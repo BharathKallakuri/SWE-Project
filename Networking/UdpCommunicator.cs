@@ -5,6 +5,10 @@ using System.Text;
 
 namespace Networking;
 
+
+/// <summary>
+/// Communicator that can send and listen for messages over the network using UDP.
+/// </summary>
 internal class UdpCommunicator : ICommunicator
 {
     private readonly UdpClient _listener;
