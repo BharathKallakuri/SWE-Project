@@ -1,4 +1,6 @@
-﻿namespace Networking;
+﻿using System.Net;
+
+namespace Networking;
 
 /// <summary>
 /// Declares a communicator that can send and receive messages.
@@ -13,22 +15,57 @@ public interface ICommunicator
     /// <summary>
     /// Adds a subscriber.
     /// </summary>
-    /// <param name="id">Identity of the subscriber to be added</param>
+    /// <param name="module">module id for the subscriber</param>
     /// <param name="subscriber">The message listener instance</param>
-    void AddSubscriber(string id, IMessageListener subscriber);
+    void AddSubscriber(int module, IMessageListener subscriber);
 
     /// <summary>
     /// Removes a subscriber
     /// </summary>
-    /// <param name="id">Identity of the subscriber to be removed</param>
-    void RemoveSubscriber(string id);
+    /// <param name="module">Module id of the subscriber to be removed</param>
+    void RemoveSubscriber(int module);
 
     /// <summary>
     /// Sends the given message to the given ip and port.
     /// </summary>
-    /// <param name="ipAddress">IP address of the destination</param>
-    /// <param name="port">Port of the destination</param>
-    /// <param name="senderId">Identity of the sender</param>
+    /// <param name="ipEndPoint">IP EndPoint(Address:Port) of the destination</param>
     /// <param name="message">Message to be sent</param>
-    void SendMessage(string ipAddress, int port, string senderId, string message);
+    /// <param name="module">Module id of the module to which the message should be sent</param>
+    /// <param name="priority">Priority of the message to be sent</param>
+    void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority);
+
+
+    /// <summary>
+    /// Broadcasts the message to every listener in a given module
+    /// </summary>
+    /// <param name="message">Message to be broadcasted</param>
+    /// <param name="module">Module ID of the module to which the message should be broadcasted</param>
+    /// <param name="priority">Priority of the message</param>
+    void BroadcastMessage(byte[] message, int module, int priority);
+
+    ///Multicast Methods
+
+    /// <summary>
+    /// Join a Multicast Group
+    /// </summary>
+    /// <param name="multicastGroup">IP Endpoint of the joining Multicast group</param>
+    void JoinMulticastGroup(IPEndPoint  multicastGroup);
+
+    /// <summary>
+    /// Leave a Multicast group
+    /// </summary>
+    /// <param name="multicastGroup">IP Endpoint of the leaving Mutlicast group</param>
+    void LeaveMulticastGroup(IPEndPoint multicastGroup);
+    
+
+    /// <summary>
+    /// Send message to all users in a Multicast group
+    /// </summary>
+    /// <param name="multicastGroup">IP Endpoint of the Mutlicast group</param>
+    /// <param name="message">Message to be sent</param>
+    /// <param name="module">Module ID of the module to which the message is multicasted</param>
+    /// <param name="priority">Priority of the message</param>
+    void MulticastMessage(IPEndPoint multicastGroup, byte[] message, int module, int priority);
+
+    
 }
