@@ -49,13 +49,13 @@ public interface ICommunicator
     /// Join a Multicast Group
     /// </summary>
     /// <param name="multicastGroup">IP Endpoint of the joining Multicast group</param>
-    void JoinMulticastGroup(IPEndPoint multicastGroup);
+    void JoinMulticastGroup(int multicastGroup);
 
     /// <summary>
     /// Leave a Multicast group
     /// </summary>
     /// <param name="multicastGroup">IP Endpoint of the leaving Mutlicast group</param>
-    void LeaveMulticastGroup(IPEndPoint multicastGroup);
+    void LeaveMulticastGroup(int multicastGroup);
 
 
     /// <summary>
@@ -65,7 +65,7 @@ public interface ICommunicator
     /// <param name="message">Message to be sent</param>
     /// <param name="module">Module ID of the module to which the message is multicasted</param>
     /// <param name="priority">Priority of the message</param>
-    void MulticastMessage(IPEndPoint multicastGroup, byte[] message, int module, int priority);
+    void MulticastMessage(int multicastGroup, byte[] message, int module, int priority);
 
 
 }
