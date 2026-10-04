@@ -9,5 +9,5 @@ public interface IMessageListener
     /// Handles reception of a message.
     /// </summary>
     /// <param name="message">Message that is received</param>
-    void OnMessageReceived(string message);
+    void OnMessageReceived(byte[] message);
 }
