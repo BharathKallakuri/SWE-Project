@@ -20,6 +20,7 @@ public static class CosmosSettings
 
             return key;
         }
-    }
     
+    }
+
 }

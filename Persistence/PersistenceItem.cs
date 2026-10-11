@@ -6,5 +6,5 @@ public class PersistenceItem
     public string Id { get; set; } = string.Empty;
 
     [JsonProperty("data")]
-    public string Data { get; set; } = string.Empty;
+    public byte[] Data { get; set; } = Array.Empty<byte>();
 }
