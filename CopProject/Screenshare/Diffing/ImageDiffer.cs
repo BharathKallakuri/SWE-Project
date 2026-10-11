@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Data;
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 
@@ -36,9 +37,9 @@ public class ImageDiffer : IImageDiffer
 
         List<Tile> changedTiles = new();
 
-        int totalPixels = currentFrame.Width * currentFrame.Height;
+        long totalPixels = (long)currentFrame.Width * currentFrame.Height;
 
-        int changedPixels = 0;
+        long changedPixels = 0;
 
         for (int row = 0; row < rows; row++)
         {
@@ -94,7 +95,7 @@ public class ImageDiffer : IImageDiffer
                         )
                     );
 
-                    changedPixels += width * height;
+                    changedPixels += (long)width * height;
                 }
             }
         }
@@ -131,26 +132,53 @@ public class ImageDiffer : IImageDiffer
         int width,
         int height)
     {
-        ulong hash = 14695981039346656037UL;
 
-        for (int y = startY; y < startY + height; y++)
+        Rectangle rectangle = new(
+            startX,
+            startY,
+            width,
+            height
+            );
+
+        Bitmap data = bitmap.LockBits(
+            rectangle,
+            ImageLockMode.ReadOnly,
+            PixelFormat.Format32bppArgb
+            );
+
+
+        try
         {
-            for (int x = startX; x < startX + width; x++)
+            ulong hash = FNV_OFFSET_BASIS;
+            int bytesPerPixel = 4;
+            int rowBytes = width * bytesPerPixel;
+            byte[] buffer = new byte[rowBytes];
+
+            for(int y=0; y < height; y++)
             {
-                System.Drawing.Color pixel = bitmap.GetPixel(x, y);
+                IntPtr rowPointer = IntPtr.Add(
+                    data.Scan0,
+                    y * data.Stride
+                    );
 
-                hash ^= pixel.R;
-                hash *= 1099511628211UL;
-
-                hash ^= pixel.G;
-                hash *= 1099511628211UL;
-
-                hash ^= pixel.B;
-                hash *= 1099511628211UL;
+                Marshal.Copy(
+                    rowPointer,
+                    buffer,
+                    0,
+                    rowBytes
+                    );
+                for(int i = 0; i < rowBytes; i++)
+                {
+                    hash ^= buffer[i];
+                    hash *= FNV_PRIME;
+                }
             }
+            return hash;
         }
-
-        return hash;
+        finally
+        {
+            bitmap.UnlockBits(data);
+        }
     }
 
     //private List<Tile> FindChangedTiles(Bitmap currentFrame)
@@ -229,14 +257,18 @@ public class ImageDiffer : IImageDiffer
         int width,
         int height)
     {
+
+        Rectangle rectangle = new(
+            startX,
+            startY,
+            width,
+            height
+            );
+
+
         using Bitmap tileBitmap = bitmap.Clone(
-            new Rectangle(
-                startX,
-                startY,
-                width,
-                height
-            ),
-            bitmap.PixelFormat);
+            rectangle,
+            PixelFormat.Format32bppArgb);
 
         using MemoryStream stream = new MemoryStream();
 
