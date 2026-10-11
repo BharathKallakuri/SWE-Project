@@ -140,7 +140,8 @@ public class ImageDiffer : IImageDiffer
             height
             );
 
-        Bitmap data = bitmap.LockBits(
+        /// bitmap represents image while bitmapData represents locked pixel memory including Scan0 and Stride
+        BitmapData data = bitmap.LockBits(
             rectangle,
             ImageLockMode.ReadOnly,
             PixelFormat.Format32bppArgb
