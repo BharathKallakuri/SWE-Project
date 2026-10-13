@@ -57,18 +57,44 @@ public class CosmosStorage : IStorage
         return response.Resource.Data;
     }
 
-    public async Task Update(string key, byte[] data)
+    public async Task<string> ReadEtag(string key)
     {
+        ItemResponse<PersistenceItem> response =
+            await _container.ReadItemAsync<PersistenceItem>(
+                key,
+                new PartitionKey(key));
+        return (response.ETag);
+    }
+
+    public async Task<bool> Update(string key, byte[] data, string etag)
+    {
+
         PersistenceItem item = new PersistenceItem
         {
             Id = key,
             Data = data
         };
 
-        await _container.ReplaceItemAsync(
-            item,
-            key,
-            new PartitionKey(key));
+        try
+        {
+            await _container.ReplaceItemAsync(
+                item,
+                key,
+                new PartitionKey(key),
+                new ItemRequestOptions
+                {
+                    IfMatchEtag = etag
+                });
+
+            return true;
+
+        }
+        catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.PreconditionFailed)
+        {
+            // The ETag does not match, so the item has been modified by another process
+            Console.WriteLine($"Update failed for key '{key}': ETag mismatch");
+            return false;
+        }
     }
 
 

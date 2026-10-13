@@ -10,8 +10,9 @@ namespace Persistence
     {
         Task Create(string key, byte[] data);
         Task<byte[]> Read(string key);
-        Task Update(string key, byte[] data);
+        Task<bool> Update(string key, byte[] data, string etag);
         Task Delete(string key);
+        Task<string> ReadEtag(string key);
 
     }
 
