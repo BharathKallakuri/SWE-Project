@@ -149,6 +149,23 @@ class IWhiteboardAction {
 1. Using [`InkCanvas`](https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.controls.inkcanvas?view=winrt-28000) to take user input
 2. Using [`InkPresenter`](https://learn.microsoft.com/en-us/dotnet/api/system.windows.controls.inkpresenter?view=windowsdesktop-10.0) to
    statically render strokes
+3. Proposed chain of events for strokes and its interaction with whiteboard
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant InkCanvas
+    participant InkPresenter
+    participant Subscriber as Event Subscriber
+    participant Whiteboard as Whiteboard State
+
+    User->>InkCanvas: Draws stroke with mouse
+    InkCanvas->>InkPresenter: Forwards input for live rendering
+    InkPresenter->>Subscriber: Fires StrokesCollected event
+    Subscriber->>Whiteboard: Adds collected stroke
+    Subscriber->>User: Displays shape recognition and fix options
+```
 
 ### Views
 
