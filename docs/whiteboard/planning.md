@@ -175,3 +175,7 @@ sequenceDiagram
    2. Toolboxes and its various commands with icons
    3. Hover-tooltips
    4. Restore-buffer
+
+## Further References
+
+1. [How Figma’s multiplayer technology works](https://www.figma.com/blog/how-figmas-multiplayer-technology-works/)
