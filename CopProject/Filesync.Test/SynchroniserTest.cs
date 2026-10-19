@@ -56,7 +56,6 @@ public sealed class SynchroniserTest
     [TestMethod]
     public void Synchronise_WithFiles_RaisesOnSyncComplete()
     {
-        // save a couple of files first
         string path1 = $"{_testDir}/file1.txt";
         string path2 = $"{_testDir}/file2.txt";
 
@@ -115,5 +114,76 @@ public sealed class SynchroniserTest
         _sync.Synchronise();
 
         Assert.AreEqual(2, completedCount);
+    }
+
+    /// <summary>
+    /// 6. Synchronise succeeds with an empty file in root
+    /// </summary>
+    [TestMethod]
+    public void Synchronise_WithEmptyFile_RaisesOnSyncComplete()
+    {
+        string path = $"{_testDir}/empty.txt";
+        _sync.SaveFile(path, Array.Empty<byte>());
+
+        bool completed = false;
+        _sync.OnSyncComplete += () => completed = true;
+
+        _sync.Synchronise();
+
+        Assert.IsTrue(completed);
+    }
+
+    /// <summary>
+    /// 7. Synchronise handles multiple files in various subfolders
+    /// </summary>
+    [TestMethod]
+    public void Synchronise_WithMultipleFolders_RaisesOnSyncComplete()
+    {
+        _sync.SaveFile($"{_testDir}/evidences/case1.txt", Encoding.UTF8.GetBytes("evidence 1"));
+        _sync.SaveFile($"{_testDir}/logs/whiteboard.txt", Encoding.UTF8.GetBytes("board log"));
+        _sync.SaveFile($"{_testDir}/top.txt", Encoding.UTF8.GetBytes("top level"));
+
+        bool completed = false;
+        _sync.OnSyncComplete += () => completed = true;
+
+        _sync.Synchronise();
+
+        Assert.IsTrue(completed);
+    }
+
+    /// <summary>
+    /// 8. Synchronise succeeds after updating an existing file
+    /// </summary>
+    [TestMethod]
+    public void Synchronise_AfterFileUpdate_RaisesOnSyncComplete()
+    {
+        string path = $"{_testDir}/update.txt";
+        _sync.SaveFile(path, Encoding.UTF8.GetBytes("version 1"));
+        _sync.UpdateFile(path, Encoding.UTF8.GetBytes("version 2"));
+
+        bool completed = false;
+        _sync.OnSyncComplete += () => completed = true;
+
+        _sync.Synchronise();
+
+        Assert.IsTrue(completed);
+    }
+
+    /// <summary>
+    /// 9. Synchronise succeeds after deleting a file
+    /// </summary>
+    [TestMethod]
+    public void Synchronise_AfterFileDelete_RaisesOnSyncComplete()
+    {
+        string path = $"{_testDir}/temp.txt";
+        _sync.SaveFile(path, Encoding.UTF8.GetBytes("temp content"));
+        _sync.DeleteFile(path);
+
+        bool completed = false;
+        _sync.OnSyncComplete += () => completed = true;
+
+        _sync.Synchronise();
+
+        Assert.IsTrue(completed);
     }
 }

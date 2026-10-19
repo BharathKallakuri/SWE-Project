@@ -4,44 +4,79 @@ using System.IO;
 
 namespace Filesync;
 
-// the data object that holds one piece of a file
+/// <summary>
+/// Represents a single chunk of a large file.
+/// </summary>
 public class FileChunk
 {
-    public string FileId { get; set; } = string.Empty; // e.g. "evidences/photo.png"
-    public int ChunkNumber { get; set; }               // e.g. 0, 1, 2...
-    public int TotalChunks { get; set; }               // so we know when to stop waiting
-    public byte[] Data { get; set; } = Array.Empty<byte>(); // the actual bytes
+    /// <summary>
+    /// Relative path identifying the file.
+    /// </summary>
+    public string FileId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Zero-based index of this chunk.
+    /// </summary>
+    public int ChunkNumber { get; set; }
+
+    /// <summary>
+    /// Total count of chunks for the file.
+    /// </summary>
+    public int TotalChunks { get; set; }
+
+    /// <summary>
+    /// Binary data payload of this chunk.
+    /// </summary>
+    public byte[] Data { get; set; } = Array.Empty<byte>();
 }
 
-// a simple utility class to cut up files and stitch them back together
+/// <summary>
+/// Splits large files into chunks and merges chunks back into a file.
+/// </summary>
 public class FileChunker
 {
-    // 4MB default chunk size to prevent memory crashes over TCP
-    private const int DefaultChunkSize = 4 * 1024 * 1024; 
+    private const int DefaultChunkSize = 4 * 1024 * 1024;
 
-    // reads a large file from the hard drive and breaks it into small pieces
+    /// <summary>
+    /// Reads a file and splits it into chunks of default size.
+    /// </summary>
     public List<FileChunk> SplitFile(string fullPath, string relativePath)
     {
+        return SplitFile(fullPath, relativePath, DefaultChunkSize);
+    }
+
+    /// <summary>
+    /// Reads a file and splits it into chunks of a specified size.
+    /// </summary>
+    public List<FileChunk> SplitFile(string fullPath, string relativePath, int chunkSize)
+    {
         var chunks = new List<FileChunk>();
-        
-        // we use a FileStream here instead of File.ReadAllBytes()
-        // so that if a 2GB video is dropped, it doesn't crash the RAM.
+
         using FileStream fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
-        
-        int totalChunks = (int)Math.Ceiling((double)fs.Length / DefaultChunkSize);
+
+        if (fs.Length == 0)
+        {
+            chunks.Add(new FileChunk
+            {
+                FileId = relativePath,
+                ChunkNumber = 0,
+                TotalChunks = 1,
+                Data = Array.Empty<byte>()
+            });
+            return chunks;
+        }
+
+        int totalChunks = (int)Math.Ceiling((double)fs.Length / chunkSize);
         int currentChunk = 0;
-        
-        byte[] buffer = new byte[DefaultChunkSize];
-        int bytesRead = 0;
-        
-        // keep reading chunks of 4MB until the stream is empty
+
+        byte[] buffer = new byte[chunkSize];
+        int bytesRead;
+
         while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
         {
-            // the very last chunk usually won't be exactly 4MB, 
-            // so we copy only the actual bytes we read into a smaller array.
             byte[] actualData = new byte[bytesRead];
             Array.Copy(buffer, actualData, bytesRead);
-            
+
             var chunk = new FileChunk
             {
                 FileId = relativePath,
@@ -49,24 +84,29 @@ public class FileChunker
                 TotalChunks = totalChunks,
                 Data = actualData
             };
-            
+
             chunks.Add(chunk);
             currentChunk++;
         }
-        
+
         return chunks;
     }
-    
-    // the other computer receives the chunks over the network and stitches them back together
+
+    /// <summary>
+    /// Merges chunks in chunk order and writes the full file.
+    /// </summary>
     public void MergeChunks(List<FileChunk> receivedChunks, string savePath)
     {
-        // network packets often arrive out of order! 
-        // we must sort them by ChunkNumber before we stitch them together.
         receivedChunks.Sort((a, b) => a.ChunkNumber.CompareTo(b.ChunkNumber));
-        
-        // open a stream to write the final stitched file to the hard drive
+
+        string? parent = Path.GetDirectoryName(savePath);
+        if (parent != null)
+        {
+            Directory.CreateDirectory(parent);
+        }
+
         using FileStream fs = new FileStream(savePath, FileMode.Create, FileAccess.Write);
-        
+
         foreach (var chunk in receivedChunks)
         {
             fs.Write(chunk.Data, 0, chunk.Data.Length);
