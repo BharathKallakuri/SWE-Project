@@ -293,6 +293,14 @@ The following classes capture the same:
 ```cs
 public abstract record ChatRequest;
 
+// Client-specific operations.
+
+public sealed record Sync() : ChatRequest;
+
+public sealed record Reset() : ChatRequest;
+
+// General operations.
+
 public sealed record SendMainMessage(ChatMessageWithThreads Message, Guid? ParentMessageId) : ChatRequest;
 
 public sealed record EditMessage(Guid MessageId, string NewContent, string EditorName, Guid? ParentMessageId) : ChatRequest;
@@ -301,7 +309,7 @@ public sealed record DeleteMessage(Guid MessageId, string DeleterName, Guid? Par
 
 public sealed record AddReaction(Guid MessageId, string Emoji, string ReactorName, Guid? ParentMessageId) : ChatRequest;
 
-public sealed record RemoveReaction(Guid MessageId, string Emoji, string ReactorName, Guid? ParentMessageId) : ChatRequest;`
+public sealed record RemoveReaction(Guid MessageId, string Emoji, string ReactorName, Guid? ParentMessageId) : ChatRequest;
 ```
 
 > [!NOTE]
@@ -322,7 +330,7 @@ additionally stores the state of every client's `Chatroom`.
 An inefficient way to store the state of every client would be to store the
 entire `Chatroom` data structure. Instead, we store a _non-negative integer_ as
 representative of a `Chatroom` state -- the value 0 denotes the initialialized
-empty state, and a value of $n$, for some $n > 0$ denotes the first $n$
+empty state, and a value of `n`, for some `n > 0` denotes the first `n`
 operations applied onto the initialized empty state.
 
 So, the server stores a list of these operations, as well a map of
@@ -335,15 +343,23 @@ following:
 1. Applies that operation onto its own `Chatroom` object
 2. Updates the operation list with this new operation
 3. Updates the client states accordingly
-    - For general operations (those that lead to updates for every client):
-        - Iterates over the table of client states, and for each client:
-            - Compares its state value with the latest state value (length of
-            the operations list)
-            - If there is a difference, send the appropriate sub-list of
-            operations to the client
-                - If successful, update the client's state to the latest one
+    - For general operations (those that lead to updates for every client),
+    iterates over the table of client states, and for each client:
+        - Compares its state value with the latest state value (length of
+        the operations list)
+        - If there is a difference, send the appropriate sub-list of
+        operations to the client
+        - If successful, update the client's state to the latest one
     - For client-specific operations, attempts to send the appropriate
     operations to that client and update only it's state when successful
+
+#### Client-side
+
+The client maintains a `Chatroom` structure, and upon any operation, updates
+its local copy, and sends the appropriate message to the server.
+
+When it receives a message from the server, it updates the `Chatroom`
+accordingly.
 
 ## Threads
 
