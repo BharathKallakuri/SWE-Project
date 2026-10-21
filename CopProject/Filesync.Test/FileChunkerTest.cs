@@ -66,7 +66,7 @@ public class FileChunkerTest
 
         List<FileChunk> chunks = _chunker.SplitFile(filePath, "small.txt", 1024);
 
-        Assert.AreEqual(1, chunks.Count);
+        Assert.HasCount(1, chunks);
         Assert.AreEqual(0, chunks[0].ChunkNumber);
         Assert.AreEqual(1, chunks[0].TotalChunks);
         CollectionAssert.AreEqual(expected, chunks[0].Data);
@@ -85,10 +85,10 @@ public class FileChunkerTest
 
         List<FileChunk> chunks = _chunker.SplitFile(filePath, "multi.txt", 1000);
 
-        Assert.AreEqual(3, chunks.Count);
-        Assert.AreEqual(1000, chunks[0].Data.Length);
-        Assert.AreEqual(1000, chunks[1].Data.Length);
-        Assert.AreEqual(500, chunks[2].Data.Length);
+        Assert.HasCount(3, chunks);
+        Assert.HasCount(1000, chunks[0].Data);
+        Assert.HasCount(1000, chunks[1].Data);
+        Assert.HasCount(500, chunks[2].Data);
 
         for (int i = 0; i < chunks.Count; i++)
         {
