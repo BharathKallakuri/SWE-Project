@@ -47,11 +47,11 @@ public class FileChunkerTest
 
         List<FileChunk> chunks = _chunker.SplitFile(filePath, "empty.txt");
 
-        Assert.AreEqual(1, chunks.Count);
+        Assert.HasCount(1, chunks);
         Assert.AreEqual(0, chunks[0].ChunkNumber);
         Assert.AreEqual(1, chunks[0].TotalChunks);
         Assert.AreEqual("empty.txt", chunks[0].FileId);
-        Assert.AreEqual(0, chunks[0].Data.Length);
+        Assert.IsEmpty(chunks[0].Data);
     }
 
     /// <summary>
