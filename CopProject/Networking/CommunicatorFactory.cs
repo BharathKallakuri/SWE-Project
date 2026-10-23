@@ -13,19 +13,27 @@ public static class CommunicatorFactory
     /// Creates a communicator.
     /// </summary>
     /// <returns>A new communicator instance</returns>
-    public static ICommunicator CreateCommunicator(bool isServer = true, bool isClient = false)
+    public static ICommunicator CreateCommunicator(IPEndPoint? serverIp, bool isServer = true, bool isClient = false)
     {
         if (isServer == isClient)
         {
-            throw new Exception("[Networking] CommunicatorFactory.CreateCommunicator: Ambiguity in creation of Communicator, isServer == isClient");
+            Trace.WriteLine("[Networking] CommunicatorFactory.CreateCommunicator: Ambiguity in creation of Communicator, isServer == isClient");
         }
         else if (isServer)
         {
-            return new CommunicatorServer();
+            return new CommunicatorServer(null);
         }
         else
         {
-            return CommunicatorClient;
+            if (serverIp != null)
+            {
+                return new CommunicatorClient(serverIp);
+            }
+            else
+            {
+                Trace.WriteLine("[Networking] CommunicatorFactory.CreateCommunicator: Unable to start Client Communicator, Server IP is not provided");
+            }
         }
+        return null;
     }
 }
