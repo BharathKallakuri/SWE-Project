@@ -15,6 +15,6 @@
     </Window.SystemBackdrop>
 
     <Grid>
-        <incident:TestUserControl />
+        <incident:AllIncidentsPage />
     </Grid>
 </Window>
