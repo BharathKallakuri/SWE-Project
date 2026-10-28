@@ -36,6 +36,7 @@ public class SendingQueueListenerServer : IDisposable
     private PacketSerializer _packetSerializer;
     public SendingQueueListenerServer(SendingQueue sendingQueue, ConcurrentDictionary<IPEndPoint, TcpClient> clientToTcpListenerMap)
     {
+        _isRunningLock = new object();
         _sendingQueue = sendingQueue;
         _clientToTcpListenerMap = clientToTcpListenerMap;
         _isRunning = true;
@@ -54,7 +55,7 @@ public class SendingQueueListenerServer : IDisposable
                 continue;
             }
 
-            Packet packet = _sendingQueue.Dequeue();
+            Packet? packet = _sendingQueue.Dequeue();
             if (packet == null)
             {
                 continue;
@@ -62,21 +63,25 @@ public class SendingQueueListenerServer : IDisposable
 
             byte[] data = _packetSerializer.PacketToBytes(packet);
 
-            SendDataToClient(data, packet.Destination, packet.Module, packet.Priority);
+            SendDataToClient(data, packet.Destination);
 
         }
     }
 
-    public void SendDataToClient(byte[] data, IPEndPoint destination, int module, int priority)
+    public void SendDataToClient(byte[] data, IPEndPoint destination)
     {
+        if (destination == null || !_clientToTcpListenerMap.TryGetValue(destination, out TcpClient? socket) || socket == null)
+        {
+            Trace.WriteLine($"[Networking] SendingQueueListenerServer.SendDataToClient: Destination client {destination} not found in client map.");
+            return;
+        }
         int maxAttempts = 4;
         int delay = 3000;  // ms
         for (int attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            TcpClient socket = _clientToTcpListenerMap[destination];
             try
             {
-                using NetworkStream stream = socket.GetStream();
+                NetworkStream stream = socket.GetStream();
                 stream.Write(data, 0, data.Length);
                 return;
             }
