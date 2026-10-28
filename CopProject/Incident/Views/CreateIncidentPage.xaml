@@ -147,26 +147,32 @@
                         <StackPanel Spacing="16">
                             <Grid>
                                 <TextBlock Text="Evidence Attachments" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+
                                 <Button
-                                    HorizontalAlignment="Right"
-                                    Content="Add Evidence"
-                                    Command="{Binding AddEvidenceCommand}"
-                                    IsEnabled="{Binding IsNotSubmitting}" />
+                                HorizontalAlignment="Right"
+                                Content="Add Evidence"
+                                Click="AddEvidence_Click"
+                                IsEnabled="{Binding IsNotSubmitting}" />
                             </Grid>
 
                             <ListView
-                                ItemsSource="{Binding Evidences}"
-                                MaxHeight="120"
-                                SelectionMode="None">
+                            ItemsSource="{Binding Evidences}"
+                            MaxHeight="150"
+                            SelectionMode="None">
                                 <ListView.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding FilePath}" VerticalAlignment="Center" />
+                                        <Grid Padding="4" ColumnSpacing="12">
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="{Binding FilePath}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Description}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </Grid>
                                     </DataTemplate>
                                 </ListView.ItemTemplate>
                             </ListView>
                         </StackPanel>
                     </Border>
-
+                    
                 </StackPanel>
             </Grid>
         </ScrollViewer>

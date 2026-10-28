@@ -32,6 +32,7 @@ public sealed partial class MainWindow : Window
         AppServices.IncidentController = controller;
         AppServices.NavigationService = navigationService;
         AppServices.CurrentUserId = Guid.NewGuid(); // Test user ID
+        AppServices.WindowHandle = WinRT.Interop.WindowNative.GetWindowHandle(this);
 
         // Navigate to initial page
         navigationService.NavigateTo<AllIncidentsPageViewModel>();

@@ -12,6 +12,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Remove="Views\AddEvidenceDialog.xaml" />
       <None Remove="Views\AllIncidentsPage.xaml" />
       <None Remove="Views\CreateIncidentPage.xaml" />
     </ItemGroup>
@@ -24,6 +25,12 @@
     <ItemGroup>
         <ProjectReference Include="..\Cloud\Cloud.csproj" />
         <ProjectReference Include="..\FileSync\Filesync.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Update="Views\AddEvidenceDialog.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
     </ItemGroup>
 
     <ItemGroup>
