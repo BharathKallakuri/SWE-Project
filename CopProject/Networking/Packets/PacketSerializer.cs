@@ -11,16 +11,16 @@ namespace Networking.Packets;
 
 public class PacketSerializer
 {
-    private Serializer<Packet> packetSerializer = new Packets.Serializer<Packet>();
+    private Serializer<Packet> _packetSerializer = new Packets.Serializer<Packet>();
     public byte[] PacketToBytes(Packet packet)
     {
-        byte[] serializedData = packetSerializer.Serialize(packet);
+        byte[] serializedData = _packetSerializer.Serialize(packet);
         byte[] finalData = new byte[4 + serializedData.Length];
         BinaryPrimitives.WriteInt32BigEndian(finalData, serializedData.Length);
         Buffer.BlockCopy(serializedData, 0, finalData, 4, serializedData.Length);
         return finalData;
     }
-    public Packet BytesToPacket(byte[] data)
+    public Packet? BytesToPacket(byte[] data)
     {
         try
         {
@@ -36,11 +36,12 @@ public class PacketSerializer
             }
             byte[] payload = new byte[payloadLength];
             Buffer.BlockCopy(data, 4, payload, 0, payloadLength);
-            return packetSerializer.Deserialize(payload);
+            return _packetSerializer.Deserialize(payload);
         }
         catch (Exception e)
         {
-            Trace.WriteLine(".");
+            Trace.WriteLine($"[Networking] Error in BytesToPacket: {e.Message}");
+            return null;
         }
         throw new NotImplementedException();
     }
