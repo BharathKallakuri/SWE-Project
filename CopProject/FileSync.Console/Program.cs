@@ -20,9 +20,10 @@ internal static class Program
         {
             int listenPort = int.Parse(args[0]);
             int peerPort = int.Parse(args[1]);
-            string folder = args.Length > 2 ? args[2] : $"Node_{listenPort}";
+            string peerIp = args.Length > 2 ? args[2] : "127.0.0.1";
+            string folder = args.Length > 3 ? args[3] : $"Node_{listenPort}";
 
-            RunInteractiveNode(listenPort, peerPort, folder);
+            RunInteractiveNode(listenPort, peerPort, peerIp, folder);
             return;
         }
 
@@ -31,13 +32,14 @@ internal static class Program
     }
 
     // runs an interactive node connecting to a peer machine over tcp
-    private static void RunInteractiveNode(int listenPort, int peerPort, string folder)
+    private static void RunInteractiveNode(int listenPort, int peerPort, string peerIp, string folder)
     {
-        Console.WriteLine($"[node] starting on listen port {listenPort}, targeting peer port {peerPort}");
+        Console.WriteLine($"[node] listening on port {listenPort}");
+        Console.WriteLine($"[node] targeting peer at {peerIp}:{peerPort}");
         Console.WriteLine($"[node] shared folder: {Path.GetFullPath(folder)}");
 
         using var communicator = new SimulatedCommunicator(listenPort);
-        var peerEndpoint = new IPEndPoint(IPAddress.Loopback, peerPort);
+        var peerEndpoint = new IPEndPoint(IPAddress.Parse(peerIp), peerPort);
         communicator.RegisterPeer(peerEndpoint);
 
         var handler = new NetworkSyncHandler(folder, communicator)
