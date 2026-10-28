@@ -20,7 +20,7 @@ public class PacketSerializer
         Buffer.BlockCopy(serializedData, 0, finalData, 4, serializedData.Length);
         return finalData;
     }
-    public Packet BytesToPacket(byte[] data)
+    public Packet? BytesToPacket(byte[] data)
     {
         try
         {
@@ -40,7 +40,8 @@ public class PacketSerializer
         }
         catch (Exception e)
         {
-            Trace.WriteLine(".");
+            Trace.WriteLine("$[Networking] Error in BytesToPacket: {e.Message}");
+            return null;
         }
         throw new NotImplementedException();
     }

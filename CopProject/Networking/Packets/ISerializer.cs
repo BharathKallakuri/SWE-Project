@@ -9,5 +9,5 @@ namespace Networking.Packets;
 public interface ISerializer<T>
 {
     byte[] Serialize(T item);
-    T Deserialize(byte[] data);
+    T? Deserialize(byte[] data);
 }

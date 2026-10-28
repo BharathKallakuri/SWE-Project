@@ -1,17 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace Networking.Packets;
 
+public class IPEndPointConverter : JsonConverter<IPEndPoint>
+{
+    public override IPEndPoint? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        string? str = reader.GetString();
+        return str != null ? IPEndPoint.Parse(str) : null;
+    }
+
+    public override void Write(Utf8JsonWriter writer, IPEndPoint value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ToString());
+    }
+}
+
 public class Serializer<T> : ISerializer<T>
 {
-    public XmlSerializer DataSerializer = new XmlSerializer(typeof(T));
-    //public ISerializer DataSerializer = new JsonSerializer();
+    private readonly JsonSerializerOptions _options;
+
+    public Serializer()
+    {
+        _options = new JsonSerializerOptions();
+        _options.Converters.Add(new IPEndPointConverter());
+    }
 
     public byte[] Serialize(T item)
     {
@@ -19,20 +40,15 @@ public class Serializer<T> : ISerializer<T>
         {
             return Array.Empty<byte>();
         }
-
-        using MemoryStream memoryStream = new MemoryStream();
-        DataSerializer.Serialize(memoryStream, item);
-        return memoryStream.ToArray();
+        return JsonSerializer.SerializeToUtf8Bytes(item, _options);
     }
-    public T Deserialize(byte[] data)
+
+    public T? Deserialize(byte[] data)
     {
         if (data == null || data.Length == 0)
         {
             return default;
         }
-
-        using MemoryStream memoryStream = new MemoryStream(data);
-        return (T)DataSerializer.Deserialize(memoryStream);
+        return JsonSerializer.Deserialize<T>(data, _options);
     }
-
 }
