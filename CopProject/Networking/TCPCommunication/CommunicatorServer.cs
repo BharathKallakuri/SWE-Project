@@ -18,18 +18,18 @@ public class CommunicatorServer : ICommunicator, IDisposable
 {
     private SendingQueue _sendingQueue = new SendingQueue();
     private ReceivingQueue _receivingQueue = new ReceivingQueue();
-    private SendingQueueListenerServer _sendingQueueListenerServer;
-    private ReceivingQueueListener _receivingQueueListener;
-    private TcpListener _tcpClientRequestListener;
+    private SendingQueueListenerServer? _sendingQueueListenerServer;
+    private ReceivingQueueListener? _receivingQueueListener;
+    private TcpListener? _tcpClientRequestListener;
     private ConcurrentDictionary<IPEndPoint, TcpClient> _clientToTcpListenerMap = new ConcurrentDictionary<IPEndPoint, TcpClient>();
     private ConcurrentDictionary<int, IMessageListener> _moduleToMessageListenerMap = new ConcurrentDictionary<int, IMessageListener>();
     private ConcurrentDictionary<IPEndPoint, SocketListener> _clientToSocketListenerMap = new ConcurrentDictionary<IPEndPoint, SocketListener>();
     private ConcurrentDictionary<int, ConcurrentBag<IPEndPoint>> _multicastGroupMap = new ConcurrentDictionary<int, ConcurrentBag<IPEndPoint>>();
     private bool _isRunning;
     private object _isRunningLock;
-    private IPEndPoint _thisIpEndPoint;
+    private IPEndPoint? _thisIpEndPoint;
 
-    private Thread _clientConnectionListenerThread;
+    private Thread? _clientConnectionListenerThread;
     private bool IsRunning
     {
         get {
@@ -42,24 +42,30 @@ public class CommunicatorServer : ICommunicator, IDisposable
 
     public CommunicatorServer(IPEndPoint? ipEndPoint)
     {
+        _isRunningLock = new object();
         try
         {
-            if (ipEndPoint != null)
+            if (ipEndPoint == null)
             {
                 ipEndPoint = GetFreeIPEndPoint();
             }
             _thisIpEndPoint = ipEndPoint;
             _tcpClientRequestListener = new TcpListener(ipEndPoint.Address, ipEndPoint.Port);
+            _tcpClientRequestListener.Start();
+
             _sendingQueueListenerServer = new SendingQueueListenerServer(_sendingQueue, _clientToTcpListenerMap);
             _receivingQueueListener = new ReceivingQueueListener(_receivingQueue, _moduleToMessageListenerMap);
+
+            _isRunning = true;
             _clientConnectionListenerThread = new Thread(AcceptClientConnections) { IsBackground = true };
-            using (_tcpClientRequestListener)
-            using (_sendingQueueListenerServer)
-            using (_receivingQueueListener)
-            {
-                _isRunning = true;
-                _clientConnectionListenerThread.Start();
-            }
+            _clientConnectionListenerThread.Start();
+            // using (_tcpClientRequestListener)
+            // using (_sendingQueueListenerServer)
+            // using (_receivingQueueListener)
+            // {
+            //     _isRunning = true;
+            //     _clientConnectionListenerThread.Start();
+            // }
         }
         catch (Exception e)
         {
@@ -70,12 +76,20 @@ public class CommunicatorServer : ICommunicator, IDisposable
 
     public void AcceptClientConnections()
     {
+        TcpListener? listener = _tcpClientRequestListener;
+        if (listener == null)
+        {
+            return;
+        }
         while (IsRunning)
         {
             try
             {
-                TcpClient clientTcpClient = _tcpClientRequestListener.AcceptTcpClient();
-                // Should implement function for a client joined
+                TcpClient clientTcpClient = listener.AcceptTcpClient();
+                if (clientTcpClient.Client.RemoteEndPoint is IPEndPoint clientEp)
+                {
+                    AddClient(clientEp, clientTcpClient);
+                }
             }
             catch (SocketException e)
             {
@@ -90,17 +104,19 @@ public class CommunicatorServer : ICommunicator, IDisposable
             }
         }
 
-        throw new NotImplementedException();
     }
 
     public IPEndPoint GetFreeIPEndPoint()
     {
-        IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
-        IPAddress ipAddress = hostEntry.AddressList.FirstOrDefault(ip => (ip.AddressFamily == AddressFamily.InterNetwork));
-        if (ipAddress == null)
+        IPAddress ipAddress = IPAddress.Loopback;
+        try
         {
-            Trace.WriteLine("[Networking] CommunicatorServer.GetFreeIPEndPoint: Unable to find a valid IPv4 address for the machine.");
-            return null;
+            IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
+            ipAddress = hostEntry.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork) ?? IPAddress.Loopback;
+        }
+        catch
+        {
+            ipAddress = IPAddress.Loopback;
         }
         using TcpListener dummyListener = new TcpListener(IPAddress.Loopback, 0);
         dummyListener.Start();
@@ -187,13 +203,26 @@ public class CommunicatorServer : ICommunicator, IDisposable
     }
     public void BroadcastMessage(byte[] message, int module, int priority)
     {
-        throw new NotImplementedException();
+        foreach (IPEndPoint clientEp in _clientToTcpListenerMap.Keys)
+        {
+            SendMessage(clientEp, message, module, priority);
+        }
     }
 
-    public int ListenPort => _thisIpEndPoint.Port;
+    public int ListenPort => _thisIpEndPoint?.Port ?? 0;
     public void Dispose()
     {
-        throw new NotImplementedException();
+        lock (_isRunningLock)
+        {
+            _isRunning = false;
+        }
+        _tcpClientRequestListener?.Stop();
+        _sendingQueueListenerServer?.Dispose();
+        _receivingQueueListener?.Dispose();
+        foreach (SocketListener socketListener in _clientToSocketListenerMap.Values)
+        {
+            socketListener.Dispose();
+        }
     }
 }
 

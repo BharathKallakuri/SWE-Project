@@ -34,6 +34,7 @@ public class SendingQueueListenerClient : IDisposable
 
     public SendingQueueListenerClient(SendingQueue sendingQueue, TcpClient clientSocket)
     {
+        _isRunningLock = new object();
         this._sendingQueue = sendingQueue;
         this._clientSocket = clientSocket;
         _isRunning = true;
@@ -51,7 +52,7 @@ public class SendingQueueListenerClient : IDisposable
                 continue;
             }
 
-            Packet packet = _sendingQueue.Dequeue();
+            Packet? packet = _sendingQueue.Dequeue();
             if (packet == null)
             {
                 continue;

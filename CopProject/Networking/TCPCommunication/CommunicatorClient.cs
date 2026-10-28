@@ -16,33 +16,34 @@ namespace Networking.TCPCommunication;
 
 public class CommunicatorClient : ICommunicator, IDisposable
 {
-    private SendingQueue _sendingQueue = new SendingQueue();
-    private ReceivingQueue _receivingQueue = new ReceivingQueue();
-    private SocketListener _socketListener;
-    private SendingQueueListenerClient _sendingQueueListenerClient;
-    private ReceivingQueueListener _receivingQueueListener;
-    private TcpClient _tcpClient;
-    private ConcurrentDictionary<int, IMessageListener> _moduleToMessageListenerMap = new ConcurrentDictionary<int, IMessageListener>();
+    private readonly SendingQueue _sendingQueue = new SendingQueue();
+    private readonly ReceivingQueue _receivingQueue = new ReceivingQueue();
+    private readonly SocketListener? _socketListener;
+    private readonly SendingQueueListenerClient? _sendingQueueListenerClient;
+    private readonly ReceivingQueueListener _receivingQueueListener;
+    private readonly TcpClient _tcpClient;
+    private readonly IPEndPoint _serverIp;
+    private readonly ConcurrentDictionary<int, IMessageListener> _moduleToMessageListenerMap = new ConcurrentDictionary<int, IMessageListener>();
 
     public CommunicatorClient(IPEndPoint serverIp)
     {
-        _socketListener = new SocketListener(_receivingQueue, _tcpClient);
-        _sendingQueueListenerClient = new SendingQueueListenerClient(_sendingQueue, _tcpClient);
+        _serverIp = serverIp;
+        _tcpClient = new TcpClient();
         _receivingQueueListener = new ReceivingQueueListener(_receivingQueue, _moduleToMessageListenerMap);
         try
         {
             _tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
             _tcpClient.Connect(serverIp.Address, serverIp.Port);
+            _socketListener = new SocketListener(_receivingQueue, _tcpClient);
+            _sendingQueueListenerClient = new SendingQueueListenerClient(_sendingQueue, _tcpClient);
+
         }
         catch (Exception e)
         {
             Trace.WriteLine($"[Networking] CommunicatorClient.CommunicatorClient: Failed to connect to server at {serverIp}. Exception: {e.Message}");
         }
     }
-    public void Dispose()
-    {
-        throw new NotImplementedException();
-    }
+
     public void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
     {
         try
@@ -56,16 +57,14 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
-    [ExcludeFromCodeCoverage]
     public void AddSubscriber(int module, IMessageListener subscriber)
     {
-        throw new NotImplementedException();
+        _moduleToMessageListenerMap[module] = subscriber;
     }
 
-    [ExcludeFromCodeCoverage]
     public void RemoveSubscriber(int module)
     {
-        throw new NotImplementedException();
+        _moduleToMessageListenerMap.TryRemove(module, out _);
     }
 
     [ExcludeFromCodeCoverage]
@@ -92,7 +91,23 @@ public class CommunicatorClient : ICommunicator, IDisposable
         throw new NotImplementedException();
     }
 
-    [ExcludeFromCodeCoverage]
-    public int ListenPort => throw new NotImplementedException();
+    public int ListenPort
+    {
+        get {
+            if (_tcpClient?.Client?.LocalEndPoint is IPEndPoint ep)
+            {
+                return ep.Port;
+            }
+
+            return 0;
+        }
+    }
+    public void Dispose()
+    {
+        _socketListener?.Dispose();
+        _sendingQueueListenerClient?.Dispose();
+        _receivingQueueListener.Dispose();
+        _tcpClient.Close();
+    }
 
 }

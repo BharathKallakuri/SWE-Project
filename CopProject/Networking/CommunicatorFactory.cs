@@ -13,7 +13,7 @@ public static class CommunicatorFactory
     /// Creates a communicator.
     /// </summary>
     /// <returns>A new communicator instance</returns>
-    public static ICommunicator CreateCommunicator(IPEndPoint? serverIp, bool isServer = true, bool isClient = false)
+    public static ICommunicator? CreateCommunicator(IPEndPoint? serverIp, bool isServer = true, bool isClient = false)
     {
         if (isServer == isClient)
         {
