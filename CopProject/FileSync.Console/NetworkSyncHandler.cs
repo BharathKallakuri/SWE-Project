@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -13,6 +10,7 @@ namespace FileSync.ConsoleApp;
 // handles file sync protocol over the networking communicator
 public class NetworkSyncHandler : IMessageListener
 {
+    // SubscriberId for now
     public const int ModuleId = 5;
 
     private readonly string _rootDir;
@@ -111,14 +109,17 @@ public class NetworkSyncHandler : IMessageListener
 
     private void HandleManifest(string json)
     {
-        var remoteManifest = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
-        if (remoteManifest == null) return;
+        Dictionary<string, DateTime>? remoteManifest = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
+        if (remoteManifest == null)
+        {
+            return;
+        }
 
         OnLog?.Invoke($"[sync] received remote manifest with {remoteManifest.Count} file(s)");
 
         int requestedCount = 0;
 
-        foreach (var (relPath, remoteTime) in remoteManifest)
+        foreach ((string? relPath, DateTime remoteTime) in remoteManifest)
         {
             string localFullPath = Path.Combine(_rootDir, relPath);
 
@@ -173,10 +174,9 @@ public class NetworkSyncHandler : IMessageListener
         // split file into 64kb chunks for network transfer
         List<FileChunk> chunks = _chunker.SplitFile(fullPath, relPath, chunkSize: 64 * 1024);
 
-        foreach (var chunk in chunks)
+        foreach (FileChunk chunk in chunks)
         {
-            var chunkDto = new ChunkDto
-            {
+            var chunkDto = new ChunkDto {
                 FileId = chunk.FileId,
                 ChunkNumber = chunk.ChunkNumber,
                 TotalChunks = chunk.TotalChunks,
@@ -199,15 +199,17 @@ public class NetworkSyncHandler : IMessageListener
 
     private void HandleChunk(string json)
     {
-        var dto = JsonSerializer.Deserialize<ChunkDto>(json);
-        if (dto == null) return;
+        ChunkDto? dto = JsonSerializer.Deserialize<ChunkDto>(json);
+        if (dto == null)
+        {
+            return;
+        }
 
-        var list = _incomingChunks.GetOrAdd(dto.FileId, _ => new List<FileChunk>());
+        List<FileChunk> list = _incomingChunks.GetOrAdd(dto.FileId, _ => new List<FileChunk>());
 
         lock (list)
         {
-            list.Add(new FileChunk
-            {
+            list.Add(new FileChunk {
                 FileId = dto.FileId,
                 ChunkNumber = dto.ChunkNumber,
                 TotalChunks = dto.TotalChunks,

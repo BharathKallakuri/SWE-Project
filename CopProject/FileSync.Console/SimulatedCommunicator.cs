@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
@@ -48,14 +48,16 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
 
     public void SendMessage(IPEndPoint ipEndPoint, byte[] message, int module, int priority)
     {
-        if (_disposed) return;
-
+        if (_disposed)
+        {
+            return;
+        }
         try
         {
             // connect to the target peer and send the packet
             using var client = new TcpClient();
             client.Connect(ipEndPoint.Address, ipEndPoint.Port);
-            using var stream = client.GetStream();
+            using NetworkStream stream = client.GetStream();
             using var writer = new BinaryWriter(stream);
 
             // packet structure: module id, length, message bytes
@@ -74,7 +76,7 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
     public void BroadcastMessage(byte[] message, int module, int priority)
     {
         // broadcast to all registered peers
-        foreach (var peer in _knownPeers)
+        foreach (IPEndPoint peer in _knownPeers)
         {
             SendMessage(peer, message, module, priority);
         }
@@ -117,7 +119,7 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
                     byte[] payload = reader.ReadBytes(length);
 
                     // forward received bytes to the registered subscriber
-                    if (_subscribers.TryGetValue(module, out var listener))
+                    if (_subscribers.TryGetValue(module, out IMessageListener? listener))
                     {
                         listener.OnMessageReceived(payload);
                     }
@@ -135,7 +137,10 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
         _disposed = true;
         _cts.Cancel();
         _listener.Stop();
