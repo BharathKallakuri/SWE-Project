@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <None Remove="Views\AllIncidentsPage.xaml" />
+      <None Remove="Views\CreateIncidentPage.xaml" />
     </ItemGroup>
 
     <ItemGroup>
@@ -23,6 +24,12 @@
     <ItemGroup>
         <ProjectReference Include="..\Cloud\Cloud.csproj" />
         <ProjectReference Include="..\FileSync\Filesync.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Update="Views\CreateIncidentPage.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
     </ItemGroup>
 
     <ItemGroup>

@@ -4,7 +4,7 @@ using System.Windows.Input;
 
 namespace Incident_module.ViewModels.Utils;
 
-internal sealed class RelayCommand : ICommand
+public sealed class RelayCommand : ICommand
 {
     private readonly Action _execute;
 

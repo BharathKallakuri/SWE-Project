@@ -1,33 +1,39 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
-
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
+﻿using System;
+using Incident_module;
+using Incident_module.Implementations;
+using Incident_module.ViewModels;
+using Incident_module.ViewModels.Utils;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace Incidents.UIharness;
-/// <summary>
-/// An empty window that can be used on its own or navigated to within a Frame.
-/// </summary>
+
 public sealed partial class MainWindow : Window
 {
     public MainWindow()
     {
         InitializeComponent();
+        InitializeAndStartAsync();
+    }
+
+    private async void InitializeAndStartAsync()
+    {
+        // Instantiate implementations
+        IncidentCloudStorageService storageService = new();
+        IncidentFileSynchroniser fileSynchroniser = new();
+
+        // Initialize IncidentController asynchronously
+        IIncidentController controller = await IncidentController.CreateAsync(storageService, fileSynchroniser);
+
+        // Set up NavigationService with the RootFrame in MainWindow.xaml
+        NavigationService navigationService = new();
+        navigationService.Initialize(RootFrame);
+
+        // Register shared services
+        AppServices.IncidentController = controller;
+        AppServices.NavigationService = navigationService;
+        AppServices.CurrentUserId = Guid.NewGuid(); // Test user ID
+
+        // Navigate to initial page
+        navigationService.NavigateTo<AllIncidentsPageViewModel>();
     }
 }

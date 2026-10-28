@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -10,21 +9,29 @@ using Microsoft.UI.Xaml;
 
 namespace Incident_module.ViewModels;
 
-internal sealed class AllIncidentsPageViewModel : ViewModelBase
+public sealed class AllIncidentsPageViewModel : ViewModelBase
 {
     private readonly IIncidentController _incidentController;
+    private readonly INavigationService _navigationService;
+    private readonly Guid _currentUserId;
+
     private List<Incident> _allIncidents = [];
     private string _searchText = string.Empty;
+
     public ObservableCollection<Incident> Incidents { get; } = [];
     public RelayCommand CreateIncidentCommand { get; }
-    public event EventHandler? CreateIncidentRequested;
 
-    public AllIncidentsPageViewModel(IIncidentController incidentController)
+    public AllIncidentsPageViewModel(
+        IIncidentController incidentController,
+        INavigationService navigationService,
+        Guid currentUserId)
     {
-        _incidentController = incidentController;
+        _incidentController = incidentController ?? throw new ArgumentNullException(nameof(incidentController));
+        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+        _currentUserId = currentUserId;
 
         CreateIncidentCommand = new RelayCommand(
-            () => CreateIncidentRequested?.Invoke(this, EventArgs.Empty));
+            () => _navigationService.NavigateTo<CreateIncidentPageViewModel>(_currentUserId));
     }
 
     public string SearchText
