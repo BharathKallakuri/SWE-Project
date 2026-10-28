@@ -38,9 +38,10 @@ public class SocketListener : IDisposable
 
     public SocketListener(ReceivingQueue receivingQueue, TcpClient tcpClient)
     {
+        _isRunningLock = new object();
         _receivingQueue = receivingQueue;
         _tcpClient = tcpClient;
-        _receivedBuffer = new byte[1024 * 1024];
+        _receivedBuffer = new byte[BufferSize];
         _isRunning = true;
         NetworkStream stream = tcpClient.GetStream();
         _listeningThread = new Thread(() => ListenStream(stream));
@@ -77,7 +78,6 @@ public class SocketListener : IDisposable
 
     public void ProcessData(MemoryStream input)
     {
-        input.Position = 0;
         byte[] buffer = input.GetBuffer();
         int length = (int)input.Length;
         int offset = 0;
@@ -92,14 +92,22 @@ public class SocketListener : IDisposable
             byte[] packetData = new byte[4 + payloadLength];
             Buffer.BlockCopy(buffer, offset, packetData, 0, 4 + payloadLength);
 
-            Packet packet = _packetSerializer.BytesToPacket(packetData);
+            Packet? packet = _packetSerializer.BytesToPacket(packetData);
             if (packet != null)
             {
                 _receivingQueue.Enqueue(packet);
             }
             offset += 4 + payloadLength;
         }
-        throw new NotImplementedException();
+
+        if (offset > 0)
+        {
+            int remaining = length - offset;
+            byte[] remainingBytes = new byte[remaining];
+            Buffer.BlockCopy(buffer, offset, remainingBytes, 0, remaining);
+            input.SetLength(0);
+            input.Write(remainingBytes, 0, remaining);
+        }
     }
 
     public void Dispose()

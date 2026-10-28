@@ -48,25 +48,25 @@ public class ReceivingQueueListener : IDisposable
                 Thread.Sleep(100);
                 continue;
             }
-            Packet packet = _receivingQueue.Dequeue();
+            Packet? packet = _receivingQueue.Dequeue();
             if (packet == null) { continue; }
 
-            IMessageListener messageHandler = null;
+            if (_moduleToMessageListenerMap.TryGetValue(packet.Module, out IMessageListener? messageHandler) && messageHandler != null)
+            {
+                try
+                {
+                    messageHandler.OnMessageReceived(packet.SerializedData);
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine($"[Networking] Message handler for module {packet.Module} threw: {e}");
+                }
+            }
+            else
 
-            messageHandler = _moduleToMessageListenerMap[packet.Module];
-
-            if (messageHandler == null)
             {
                 Trace.WriteLine($"[Networking] Module {packet.Module} is not found. Unable to handle the data.");
-                continue;
-            }
-            try
-            {
-                messageHandler.OnMessageReceived(packet.SerializedData);
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine($"[Networking] Message handler for module {packet.Module} threw: {e}");
+
             }
         }
     }
