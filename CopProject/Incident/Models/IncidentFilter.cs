@@ -1,12 +1,12 @@
 ﻿namespace Incident_module;
 
 public record IncidentFilter(
-    string? Title,
-    IncidentStatus? Status,
-    IncidentCategory? Category,
-    IncidentSeverity? Severity,
-    DateTime? FromDateTime,
-    DateTime? ToDateTime,
-    Guid? CreatedBy,
-    IncidentLocationFilter? Location
+    string? Title = null,
+    IncidentStatus? Status = null,
+    IncidentCategory? Category = null,
+    IncidentSeverity? Severity = null,
+    DateTime? FromDateTime = null,
+    DateTime? ToDateTime = null,
+    Guid? CreatedBy = null,
+    IncidentLocationFilter? Location = null
 );
