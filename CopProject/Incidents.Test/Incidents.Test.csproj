@@ -12,4 +12,11 @@
         <ProjectReference Include="..\Incident\Incident.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="coverlet.collector" Version="10.1.0">
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+      </PackageReference>
+    </ItemGroup>
+
 </Project>
