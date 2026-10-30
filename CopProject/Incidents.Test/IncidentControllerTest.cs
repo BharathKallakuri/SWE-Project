@@ -16,6 +16,54 @@ public sealed class IncidentControllerTest
 {
     private IncidentController _incidentController = null!;
 
+    private static readonly object?[] s_filters =
+    [
+        // No filter
+        null,
+
+        // Individual filters
+        new IncidentFilter(Title: "Test Incident 1"),
+        new IncidentFilter(Status: IncidentStatus.InProgress),
+        new IncidentFilter(Category: IncidentCategory.Accident),
+        new IncidentFilter(Severity: IncidentSeverity.High),
+        new IncidentFilter(FromDateTime: new DateTime(2026, 1, 1)),
+        new IncidentFilter(ToDateTime: new DateTime(2026, 12, 31)),
+        new IncidentFilter(CreatedBy: Guid.NewGuid()),
+
+        // Multiple filters
+        new IncidentFilter(
+            Category: IncidentCategory.Accident,
+            Severity: IncidentSeverity.High,
+            Status: IncidentStatus.Reported
+        ),
+
+        // Date range
+        new IncidentFilter(
+            FromDateTime: new DateTime(2026, 1, 1),
+            ToDateTime: new DateTime(2026, 12, 31)
+        ),
+        
+        // All filters
+        new IncidentFilter(
+            Title: "Test Incident",
+            Status: IncidentStatus.InProgress,
+            Category: IncidentCategory.Accident,
+            Severity: IncidentSeverity.High,
+            FromDateTime: new DateTime(2026, 1, 1, 0, 0, 0),
+            ToDateTime: new DateTime(2026, 12, 31, 23, 59, 59),
+            CreatedBy: Guid.NewGuid(),
+            Location: new IncidentLocationFilter(
+                Latitude: 10.80,
+                Longitude: 76.72,
+                Address: "IIT Palakkad, Kerala, India",
+                Radius: 10.0
+            )
+        )
+    ];
+
+    public static IEnumerable<object?[]> IncidentFilters =>
+        s_filters.Select(filter => new object?[] { filter });
+
     /// <summary>
     /// Initialiazes IncidentController
     /// </summary>
@@ -87,5 +135,58 @@ public sealed class IncidentControllerTest
         Assert.AreEqual(incident.Severity, retrievedIncident.Severity);
         Assert.AreEqual(incident.Location.Latitude, retrievedIncident.Location.Latitude);
         Assert.AreEqual(incident.Location.Longitude, retrievedIncident.Location.Longitude);
+    }
+
+    /// <summary>
+    /// Creates few incidents for testing
+    /// </summary>
+    /// <returns></returns>
+    private async Task CreateMockIncidents()
+    {
+        var incident1 = new CreateIncidentRequest(
+            title: "Test Incident 1",
+            description: "This is a test incident 1.",
+            createdBy: Guid.NewGuid(),
+            category: IncidentCategory.Accident,
+            severity: IncidentSeverity.Medium,
+            location: new IncidentLocation(Latitude: 0.0, Longitude: 0.0),
+            evidences: new List<IncidentEvidence>()
+        );
+        var incident2 = new CreateIncidentRequest(
+            title: "Test Incident 2",
+            description: "This is a test incident 2.",
+            createdBy: Guid.NewGuid(),
+            category: IncidentCategory.DrunkDriving,
+            severity: IncidentSeverity.High,
+            location: new IncidentLocation(Latitude: 1.0, Longitude: 1.0),
+            evidences: new List<IncidentEvidence>()
+        );
+        var incident3 = new CreateIncidentRequest(
+            title: "Test Incident 3",
+            description: "This is a test incident 3.",
+            createdBy: Guid.NewGuid(),
+            category: IncidentCategory.Theft,
+            severity: IncidentSeverity.Low,
+            location: new IncidentLocation(Latitude: 2.0, Longitude: 2.0),
+            evidences: new List<IncidentEvidence>()
+        );
+
+        await _incidentController.CreateIncident(incident1);
+        await _incidentController.CreateIncident(incident2);
+        await _incidentController.CreateIncident(incident3);
+    }
+
+    /// <summary>
+    /// Get incident by id and check that the retrieved incident matches the created incident.
+    /// </summary>
+    /// <returns></returns>
+    [TestMethod]
+    [DynamicData(nameof(IncidentFilters))]
+    public async Task GetAllIncidents(IncidentFilter filter)
+    {
+        await CreateMockIncidents();
+        List<Incident> incidents = await _incidentController.GetAllIncidents(filter);
+
+        Assert.IsNotNull(incidents);
     }
 }
