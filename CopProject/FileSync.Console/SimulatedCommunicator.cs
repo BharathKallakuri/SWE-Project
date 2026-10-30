@@ -9,7 +9,9 @@ using Networking;
 
 namespace FileSync.ConsoleApp;
 
-// simple tcp communicator implementation of ICommunicator for testing network sync
+/// <summary>
+/// simple tcp communicator implementation of ICommunicator for testing network sync
+/// </summary>
 public class SimulatedCommunicator : ICommunicator, IDisposable
 {
     private readonly TcpListener _listener;
@@ -20,6 +22,9 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
 
     public int ListenPort { get; }
 
+    /// <summary>
+    /// initializes the TCP communicator, starts the listener, and launches the background listening loop
+    /// </summary>
     public SimulatedCommunicator(int port)
     {
         ListenPort = port;
@@ -30,22 +35,33 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
         _ = Task.Run(ListenLoopAsync);
     }
 
-    // register a peer endpoint so broadcast knows where to send
+    /// <summary>
+    /// registers a peer endpoint so that broadcast messages can be sent to it
+    /// </summary>
     public void RegisterPeer(IPEndPoint peer)
     {
         _knownPeers.Add(peer);
     }
 
+    /// <summary>
+    /// registers a message listener for a specific module
+    /// </summary>
     public void AddSubscriber(int module, IMessageListener subscriber)
     {
         _subscribers[module] = subscriber;
     }
 
+    /// <summary>
+    /// removes the registered message listener for a specific module
+    /// </summary>
     public void RemoveSubscriber(int module)
     {
         _subscribers.TryRemove(module, out _);
     }
 
+    /// <summary>
+    /// sends a message to a specific peer using a TCP connection
+    /// </summary>
     public void SendMessage(IPEndPoint ipEndPoint, byte[] message, int module, int priority)
     {
         if (_disposed)
@@ -73,6 +89,9 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
         }
     }
 
+    /// <summary>
+    /// sends a message to all registered peer endpoints
+    /// </summary>
     public void BroadcastMessage(byte[] message, int module, int priority)
     {
         // broadcast to all registered peers
@@ -82,13 +101,27 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
         }
     }
 
+    /// <summary>
+    /// joins the specified multicast group
+    /// </summary>
     public void JoinMulticastGroup(int multicastGroup) { }
+
+    /// <summary>
+    /// leaves the specified multicast group
+    /// </summary>
     public void LeaveMulticastGroup(int multicastGroup) { }
+
+    /// <summary>
+    /// sends a message to the specified multicast group by broadcasting it to registered peers
+    /// </summary>
     public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority)
     {
         BroadcastMessage(message, module, priority);
     }
 
+    /// <summary>
+    /// continuously listens for incoming TCP connections and dispatches connected clients for handling
+    /// </summary>
     private async Task ListenLoopAsync()
     {
         while (!_cts.IsCancellationRequested)
@@ -104,6 +137,9 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
         }
     }
 
+    /// <summary>
+    /// processes an incoming TCP client, reads the message packet, and forwards it to the registered subscriber
+    /// </summary>
     private void HandleClient(TcpClient client)
     {
         using (client)
@@ -135,6 +171,9 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
         }
     }
 
+    /// <summary>
+    /// releases the TCP listener and cancellation resources and stops the communicator
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)
