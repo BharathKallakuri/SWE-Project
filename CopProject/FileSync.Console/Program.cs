@@ -9,6 +9,9 @@ namespace FileSync.ConsoleApp;
 
 internal static class Program
 {
+    /// <summary>
+    /// serves as the entry point of the console application and processes command-line arguments
+    /// </summary>
     private static async Task Main(string[] args)
     {
         Console.WriteLine("\n FileSync & Networking Simulation Console App \n");
@@ -28,10 +31,15 @@ internal static class Program
         {
             Console.WriteLine("Exactly 4 arguments in the order of <listenPort, peerPort, peerIp, folder> should be given");
         }
-
     }
 
-    // runs an interactive node connecting to a peer machine over tcp
+    /// <summary>
+    /// runs an interactive node that connects to a peer machine over TCP and handles file synchronization commands
+    /// </summary>
+    /// <param name="listenPort">the port on which the node listens for incoming connections</param>
+    /// <param name="peerPort">the port of the remote peer</param>
+    /// <param name="peerIp">the IP address of the remote peer</param>
+    /// <param name="folder">the local directory used for file synchronization</param>
     private static void RunInteractiveNode(int listenPort, int peerPort, string peerIp, string folder)
     {
         Console.WriteLine($"[node] listening on port {listenPort}");
@@ -101,5 +109,4 @@ internal static class Program
             }
         }
     }
-
 }
