@@ -7,12 +7,13 @@ using Networking;
 
 namespace FileSync.ConsoleApp;
 
-// handles file sync protocol over the networking communicator
+/// <summary>
+/// handles file sync protocol over the networking communicator
+/// </summary>
 public class NetworkSyncHandler : IMessageListener
 {
-    // SubscriberId for now
+    // SubscriberId for now will be replaced once joined with controller
     public const int ModuleId = 5;
-
     private readonly string _rootDir;
     private readonly ICommunicator _communicator;
     private readonly FileChunker _chunker;
@@ -23,6 +24,9 @@ public class NetworkSyncHandler : IMessageListener
     public event Action? OnSyncCompleted;
     public event Action<string>? OnLog;
 
+    /// <summary>
+    /// register this handler as the subscriber for the filesync module
+    /// </summary>
     public NetworkSyncHandler(string rootDir, ICommunicator communicator)
     {
         _rootDir = Path.GetFullPath(rootDir);
@@ -34,13 +38,17 @@ public class NetworkSyncHandler : IMessageListener
             Directory.CreateDirectory(_rootDir);
         }
 
-        // register this handler as the subscriber for the filesync module
         _communicator.AddSubscriber(ModuleId, this);
     }
 
+    /// <summary>
+    /// gets the root directory used for file synchronization
+    /// </summary>
     public string RootDirectory => _rootDir;
 
-    // triggers synchronisation by requesting the remote manifest from the peer
+    /// <summary>
+    /// triggers synchronisation by requesting the remote manifest from the peer
+    /// </summary>
     public void StartSync()
     {
         OnLog?.Invoke($"[sync] starting sync from folder: {_rootDir}");
@@ -57,7 +65,10 @@ public class NetworkSyncHandler : IMessageListener
         }
     }
 
-    // handles incoming network messages from other peers
+    /// <summary>
+    /// handles incoming network messages from other peers
+    /// </summary>
+    /// <param name="message">the received network message</param>
     public void OnMessageReceived(byte[] message)
     {
         string raw = Encoding.UTF8.GetString(message);
@@ -80,9 +91,11 @@ public class NetworkSyncHandler : IMessageListener
         }
     }
 
+    /// <summary>
+    /// gathers all local files and timestamps in the root directory and sends the manifest to the peer
+    /// </summary>
     private void SendLocalManifest()
     {
-        // gather all local files and timestamps in our directory
         string[] allFiles = Directory.GetFiles(_rootDir, "*", SearchOption.AllDirectories);
         var manifest = new Dictionary<string, DateTime>();
 
@@ -107,6 +120,10 @@ public class NetworkSyncHandler : IMessageListener
         }
     }
 
+    /// <summary>
+    /// compares the received remote manifest with local files and requests missing or newer files
+    /// </summary>
+    /// <param name="json">the serialized remote file manifest</param>
     private void HandleManifest(string json)
     {
         Dictionary<string, DateTime>? remoteManifest = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
@@ -158,6 +175,10 @@ public class NetworkSyncHandler : IMessageListener
         }
     }
 
+    /// <summary>
+    /// handles a file request by splitting the requested local file into chunks and sending them to the peer
+    /// </summary>
+    /// <param name="relPath">the relative path of the requested file</param>
     private void HandleFileRequest(string relPath)
     {
         string fullPath = Path.Combine(_rootDir, relPath);
@@ -197,6 +218,10 @@ public class NetworkSyncHandler : IMessageListener
         }
     }
 
+    /// <summary>
+    /// receives file chunks, stores them, and merges them when all chunks have arrived
+    /// </summary>
+    /// <param name="json">the serialized file chunk data</param>
     private void HandleChunk(string json)
     {
         ChunkDto? dto = JsonSerializer.Deserialize<ChunkDto>(json);
@@ -231,7 +256,9 @@ public class NetworkSyncHandler : IMessageListener
         }
     }
 
-    // simple data transfer object for serializing chunk over json
+    /// <summary>
+    /// represents the data structure used to serialize file chunks over the network
+    /// </summary>
     private class ChunkDto
     {
         public string FileId { get; set; } = string.Empty;
