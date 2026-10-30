@@ -210,6 +210,9 @@ public class CommunicatorServer : ICommunicator, IDisposable
     }
 
     public int ListenPort => _thisIpEndPoint?.Port ?? 0;
+
+    public IPAddress ListenIpAddress => _thisIpEndPoint?.Address ?? IPAddress.Any;
+
     public void Dispose()
     {
         lock (_isRunningLock)

@@ -32,8 +32,8 @@ public class CommunicatorClient : ICommunicator, IDisposable
         _receivingQueueListener = new ReceivingQueueListener(_receivingQueue, _moduleToMessageListenerMap);
         try
         {
-            _tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
-            _tcpClient.Connect(serverIp.Address, serverIp.Port);
+            _tcpClient.LingerState = new LingerOption(false, 0);
+            _tcpClient.Connect(_serverIp.Address, _serverIp.Port);
             _socketListener = new SocketListener(_receivingQueue, _tcpClient);
             _sendingQueueListenerClient = new SendingQueueListenerClient(_sendingQueue, _tcpClient);
 
@@ -102,6 +102,20 @@ public class CommunicatorClient : ICommunicator, IDisposable
             return 0;
         }
     }
+
+    public IPAddress ListenIpAddress
+    {
+        get {
+            if (_tcpClient?.Client?.LocalEndPoint is IPEndPoint ep)
+            {
+                return ep.Address;
+            }
+
+            return IPAddress.Any;
+        }
+    }
+
+
     public void Dispose()
     {
         _socketListener?.Dispose();
