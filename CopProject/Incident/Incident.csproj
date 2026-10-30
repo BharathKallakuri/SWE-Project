@@ -23,6 +23,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Cloud\Cloud.csproj" />
         <ProjectReference Include="..\FileSync\Filesync.csproj" />
+        <InternalsVisibleTo Include="Incidents.Test" />
     </ItemGroup>
 
     <ItemGroup>
