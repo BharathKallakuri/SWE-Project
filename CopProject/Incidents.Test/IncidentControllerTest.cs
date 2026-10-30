@@ -6,6 +6,7 @@ using Filesync;
 using Incident_module;
 using Incident_module.Implementations;
 using Persistence;
+using Windows.ApplicationModel.Store.Preview.InstallControl;
 using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 
@@ -68,7 +69,13 @@ public sealed class IncidentControllerTest
     /// Initialiazes IncidentController
     /// </summary>
     [TestInitialize]
-    public async Task InitiliazeIncidentController()
+    public async Task Setup()
+    {
+        await SetupIncidentController();
+        SetupMockIncidents();
+    }
+
+    private async Task SetupIncidentController()
     {
         IStorage cloudStorageService = new IncidentCloudStorageService();
         IFileOperations fileOperationsService = new IncidentFileSynchroniser();
@@ -137,43 +144,62 @@ public sealed class IncidentControllerTest
         Assert.AreEqual(incident.Location.Longitude, retrievedIncident.Location.Longitude);
     }
 
+    private List<Incident> _mockIncidents = new List<Incident>();
+
     /// <summary>
     /// Creates few incidents for testing
     /// </summary>
     /// <returns></returns>
-    private async Task CreateMockIncidents()
+    private void SetupMockIncidents()
     {
-        var incident1 = new CreateIncidentRequest(
+        _mockIncidents.AddRange(
+            [
+            new Incident(
+            id: Guid.NewGuid(),
             title: "Test Incident 1",
             description: "This is a test incident 1.",
             createdBy: Guid.NewGuid(),
             category: IncidentCategory.Accident,
             severity: IncidentSeverity.Medium,
+            status: IncidentStatus.Reported,
+            creationTime: DateTime.UtcNow,
+            updateTime: DateTime.UtcNow,
             location: new IncidentLocation(Latitude: 0.0, Longitude: 0.0),
-            evidences: new List<IncidentEvidence>()
-        );
-        var incident2 = new CreateIncidentRequest(
+            evidence: [],
+            changes: [],
+            edges: []
+            ),
+       new Incident(
+            id: Guid.NewGuid(),
             title: "Test Incident 2",
             description: "This is a test incident 2.",
             createdBy: Guid.NewGuid(),
             category: IncidentCategory.DrunkDriving,
             severity: IncidentSeverity.High,
+            status: IncidentStatus.InProgress,
             location: new IncidentLocation(Latitude: 1.0, Longitude: 1.0),
-            evidences: new List<IncidentEvidence>()
-        );
-        var incident3 = new CreateIncidentRequest(
+            creationTime: DateTime.UtcNow,
+            updateTime: DateTime.UtcNow,
+            evidence: [],
+            changes: [],
+            edges: []
+         ),
+       new Incident(
+            id: Guid.NewGuid(),
             title: "Test Incident 3",
             description: "This is a test incident 3.",
             createdBy: Guid.NewGuid(),
             category: IncidentCategory.Theft,
             severity: IncidentSeverity.Low,
-            location: new IncidentLocation(Latitude: 2.0, Longitude: 2.0),
-            evidences: new List<IncidentEvidence>()
-        );
-
-        await _incidentController.CreateIncident(incident1);
-        await _incidentController.CreateIncident(incident2);
-        await _incidentController.CreateIncident(incident3);
+            status: IncidentStatus.InProgress,
+            location: new IncidentLocation(Latitude: 3.0, Longitude: 3.0),
+            creationTime: DateTime.UtcNow,
+            updateTime: DateTime.UtcNow,
+            evidence: [],
+            changes: [],
+            edges: []
+         )
+        ]);
     }
 
     /// <summary>
@@ -184,9 +210,100 @@ public sealed class IncidentControllerTest
     [DynamicData(nameof(IncidentFilters))]
     public async Task GetAllIncidents(IncidentFilter filter)
     {
-        await CreateMockIncidents();
         List<Incident> incidents = await _incidentController.GetAllIncidents(filter);
 
         Assert.IsNotNull(incidents);
+    }
+
+    [TestMethod]
+    public async Task AddEvidence_NullIncident()
+    {
+        await Assert.ThrowsExactlyAsync<ArgumentNullException>(
+            () => _incidentController.AddEvidence(null!, []));
+    }
+
+    [TestMethod]
+    public async Task AddEvidence_NullEvidence()
+    {
+        if (_mockIncidents.Count == 0)
+        {
+            Assert.Fail("No incidents created for testing.");
+        }
+
+        await Assert.ThrowsExactlyAsync<ArgumentNullException>(
+            () => _incidentController.AddEvidence(_mockIncidents[0], null!));
+    }
+
+    [TestMethod]
+    public async Task AddEvidence_ResolvedIncident()
+    {
+        Incident resolvedIncident = new Incident(
+            id: Guid.NewGuid(),
+            title: "Resolved Incident",
+            description: "This incident is resolved.",
+            createdBy: Guid.NewGuid(),
+            status: IncidentStatus.Resolved,
+            category: IncidentCategory.Accident,
+            severity: IncidentSeverity.Medium,
+            creationTime: DateTime.UtcNow,
+            updateTime: DateTime.UtcNow,
+            location: new IncidentLocation(Latitude: 0.0, Longitude: 0.0),
+            evidence: [],
+            changes: [],
+            edges: []
+        );
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            () => _incidentController.AddEvidence(resolvedIncident, []));
+    }
+
+    [TestMethod]
+    public async Task AddEvidence_ETagNotFound()
+    {
+        Incident? incident = _mockIncidents.Find(i => i.Status != IncidentStatus.Resolved);
+
+        if (incident == null)
+        {
+            Assert.Fail("No incidents created for testing.");
+        }
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            () => _incidentController.AddEvidence(incident, new List<IncidentEvidence> {
+                new IncidentEvidence(
+                    Id: Guid.NewGuid(),
+                    Description: "Test Evidence",
+                    FilePath: "/path/to/test_image.jpg",
+                    UploadTime: DateTime.UtcNow,
+            UploadedBy: Guid.NewGuid()
+        )}));
+    }
+
+    [TestMethod]
+    public async Task AddEvidence_ValidIncident()
+    {
+        Incident? incident = await _incidentController.CreateIncident(new CreateIncidentRequest(
+            title: "Test Incident",
+            description: "This is a test incident.",
+            createdBy: Guid.NewGuid(),
+            category: IncidentCategory.Accident,
+            severity: IncidentSeverity.Medium,
+            location: new IncidentLocation(Latitude: 0.0, Longitude: 0.0),
+            evidences: new List<IncidentEvidence>()
+        ));
+
+        if (incident == null)
+        {
+            Assert.Fail("No incidents created for testing.");
+        }
+
+        Assert.IsTrue(await _incidentController.AddEvidence(incident, new List<IncidentEvidence> {
+            new IncidentEvidence(
+                Id: Guid.NewGuid(),
+                Description: "Test Evidence",
+                FilePath: "/path/to/test_image.jpg",
+                UploadTime: DateTime.UtcNow,
+                UploadedBy: Guid.NewGuid()
+            )
+        }));
     }
 }
