@@ -44,7 +44,6 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
         }
 
         SubmitCommand = new RelayCommand(async () => await SubmitAsync());
-        AddEvidenceCommand = new RelayCommand(OnAddEvidence);
     }
 
     public IReadOnlyList<IncidentCategory> Categories { get; }
@@ -52,7 +51,6 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
     public ObservableCollection<IncidentEvidence> Evidences { get; } = [];
 
     public RelayCommand SubmitCommand { get; }
-    public RelayCommand AddEvidenceCommand { get; }
 
     public string Title
     {
@@ -150,11 +148,6 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
     }
 
     public bool IsNotSubmitting => !IsSubmitting;
-
-    private void OnAddEvidence()
-    {
-        // TODO: Implement file picker and add to Evidences collection
-    }
 
     private async Task SubmitAsync()
     {
