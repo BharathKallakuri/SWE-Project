@@ -12,26 +12,19 @@ namespace Incident_module.ViewModels;
 public sealed class AllIncidentsPageViewModel : ViewModelBase
 {
     private readonly IIncidentController _incidentController;
-    private readonly INavigationService _navigationService;
     private readonly Guid _currentUserId;
 
     private List<Incident> _allIncidents = [];
     private string _searchText = string.Empty;
 
     public ObservableCollection<Incident> Incidents { get; } = [];
-    public RelayCommand CreateIncidentCommand { get; }
 
     public AllIncidentsPageViewModel(
         IIncidentController incidentController,
-        INavigationService navigationService,
         Guid currentUserId)
     {
         _incidentController = incidentController ?? throw new ArgumentNullException(nameof(incidentController));
-        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _currentUserId = currentUserId;
-
-        CreateIncidentCommand = new RelayCommand(
-            () => _navigationService.NavigateTo<CreateIncidentPageViewModel>(_currentUserId));
     }
 
     public string SearchText

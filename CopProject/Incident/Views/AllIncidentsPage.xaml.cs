@@ -1,7 +1,8 @@
-﻿using Incident_module.ViewModels;
-using Incident_module.ViewModels.Utils;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using Incident_module.ViewModels;
+using Incident_module.ViewModels.Utils;
 
 namespace Incident_module.Views;
 
@@ -22,7 +23,6 @@ public sealed partial class AllIncidentsPage : Page
         {
             DataContext = new AllIncidentsPageViewModel(
                 AppServices.IncidentController,
-                AppServices.NavigationService,
                 AppServices.CurrentUserId
             );
         }
@@ -31,5 +31,10 @@ public sealed partial class AllIncidentsPage : Page
         {
             await ViewModel.LoadAsync();
         }
+    }
+
+    private void CreateIncident_Click(object _, RoutedEventArgs __)
+    {
+        this.Frame.Navigate(typeof(CreateIncidentPage), AppServices.CurrentUserId);
     }
 }

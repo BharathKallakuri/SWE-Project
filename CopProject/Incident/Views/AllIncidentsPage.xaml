@@ -41,7 +41,7 @@
                 Padding="16,0"
                 VerticalAlignment="Center"
                 Content="Create Incident"
-                Command="{Binding CreateIncidentCommand}" />
+                Click="CreateIncident_Click" />
         </Grid>
 
         <!-- Incident table -->

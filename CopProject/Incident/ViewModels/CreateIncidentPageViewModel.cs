@@ -11,9 +11,8 @@ namespace Incident_module.ViewModels;
 public sealed class CreateIncidentPageViewModel : ViewModelBase
 {
     private readonly IIncidentController _incidentController;
-    private readonly INavigationService _navigationService;
     private readonly Guid _currentUserId;
-
+    public event EventHandler? IncidentCreated;
     private string _title = string.Empty;
     private string _description = string.Empty;
     private IncidentCategory _selectedCategory;
@@ -26,11 +25,9 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
 
     public CreateIncidentPageViewModel(
         IIncidentController incidentController,
-        INavigationService navigationService,
         Guid currentUserId)
     {
         _incidentController = incidentController ?? throw new ArgumentNullException(nameof(incidentController));
-        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _currentUserId = currentUserId;
 
         Categories = Enum.GetValues(typeof(IncidentCategory)).Cast<IncidentCategory>().ToList();
@@ -47,7 +44,6 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
         }
 
         SubmitCommand = new RelayCommand(async () => await SubmitAsync());
-        CancelCommand = new RelayCommand(() => _navigationService.GoBack());
         AddEvidenceCommand = new RelayCommand(OnAddEvidence);
     }
 
@@ -56,7 +52,6 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
     public ObservableCollection<IncidentEvidence> Evidences { get; } = [];
 
     public RelayCommand SubmitCommand { get; }
-    public RelayCommand CancelCommand { get; }
     public RelayCommand AddEvidenceCommand { get; }
 
     public string Title
@@ -205,7 +200,8 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
             );
 
             await _incidentController.CreateIncident(request);
-            _navigationService.GoBack();
+
+            IncidentCreated?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {

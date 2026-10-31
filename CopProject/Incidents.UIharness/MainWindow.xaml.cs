@@ -1,8 +1,8 @@
 ﻿using System;
 using Incident_module;
 using Incident_module.Implementations;
-using Incident_module.ViewModels;
 using Incident_module.ViewModels.Utils;
+using Incident_module.Views;
 using Microsoft.UI.Xaml;
 
 namespace Incidents.UIharness;
@@ -17,24 +17,20 @@ public sealed partial class MainWindow : Window
 
     private async void InitializeAndStartAsync()
     {
-        // Instantiate implementations
+        // Instantiate services/controllers
         IncidentCloudStorageService storageService = new();
         IncidentFileSynchroniser fileSynchroniser = new();
 
-        // Initialize IncidentController asynchronously
         IIncidentController controller = await IncidentController.CreateAsync(storageService, fileSynchroniser);
 
-        // Set up NavigationService with the RootFrame in MainWindow.xaml
-        NavigationService navigationService = new();
-        navigationService.Initialize(RootFrame);
-
-        // Register shared services
+        // Register shared services 
+        // Acts as a dependency factory: pulls global singletons from AppServices 
+        // and injects them into the ViewModel via explicit constructor arguments.
         AppServices.IncidentController = controller;
-        AppServices.NavigationService = navigationService;
         AppServices.CurrentUserId = Guid.NewGuid(); // Test user ID
         AppServices.WindowHandle = WinRT.Interop.WindowNative.GetWindowHandle(this);
 
-        // Navigate to initial page
-        navigationService.NavigateTo<AllIncidentsPageViewModel>();
+        // Navigate directly to the initial View via Frame
+        RootFrame.Navigate(typeof(AllIncidentsPage));
     }
 }

@@ -22,11 +22,28 @@ public sealed partial class CreateIncidentPage : Page
 
         if (e.Parameter is Guid currentUserId)
         {
-            DataContext = new CreateIncidentPageViewModel(
+            var vm = new CreateIncidentPageViewModel(
                 AppServices.IncidentController,
-                AppServices.NavigationService,
                 currentUserId
             );
+
+            // Subscribe to successful creation event to navigate back
+            vm.IncidentCreated += (s, args) => {
+                if (this.Frame.CanGoBack)
+                {
+                    this.Frame.GoBack();
+                }
+            };
+
+            DataContext = vm;
+        }
+    }
+
+    private void CancelButton_Click(object _, RoutedEventArgs __)
+    {
+        if (this.Frame.CanGoBack)
+        {
+            this.Frame.GoBack();
         }
     }
 
