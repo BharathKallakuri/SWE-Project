@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Incident_module.ViewModels.Utils;
 using Windows.Storage;
@@ -45,20 +46,32 @@ public sealed class AddEvidenceDialogViewModel : ViewModelBase
 
     private async Task BrowseFileAsync()
     {
-        FileOpenPicker picker = new();
-
-        // Use AppServices.WindowHandle instead of App.MainWindow
-        IntPtr windowHandle = AppServices.WindowHandle;
-        InitializeWithWindow.Initialize(picker, windowHandle);
-
-        picker.ViewMode = PickerViewMode.Thumbnail;
-        picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
-        picker.FileTypeFilter.Add("*");
-
-        StorageFile file = await picker.PickSingleFileAsync();
-        if (file != null)
+        try
         {
-            FilePath = file.Path;
+            IntPtr windowHandle = AppServices.WindowHandle;
+            if (windowHandle == IntPtr.Zero)
+            {
+                Debug.WriteLine("AppServices.WindowHandle is IntPtr.Zero!");
+                return;
+            }
+
+            FileOpenPicker picker = new();
+            InitializeWithWindow.Initialize(picker, windowHandle);
+
+            picker.ViewMode = PickerViewMode.Thumbnail;
+            picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+
+            picker.FileTypeFilter.Add("*");
+
+            StorageFile file = await picker.PickSingleFileAsync();
+            if (file != null)
+            {
+                FilePath = file.Path;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to open file picker: {ex.Message}");
         }
     }
 

@@ -162,7 +162,10 @@
 
             <!-- Incident Rows -->
             <Grid Grid.Row="1">
-                <ListView ItemsSource="{Binding Incidents}" SelectionMode="None">
+                <ListView ItemsSource="{Binding Incidents}" 
+                          SelectionMode="None"
+                          IsItemClickEnabled="True"
+                          ItemClick="Incident_ItemClick">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <Grid Padding="12,14">

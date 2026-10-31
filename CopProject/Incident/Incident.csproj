@@ -28,6 +28,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Page Update="Views\IncidentDetailsPage.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
+    </ItemGroup>
+
+    <ItemGroup>
       <Page Update="Views\AddEvidenceDialog.xaml">
         <Generator>MSBuild:Compile</Generator>
       </Page>

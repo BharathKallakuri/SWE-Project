@@ -37,4 +37,12 @@ public sealed partial class AllIncidentsPage : Page
     {
         this.Frame.Navigate(typeof(CreateIncidentPage), AppServices.CurrentUserId);
     }
+
+    private void Incident_ItemClick(object _, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is Incident incident)
+        {
+            this.Frame.Navigate(typeof(IncidentDetailsPage), incident.Id);
+        }
+    }
 }
