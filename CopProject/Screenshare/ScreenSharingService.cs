@@ -48,16 +48,7 @@ public class ScreenSharingService : IDisposable
             return ImageDiffResult.CreateFullFrame(new Bitmap(_previousFrame));
         }
 
-        ImageDiffResult result;
-        try
-        {
-            result = _imageDiffer.Compare(_previousFrame, currentFrame);
-        }
-        catch
-        {
-            // preserce the old baseline if comparison fails.
-            throw;
-        }
+        ImageDiffResult result = _imageDiffer.Compare(_previousFrame, currentFrame);
 
         // Current frame becomes the base frame for the next comparison.
         Bitmap newPreviousFrame = new Bitmap(currentFrame);
