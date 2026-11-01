@@ -1,0 +1,40 @@
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
+using Whiteboard.Interfaces;
+
+namespace Whiteboard.Models.Messages;
+
+/// <summary>
+/// Message sent from the server to a client for acknowledgement
+/// </summary>
+public abstract record ServerAckMessage
+{
+    private ServerAckMessage() { }
+
+    /// <summary>
+    /// Sent when a client requested a complete whiteboard update.
+    /// </summary>
+    /// <param name="Whiteboard">Entire whiteboard state from the server</param>
+    public sealed record AckUpdate(IWhiteboard Whiteboard) : ServerAckMessage;
+
+    /// <summary>
+    /// Sent when a client requested approval for an item addition.
+    /// </summary>
+    /// <param name="Id">GUID of the added item</param>
+    public sealed record AckAddItem(Guid Id) : ServerAckMessage;
+
+    /// <summary>
+    /// Sent when a client requested approval for an item deletion.
+    /// </summary>
+    /// <param name="Id">GUID of the deleted item</param>
+    public sealed record AckDeleteItem(Guid Id) : ServerAckMessage;
+
+    /// <summary>
+    /// Sent when a client requested approval for an item edit.
+    /// </summary>
+    /// <param name="Id">GUID of the item updated</param>
+    public sealed record AckUpdateItem(Guid Id) : ServerAckMessage;
+}
