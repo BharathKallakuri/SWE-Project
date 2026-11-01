@@ -53,7 +53,7 @@ public class RandomItemPayloadGenerator : BaseGenerator
     /// Generate a random <see cref="ItemPayload.Textbox"/>
     /// </summary>
     /// <returns>A random <see cref="ItemPayload.Textbox"/></returns>
-    public static ItemPayload.Textbox GenerateText()
+    public static ItemPayload.Textbox GenerateTextbox()
     {
         // 1. Generate a two random center
         Point2D center = RandomPointGenerator.Generate();
