@@ -4,6 +4,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Whiteboard.Interfaces;
+using Whiteboard.Items.Shapes;
 using Whiteboard.Network.Dtos;
 
 namespace Whiteboard.Test.RandomGenerators;
@@ -12,13 +13,8 @@ namespace Whiteboard.Test.RandomGenerators;
 /// Generates a random <see cref="ItemPayload"/>
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class RandomItemPayloadGenerator
+public class RandomItemPayloadGenerator : BaseGenerator
 {
-    /// <summary>
-    /// Random number generator
-    /// </summary>
-    private static readonly Random s_random = new();
-
     /// <summary>
     /// Generate a random <see cref="ItemPayload.Circle"/>
     /// </summary>
@@ -29,12 +25,12 @@ public class RandomItemPayloadGenerator
         ShapeStyle style = RandomShapeStyleGenerator.Generate();
 
         // 2. Generate a random center
-        double centerX = s_random.NextDouble() * 100;
-        double centerY = s_random.NextDouble() * 100;
+        double centerX = Rng.NextDouble() * 100;
+        double centerY = Rng.NextDouble() * 100;
         Point2D center = new() { X = centerX, Y = centerY };
 
         // 3. Generate a random radius
-        double radius = s_random.NextDouble() * 100;
+        double radius = Rng.NextDouble() * 100;
 
         // 4. Generate a circle itempayload
         ItemPayload.Circle circle = new(style, center, radius);
@@ -51,13 +47,13 @@ public class RandomItemPayloadGenerator
         ShapeStyle style = RandomShapeStyleGenerator.Generate();
 
         // 2. Generate a random center
-        double centerX = s_random.NextDouble() * 100;
-        double centerY = s_random.NextDouble() * 100;
+        double centerX = Rng.NextDouble() * 100;
+        double centerY = Rng.NextDouble() * 100;
         Point2D center = new() { X = centerX, Y = centerY };
 
         // 3. Generate a random width and height
-        double width = s_random.NextDouble() * 100;
-        double height = s_random.NextDouble() * 100;
+        double width = Rng.NextDouble() * 100;
+        double height = Rng.NextDouble() * 100;
 
         // 4. Generate a ellipse itempayload
         ItemPayload.Ellipse ellipse = new(style, center, width, height);
@@ -74,12 +70,12 @@ public class RandomItemPayloadGenerator
         ShapeStyle style = RandomShapeStyleGenerator.Generate();
 
         // 2. Generate a random center
-        double centerX = s_random.NextDouble() * 100;
-        double centerY = s_random.NextDouble() * 100;
+        double centerX = Rng.NextDouble() * 100;
+        double centerY = Rng.NextDouble() * 100;
         Point2D center = new() { X = centerX, Y = centerY };
 
         // 3. Generate a random side length
-        double sideLength = s_random.NextDouble() * 100;
+        double sideLength = Rng.NextDouble() * 100;
 
         // 4. Generate a eqilateral triangle itempayload
         ItemPayload.EqTriangle eqTriangle = new(style, center, sideLength);
@@ -102,8 +98,8 @@ public class RandomItemPayloadGenerator
         for (int i = 0; i < nVertices; i++)
         {
             // 2.a. Generate a random point
-            double pointX = s_random.NextDouble() * 100;
-            double pointY = s_random.NextDouble() * 100;
+            double pointX = Rng.NextDouble() * 100;
+            double pointY = Rng.NextDouble() * 100;
             Point2D point = new() { X = pointX, Y = pointY };
 
             vertices.Add(point);
@@ -124,13 +120,13 @@ public class RandomItemPayloadGenerator
         ShapeStyle style = RandomShapeStyleGenerator.Generate();
 
         // 2. Generate a random center
-        double centerX = s_random.NextDouble() * 100;
-        double centerY = s_random.NextDouble() * 100;
+        double centerX = Rng.NextDouble() * 100;
+        double centerY = Rng.NextDouble() * 100;
         Point2D center = new() { X = centerX, Y = centerY };
 
         // 3. Generate a random width and height
-        double width = s_random.NextDouble() * 100;
-        double height = s_random.NextDouble() * 100;
+        double width = Rng.NextDouble() * 100;
+        double height = Rng.NextDouble() * 100;
 
         // 4. Generate a rectangle itempayload
         ItemPayload.Rectangle rectangle = new(style, center, width, height);
@@ -147,12 +143,12 @@ public class RandomItemPayloadGenerator
         ShapeStyle style = RandomShapeStyleGenerator.Generate();
 
         // 2. Generate a random center
-        double centerX = s_random.NextDouble() * 100;
-        double centerY = s_random.NextDouble() * 100;
+        double centerX = Rng.NextDouble() * 100;
+        double centerY = Rng.NextDouble() * 100;
         Point2D center = new() { X = centerX, Y = centerY };
 
         // 3. Generate a random side length
-        double sideLength = s_random.NextDouble() * 100;
+        double sideLength = Rng.NextDouble() * 100;
 
         // 4. Generate a square itempayload
         ItemPayload.Square square = new(style, center, sideLength);
