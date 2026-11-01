@@ -18,10 +18,6 @@ public class RandomColorGenerator : BaseGenerator
     /// </summary>
     private static readonly List<Color> s_random_colors = [Color.Red, Color.Black, Color.Blue, Color.Yellow];
 
-    /// <summary>
-    /// Generate a random <see cref="Color"/>
-    /// </summary>
-    /// <returns>A random <see cref="Color"/></returns>
     public static Color Generate()
     {
         int randomIndex = Rng.Next(s_random_colors.Count);

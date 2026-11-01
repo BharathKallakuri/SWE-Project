@@ -13,10 +13,6 @@ namespace Whiteboard.Test.RandomGenerators;
 [ExcludeFromCodeCoverage]
 public class RandomShapeStyleGenerator : BaseGenerator
 {
-    /// <summary>
-    /// Generate a random <see cref="ShapeStyle"/>
-    /// </summary>
-    /// <returns>A random <see cref="ShapeStyle"/></returns>
     public static ShapeStyle Generate()
     {
         // 1. Generate a random fill color

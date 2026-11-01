@@ -18,10 +18,6 @@ public class RandomItemMetadataGenerator : BaseGenerator
     /// </summary>
     private static readonly string s_allowed_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
 
-    /// <summary>
-    /// Generate a random <see cref="ItemDto"/>
-    /// </summary>
-    /// <returns>A random <see cref="ItemDto"/></returns>
     public static ItemMetadata Generate()
     {
         // 1. Generate a GUID

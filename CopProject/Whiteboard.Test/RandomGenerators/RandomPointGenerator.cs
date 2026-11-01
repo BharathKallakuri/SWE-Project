@@ -13,10 +13,6 @@ namespace Whiteboard.Test.RandomGenerators;
 [ExcludeFromCodeCoverage]
 public class RandomPointGenerator : BaseGenerator
 {
-    /// <summary>
-    /// Generate a random <see cref="Point2D"/>
-    /// </summary>
-    /// <returns>A random <see cref="Point2D"/></returns>
     public static Point2D Generate()
     {
         double pointX = Rng.NextDouble() * 100;
