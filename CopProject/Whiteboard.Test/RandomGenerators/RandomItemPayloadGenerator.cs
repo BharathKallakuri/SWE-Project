@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using Whiteboard.Interfaces;
 using Whiteboard.Items.Shapes;
 using Whiteboard.Network.Dtos;
@@ -15,6 +16,26 @@ namespace Whiteboard.Test.RandomGenerators;
 [ExcludeFromCodeCoverage]
 public class RandomItemPayloadGenerator : BaseGenerator
 {
+    /// <summary>
+    /// Generate a random <see cref="ItemPayload.Freehand"/>
+    /// </summary>
+    /// <returns>A random <see cref="ItemPayload.Freehand"/></returns>
+    public static ItemPayload.Freehand GenerateFreehand()
+    {
+        // 1. Generate a random list of points
+        List<Point2D> points = RandomPointListGenerator.Generate(2, 500);
+
+        // 2. Generate a random stroke color
+        string strokeColor = RandomColorGenerator.Generate().ToString();
+
+        // 3. Generate a random stroke width
+        double strokeWidth = Rng.NextDouble() * 100;
+
+        // 4. Generate a freehand payload
+        ItemPayload.Freehand freehand = new(points, strokeColor, strokeWidth);
+        return freehand;
+    }
+
     /// <summary>
     /// Generate a random <see cref="ItemPayload.Circle"/>
     /// </summary>
