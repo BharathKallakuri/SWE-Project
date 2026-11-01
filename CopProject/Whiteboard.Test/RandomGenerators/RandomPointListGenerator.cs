@@ -11,16 +11,11 @@ namespace Whiteboard.Test.RandomGenerators;
 /// Generates a random list of <see cref="Point2D"/>
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class RandomPointListGenerator
+public class RandomPointListGenerator : BaseGenerator
 {
-    /// <summary>
-    /// Random number generator
-    /// </summary>
-    private static readonly Random s_random = new();
-
     public static List<Point2D> Generate()
     {
-        int nPoints = s_random.Next(2, 50);
+        int nPoints = Rng.Next(2, 50);
         List<Point2D> points = [];
 
         for (int i = 0; i < nPoints; i++)
