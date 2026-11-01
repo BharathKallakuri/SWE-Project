@@ -263,12 +263,18 @@ public class CommunicatorTests
         Assert.IsFalse(listener2.WaitForMessage(500));
 
         listener1.Reset();
+        IPEndPoint client2Ep = new(client2.ListenIpAddress, client2.ListenPort);
+        server.JoinMulticastGroup(101, client2Ep);
         server.LeaveMulticastGroup(101, client1Ep);
         server.MulticastMessage(101, payload, 15, 1);
         Assert.IsFalse(listener1.WaitForMessage(500));
 
-        server.JoinMulticastGroup(202);
-        server.LeaveMulticastGroup(202);
+        server.LeaveMulticastGroup(101, client2Ep);
+        server.LeaveMulticastGroup(999, client1Ep);
+
+        IPEndPoint ipv6Mapped = new(IPAddress.Parse("::ffff:127.0.0.1"), 8888);
+        server.JoinMulticastGroup(202, ipv6Mapped);
+        server.LeaveMulticastGroup(202, ipv6Mapped);
         server.MulticastMessage(999, payload, 15, 1);
     }
 
@@ -290,6 +296,7 @@ public class CommunicatorTests
         IPEndPoint clientEp = (IPEndPoint)connectedTcp.Client.LocalEndPoint!;
 
         server.AddClient(clientEp, connectedTcp);
+        server.JoinMulticastGroup(505, clientEp);
         server.RemoveClient(clientEp);
     }
 
@@ -304,6 +311,7 @@ public class CommunicatorTests
         blocker.Start();
 
         CommunicatorServer failedServer = new(new IPEndPoint(IPAddress.Loopback, port));
+        failedServer.AcceptClientConnections();
         failedServer.Dispose();
     }
 
