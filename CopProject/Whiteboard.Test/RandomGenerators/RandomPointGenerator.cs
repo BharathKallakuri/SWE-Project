@@ -11,21 +11,16 @@ namespace Whiteboard.Test.RandomGenerators;
 /// Generates a random <see cref="Point2D"/>
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class RandomPointGenerator
+public class RandomPointGenerator : BaseGenerator
 {
-    /// <summary>
-    /// Random number generator
-    /// </summary>
-    private static readonly Random s_random = new();
-
     /// <summary>
     /// Generate a random <see cref="Point2D"/>
     /// </summary>
     /// <returns>A random <see cref="Point2D"/></returns>
     public static Point2D Generate()
     {
-        double pointX = s_random.NextDouble() * 100;
-        double pointY = s_random.NextDouble() * 100;
+        double pointX = Rng.NextDouble() * 100;
+        double pointY = Rng.NextDouble() * 100;
         Point2D point = new() { X = pointX, Y = pointY };
         return point;
     }
