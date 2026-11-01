@@ -5,7 +5,7 @@
 using System;
 using Whiteboard.Interfaces;
 
-namespace Whiteboard.Models.Messages;
+namespace Whiteboard.Network.Messages;
 
 /// <summary>
 /// Message sent from the server to a client for acknowledgement
