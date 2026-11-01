@@ -3,7 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Whiteboard.Interfaces;
+using Whiteboard.Network.Dtos;
 
 namespace Whiteboard.Network.Messages;
 
@@ -27,7 +27,7 @@ public abstract record ClientMessage
     /// </summary>
     /// <param name="Id">GUID of the added item</param>
     /// <param name="Item">Added item</param>
-    public sealed record ReqAddItem(Guid Id, IItem Item) : ClientMessage;
+    public sealed record ReqAddItem(Guid Id, ItemDto Item) : ClientMessage;
 
     /// <summary>
     /// Sent when a client deletes an item from its state,
@@ -43,5 +43,5 @@ public abstract record ClientMessage
     /// <param name="Id">GUID of the updated item</param>
     /// <param name="Item">Updated item</param>
     /// 
-    public sealed record ReqUpdateItem(Guid Id, IItem Item) : ClientMessage;
+    public sealed record ReqUpdateItem(Guid Id, ItemDto Item) : ClientMessage;
 }

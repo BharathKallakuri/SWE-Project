@@ -3,7 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Whiteboard.Interfaces;
+using Whiteboard.Network.Dtos;
 
 namespace Whiteboard.Network.Messages;
 
@@ -18,7 +18,7 @@ public abstract record ServerAckMessage
     /// Sent when a client requested a complete whiteboard update.
     /// </summary>
     /// <param name="Whiteboard">Entire whiteboard state from the server</param>
-    public sealed record AckUpdate(IWhiteboard Whiteboard) : ServerAckMessage;
+    public sealed record AckUpdate(WhiteboardDto Whiteboard) : ServerAckMessage;
 
     /// <summary>
     /// Sent when a client requested approval for an item addition.
@@ -51,7 +51,7 @@ public abstract record ServerBrdMessage
     /// </summary>
     /// <param name="Id">GUID of the added item</param>
     /// <param name="Item">Item added</param>
-    public sealed record BrdAddItem(Guid Id, IItem Item) : ServerBrdMessage;
+    public sealed record BrdAddItem(Guid Id, ItemDto Item) : ServerBrdMessage;
 
     /// <summary>
     /// Sent when a server deletes an item from its state.
@@ -64,5 +64,5 @@ public abstract record ServerBrdMessage
     /// </summary>
     /// <param name="Id">GUID of the updated item</param>
     /// <param name="Item">Updated item</param>
-    public sealed record BrdUpdateItem(Guid Id, IItem Item) : ServerBrdMessage;
+    public sealed record BrdUpdateItem(Guid Id, ItemDto Item) : ServerBrdMessage;
 }
