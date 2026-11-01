@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -24,7 +24,7 @@ public class CommunicatorServer : ICommunicator, IDisposable
     private ConcurrentDictionary<IPEndPoint, TcpClient> _clientToTcpListenerMap = new ConcurrentDictionary<IPEndPoint, TcpClient>();
     private ConcurrentDictionary<int, IMessageListener> _moduleToMessageListenerMap = new ConcurrentDictionary<int, IMessageListener>();
     private ConcurrentDictionary<IPEndPoint, SocketListener> _clientToSocketListenerMap = new ConcurrentDictionary<IPEndPoint, SocketListener>();
-    private ConcurrentDictionary<int, ConcurrentBag<IPEndPoint>> _multicastGroupMap = new ConcurrentDictionary<int, ConcurrentBag<IPEndPoint>>();
+    private ConcurrentDictionary<int, ConcurrentDictionary<IPEndPoint, byte>> _multicastGroupMap = new ConcurrentDictionary<int, ConcurrentDictionary<IPEndPoint, byte>>();
     private bool _isRunning;
     private object _isRunningLock;
     private IPEndPoint? _thisIpEndPoint;
@@ -88,6 +88,10 @@ public class CommunicatorServer : ICommunicator, IDisposable
                 TcpClient clientTcpClient = listener.AcceptTcpClient();
                 if (clientTcpClient.Client.RemoteEndPoint is IPEndPoint clientEp)
                 {
+                    if (clientEp.Address.IsIPv4MappedToIPv6)
+                    {
+                        clientEp = new IPEndPoint(clientEp.Address.MapToIPv4(), clientEp.Port);
+                    }
                     AddClient(clientEp, clientTcpClient);
                 }
             }
@@ -144,6 +148,11 @@ public class CommunicatorServer : ICommunicator, IDisposable
         {
             SocketListener socketListener = _clientToSocketListenerMap[clientIp];
             _clientToSocketListenerMap.TryRemove(clientIp, out _);
+            _clientToTcpListenerMap.TryRemove(clientIp, out _);
+            foreach (ConcurrentDictionary<IPEndPoint, byte> group in _multicastGroupMap.Values)
+            {
+                group.TryRemove(clientIp, out _);
+            }
             socketListener.Dispose();
         }
         catch (Exception e)
@@ -189,17 +198,62 @@ public class CommunicatorServer : ICommunicator, IDisposable
     }
 
 
+    public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
+    {
+        if (clientIp.Address.IsIPv4MappedToIPv6)
+        {
+            clientIp = new IPEndPoint(clientIp.Address.MapToIPv4(), clientIp.Port);
+        }
+
+        ConcurrentDictionary<IPEndPoint, byte> group = _multicastGroupMap.GetOrAdd(
+            multicastGroup,
+            _ => new ConcurrentDictionary<IPEndPoint, byte>()
+        );
+        group.TryAdd(clientIp, 0);
+    }
+
+    public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
+    {
+        if (clientIp.Address.IsIPv4MappedToIPv6)
+        {
+            clientIp = new IPEndPoint(clientIp.Address.MapToIPv4(), clientIp.Port);
+        }
+
+        if (_multicastGroupMap.TryGetValue(multicastGroup, out ConcurrentDictionary<IPEndPoint, byte>? group))
+        {
+            group.TryRemove(clientIp, out _);
+            if (group.IsEmpty)
+            {
+                _multicastGroupMap.TryRemove(multicastGroup, out _);
+            }
+        }
+    }
+
     public void JoinMulticastGroup(int multicastGroup)
     {
-        throw new NotImplementedException();
+        if (_thisIpEndPoint != null)
+        {
+            JoinMulticastGroup(multicastGroup, _thisIpEndPoint);
+        }
     }
+
     public void LeaveMulticastGroup(int multicastGroup)
     {
-        throw new NotImplementedException();
+        if (_thisIpEndPoint != null)
+        {
+            LeaveMulticastGroup(multicastGroup, _thisIpEndPoint);
+        }
     }
+
     public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority)
     {
-        throw new NotImplementedException();
+        if (_multicastGroupMap.TryGetValue(multicastGroup, out ConcurrentDictionary<IPEndPoint, byte>? group))
+        {
+            foreach (IPEndPoint clientEp in group.Keys)
+            {
+                SendMessage(clientEp, message, module, priority);
+            }
+        }
     }
     public void BroadcastMessage(byte[] message, int module, int priority)
     {
