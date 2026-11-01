@@ -106,12 +106,12 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
     /// <summary>
     /// joins the specified multicast group
     /// </summary>
-    public void JoinMulticastGroup(int multicastGroup) { }
+    public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp) { }
 
     /// <summary>
     /// leaves the specified multicast group
     /// </summary>
-    public void LeaveMulticastGroup(int multicastGroup) { }
+    public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp) { }
 
     /// <summary>
     /// sends a message to the specified multicast group by broadcasting it to registered peers
