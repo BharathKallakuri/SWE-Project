@@ -86,4 +86,32 @@ public class RandomItemPayloadGenerator
         ItemPayload.EqTriangle eqTriangle = new(style, center, sideLength);
         return eqTriangle;
     }
+
+    /// <summary>
+    /// Generate a random <see cref="ItemPayload.Polygon"/>
+    /// </summary>
+    /// <returns>A random <see cref="ItemPayload.Polygon"/></returns>
+    public static ItemPayload.Polygon GeneratePolygon()
+    {
+        // 1. Generate a random style
+        ShapeStyle style = RandomShapeStyleGenerator.Generate();
+
+        // 2. Generate a random lit of vertices
+        int nVertices = s_random.Next(2, 50);
+        List<Point2D> vertices = [];
+
+        for (int i = 0; i < nVertices; i++)
+        {
+            // 2.a. Generate a random point
+            double pointX = s_random.NextDouble() * 100;
+            double pointY = s_random.NextDouble() * 100;
+            Point2D point = new() { X = pointX, Y = pointY };
+
+            vertices.Add(point);
+        }
+
+        // 3. Generate a polygon itempayload
+        ItemPayload.Polygon polygon = new(style, vertices);
+        return polygon;
+    }
 }
