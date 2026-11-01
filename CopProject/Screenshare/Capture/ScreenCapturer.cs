@@ -4,6 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace ScreenShare;
 
+/// <summary>
+/// captures the primary display on windows
+/// </summary>
 public class ScreenCapturer : IImageSource
 {
     [DllImport("user32.dll")]
@@ -12,24 +15,45 @@ public class ScreenCapturer : IImageSource
     private const int SM_CXSCREEN = 0;
     private const int SM_CYSCREEN = 1;
 
+    /// <summary>
+    /// captures the current contents of the primary display
+    /// </summary>
+    /// <returns>a bitmap containing the captured screen</returns>
+    /// <exception cref="InvalidOperationException">
+    /// the display dimensions are invalid
+    /// </exception>
     public Bitmap Capture()
     {
+        int width = GetSystemMetrics(SM_CXSCREEN);
+        int height = GetSystemMetrics(SM_CYSCREEN);
+        if(width<=0 || height <= 0)
+        {
+            throw new InvalidOperationException($"invalid screen dimensions: {width}x{height}");
+        }
+
         var bounds = new Rectangle(
             0,
             0,
-            GetSystemMetrics(SM_CXSCREEN),
-            GetSystemMetrics(SM_CYSCREEN));
+            width,
+            height);
 
         var screenshot = new Bitmap(
-            bounds.Width,
-            bounds.Height,
+            width,
+            height,
             PixelFormat.Format32bppArgb);
 
-        using (Graphics graphics = Graphics.FromImage(screenshot))
+        try
         {
-            graphics.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
+            using (Graphics graphics = Graphics.FromImage(screenshot))
+            {
+                graphics.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
+                return screenshot;
+            }
         }
-
-        return screenshot;
+        catch
+        {
+            screenshot.Dispose();
+            throw;
+        }
     }
 }
