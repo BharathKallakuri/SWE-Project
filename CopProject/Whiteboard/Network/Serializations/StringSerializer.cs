@@ -1,0 +1,80 @@
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System.Text.Json;
+using Whiteboard.Network.Dtos;
+
+namespace Whiteboard.Network.Serializations;
+
+/// <summary>
+/// Serialize and deserialise an <see cref="ItemDto"/> using JSON
+/// </summary>
+public class ItemDtoStringSerializer
+{
+    /// <summary>
+    /// Serialize from ItemDto to JSON
+    /// </summary>
+    /// <param name="item">Item to serialize</param>
+    /// <returns>Serialized JSON</returns>
+    public static string Serialize(ItemDto item)
+    {
+        if (item is null)
+        {
+            return string.Empty;
+        }
+
+        return JsonSerializer.Serialize(item);
+    }
+
+    /// <summary>
+    /// Deserialize from JSON to ItemDto
+    /// </summary>
+    /// <param name="json">Serialized JSON</param>
+    /// <returns>Deserialized item</returns>
+    public static ItemDto Deserialize(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return default!;
+        }
+
+        return JsonSerializer.Deserialize<ItemDto>(json)!;
+    }
+}
+
+/// <summary>
+/// Serialize and deserialise an <see cref="WhiteboardDto"/> using JSON
+/// </summary>
+public class WhiteboardDtoStringSerializer
+{
+    /// <summary>
+    /// Serialize from WhiteboardDto to JSON
+    /// </summary>
+    /// <param name="item">Whiteboard to serialize</param>
+    /// <returns>Serialized JSON</returns>
+    public static string Serialize(WhiteboardDto item)
+    {
+        if (item is null)
+        {
+            return string.Empty;
+        }
+
+        return JsonSerializer.Serialize(item);
+    }
+
+    /// <summary>
+    /// Deserialize from JSON to WhiteboardDto
+    /// </summary>
+    /// <param name="json">Serialized JSON</param>
+    /// <returns>Deserialized whiteboard DTO</returns>
+    public static WhiteboardDto Deserialize(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return default!;
+        }
+
+        return JsonSerializer.Deserialize<WhiteboardDto>(json)!;
+    }
+}
