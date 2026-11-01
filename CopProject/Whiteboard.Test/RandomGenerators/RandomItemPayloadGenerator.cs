@@ -37,6 +37,21 @@ public class RandomItemPayloadGenerator : BaseGenerator
     }
 
     /// <summary>
+    /// Generate a random <see cref="ItemPayload.Line"/>
+    /// </summary>
+    /// <returns>A random <see cref="ItemPayload.Line"/></returns>
+    public static ItemPayload.Line GenerateLine()
+    {
+        // 1. Generate a two random endpoints
+        Point2D begin = RandomPointGenerator.Generate();
+        Point2D end = RandomPointGenerator.Generate();
+
+        // 2. Generate a line payload
+        ItemPayload.Line line = new(begin, end);
+        return line;
+    }
+
+    /// <summary>
     /// Generate a random <see cref="ItemPayload.Circle"/>
     /// </summary>
     /// <returns>A random <see cref="ItemPayload.Circle"/></returns>
