@@ -11,13 +11,8 @@ namespace Whiteboard.Test.RandomGenerators;
 /// Generates a random <see cref="Color"/>
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class RandomColorGenerator
+public class RandomColorGenerator : BaseGenerator
 {
-    /// <summary>
-    /// Random number generator
-    /// </summary>
-    private static readonly Random s_random = new();
-
     /// <summary>
     /// Random colors for testing
     /// </summary>
@@ -29,7 +24,7 @@ public class RandomColorGenerator
     /// <returns>A random <see cref="Color"/></returns>
     public static Color Generate()
     {
-        int randomIndex = s_random.Next(s_random_colors.Count);
+        int randomIndex = Rng.Next(s_random_colors.Count);
         Color randomColor = s_random_colors[randomIndex];
 
         return randomColor;
