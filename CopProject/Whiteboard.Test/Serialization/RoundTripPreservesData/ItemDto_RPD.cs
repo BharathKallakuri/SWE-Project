@@ -71,4 +71,51 @@ public class ItemDto_RPD
             Assert.Equivalent(original, deserialized);
         }
     }
+
+    /// <summary>
+    /// Test that byte serialization and deserialization preserves the data
+    /// </summary>
+    /// <param name="type">One of <see cref="XUnitShapeType"/></param>
+    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="type"/> is not one of <see cref="XUnitShapeType"/></exception>
+    [Theory]
+    [InlineData(XUnitShapeType.Freehand)]
+    [InlineData(XUnitShapeType.Line)]
+    [InlineData(XUnitShapeType.Textbox)]
+    [InlineData(XUnitShapeType.Circle)]
+    [InlineData(XUnitShapeType.Ellipse)]
+    [InlineData(XUnitShapeType.EqTriangle)]
+    [InlineData(XUnitShapeType.Polygon)]
+    [InlineData(XUnitShapeType.Rectangle)]
+    [InlineData(XUnitShapeType.Square)]
+    public void TestByte(XUnitShapeType type)
+    {
+        // Repeat test 50 times
+        for (int i = 0; i < 50; i++)
+        {
+            // Arrange
+            ItemMetadata meta = RandomItemMetadataGenerator.Generate();
+            ItemPayload payload = type switch {
+                XUnitShapeType.Freehand => RandomItemPayloadGenerator.GenerateFreehand(),
+                XUnitShapeType.Line => RandomItemPayloadGenerator.GenerateLine(),
+                XUnitShapeType.Textbox => RandomItemPayloadGenerator.GenerateTextbox(),
+                XUnitShapeType.Circle => RandomItemPayloadGenerator.GenerateCircle(),
+                XUnitShapeType.Ellipse => RandomItemPayloadGenerator.GenerateEllipse(),
+                XUnitShapeType.EqTriangle => RandomItemPayloadGenerator.GenerateEqTriangle(),
+                XUnitShapeType.Polygon => RandomItemPayloadGenerator.GeneratePolygon(),
+                XUnitShapeType.Rectangle => RandomItemPayloadGenerator.GenerateRectangle(),
+                XUnitShapeType.Square => RandomItemPayloadGenerator.GenerateSquare(),
+                _ => throw new ArgumentOutOfRangeException(nameof(type))
+            };
+
+            ItemDto original = new ItemDto(meta, payload);
+
+            // Act
+            byte[] serialized = new ItemDtoByteSerializer().Serialize(original);
+            ItemDto deserialized = new ItemDtoByteSerializer().Deserialize(serialized);
+
+            // Assert
+            Assert.Equivalent(original, deserialized);
+        }
+    }
+
 }
