@@ -4,6 +4,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Whiteboard.Interfaces;
+using Whiteboard.Items.Shapes;
 using Whiteboard.Network.Dtos;
 
 namespace Whiteboard.Test.RandomGenerators;
@@ -62,5 +63,27 @@ public class RandomItemPayloadGenerator
         // 4. Generate a ellipse itempayload
         ItemPayload.Ellipse ellipse = new(style, center, width, height);
         return ellipse;
+    }
+
+    /// <summary>
+    /// Generate a random <see cref="ItemPayload.EqTriangle"/>
+    /// </summary>
+    /// <returns>A random <see cref="ItemPayload.EqTriangle"/></returns>
+    public static ItemPayload.EqTriangle GenerateEqTriangle()
+    {
+        // 1. Generate a random style
+        ShapeStyle style = RandomShapeStyleGenerator.Generate();
+
+        // 2. Generate a random center
+        double centerX = s_random.NextDouble() * 100;
+        double centerY = s_random.NextDouble() * 100;
+        Point2D center = new() { X = centerX, Y = centerY };
+
+        // 3. Generate a random side length
+        double sideLength = s_random.NextDouble() * 100;
+
+        // 4. Generate a eqilateral triangle itempayload
+        ItemPayload.EqTriangle eqTriangle = new(style, center, sideLength);
+        return eqTriangle;
     }
 }
