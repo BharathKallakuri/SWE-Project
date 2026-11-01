@@ -7,15 +7,18 @@ using Whiteboard.Interfaces;
 
 namespace Whiteboard.Test.RandomGenerators;
 
-/// <summary>
-/// Generates a random list of <see cref="Point2D"/>
-/// </summary>
 [ExcludeFromCodeCoverage]
 public class RandomPointListGenerator : BaseGenerator
 {
-    public static List<Point2D> Generate()
+    /// <summary>
+    /// Generates a random list of <see cref="Point2D"/>
+    /// </summary>
+    /// <param name="min">Minimum number of points (default 2)</param>
+    /// <param name="max">Maximum number of points (default 50)</param>
+    /// <returns></returns>
+    public static List<Point2D> Generate(int min = 2, int max = 50)
     {
-        int nPoints = Rng.Next(2, 50);
+        int nPoints = Rng.Next(min, max);
         List<Point2D> points = [];
 
         for (int i = 0; i < nPoints; i++)
