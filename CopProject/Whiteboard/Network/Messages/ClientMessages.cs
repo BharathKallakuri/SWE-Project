@@ -3,13 +3,19 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Text.Json.Serialization;
 using Whiteboard.Network.Dtos;
 
 namespace Whiteboard.Network.Messages;
 
 /// <summary>
 /// Message sent from a client to the server
-/// </summary>
+/// </summary 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(ReqUpdate), "req_update")]
+[JsonDerivedType(typeof(ReqAddItem), "req_add_item")]
+[JsonDerivedType(typeof(ReqDeleteItem), "req_delete_item")]
+[JsonDerivedType(typeof(ReqUpdateItem), "req_update_item")]
 public abstract record ClientMessage
 {
     private ClientMessage() { }

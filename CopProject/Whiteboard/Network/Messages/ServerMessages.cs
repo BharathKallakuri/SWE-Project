@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Text.Json.Serialization;
 using Whiteboard.Network.Dtos;
 
 namespace Whiteboard.Network.Messages;
@@ -10,6 +11,11 @@ namespace Whiteboard.Network.Messages;
 /// <summary>
 /// Message sent from the server to a client for acknowledgement
 /// </summary>
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(AckUpdate), "ack_update")]
+[JsonDerivedType(typeof(AckAddItem), "ack_add_item")]
+[JsonDerivedType(typeof(AckDeleteItem), "ack_delete_item")]
+[JsonDerivedType(typeof(AckUpdateItem), "ack_update_item")]
 public abstract record ServerAckMessage
 {
     private ServerAckMessage() { }
@@ -42,6 +48,10 @@ public abstract record ServerAckMessage
 /// <summary>
 /// Message sent from the server to all clients (broadcast) upon state change
 /// </summary>
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(BrdAddItem), "brd_add_item")]
+[JsonDerivedType(typeof(BrdDeleteItem), "brd_delete_item")]
+[JsonDerivedType(typeof(BrdUpdateItem), "brd_update_item")]
 public abstract record ServerBrdMessage
 {
     private ServerBrdMessage() { }
