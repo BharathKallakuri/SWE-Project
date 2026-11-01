@@ -229,21 +229,7 @@ public class CommunicatorServer : ICommunicator, IDisposable
         }
     }
 
-    public void JoinMulticastGroup(int multicastGroup)
-    {
-        if (_thisIpEndPoint != null)
-        {
-            JoinMulticastGroup(multicastGroup, _thisIpEndPoint);
-        }
-    }
 
-    public void LeaveMulticastGroup(int multicastGroup)
-    {
-        if (_thisIpEndPoint != null)
-        {
-            LeaveMulticastGroup(multicastGroup, _thisIpEndPoint);
-        }
-    }
 
     public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority)
     {
