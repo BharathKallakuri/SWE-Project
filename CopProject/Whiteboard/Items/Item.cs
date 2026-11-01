@@ -14,7 +14,6 @@ public abstract class Item : IItem
     public double Zindex { get; set; } = 0;
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime CreatedDateTime { get; set; } = DateTime.Now;
-    public string LastModifiedBy { get; set; } = string.Empty;
     public DateTime LastModifiedDateTime { get; set; } = DateTime.Now;
     public double Left { get; set; } = 0;
     public double Top { get; set; } = 0;

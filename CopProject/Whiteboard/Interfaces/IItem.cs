@@ -28,11 +28,6 @@ public interface IItem
     DateTime CreatedDateTime { get; set; }
 
     /// <summary>
-    /// User who last modified the item
-    /// </summary>
-    string LastModifiedBy { get; set; }
-
-    /// <summary>
     /// Date and time of last modification
     /// </summary>
     DateTime LastModifiedDateTime { get; set; }
