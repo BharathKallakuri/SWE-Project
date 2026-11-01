@@ -25,9 +25,7 @@ public class RandomItemPayloadGenerator : BaseGenerator
         ShapeStyle style = RandomShapeStyleGenerator.Generate();
 
         // 2. Generate a random center
-        double centerX = Rng.NextDouble() * 100;
-        double centerY = Rng.NextDouble() * 100;
-        Point2D center = new() { X = centerX, Y = centerY };
+        Point2D center = RandomPointGenerator.Generate();
 
         // 3. Generate a random radius
         double radius = Rng.NextDouble() * 100;
@@ -47,9 +45,7 @@ public class RandomItemPayloadGenerator : BaseGenerator
         ShapeStyle style = RandomShapeStyleGenerator.Generate();
 
         // 2. Generate a random center
-        double centerX = Rng.NextDouble() * 100;
-        double centerY = Rng.NextDouble() * 100;
-        Point2D center = new() { X = centerX, Y = centerY };
+        Point2D center = RandomPointGenerator.Generate();
 
         // 3. Generate a random width and height
         double width = Rng.NextDouble() * 100;
@@ -70,9 +66,7 @@ public class RandomItemPayloadGenerator : BaseGenerator
         ShapeStyle style = RandomShapeStyleGenerator.Generate();
 
         // 2. Generate a random center
-        double centerX = Rng.NextDouble() * 100;
-        double centerY = Rng.NextDouble() * 100;
-        Point2D center = new() { X = centerX, Y = centerY };
+        Point2D center = RandomPointGenerator.Generate();
 
         // 3. Generate a random side length
         double sideLength = Rng.NextDouble() * 100;
@@ -92,18 +86,7 @@ public class RandomItemPayloadGenerator : BaseGenerator
         ShapeStyle style = RandomShapeStyleGenerator.Generate();
 
         // 2. Generate a random lit of vertices
-        int nVertices = s_random.Next(2, 50);
-        List<Point2D> vertices = [];
-
-        for (int i = 0; i < nVertices; i++)
-        {
-            // 2.a. Generate a random point
-            double pointX = Rng.NextDouble() * 100;
-            double pointY = Rng.NextDouble() * 100;
-            Point2D point = new() { X = pointX, Y = pointY };
-
-            vertices.Add(point);
-        }
+        List<Point2D> vertices = RandomPointListGenerator.Generate();
 
         // 3. Generate a polygon itempayload
         ItemPayload.Polygon polygon = new(style, vertices);
@@ -120,9 +103,7 @@ public class RandomItemPayloadGenerator : BaseGenerator
         ShapeStyle style = RandomShapeStyleGenerator.Generate();
 
         // 2. Generate a random center
-        double centerX = Rng.NextDouble() * 100;
-        double centerY = Rng.NextDouble() * 100;
-        Point2D center = new() { X = centerX, Y = centerY };
+        Point2D center = RandomPointGenerator.Generate();
 
         // 3. Generate a random width and height
         double width = Rng.NextDouble() * 100;
@@ -143,9 +124,7 @@ public class RandomItemPayloadGenerator : BaseGenerator
         ShapeStyle style = RandomShapeStyleGenerator.Generate();
 
         // 2. Generate a random center
-        double centerX = Rng.NextDouble() * 100;
-        double centerY = Rng.NextDouble() * 100;
-        Point2D center = new() { X = centerX, Y = centerY };
+        Point2D center = RandomPointGenerator.Generate();
 
         // 3. Generate a random side length
         double sideLength = Rng.NextDouble() * 100;
