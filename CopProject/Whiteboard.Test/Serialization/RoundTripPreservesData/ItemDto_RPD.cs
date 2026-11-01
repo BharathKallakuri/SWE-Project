@@ -6,7 +6,7 @@ using Whiteboard.Network.Dtos;
 using Whiteboard.Network.Serializations;
 using Whiteboard.Test.RandomGenerators;
 
-namespace Whiteboard.Test.Serialization;
+namespace Whiteboard.Test.Serialization.RoundTripPreservesData;
 
 /// <summary>
 /// An enum representing differen test cases for xUnit
@@ -24,10 +24,10 @@ public enum XUnitShapeType
     Square
 }
 
-public class ItemDtoSerializationTests
+public class ItemDto_RPD
 {
     /// <summary>
-    /// Test that serialization and deserialization preserves the data
+    /// Test that string serialization and deserialization preserves the data
     /// </summary>
     /// <param name="type">One of <see cref="XUnitShapeType"/></param>
     /// <exception cref="ArgumentOutOfRangeException">If <paramref name="type"/> is not one of <see cref="XUnitShapeType"/></exception>
@@ -41,7 +41,7 @@ public class ItemDtoSerializationTests
     [InlineData(XUnitShapeType.Polygon)]
     [InlineData(XUnitShapeType.Rectangle)]
     [InlineData(XUnitShapeType.Square)]
-    public void ItemDto_RoundTrip_PreservesData(XUnitShapeType type)
+    public void TestString(XUnitShapeType type)
     {
         // Repeat test 50 times
         for (int i = 0; i < 50; i++)
