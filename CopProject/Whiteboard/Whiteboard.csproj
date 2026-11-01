@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Networking\Networking.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Page Update="Views\WhiteBoardView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
