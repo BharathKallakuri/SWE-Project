@@ -8,7 +8,7 @@ using Whiteboard.Network.Dtos;
 namespace Whiteboard.Test.RandomGenerators;
 
 /// <summary>
-/// Generates a random <see cref="ItemDto"/>
+/// Generates a random <see cref="ItemMetadata"/>
 /// </summary>
 [ExcludeFromCodeCoverage]
 public class RandomItemMetadataGenerator : BaseGenerator
