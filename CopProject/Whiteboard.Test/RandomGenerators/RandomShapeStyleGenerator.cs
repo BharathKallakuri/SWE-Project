@@ -11,13 +11,8 @@ namespace Whiteboard.Test.RandomGenerators;
 /// Generates a random <see cref="ShapeStyle"/>
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class RandomShapeStyleGenerator
+public class RandomShapeStyleGenerator : BaseGenerator
 {
-    /// <summary>
-    /// Random number generator
-    /// </summary>
-    private static readonly Random s_random = new();
-
     /// <summary>
     /// Generate a random <see cref="ShapeStyle"/>
     /// </summary>
@@ -31,7 +26,7 @@ public class RandomShapeStyleGenerator
         string borderColorString = RandomColorGenerator.Generate().ToString();
 
         // 3. Generate a random border width
-        double borderWidth = s_random.NextDouble() * 10;
+        double borderWidth = Rng.NextDouble() * 10;
 
         // 4. Generate shape style
         ShapeStyle style = new(fillColorString, borderColorString, borderWidth);
