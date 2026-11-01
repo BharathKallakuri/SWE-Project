@@ -72,4 +72,70 @@ public class ImageStitcherTests
         Assert.Equal(Color.Blue.ToArgb(),
             result.GetPixel(100, 100).ToArgb());
     }
+
+    [Fact]
+    public void ApplyChangedTile_ThrowsWhenTileIsOutsideFrame()
+    {
+        using var stitcher = new ImageStitcher();
+        using var frame = new Bitmap(128, 128);
+
+        stitcher.ApplyFullFrame(frame);
+
+        using var tileBitmap = new Bitmap(64, 64);
+        using var stream = new MemoryStream();
+
+        tileBitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+
+        var tile = new Tile(
+            x: 100,
+            y: 100,
+            width: 64,
+            height: 64,
+            hash: 0,
+            data: stream.ToArray()
+            );
+
+        Assert.Throws<ArgumentException>(
+            () => stitcher.ApplyChangedTile(tile)
+            );
+    }
+
+    [Fact]
+    public void ApplyChangedTile_ThrowsWhenEncodedDimensionsDoNotMatch()
+    {
+        using var stitcher = new ImageStitcher();
+        using var frame = new Bitmap(128, 128);
+        stitcher.ApplyFullFrame(frame);
+
+        // encoded image is 32x32 , but metadata says 64x64
+        using var tileBitmap = new Bitmap(32, 32);
+        using var stream = new MemoryStream();
+
+        tileBitmap.Save(stream,System.Drawing.Imaging.ImageFormat.Png);
+
+        var tile = new Tile(
+            x: 0,
+            y: 0,
+            width: 64,
+            height: 64,
+            hash: 0,
+            data: stream.ToArray()
+            );
+        Assert.Throws<ArgumentException>(() => stitcher.ApplyChangedTile(tile));
+    }
+
+    [Fact]
+    public void ApplyChangedTile_ThrowsWhenNoFullFrameExists()
+    {
+        using var stitcher = new ImageStitcher();
+        var tile = new Tile(
+            x: 0,
+            y: 0,
+            width: 64,
+            height: 64,
+            hash: 0,
+            data: new byte[] { 1, 2, 3 }
+            );
+        Assert.Throws<InvalidOperationException>(() => stitcher.ApplyChangedTile(tile));
+    }
 }
