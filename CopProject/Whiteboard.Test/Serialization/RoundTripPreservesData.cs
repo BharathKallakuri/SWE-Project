@@ -43,28 +43,32 @@ public class ItemDtoSerializationTests
     [InlineData(XUnitShapeType.Square)]
     public void ItemDto_RoundTrip_PreservesData(XUnitShapeType type)
     {
-        // Arrange
-        ItemMetadata meta = RandomItemMetadataGenerator.Generate();
-        ItemPayload payload = type switch {
-            XUnitShapeType.Freehand => RandomItemPayloadGenerator.GenerateFreehand(),
-            XUnitShapeType.Line => RandomItemPayloadGenerator.GenerateLine(),
-            XUnitShapeType.Textbox => RandomItemPayloadGenerator.GenerateTextbox(),
-            XUnitShapeType.Circle => RandomItemPayloadGenerator.GenerateCircle(),
-            XUnitShapeType.Ellipse => RandomItemPayloadGenerator.GenerateEllipse(),
-            XUnitShapeType.EqTriangle => RandomItemPayloadGenerator.GenerateEqTriangle(),
-            XUnitShapeType.Polygon => RandomItemPayloadGenerator.GeneratePolygon(),
-            XUnitShapeType.Rectangle => RandomItemPayloadGenerator.GenerateRectangle(),
-            XUnitShapeType.Square => RandomItemPayloadGenerator.GenerateSquare(),
-            _ => throw new ArgumentOutOfRangeException(nameof(type))
-        };
+        // Repeat test 50 times
+        for (int i = 0; i < 50; i++)
+        {
+            // Arrange
+            ItemMetadata meta = RandomItemMetadataGenerator.Generate();
+            ItemPayload payload = type switch {
+                XUnitShapeType.Freehand => RandomItemPayloadGenerator.GenerateFreehand(),
+                XUnitShapeType.Line => RandomItemPayloadGenerator.GenerateLine(),
+                XUnitShapeType.Textbox => RandomItemPayloadGenerator.GenerateTextbox(),
+                XUnitShapeType.Circle => RandomItemPayloadGenerator.GenerateCircle(),
+                XUnitShapeType.Ellipse => RandomItemPayloadGenerator.GenerateEllipse(),
+                XUnitShapeType.EqTriangle => RandomItemPayloadGenerator.GenerateEqTriangle(),
+                XUnitShapeType.Polygon => RandomItemPayloadGenerator.GeneratePolygon(),
+                XUnitShapeType.Rectangle => RandomItemPayloadGenerator.GenerateRectangle(),
+                XUnitShapeType.Square => RandomItemPayloadGenerator.GenerateSquare(),
+                _ => throw new ArgumentOutOfRangeException(nameof(type))
+            };
 
-        ItemDto original = new ItemDto(meta, payload);
+            ItemDto original = new ItemDto(meta, payload);
 
-        // Act
-        string serialized = ItemDtoStringSerializer.Serialize(original);
-        ItemDto deserialized = ItemDtoStringSerializer.Deserialize(serialized);
+            // Act
+            string serialized = ItemDtoStringSerializer.Serialize(original);
+            ItemDto deserialized = ItemDtoStringSerializer.Deserialize(serialized);
 
-        // Assert
-        Assert.Equivalent(original, deserialized);
+            // Assert
+            Assert.Equivalent(original, deserialized);
+        }
     }
 }
