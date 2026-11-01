@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Text.Json;
+using Microsoft.Windows.AI.ContentSafety;
 using Networking.Packets;
 using Whiteboard.Network.Dtos;
 using Whiteboard.Network.Messages;
@@ -78,5 +79,53 @@ public class ClientMessageByteSerializer : ISerializer<ClientMessage>
         }
 
         return JsonSerializer.Deserialize<ClientMessage>(data)!;
+    }
+}
+
+/// <inheritdoc/>
+public class ServerAckMessageByteSerializer : ISerializer<ServerAckMessage>
+{
+    public byte[] Serialize(ServerAckMessage item)
+    {
+        if (item is null)
+        {
+            return [];
+        }
+
+        return JsonSerializer.SerializeToUtf8Bytes(item);
+    }
+
+    public ServerAckMessage Deserialize(byte[] data)
+    {
+        if (data is null || data.Length == 0)
+        {
+            return default!;
+        }
+
+        return JsonSerializer.Deserialize<ServerAckMessage>(data)!;
+    }
+}
+
+/// <inheritdoc/>
+public class ServerBrdMessageByteSerializer : ISerializer<ServerBrdMessage>
+{
+    public byte[] Serialize(ServerBrdMessage item)
+    {
+        if (item is null)
+        {
+            return [];
+        }
+
+        return JsonSerializer.SerializeToUtf8Bytes(item);
+    }
+
+    public ServerBrdMessage Deserialize(byte[] data)
+    {
+        if (data is null || data.Length == 0)
+        {
+            return default!;
+        }
+
+        return JsonSerializer.Deserialize<ServerBrdMessage>(data)!;
     }
 }
