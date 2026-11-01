@@ -62,8 +62,7 @@ public class RandomItemPayloadGenerator : BaseGenerator
         string content = LoremIpsumGenerator.Generate();
 
         // 3. Generate a random font family
-        string defaultFont = "Calibri";
-        string fontFamily = RandomFontFamilyGenerator.Generate().ToString() ?? defaultFont;
+        string fontFamily = RandomFontFamilyGenerator.Generate();
 
         // 4. Generate a random font size
         int fontSize = Rng.Next(1, 10);

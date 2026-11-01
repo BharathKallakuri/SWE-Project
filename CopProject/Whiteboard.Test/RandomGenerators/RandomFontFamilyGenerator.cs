@@ -3,12 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.UI.Xaml.Media;
 
 namespace Whiteboard.Test.RandomGenerators;
 
 /// <summary>
-/// Generates a random <see cref="FontFamily"/>
+/// Generates a random font family
 /// </summary>
 [ExcludeFromCodeCoverage]
 public class RandomFontFamilyGenerator : BaseGenerator
@@ -16,14 +15,12 @@ public class RandomFontFamilyGenerator : BaseGenerator
     /// <summary>
     /// Random font families for testing
     /// </summary>
-    private static readonly List<FontFamily> s_random_font_families =
-        [new FontFamily("Segoe UI"), new FontFamily("Arial"), new FontFamily("Consolas"), new FontFamily("Calibri ")];
-
-    public static FontFamily Generate()
+    private static readonly List<string> s_random_font_families = ["Segoe UI", "Arial", "Consolas", "Calibri"];
+    public static string Generate()
     {
-        int randomFamily = Rng.Next(s_random_font_families.Count);
-        FontFamily randomColor = s_random_font_families[randomFamily];
+        int randomIndex = Rng.Next(s_random_font_families.Count);
+        string randomFamily = s_random_font_families[randomIndex];
 
-        return randomColor;
+        return randomFamily;
     }
 }
