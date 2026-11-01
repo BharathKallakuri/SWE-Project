@@ -11,13 +11,8 @@ namespace Whiteboard.Test.RandomGenerators;
 /// Generates a random <see cref="ItemDto"/>
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class RandomItemMetadataGenerator
+public class RandomItemMetadataGenerator : BaseGenerator
 {
-    /// <summary>
-    /// Random number generator
-    /// </summary>
-    private static readonly Random s_random = new();
-
     /// <summary>
     /// Allowed characters in the username
     /// </summary>
@@ -33,11 +28,12 @@ public class RandomItemMetadataGenerator
         Guid id = Guid.NewGuid();
 
         // 2. Generate a random z-index
-        double zIndex = s_random.NextDouble() * 100;
+        double zIndex = Rng.NextDouble() * 100;
 
         // 3. Generate a random string for creator
-        int stringLength = s_random.Next(34);
-        string createdBy = s_random.GetString(s_allowed_chars, stringLength);
+        int stringLength = Rng.Next(34);
+        string createdBy = Rng.GetString(s_allowed_chars, stringLength);
+
 
         // 4. get current time
         DateTime currentTime = DateTime.Now;
@@ -45,7 +41,7 @@ public class RandomItemMetadataGenerator
         DateTime modifiedDateTime = currentTime;
 
         // 5. Generate a rando orientation
-        double orientation = s_random.NextDouble() * 360;
+        double orientation = Rng.NextDouble() * 360;
 
         // 6. Generate item metadata
         ItemMetadata metaData = new(id, zIndex, createdBy, createdDateTime, modifiedDateTime, orientation);
