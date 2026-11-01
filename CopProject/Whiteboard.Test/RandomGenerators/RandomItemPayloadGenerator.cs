@@ -3,9 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
 using Whiteboard.Interfaces;
-using Whiteboard.Items.Shapes;
 using Whiteboard.Network.Dtos;
 
 namespace Whiteboard.Test.RandomGenerators;
@@ -49,6 +47,33 @@ public class RandomItemPayloadGenerator : BaseGenerator
         // 2. Generate a line payload
         ItemPayload.Line line = new(begin, end);
         return line;
+    }
+
+    /// <summary>
+    /// Generate a random <see cref="ItemPayload.Textbox"/>
+    /// </summary>
+    /// <returns>A random <see cref="ItemPayload.Textbox"/></returns>
+    public static ItemPayload.Textbox GenerateText()
+    {
+        // 1. Generate a two random center
+        Point2D center = RandomPointGenerator.Generate();
+
+        // 2. Generate a random string
+        string content = LoremIpsumGenerator.Generate();
+
+        // 3. Generate a random font family
+        string defaultFont = "Calibri";
+        string fontFamily = RandomFontFamilyGenerator.Generate().ToString() ?? defaultFont;
+
+        // 4. Generate a random font size
+        int fontSize = Rng.Next(1, 10);
+
+        // 5. Generate a random font color
+        string fontColor = RandomColorGenerator.Generate().ToString();
+
+        // 6. Generate a textbox payload
+        ItemPayload.Textbox textbox = new(center, content, fontFamily, fontSize, fontColor);
+        return textbox;
     }
 
     /// <summary>
