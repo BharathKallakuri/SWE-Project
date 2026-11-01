@@ -38,3 +38,31 @@ public abstract record ServerAckMessage
     /// <param name="Id">GUID of the item updated</param>
     public sealed record AckUpdateItem(Guid Id) : ServerAckMessage;
 }
+
+/// <summary>
+/// Message sent from the server to all clients (broadcast) upon state change
+/// </summary>
+public abstract record ServerBrdMessage
+{
+    private ServerBrdMessage() { }
+
+    /// <summary>
+    /// Sent when a server adds an item to its state.
+    /// </summary>
+    /// <param name="Id">GUID of the added item</param>
+    /// <param name="Item">Item added</param>
+    public sealed record BrdAddItem(Guid Id, IItem Item) : ServerBrdMessage;
+
+    /// <summary>
+    /// Sent when a server deletes an item from its state.
+    /// </summary>
+    /// <param name="Id">GUID of the deleted item</param>
+    public sealed record BrdDeleteItem(Guid Id) : ServerBrdMessage;
+
+    /// <summary>
+    /// Sent when a server updates an item in its state.
+    /// </summary>
+    /// <param name="Id">GUID of the updated item</param>
+    /// <param name="Item">Updated item</param>
+    public sealed record BrdUpdateItem(Guid Id, IItem Item) : ServerBrdMessage;
+}

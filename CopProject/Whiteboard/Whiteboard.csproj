@@ -19,10 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Dependencies\" />
-    <Folder Include="Controls\" />
-    <Folder Include="Services\" />
-    <Folder Include="ViewModels\" />
+    <Folder Include="Client\" />
+    <Folder Include="Server\" />
   </ItemGroup>
 
   <ItemGroup>
