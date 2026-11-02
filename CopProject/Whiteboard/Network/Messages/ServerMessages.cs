@@ -14,9 +14,9 @@ namespace Whiteboard.Network.Messages;
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(ResUpdate), "res_update")]
-[JsonDerivedType(typeof(ResAddItem), "add_item")]
-[JsonDerivedType(typeof(ResDeleteItem), "delete_item")]
-[JsonDerivedType(typeof(ResUpdateItem), "update_item")]
+[JsonDerivedType(typeof(ResAddItem), "res_add_item")]
+[JsonDerivedType(typeof(ResDeleteItem), "res_delete_item")]
+[JsonDerivedType(typeof(ResUpdateItem), "res_update_item")]
 [ExcludeFromCodeCoverage]
 public abstract record ServerMessage
 {
