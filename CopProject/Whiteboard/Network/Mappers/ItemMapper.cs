@@ -51,7 +51,7 @@ public class ItemMapper
             ITextbox textbox => new ItemPayload.Textbox(
                 textbox.Center,
                 textbox.Content,
-                textbox.FontFamily.Source,
+                textbox.FontFamily,
                 textbox.FontSize,
                 ColorToHex(textbox.FontColor)
             ),
@@ -119,7 +119,7 @@ public class ItemMapper
             ItemPayload.Textbox textbox => new Textbox {
                 Center = textbox.Center,
                 Content = textbox.Content,
-                FontFamily = new FontFamily(textbox.FontFamily),
+                FontFamily = textbox.FontFamily,
                 FontSize = textbox.FontSize,
                 FontColor = HexToColor(textbox.FontColor)
             },
