@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Whiteboard.Network.Dtos;
 
@@ -16,6 +17,7 @@ namespace Whiteboard.Network.Messages;
 [JsonDerivedType(typeof(ReqAddItem), "req_add_item")]
 [JsonDerivedType(typeof(ReqDeleteItem), "req_delete_item")]
 [JsonDerivedType(typeof(ReqUpdateItem), "req_update_item")]
+[ExcludeFromCodeCoverage]
 public abstract record ClientMessage
 {
     private ClientMessage() { }
@@ -25,6 +27,7 @@ public abstract record ClientMessage
     /// Or when the client believes its state is out of sync from the server.
     /// TODO How does client know that?
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public sealed record ReqUpdate() : ClientMessage;
 
     /// <summary>
@@ -33,6 +36,7 @@ public abstract record ClientMessage
     /// </summary>
     /// <param name="Id">GUID of the added item</param>
     /// <param name="Item">Added item</param>
+    [ExcludeFromCodeCoverage]
     public sealed record ReqAddItem(Guid Id, ItemDto Item) : ClientMessage;
 
     /// <summary>
@@ -40,6 +44,7 @@ public abstract record ClientMessage
     /// and requests the server to approve the deletion.
     /// </summary>
     /// <param name="Id">GUID of the deleted item</param>
+    [ExcludeFromCodeCoverage]
     public sealed record ReqDeleteItem(Guid Id) : ClientMessage;
 
     /// <summary>
@@ -48,6 +53,6 @@ public abstract record ClientMessage
     /// </summary>
     /// <param name="Id">GUID of the updated item</param>
     /// <param name="Item">Updated item</param>
-    /// 
+    [ExcludeFromCodeCoverage]
     public sealed record ReqUpdateItem(Guid Id, ItemDto Item) : ClientMessage;
 }

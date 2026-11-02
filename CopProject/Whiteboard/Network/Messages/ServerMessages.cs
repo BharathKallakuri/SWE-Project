@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Whiteboard.Network.Dtos;
 
@@ -16,6 +17,7 @@ namespace Whiteboard.Network.Messages;
 [JsonDerivedType(typeof(ResAddItem), "add_item")]
 [JsonDerivedType(typeof(ResDeleteItem), "delete_item")]
 [JsonDerivedType(typeof(ResUpdateItem), "update_item")]
+[ExcludeFromCodeCoverage]
 public abstract record ServerMessage
 {
     private ServerMessage() { }
@@ -24,6 +26,7 @@ public abstract record ServerMessage
     /// Sent when a client requested a complete whiteboard update (unicast).
     /// </summary>
     /// <param name="Whiteboard">Entire whiteboard state from the server</param>
+    [ExcludeFromCodeCoverage]
     public sealed record ResUpdate(WhiteboardDto Whiteboard) : ServerMessage;
 
     /// <summary>
@@ -31,12 +34,14 @@ public abstract record ServerMessage
     /// </summary>
     /// <param name="Id">GUID of the added item</param>
     /// <param name="Item">Item added</param>
+    [ExcludeFromCodeCoverage]
     public sealed record ResAddItem(Guid Id, ItemDto Item) : ServerMessage;
 
     /// <summary>
     /// Sent when a server deletes an item from its state (broadcast).
     /// </summary>
     /// <param name="Id">GUID of the deleted item</param>
+    [ExcludeFromCodeCoverage]
     public sealed record ResDeleteItem(Guid Id) : ServerMessage;
 
     /// <summary>
@@ -44,5 +49,6 @@ public abstract record ServerMessage
     /// </summary>
     /// <param name="Id">GUID of the updated item</param>
     /// <param name="Item">Updated item</param>
+    [ExcludeFromCodeCoverage]
     public sealed record ResUpdateItem(Guid Id, ItemDto Item) : ServerMessage;
 }
