@@ -115,3 +115,40 @@ public class ClientMessageStringSerializer
         return JsonSerializer.Deserialize<ClientMessage>(json)!;
     }
 }
+
+/// <summary>
+/// Serialize and deserialise an <see cref="ServerMessage"/> using JSON
+/// </summary>
+public class ServerMessageStringSerializer
+{
+    /// <summary>
+    /// Serialize from ServerMessage to JSON
+    /// </summary>
+    /// <param name="item">ServerMessage to serialize</param>
+    /// <returns>Serialized JSON</returns>
+    public static string Serialize(ServerMessage item)
+    {
+        if (item is null)
+        {
+            return string.Empty;
+        }
+
+        return JsonSerializer.Serialize(item);
+    }
+
+    /// <summary>
+    /// Deserialize from JSON to ServerMessage
+    /// </summary>
+    /// <param name="json">Serialized JSON</param>
+    /// <returns>Deserialized ServerMessage</returns>
+    public static ServerMessage Deserialize(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return default!;
+        }
+
+        return JsonSerializer.Deserialize<ServerMessage>(json)!;
+    }
+}
+
