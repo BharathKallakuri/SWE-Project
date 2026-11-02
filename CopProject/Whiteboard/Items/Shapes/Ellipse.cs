@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 
@@ -11,14 +10,17 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class Ellipse : Shape, IEllipse
 {
+    public Point2D Center { get; init => field = new(0, 0); }
+
     public override Rect2D BoundingBox
     {
         get => new(
-            Left - (Width / 2.0),
-            Top - (Height / 2.0),
+            Center.X - (Width / 2.0),
+            Center.Y - (Height / 2.0),
             Width,
             Height
         );
+
         set {
             Left = value.Left + (value.Width / 2.0);
             Top = value.Top + (value.Height / 2.0);
@@ -43,6 +45,7 @@ public class Ellipse : Shape, IEllipse
         double normalized = ((dx * dx) / (rx * rx)) + ((dy * dy) / (ry * ry));
         return normalized <= 1.0;
     }
+
     public double Width { get; set; } = 10;
     public double Height { get; set; } = 20;
 }
