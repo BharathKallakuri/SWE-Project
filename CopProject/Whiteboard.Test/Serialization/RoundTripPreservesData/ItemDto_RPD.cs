@@ -14,7 +14,7 @@ public class ItemDto_RPD
     /// Test that string serialization and deserialization preserves the data
     /// </summary>
     /// <param name="type">One of <see cref="XUnitShapeType"/></param>
-    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="type"/> is not one of <see cref="XUnitShapeType"/></exception>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
     [Theory]
     [InlineData(XUnitShapeType.Freehand)]
     [InlineData(XUnitShapeType.Line)]
@@ -60,7 +60,7 @@ public class ItemDto_RPD
     /// Test that byte serialization and deserialization preserves the data
     /// </summary>
     /// <param name="type">One of <see cref="XUnitShapeType"/></param>
-    /// <exception cref="ArgumentOutOfRangeException">If <paramref name="type"/> is not one of <see cref="XUnitShapeType"/></exception>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
     [Theory]
     [InlineData(XUnitShapeType.Freehand)]
     [InlineData(XUnitShapeType.Line)]
