@@ -10,6 +10,11 @@ namespace Whiteboard.Interfaces.Shapes;
 public interface IEqTriangle : IShape
 {
     /// <summary>
+    /// Center of the equilateral triangle
+    /// </summary>
+    public Point2D Center { get; init; }
+
+    /// <summary>
     /// Side length of the equilateral triangle
     /// </summary>
     public double SideLength { get; set; }

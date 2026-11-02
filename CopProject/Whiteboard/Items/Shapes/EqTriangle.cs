@@ -11,6 +11,16 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class EqTriangle : Shape, IEqTriangle
 {
+    public Point2D Center
+    {
+        get => field = new(
+            Left + (SideLength / 2.0),
+            Top + (2.0 / 3.0) * GetTriangleHeight(SideLength)
+        );
+
+        init => field = new(0, 0);
+    }
+
     public override Rect2D BoundingBox
     {
         get => new(
