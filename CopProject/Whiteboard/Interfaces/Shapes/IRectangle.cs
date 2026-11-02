@@ -10,6 +10,11 @@ namespace Whiteboard.Interfaces.Shapes;
 public interface IRectangle : IShape
 {
     /// <summary>
+    /// Center of the rectangle
+    /// </summary>
+    public Point2D Center { get; init; }
+
+    /// <summary>
     /// Width of the rectangle
     /// </summary>
     public double Width { get; set; }
