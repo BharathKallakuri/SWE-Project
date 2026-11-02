@@ -17,7 +17,7 @@ public class RandomPointGenerator : BaseGenerator
     {
         double pointX = Rng.NextDouble() * 100;
         double pointY = Rng.NextDouble() * 100;
-        Point2D point = new() { X = pointX, Y = pointY };
+        Point2D point = new Point2D(pointX, pointY);
         return point;
     }
 }

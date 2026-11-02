@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Whiteboard.Interfaces;
 
@@ -63,18 +64,13 @@ public interface IItem
 /// <summary>
 /// Represents a point in the whiteboard
 /// </summary>
-public struct Point2D
-{
-    /// <summary>
-    /// X-coordinate of the point
-    /// </summary>
-    public double X { get; set; }
-
-    /// <summary>
-    /// Y-coordinate of the point
-    /// </summary>
-    public double Y { get; set; }
-}
+/// <param name="X">X-coordinate of the point</param>
+/// <param name="Y">Y-coordinate of the point</param>
+[ExcludeFromCodeCoverage]
+public record Point2D(
+    double X,
+    double Y
+);
 
 /// <summary>
 /// Represents an always-upright rectangle on the whiteboard (not a UI element)
