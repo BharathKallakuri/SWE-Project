@@ -10,7 +10,7 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class Ellipse : Shape, IEllipse
 {
-    public Point2D Center { get; init => field = new(0, 0); }
+    public Point2D Center { get; init; } = new(0, 0);
 
     public override Rect2D BoundingBox
     {

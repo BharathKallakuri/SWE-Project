@@ -18,8 +18,8 @@ public class EqTriangle : Shape, IEqTriangle
             Top + (2.0 / 3.0) * GetTriangleHeight(SideLength)
         );
 
-        init => field = new(0, 0);
-    }
+        init;
+    } = new(0, 0);
 
     public override Rect2D BoundingBox
     {

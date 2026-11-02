@@ -13,8 +13,8 @@ public class Rectangle : Shape, IRectangle
     public Point2D Center
     {
         get => field = new(Left + (Width / 2), Top - (Height / 2));
-        init => field = new(0, 0);
-    }
+        init;
+    } = new(0, 0);
 
     public override Rect2D BoundingBox
     {

@@ -10,7 +10,7 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class Circle : Shape, ICircle
 {
-    public Point2D Center { get; init => field = new(0, 0); }
+    public Point2D Center { get; init; } = new(0, 0);
 
     public double Radius { get; set; } = 10;
 
