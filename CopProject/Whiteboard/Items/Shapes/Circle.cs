@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 
@@ -11,15 +10,19 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class Circle : Shape, ICircle
 {
-    // Left/Top are treated as center coordinates for circle
+    public Point2D Center { get; init => field = new(0, 0); }
+
+    public double Radius { get; set; } = 10;
+
     public override Rect2D BoundingBox
     {
         get => new(
-            Left - Radius,
-            Top - Radius,
+            Center.X - Radius,
+            Center.Y + Radius,
             Radius * 2,
             Radius * 2
         );
+
         set {
             Left = value.Left + (value.Width / 2.0);
             Top = value.Top + (value.Height / 2.0);
@@ -29,11 +32,10 @@ public class Circle : Shape, ICircle
 
     public override bool HitTest(Point2D point)
     {
-        double dx = point.X - Left;
-        double dy = point.Y - Top;
+        double dx = point.X - Center.X;
+        double dy = point.Y - Center.Y;
         double distanceSquared = (dx * dx) + (dy * dy);
         double radiusSquared = Radius * Radius;
         return distanceSquared <= radiusSquared;
     }
-    public double Radius { get; set; } = 10;
 }
