@@ -75,25 +75,14 @@ public record Point2D(
 /// <summary>
 /// Represents an always-upright rectangle on the whiteboard (not a UI element)
 /// </summary>
-public struct Rect2D
-{
-    /// <summary>
-    /// X-coordinate of the leftmost edge of the rectangle
-    /// </summary>
-    public double Left { get; set; }
-
-    /// <summary>
-    /// Y-coordinate of the topmost edge of the rectangle
-    /// </summary>
-    public double Top { get; set; }
-
-    /// <summary>
-    /// Width of the rectangle
-    /// </summary>
-    public double Width { get; set; }
-
-    /// <summary>
-    /// Height of the rectangle
-    /// </summary>
-    public double Height { get; set; }
-}
+/// <param name="Left">X-coordinate of the leftmost edge of the rectangle</param>
+/// <param name="Top">Y-coordinate of the topmost edge of the rectangle</param>
+/// <param name="Width">Width of the rectangle</param>
+/// <param name="Height">Height of the rectangle</param>
+[ExcludeFromCodeCoverage]
+public record Rect2D(
+    double Left,
+    double Top,
+    double Width,
+    double Height
+);

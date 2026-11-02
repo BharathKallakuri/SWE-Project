@@ -23,12 +23,12 @@ public class Line : Item, ILine
             double right = Math.Max(Begin.X, End.X);
             double bottom = Math.Max(Begin.Y, End.Y);
 
-            return new Rect2D {
-                Left = left,
-                Top = top,
-                Width = right - left,
-                Height = bottom - top
-            };
+            return new Rect2D(
+                left,
+                top,
+                right - left,
+                bottom - top
+            );
         }
         set {
             // Refit line to the diagonal of the new bounding box.

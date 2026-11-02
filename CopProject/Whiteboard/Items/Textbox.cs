@@ -14,12 +14,12 @@ public class Textbox : Item, ITextbox
 
     public override Rect2D BoundingBox
     {
-        get => new Rect2D {
-            Left = Left,
-            Top = Top,
-            Width = Width,
-            Height = Height
-        };
+        get => new(
+            Left,
+            Top,
+            Width,
+            Height
+        );
 
         set {
             Left = value.Left;

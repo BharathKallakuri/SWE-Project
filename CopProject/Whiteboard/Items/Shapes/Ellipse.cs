@@ -13,12 +13,12 @@ public class Ellipse : Shape, IEllipse
 {
     public override Rect2D BoundingBox
     {
-        get => new Rect2D {
-            Left = Left - (Width / 2.0),
-            Top = Top - (Height / 2.0),
-            Width = Width,
-            Height = Height
-        };
+        get => new(
+            Left - (Width / 2.0),
+            Top - (Height / 2.0),
+            Width,
+            Height
+        );
         set {
             Left = value.Left + (value.Width / 2.0);
             Top = value.Top + (value.Height / 2.0);

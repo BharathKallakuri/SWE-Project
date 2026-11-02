@@ -13,12 +13,12 @@ public class EqTriangle : Shape, IEqTriangle
 {
     public override Rect2D BoundingBox
     {
-        get => new Rect2D {
-            Left = Left,
-            Top = Top,
-            Width = SideLength,
-            Height = GetTriangleHeight(SideLength)
-        };
+        get => new(
+            Left,
+            Top,
+            SideLength,
+            GetTriangleHeight(SideLength)
+        );
         set {
             Left = value.Left;
             Top = value.Top;

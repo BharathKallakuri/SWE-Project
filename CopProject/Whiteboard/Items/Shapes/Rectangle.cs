@@ -12,12 +12,12 @@ public class Rectangle : Shape, IRectangle
 {
     public override Rect2D BoundingBox
     {
-        get => new Rect2D {
-            Left = Left,
-            Top = Top,
-            Width = Width,
-            Height = Height
-        };
+        get => new(
+            Left,
+            Top,
+            Width,
+            Height
+        );
         set {
             Left = value.Left;
             Top = value.Top;

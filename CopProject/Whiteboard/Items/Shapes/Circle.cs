@@ -14,12 +14,12 @@ public class Circle : Shape, ICircle
     // Left/Top are treated as center coordinates for circle
     public override Rect2D BoundingBox
     {
-        get => new Rect2D {
-            Left = Left - Radius,
-            Top = Top - Radius,
-            Width = Radius * 2,
-            Height = Radius * 2
-        };
+        get => new(
+            Left - Radius,
+            Top - Radius,
+            Radius * 2,
+            Radius * 2
+        );
         set {
             Left = value.Left + (value.Width / 2.0);
             Top = value.Top + (value.Height / 2.0);
