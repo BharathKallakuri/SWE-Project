@@ -14,6 +14,9 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="*" />
   </ItemGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="FileSynchroniser.Test"/>
+    <InternalsVisibleTo Include="FileSynchroniser.Test" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\" />
   </ItemGroup>
 </Project>
