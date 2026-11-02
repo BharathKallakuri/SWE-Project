@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "FileSynchroniser.Test (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "FileSynchroniser.Test (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
