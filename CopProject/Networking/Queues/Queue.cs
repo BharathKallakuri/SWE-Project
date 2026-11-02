@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,13 +22,13 @@ public class Queue : IQueue
     }
 
 
-    public void Enqueue(Packet packet)
+    public virtual void Enqueue(Packet packet)
     {
         Trace.WriteLine($"[Networking] Enqueuing to the queue {this.GetType().Name}");
         _queue.Enqueue(packet);
     }
 
-    public Packet? Dequeue()
+    public virtual Packet? Dequeue()
     {
         Trace.WriteLine($"[Networking] Dequeuing to the queue {this.GetType().Name}");
         if (!_queue.TryDequeue(out Packet? top))
@@ -39,7 +39,7 @@ public class Queue : IQueue
     }
 
 
-    public Packet? Peek()
+    public virtual Packet? Peek()
     {
         if (!_queue.TryPeek(out Packet? peek))
         {
@@ -48,17 +48,17 @@ public class Queue : IQueue
         return peek;
     }
 
-    public void Clear()
+    public virtual void Clear()
     {
         _queue.Clear();
     }
 
-    public int Size()
+    public virtual int Size()
     {
         return _queue.Count();
     }
 
-    public bool IsEmpty()
+    public virtual bool IsEmpty()
     {
         return _queue.IsEmpty;
     }
