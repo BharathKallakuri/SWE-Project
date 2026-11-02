@@ -10,11 +10,7 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class Rectangle : Shape, IRectangle
 {
-    public Point2D Center
-    {
-        get => field = new(Left + (Width / 2), Top - (Height / 2));
-        init;
-    } = new(0, 0);
+    public Point2D Center { get; init; } = new(0, 0);
 
     public override Rect2D BoundingBox
     {

@@ -9,11 +9,7 @@ namespace Whiteboard.Items;
 /// <inheritdoc/>
 public class Textbox : Item, ITextbox
 {
-    public Point2D Center
-    {
-        get => field = new(Left + (Width / 2), Top - (Height / 2));
-        init;
-    } = new(0, 0);
+    public Point2D Center { get; init; } = new(0, 0);
 
     // Model size for selection/hit-testing (not UI control size)
     public double Width { get; set; } = 150;

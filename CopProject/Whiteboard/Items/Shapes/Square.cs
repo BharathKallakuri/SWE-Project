@@ -11,11 +11,7 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class Square : Shape, ISquare
 {
-    public Point2D Center
-    {
-        get => field = new(Left + (SideLegth / 2), Top - (SideLegth / 2));
-        init;
-    } = new(0, 0);
+    public Point2D Center { get; init; } = new(0, 0);
 
     public override Rect2D BoundingBox
     {
