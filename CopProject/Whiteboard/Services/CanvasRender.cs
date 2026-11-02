@@ -13,12 +13,12 @@ namespace Whiteboard.Services;
 
 public class CanvasRender : ICanvasRender
 {
-    public async Task<byte> RenderToPngAsync(UIElement element)
+    public async Task<byte[]> RenderToPngAsync(UIElement element)
     {
         return await RenderToBytesAsync(element, BitmapEncoder.PngEncoderId);
     }
 
-    public async Task<byte> RenderToJpegAsync(UIElement element)
+    public async Task<byte[]> RenderToJpegAsync(UIElement element)
     {
         return await RenderToBytesAsync(element, BitmapEncoder.JpegEncoderId);
     }
@@ -34,7 +34,7 @@ public class CanvasRender : ICanvasRender
         await targetBitmap.RenderAsync(element);
 
         Guid encoderId = isJpeg ? BitmapEncoder.JpegEncoderId : BitmapEncoder.PngEncoderId;
-        string extension = isJpeg ? ".jpg" : ".png";
+        string extension = isJpeg ? "jpg" : "png";
         string contentType = isJpeg ? "image/jpeg" : "image/png";   
 
         byte[] bytes = await BitmapToBytesAsync(targetBitmap, encoderId);
@@ -74,8 +74,8 @@ public class CanvasRender : ICanvasRender
        encoder.SetPixelData(
             BitmapPixelFormat.Bgra8,
             BitmapAlphaMode.Premultiplied,
-            (uint)renderTarget.PixelWidth,
-            (uint)renderTarget.PixelHeight,
+            (uint)bitmap.PixelWidth,
+            (uint)bitmap.PixelHeight,
             96, 
             96, 
             pixels
