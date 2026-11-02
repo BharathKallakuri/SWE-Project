@@ -9,70 +9,40 @@ using Whiteboard.Network.Dtos;
 namespace Whiteboard.Network.Messages;
 
 /// <summary>
-/// Message sent from the server to a client for acknowledgement
+/// Message sent from the server to one or all clients
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(AckUpdate), "ack_update")]
-[JsonDerivedType(typeof(AckAddItem), "ack_add_item")]
-[JsonDerivedType(typeof(AckDeleteItem), "ack_delete_item")]
-[JsonDerivedType(typeof(AckUpdateItem), "ack_update_item")]
-public abstract record ServerAckMessage
+[JsonDerivedType(typeof(ResUpdate), "res_update")]
+[JsonDerivedType(typeof(ResAddItem), "add_item")]
+[JsonDerivedType(typeof(ResDeleteItem), "delete_item")]
+[JsonDerivedType(typeof(ResUpdateItem), "update_item")]
+public abstract record ServerMessage
 {
-    private ServerAckMessage() { }
+    private ServerMessage() { }
 
     /// <summary>
-    /// Sent when a client requested a complete whiteboard update.
+    /// Sent when a client requested a complete whiteboard update (unicast).
     /// </summary>
     /// <param name="Whiteboard">Entire whiteboard state from the server</param>
-    public sealed record AckUpdate(WhiteboardDto Whiteboard) : ServerAckMessage;
+    public sealed record ResUpdate(WhiteboardDto Whiteboard) : ServerMessage;
 
     /// <summary>
-    /// Sent when a client requested approval for an item addition.
-    /// </summary>
-    /// <param name="Id">GUID of the added item</param>
-    public sealed record AckAddItem(Guid Id) : ServerAckMessage;
-
-    /// <summary>
-    /// Sent when a client requested approval for an item deletion.
-    /// </summary>
-    /// <param name="Id">GUID of the deleted item</param>
-    public sealed record AckDeleteItem(Guid Id) : ServerAckMessage;
-
-    /// <summary>
-    /// Sent when a client requested approval for an item edit.
-    /// </summary>
-    /// <param name="Id">GUID of the item updated</param>
-    public sealed record AckUpdateItem(Guid Id) : ServerAckMessage;
-}
-
-/// <summary>
-/// Message sent from the server to all clients (broadcast) upon state change
-/// </summary>
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(BrdAddItem), "brd_add_item")]
-[JsonDerivedType(typeof(BrdDeleteItem), "brd_delete_item")]
-[JsonDerivedType(typeof(BrdUpdateItem), "brd_update_item")]
-public abstract record ServerBrdMessage
-{
-    private ServerBrdMessage() { }
-
-    /// <summary>
-    /// Sent when a server adds an item to its state.
+    /// Sent when a server adds an item to its state (broadcast).
     /// </summary>
     /// <param name="Id">GUID of the added item</param>
     /// <param name="Item">Item added</param>
-    public sealed record BrdAddItem(Guid Id, ItemDto Item) : ServerBrdMessage;
+    public sealed record ResAddItem(Guid Id, ItemDto Item) : ServerMessage;
 
     /// <summary>
-    /// Sent when a server deletes an item from its state.
+    /// Sent when a server deletes an item from its state (broadcast).
     /// </summary>
     /// <param name="Id">GUID of the deleted item</param>
-    public sealed record BrdDeleteItem(Guid Id) : ServerBrdMessage;
+    public sealed record ResDeleteItem(Guid Id) : ServerMessage;
 
     /// <summary>
-    /// Sent when a server updates an item in its state.
+    /// Sent when a server updates an item in its state (broadcast).
     /// </summary>
     /// <param name="Id">GUID of the updated item</param>
     /// <param name="Item">Updated item</param>
-    public sealed record BrdUpdateItem(Guid Id, ItemDto Item) : ServerBrdMessage;
+    public sealed record ResUpdateItem(Guid Id, ItemDto Item) : ServerMessage;
 }

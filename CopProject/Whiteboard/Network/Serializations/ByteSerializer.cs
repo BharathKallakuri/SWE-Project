@@ -83,9 +83,9 @@ public class ClientMessageByteSerializer : ISerializer<ClientMessage>
 }
 
 /// <inheritdoc/>
-public class ServerAckMessageByteSerializer : ISerializer<ServerAckMessage>
+public class ServerBrdMessageByteSerializer : ISerializer<ServerMessage>
 {
-    public byte[] Serialize(ServerAckMessage item)
+    public byte[] Serialize(ServerMessage item)
     {
         if (item is null)
         {
@@ -95,37 +95,13 @@ public class ServerAckMessageByteSerializer : ISerializer<ServerAckMessage>
         return JsonSerializer.SerializeToUtf8Bytes(item);
     }
 
-    public ServerAckMessage Deserialize(byte[] data)
+    public ServerMessage Deserialize(byte[] data)
     {
         if (data is null || data.Length == 0)
         {
             return default!;
         }
 
-        return JsonSerializer.Deserialize<ServerAckMessage>(data)!;
-    }
-}
-
-/// <inheritdoc/>
-public class ServerBrdMessageByteSerializer : ISerializer<ServerBrdMessage>
-{
-    public byte[] Serialize(ServerBrdMessage item)
-    {
-        if (item is null)
-        {
-            return [];
-        }
-
-        return JsonSerializer.SerializeToUtf8Bytes(item);
-    }
-
-    public ServerBrdMessage Deserialize(byte[] data)
-    {
-        if (data is null || data.Length == 0)
-        {
-            return default!;
-        }
-
-        return JsonSerializer.Deserialize<ServerBrdMessage>(data)!;
+        return JsonSerializer.Deserialize<ServerMessage>(data)!;
     }
 }
