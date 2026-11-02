@@ -4,6 +4,7 @@
 
 using System.Text.Json;
 using Whiteboard.Network.Dtos;
+using Whiteboard.Network.Messages;
 
 namespace Whiteboard.Network.Serializations;
 
@@ -76,5 +77,41 @@ public class WhiteboardDtoStringSerializer
         }
 
         return JsonSerializer.Deserialize<WhiteboardDto>(json)!;
+    }
+}
+
+/// <summary>
+/// Serialize and deserialise an <see cref="ClientMessage"/> using JSON
+/// </summary>
+public class ClientMessageStringSerializer
+{
+    /// <summary>
+    /// Serialize from ClientMessage to JSON
+    /// </summary>
+    /// <param name="item">ClientMessage to serialize</param>
+    /// <returns>Serialized JSON</returns>
+    public static string Serialize(ClientMessage item)
+    {
+        if (item is null)
+        {
+            return string.Empty;
+        }
+
+        return JsonSerializer.Serialize(item);
+    }
+
+    /// <summary>
+    /// Deserialize from JSON to ClientMessage
+    /// </summary>
+    /// <param name="json">Serialized JSON</param>
+    /// <returns>Deserialized ClientMessage</returns>
+    public static ClientMessage Deserialize(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return default!;
+        }
+
+        return JsonSerializer.Deserialize<ClientMessage>(json)!;
     }
 }

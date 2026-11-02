@@ -83,7 +83,7 @@ public class ClientMessageByteSerializer : ISerializer<ClientMessage>
 }
 
 /// <inheritdoc/>
-public class ServerBrdMessageByteSerializer : ISerializer<ServerMessage>
+public class ServerMessageByteSerializer : ISerializer<ServerMessage>
 {
     public byte[] Serialize(ServerMessage item)
     {
