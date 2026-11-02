@@ -86,7 +86,7 @@ public abstract record ItemPayload
     [ExcludeFromCodeCoverage]
     public sealed record Rectangle(ShapeStyle Style, Point2D Center, double Width, double Height) : ItemPayload;
     [ExcludeFromCodeCoverage]
-    public sealed record Square(ShapeStyle Stype, Point2D Center, double SideLength) : ItemPayload;
+    public sealed record Square(ShapeStyle Style, Point2D Center, double SideLength) : ItemPayload;
 }
 
 /// <summary>
