@@ -8,12 +8,12 @@ public class SessionEventArgs : EventArgs
 // It will be Raised when a user joins a session.
 public class UserJoinedEventArgs : SessionEventArgs
 {
-    public string UserId { get; }
+    public ControllerUser User { get; }
     public int NewCount { get; }
 
-    public UserJoinedEventArgs(string userId, int newCount)
+    public UserJoinedEventArgs(ControllerUser user, int newCount)
     {
-        UserId = userId;
+        User = user;
         NewCount = newCount;
     }
 }
@@ -21,45 +21,23 @@ public class UserJoinedEventArgs : SessionEventArgs
 // It is Raised when a user leaves a session.
 public class UserLeftEventArgs : SessionEventArgs
 {
-    public string UserId { get; }
+    public ControllerUser User { get; }
     public int NewCount { get; }
 
-    public UserLeftEventArgs(string userId, int newCount)
+    public UserLeftEventArgs(ControllerUser user, int newCount)
     {
-        UserId = userId;
+        User = user;
         NewCount = newCount;
-    }
-}
-
-// It will be Raised when the active user count changes in a session.
-public class CountChangedEventArgs : SessionEventArgs
-{
-    public int NewCount { get; }
-
-    public CountChangedEventArgs(int newCount)
-    {
-        NewCount = newCount;
-    }
-}
-
-// It will be  Raised when a session starts.It identifies the user who started the session.
-public class SessionStartedEventArgs : SessionEventArgs
-{
-    public string HostUserId { get; }
-
-    public SessionStartedEventArgs(string hostUserId)
-    {
-        HostUserId = hostUserId;
     }
 }
 
 // It will be Raised when a session ends.
-public class SessionEndedEventArgs : SessionEventArgs
+public class MeetingEndedEventArgs : SessionEventArgs
 {
-    public string EndedByUserId { get; }
+    public ControllerUser Host { get; }
 
-    public SessionEndedEventArgs(string endedByUserId)
+    public MeetingEndedEventArgs(ControllerUser host)
     {
-        EndedByUserId = endedByUserId;
+        Host=host;
     }
 }

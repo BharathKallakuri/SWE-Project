@@ -10,7 +10,7 @@ public interface IControllerService : IDisposable
     // Event Fired when a user leaves a session.
     event EventHandler<UserLeftEventArgs>? UserLeft;
     // Event Fired when the Meeting is Ended. 
-    event EventHandler<SessionEndedEventArgs>? MeetingEnded;
+    event EventHandler<MeetingEndedEventArgs>? MeetingEnded;
     // returns True if the meeting was created and started successfully.
     bool StartMeeting();
 
