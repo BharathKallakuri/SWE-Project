@@ -49,6 +49,6 @@ public class Textbox : Item, ITextbox
     public string Content { get; set; } = string.Empty;
     public FontFamily FontFamily { get; set; } = new FontFamily("Segoe UI");
     public int FontSize { get; set; } = 15;
-    public Color FontColor { get; set; } = Colors.Black;
+    public Color FontColor { get; set; } = Color.FromArgb(255, 0, 0, 0);    // Black
 
 }

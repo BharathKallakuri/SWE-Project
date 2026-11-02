@@ -5,14 +5,13 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using Windows.UI;
+using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 using Whiteboard.Items;
-using Whiteboard.Network.Dtos;
-using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
 using Whiteboard.Items.Shapes;
+using Whiteboard.Network.Dtos;
+using Windows.UI;
 
 namespace Whiteboard.Network.Mappers;
 
@@ -207,6 +206,8 @@ public class ItemMapper
         return $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
     }
 
+    private static readonly Color s_default_color = Color.FromArgb(255, 0, 0, 0);
+
     /// <summary>
     /// Convert a hexadecimal color value to <see cref="Color"/>
     /// </summary>
@@ -216,7 +217,7 @@ public class ItemMapper
     {
         if (string.IsNullOrWhiteSpace(hex))
         {
-            return Colors.Black;
+            return s_default_color;
         }
 
         hex = hex.TrimStart('#');
@@ -230,7 +231,7 @@ public class ItemMapper
             );
         }
 
-        return Colors.Black;
+        return s_default_color;
     }
 }
 
