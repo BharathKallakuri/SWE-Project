@@ -1,4 +1,5 @@
-﻿using Microsoft.UI;
+﻿using System.Reflection.Metadata.Ecma335;
+using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
 using Windows.UI;
@@ -8,6 +9,12 @@ namespace Whiteboard.Items;
 /// <inheritdoc/>
 public class Textbox : Item, ITextbox
 {
+    public Point2D Center
+    {
+        get => field = new(Left + (Width / 2), Top - (Height / 2));
+        init => field = new(0, 0);
+    }
+
     // Model size for selection/hit-testing (not UI control size)
     public double Width { get; set; } = 150;
     public double Height { get; set; } = 40;
@@ -43,4 +50,5 @@ public class Textbox : Item, ITextbox
     public FontFamily FontFamily { get; set; } = new FontFamily("Segoe UI");
     public int FontSize { get; set; } = 15;
     public Color FontColor { get; set; } = Colors.Black;
+
 }

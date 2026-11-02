@@ -14,6 +14,11 @@ namespace Whiteboard.Interfaces;
 public interface ITextbox : IItem
 {
     /// <summary>
+    /// Center of the textbox
+    /// </summary>
+    public Point2D Center { get; init; }
+
+    /// <summary>
     /// Content of the textbox
     /// </summary>
     public string Content { get; set; }
