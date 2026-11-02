@@ -69,17 +69,10 @@ public class ChatMessageWithThreads : ChatMessage, IChatMessageWithThreads
         {
             Timestamp = Timestamp,
             SenderName = SenderName,
-            Mentions = CloneMentions(Mentions),
+            Mentions = Mentions.Clone(),
             Content = Content
         };
         clone.CopyMutableStateFrom(this);
-        return clone;
-    }
-
-    internal static Mentions CloneMentions(Mentions mentions)
-    {
-        Mentions clone = new() { All = mentions.All };
-        clone.Usernames.UnionWith(mentions.Usernames);
         return clone;
     }
 }

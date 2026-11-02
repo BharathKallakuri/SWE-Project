@@ -280,7 +280,7 @@ public class Chatroom : IChatroom
         {
             Timestamp = message.Timestamp,
             SenderName = message.SenderName,
-            Mentions = ChatMessageWithThreads.CloneMentions(message.Mentions),
+            Mentions = message.Mentions.Clone(),
             Content = message.Content
         };
         clone.CopyMutableStateFrom(message);
