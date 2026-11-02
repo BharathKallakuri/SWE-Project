@@ -10,19 +10,21 @@ public class ControllerUser
 
     public string Ip { get; set; } = string.Empty;
     public int Port { get; set; }
+    public bool IsHost { get; set; }
 
     // Parameterless constructor 
     public ControllerUser() { }
 
     // Parameterized constructor
-    public ControllerUser(string username, string gmail, byte[]? profilePicture, string ip, int port)
+    public ControllerUser(string username, string gmail, byte[]? profilePicture, string ip, int port, bool isHost = false)
     {
         Username = username ?? throw new ArgumentNullException(nameof(username));
         Gmail = gmail ?? throw new ArgumentNullException(nameof(gmail));
         ProfilePicture = profilePicture;
         Ip = ip ?? throw new ArgumentNullException(nameof(ip));
         Port = port;
+        IsHost=isHost;
     }
 
-    public override string ToString() => $"{Username} ({Gmail}) @ {Ip}:{Port}";
+    public override string ToString() => $"[{(IsHost ? "Host" : "Participant")}]{Username} ({Gmail}) @ {Ip}:{Port}";
 }

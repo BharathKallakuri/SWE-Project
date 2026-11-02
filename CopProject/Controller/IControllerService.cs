@@ -1,25 +1,16 @@
 namespace Controller;
 
-// The single interface the UX team programs against.
-//   The UX layer depends on this abstraction, not on concrete Host/Client classes.
-//   It exposes commands (StartMeeting, EndMeeting, JoinMeeting, LeaveMeeting) and events so the UI updates automatically.
-// Each session is uniquely identified by the host's IP:port pair,
+// The UX layer depends on this abstraction, not on concrete Host/Client classes.
+// Each session is uniquely identified by the host's IP:port pair.
 
 public interface IControllerService : IDisposable
 {
-    // Events
-    // Fired when a meeting session starts 
-    event EventHandler<SessionStartedEventArgs>? SessionStarted;
-    //Fired when a meeting session ends.
-    event EventHandler<SessionEndedEventArgs>? SessionEnded;
-    // Fired when a user joins a session.
+    // Event Fired when a user joins a session.
     event EventHandler<UserJoinedEventArgs>? UserJoined;
-    // Fired when a user leaves a session.
+    // Event Fired when a user leaves a session.
     event EventHandler<UserLeftEventArgs>? UserLeft;
-    //Fired when the active participant count changes.
-    event EventHandler<CountChangedEventArgs>? CountChanged;
-
-    
+    // Event Fired when the Meeting is Ended. 
+    event EventHandler<SessionEndedEventArgs>? MeetingEnded;
     // returns True if the meeting was created and started successfully.
     bool StartMeeting();
 
@@ -27,18 +18,16 @@ public interface IControllerService : IDisposable
     bool EndMeeting();
 
     // Joins an existing meeting on a remote host.
-    
-    void JoinMeeting(string hostIp, int hostPort, string userId);
+    void JoinMeeting(string hostIp, int hostPort, ControllerUser user);
 
     // Leaves a meeting that was previously joined.
-   
-    void LeaveMeeting(string userId);
+    void LeaveMeeting(ControllerUser user);
 
     // Gets the number of active participants in the session.
     int GetActiveUserCount();
 
-    // Gets the user IDs of all active participants in the session.
-    List<string> GetActiveUsers();
+    // Gets the user information of all active participants in the session.
+    List<ControllerUser> GetActiveUsers();
 
     // Gets the port this controller is listening on.
     int ListenPort { get; }
