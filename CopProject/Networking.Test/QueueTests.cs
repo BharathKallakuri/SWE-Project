@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Networking.Packets;
 using Networking.Queues;
@@ -7,103 +8,73 @@ using Networking.Queues;
 namespace Networking.Test;
 
 /// <summary>
-/// Unit tests for Queue.
+/// Unit tests for base Queue class.
 /// </summary>
 [TestClass]
 public class QueueTests
 {
-    private static Packet CreateDummyPacket(int module = 1, int priority = 1)
+    private static readonly IPEndPoint DummyEndpoint = new(IPAddress.Loopback, 8080);
+
+    private static Packet CreatePacket(string content = "test")
     {
-        byte[] payload = new byte[] { 0x01, 0x02, 0x03 };
-        IPEndPoint destination = new(IPAddress.Loopback, 8080);
-        return new Packet(payload, destination, module, priority);
+        return new Packet(Encoding.UTF8.GetBytes(content), DummyEndpoint, 1, 1);
     }
 
     /// <summary>
-    /// Checks FIFO ordering of packets in the queue.
+    /// Checks that newly created queue is empty.
     /// </summary>
     [TestMethod]
-    public void Enqueue_MultiplePackets_DequeuesInFifoOrder()
-    {
-        Queue queue = new();
-        Packet first = CreateDummyPacket(module: 1);
-        Packet second = CreateDummyPacket(module: 2);
-
-        queue.Enqueue(first);
-        queue.Enqueue(second);
-
-        Packet? dequeuedFirst = queue.Dequeue();
-        Packet? dequeuedSecond = queue.Dequeue();
-
-        Assert.IsNotNull(dequeuedFirst);
-        Assert.IsNotNull(dequeuedSecond);
-        Assert.AreEqual(1, dequeuedFirst.Module);
-        Assert.AreEqual(2, dequeuedSecond.Module);
-    }
-
-    /// <summary>
-    /// Checks that Size and IsEmpty update as packets are added.
-    /// </summary>
-    [TestMethod]
-    public void IsEmptyAndSize_ReflectCurrentQueueState()
+    public void Queue_Initialization_IsEmpty()
     {
         Queue queue = new();
 
         Assert.IsTrue(queue.IsEmpty());
         Assert.AreEqual(0, queue.Size());
+        Assert.IsNull(queue.Peek());
+        Assert.IsNull(queue.Dequeue());
+    }
 
-        queue.Enqueue(CreateDummyPacket());
+    /// <summary>
+    /// Checks enqueuing, peeking, and dequeuing items in FIFO order.
+    /// </summary>
+    [TestMethod]
+    public void Queue_EnqueueAndDequeue_MaintainsFifo()
+    {
+        Queue queue = new();
+        Packet packet1 = CreatePacket("first");
+        Packet packet2 = CreatePacket("second");
+
+        queue.Enqueue(packet1);
+        queue.Enqueue(packet2);
 
         Assert.IsFalse(queue.IsEmpty());
+        Assert.AreEqual(2, queue.Size());
+
+        Assert.AreEqual(packet1, queue.Peek());
+        Assert.AreEqual(2, queue.Size());
+
+        Assert.AreEqual(packet1, queue.Dequeue());
         Assert.AreEqual(1, queue.Size());
+
+        Assert.AreEqual(packet2, queue.Dequeue());
+        Assert.IsTrue(queue.IsEmpty());
+        Assert.IsNull(queue.Dequeue());
     }
 
     /// <summary>
-    /// Checks that Peek returns the first packet without removing it.
+    /// Checks clearing the queue empties all contents.
     /// </summary>
     [TestMethod]
-    public void Peek_ReturnsTopPacketWithoutRemoving()
+    public void Queue_Clear_EmptiesAllItems()
     {
         Queue queue = new();
-        Packet packet = CreateDummyPacket(module: 5);
-        queue.Enqueue(packet);
-
-        Packet? peeked = queue.Peek();
-
-        Assert.IsNotNull(peeked);
-        Assert.AreEqual(5, peeked.Module);
-        Assert.AreEqual(1, queue.Size());
-    }
-
-    /// <summary>
-    /// Checks that Clear empties the queue.
-    /// </summary>
-    [TestMethod]
-    public void Clear_RemovesAllEnqueuedPackets()
-    {
-        Queue queue = new();
-        queue.Enqueue(CreateDummyPacket());
-        queue.Enqueue(CreateDummyPacket());
+        queue.Enqueue(CreatePacket("item1"));
+        queue.Enqueue(CreatePacket("item2"));
 
         queue.Clear();
 
         Assert.IsTrue(queue.IsEmpty());
         Assert.AreEqual(0, queue.Size());
-        Assert.IsNull(queue.Dequeue());
-    }
-
-    /// <summary>
-    /// Checks that Dequeue and Peek return null on an empty queue.
-    /// </summary>
-    [TestMethod]
-    public void DequeueAndPeek_EmptyQueue_ReturnsNull()
-    {
-        Queue queue = new();
-
-        Packet? dequeued = queue.Dequeue();
-        Packet? peeked = queue.Peek();
-
-        Assert.IsNull(dequeued);
-        Assert.IsNull(peeked);
+        Assert.IsNull(queue.Peek());
     }
 }
