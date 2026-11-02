@@ -8,22 +8,6 @@ using Whiteboard.Test.RandomGenerators;
 
 namespace Whiteboard.Test.Serialization.RoundTripPreservesData;
 
-/// <summary>
-/// An enum representing differen test cases for xUnit
-/// </summary>
-public enum XUnitShapeType
-{
-    Freehand,
-    Line,
-    Textbox,
-    Circle,
-    Ellipse,
-    EqTriangle,
-    Polygon,
-    Rectangle,
-    Square
-}
-
 public class ItemDto_RPD
 {
     /// <summary>
