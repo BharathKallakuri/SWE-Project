@@ -16,12 +16,19 @@ public class RandomColorGenerator : BaseGenerator
     /// <summary>
     /// Random colors for testing
     /// </summary>
-    private static readonly List<Color> s_random_colors = [Color.Red, Color.Black, Color.Blue, Color.Yellow];
+    private static readonly string[] s_randomHexColors =
+        [
+            "#FFFF0000",    // Red
+            "#FF000000",    // Black
+            "#FF0000FF",    // Blue
+            "#FFFFFF00",    // Yellow
+            "#FF008000"     // Green
+        ];
 
-    public static Color Generate()
+    public static string Generate()
     {
-        int randomIndex = Rng.Next(s_random_colors.Count);
-        Color randomColor = s_random_colors[randomIndex];
+        int randomIndex = Rng.Next(s_randomHexColors.Length);
+        string randomColor = s_randomHexColors[randomIndex];
 
         return randomColor;
     }
