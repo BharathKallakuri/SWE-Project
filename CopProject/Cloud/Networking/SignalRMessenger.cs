@@ -9,7 +9,7 @@ namespace Cloud.Networking;
 /// <summary>
 /// Implements messaging using SignalR.
 /// </summary>
-public sealed class SignalRMessenger : IMessenger, IAsyncDisposable
+public sealed class SignalRMessenger : IMessenger
 {
     private readonly HubConnection _connection;
     public event Action<Message>? MessageReceived;
