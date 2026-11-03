@@ -89,6 +89,15 @@ public class WhiteboardClient : IMessageListener
         SendToServer(new ClientMessage.ReqDeleteItem(id));
     }
 
+    /// <summary>
+    /// Request to edit an <see cref="IITem"/> to the server
+    /// </summary>
+    /// <param name="item">Item to edit</param>
+    public void EditItem(IItem item)
+    {
+        SendToServer(new ClientMessage.ReqUpdateItem(item.Id, ItemMapper.ToDto(item)));
+    }
+
     /// <inheritdoc/>
     public void OnMessageReceived(byte[] message)
     {
