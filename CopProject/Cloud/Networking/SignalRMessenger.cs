@@ -61,11 +61,37 @@ public sealed class SignalRMessenger : IMessenger
     }
 
     /// <summary>
-    /// Connects to the server.
+    /// Starts the connection to the SignalR server.
+    /// Makes up to three attempts, waiting 1 and then 2 seconds.
     /// </summary>
     public async Task ConnectAsync()
     {
-        await _connection.StartAsync();
+        /* if connected, then just return without throwing */
+        if (_connection.State == HubConnectionState.Connected)
+        {
+            return;
+        }
+
+        /* i should create only for a disconnected connection */
+        if (_connection.State != HubConnectionState.Disconnected)
+        {
+            throw new InvalidOperationException(
+                $"Cannot connect while the connection is in the {_connection.State} state.");
+        }
+
+        const int MaxAttempts = 3;
+        for (int attempt = 1; attempt <= MaxAttempts; attempt++)
+        {
+            try
+            {
+                await _connection.StartAsync();
+                return;
+            }
+            catch (Exception ex) when (attempt < MaxAttempts && ex is not ObjectDisposedException)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(attempt));
+            }
+        }
     }
 
     /// <summary>
