@@ -4,7 +4,10 @@ using System.Drawing;
 
 namespace ScreenShare;
 
-public class ImageDiffResult
+/// <summary>
+/// the outcome of comparing two frames. owns FullFrame, so dispose the result when done with it
+/// </summary>
+public sealed class ImageDiffResult:IDisposable
 {
     public bool IsUnchanged { get; }
 
@@ -51,5 +54,10 @@ public class ImageDiffResult
             isFullFrame: true,
             changedTiles: new List<Tile>(),
             fullFrame: frame);
+    }
+
+    public void Dispose()
+    {
+        FullFrame?.Dispose();
     }
 }
