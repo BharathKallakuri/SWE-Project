@@ -45,6 +45,8 @@ jobs:
 
         # NOTE: Requires the coverlet.collector package in the test projects.
       - name: Test dotnet projects with coverage
+        env:
+          COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
         run: >
           dotnet test CopProject --configuration Release --no-build
           --collect:"XPlat Code Coverage"
