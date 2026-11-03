@@ -130,4 +130,51 @@ public class SocketListenerTests
         tinyStream.Write(new byte[] { 1, 2 }, 0, 2);
         listener.ProcessData(tinyStream);
     }
+
+    /// <summary>
+    /// Checks ReceivingQueueListener dequeue handling when enqueued packet is null.
+    /// </summary>
+    [TestMethod]
+    public void ReceivingQueueListener_NullPacket_ContinuesListening()
+    {
+        ReceivingQueue receivingQueue = new();
+        ConcurrentDictionary<int, IMessageListener> map = new();
+        using ReceivingQueueListener listener = new(receivingQueue, map);
+
+        receivingQueue.Enqueue(null!);
+        Thread.Sleep(150);
+    }
+
+    /// <summary>
+    /// Checks SendingQueueListenerClient handling when enqueued packet is null.
+    /// </summary>
+    [TestMethod]
+    public void SendingQueueListenerClient_NullPacket_HandledSafely()
+    {
+        SendingQueue queue = new();
+        using TcpClient client = new();
+        using SendingQueueListenerClient listener = new(queue, client);
+
+        queue.Enqueue(null!);
+        Thread.Sleep(150);
+    }
+
+    /// <summary>
+    /// Checks SendingQueueListenerServer handling when enqueued packet is null and IPv4 mapped endpoint.
+    /// </summary>
+    [TestMethod]
+    public void SendingQueueListenerServer_NullPacketAndIPv6Mapped_HandledSafely()
+    {
+        SendingQueue queue = new();
+        ConcurrentDictionary<IPEndPoint, TcpClient> map = new();
+        using SendingQueueListenerServer listener = new(queue, map);
+
+        queue.Enqueue(null!);
+
+        IPEndPoint ipv6Mapped = new(IPAddress.Parse("::ffff:127.0.0.1"), 8888);
+        Packet packet = new(Encoding.UTF8.GetBytes("test"), ipv6Mapped, 1, 1);
+        queue.Enqueue(packet);
+
+        Thread.Sleep(150);
+    }
 }
