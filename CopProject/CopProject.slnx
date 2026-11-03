@@ -7,10 +7,6 @@
     <Project Path="FileSync.Console/FileSync.Console.csproj" />
     <Project Path="Filesync.Test/Filesync.Test.csproj" />
     <Project Path="FileSync/Filesync.csproj" />
-    <Project Path="FileSynchroniser.Test/FileSynchroniser.Test.csproj" Id="0c012a65-7ac2-4a30-9946-cecb9c27e696">
-        <Platform Project="x64" />
-        <Deploy />
-    </Project>
     <Project Path="FileSynchroniser.UIharness/FileSynchroniser.UIharness.csproj" Id="2420b872-bb5a-44b9-a6d0-65bebf0c022e">
         <Platform Project="x64" />
         <Deploy />
