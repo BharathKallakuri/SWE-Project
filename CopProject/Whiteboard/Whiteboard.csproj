@@ -22,7 +22,6 @@
     <Folder Include="Dependencies\" />
     <Folder Include="Controls\" />
     <Folder Include="Services\" />
-    <Folder Include="ViewModels\" />
   </ItemGroup>
 
   <ItemGroup>
