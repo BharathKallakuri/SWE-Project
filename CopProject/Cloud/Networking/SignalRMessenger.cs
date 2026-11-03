@@ -20,6 +20,8 @@ public sealed class SignalRMessenger : IMessenger
     /// <param name="serverurl"></param>
     public SignalRMessenger(string serverUrl)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(serverUrl);
+
         _connection = new HubConnectionBuilder()
             .WithUrl(serverUrl)
             .WithAutomaticReconnect()
@@ -43,6 +45,8 @@ public sealed class SignalRMessenger : IMessenger
     /// </summary>
     public async Task SendMessageAsync(string content)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(content);
+
         await _connection.InvokeAsync(Contract.SendMessage, content);
     }
 
