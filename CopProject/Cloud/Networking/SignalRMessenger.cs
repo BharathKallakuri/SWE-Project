@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 namespace Cloud.Networking;
 
 /// <summary>
-/// Implements messaging using SignalR.
+/// Implements IMessenger using SignalR.
 /// </summary>
 public sealed class SignalRMessenger : IMessenger
 {
@@ -39,7 +39,7 @@ public sealed class SignalRMessenger : IMessenger
     }
 
     /// <summary>
-    /// Sends the content of a message to the server.
+    /// Sends a message to the server (client doing RPC on server).
     /// </summary>
     public async Task SendMessageAsync(string content)
     {
@@ -47,7 +47,7 @@ public sealed class SignalRMessenger : IMessenger
     }
 
     /// <summary>
-    /// Disconnects from the server (object can be reused).
+    /// Disconnects from the server (connection can be reused).
     /// </summary>
     public async Task DisconnectAsync()
     {
@@ -55,7 +55,7 @@ public sealed class SignalRMessenger : IMessenger
     }
 
     /// <summary>
-    /// Disposes off the connection (object cannot be reused).
+    /// Disposes off the connection (connection cannot be reused).
     /// </summary>
     public async ValueTask DisposeAsync()
     {
