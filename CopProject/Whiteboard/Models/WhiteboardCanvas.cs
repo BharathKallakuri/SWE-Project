@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Whiteboard.Interfaces;
@@ -7,7 +8,7 @@ namespace Whiteboard.Models;
 
 public class WhiteboardCanvas : IWhiteboard
 {
-    public IDictionary<Guid, IItem> Items { get; set; } = new Dictionary<Guid, IItem>();
+    public IDictionary<Guid, IItem> Items { get; set; } = new ConcurrentDictionary<Guid, IItem>();
 
     public event Action<IItem> ItemAdded = delegate { };
     public event Action<Guid> ItemDeleted = delegate { };
