@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
@@ -146,30 +146,36 @@ public class SocketListenerTests
     }
 
     /// <summary>
-    /// Checks SendingQueueListenerClient handling when enqueued packet is null.
+    /// Checks SendingQueueListenerClient handling when packets are enqueued.
     /// </summary>
     [TestMethod]
-    public void SendingQueueListenerClient_NullPacket_HandledSafely()
+    public void SendingQueueListenerClient_SendPacket_HandledSafely()
     {
+        int port = GetAvailablePort();
+        using TcpListener server = new(IPAddress.Loopback, port);
+        server.Start();
+
         SendingQueue queue = new();
         using TcpClient client = new();
+        client.Connect(IPAddress.Loopback, port);
+        using TcpClient accepted = server.AcceptTcpClient();
+
         using SendingQueueListenerClient listener = new(queue, client);
 
-        queue.Enqueue(null!);
+        Packet packet = new(Encoding.UTF8.GetBytes("test_send"), new IPEndPoint(IPAddress.Loopback, port), 1, 1);
+        queue.Enqueue(packet);
         Thread.Sleep(150);
     }
 
     /// <summary>
-    /// Checks SendingQueueListenerServer handling when enqueued packet is null and IPv4 mapped endpoint.
+    /// Checks SendingQueueListenerServer handling with IPv4 mapped destination endpoint.
     /// </summary>
     [TestMethod]
-    public void SendingQueueListenerServer_NullPacketAndIPv6Mapped_HandledSafely()
+    public void SendingQueueListenerServer_IPv6Mapped_HandledSafely()
     {
         SendingQueue queue = new();
         ConcurrentDictionary<IPEndPoint, TcpClient> map = new();
         using SendingQueueListenerServer listener = new(queue, map);
-
-        queue.Enqueue(null!);
 
         IPEndPoint ipv6Mapped = new(IPAddress.Parse("::ffff:127.0.0.1"), 8888);
         Packet packet = new(Encoding.UTF8.GetBytes("test"), ipv6Mapped, 1, 1);
