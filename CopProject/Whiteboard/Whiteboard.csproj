@@ -28,6 +28,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Cloud\Cloud.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Page Update="Views\WhiteBoardView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
