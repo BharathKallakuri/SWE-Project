@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using FileSynchroniser.Models;
-using Microsoft.UI.Dispatching;
 
 namespace FileSynchroniser.ViewModels;
 
@@ -24,21 +23,33 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly ISync _sync;
     private readonly IFileOperations _files;
-    private readonly DispatcherQueue? _dispatcher;
+    private readonly Action<Action> _runOnUi;
     private readonly RelayCommand _deleteSelectedCommand;
 
     private SyncFileItem? _selectedFile;
     private string _statusMessage = "Ready";
     private bool _hasError;
 
+    /// <summary>
+    /// Production constructor. Captures the current UI thread's dispatcher when one is available,
+    /// otherwise falls back to running callbacks inline (e.g. in unit tests).
+    /// </summary>
     // Synchroniser is public; ISync is internal, so the constructor takes the concrete type.
-    public FileSyncViewModel(Synchroniser synchroniser)
+    public FileSyncViewModel(Synchroniser synchroniser) : this(synchroniser, UiDispatcher.Create())
+    {
+    }
+
+    /// <summary>
+    /// Testable constructor. <paramref name="runOnUi"/> is used to marshal events back to the UI thread;
+    /// when null, actions are run inline on the calling thread.
+    /// </summary>
+    public FileSyncViewModel(Synchroniser synchroniser, Action<Action>? runOnUi)
     {
         ArgumentNullException.ThrowIfNull(synchroniser);
 
         _sync = synchroniser;
         _files = synchroniser;
-        _dispatcher = DispatcherQueue.GetForCurrentThread();
+        _runOnUi = runOnUi ?? (action => action());
 
         RefreshCommand = new RelayCommand(Refresh);
         _deleteSelectedCommand = new RelayCommand(DeleteSelected, CanDeleteSelected);
@@ -173,14 +184,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     // Events may be raised from any thread, so marshal back to the UI thread.
     private void RunOnUi(Action action)
     {
-        if (_dispatcher is null || _dispatcher.HasThreadAccess)
-        {
-            action();
-        }
-        else
-        {
-            _dispatcher.TryEnqueue(() => action());
-        }
+        _runOnUi(action);
     }
 
     private static string FormatSize(long bytes)
