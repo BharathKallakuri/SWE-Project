@@ -48,6 +48,8 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
 
     public IReadOnlyList<IncidentCategory> Categories { get; }
     public IReadOnlyList<IncidentSeverity> Severities { get; }
+
+    // todo(@sreenath): Change signature to Tuple<IncidentEvidence, byte[]> to include the bytes of the file uploaded
     public ObservableCollection<IncidentEvidence> Evidences { get; } = [];
 
     public RelayCommand SubmitCommand { get; }
@@ -189,7 +191,7 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
                 SelectedCategory,
                 SelectedSeverity,
                 location,
-                Evidences.ToList()
+                Evidences.ToList() // @todo(@sreenath): need to verify
             );
 
             await _incidentController.CreateIncident(request);

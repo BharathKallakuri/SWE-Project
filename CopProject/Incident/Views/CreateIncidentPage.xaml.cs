@@ -70,6 +70,7 @@ public sealed partial class CreateIncidentPage : Page
 
         if (result == ContentDialogResult.Primary && dialogViewModel.IsValid && ViewModel != null)
         {
+            //todo(@sreenath): Add evidence as well as bytes of the file uploaded
             IncidentEvidence evidence = dialogViewModel.BuildEvidence(_context.CurrentUserId);
             ViewModel.Evidences.Add(evidence);
         }
