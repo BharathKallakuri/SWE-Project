@@ -6,8 +6,8 @@
     <RootNamespace>FileSynchroniser.Test</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x86;x64;ARM64</Platforms>
-    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant())</RuntimeIdentifier>
-    <PublishProfile Condition="Exists('Properties\PublishProfiles\win-$(Platform).pubxml')">win-$(Platform).pubxml</PublishProfile>
+    <RuntimeIdentifiers>win-x64;win-x86;arm64</RuntimeIdentifiers>
+    <SelfContained>false</SelfContained>
     <UseWinUI>true</UseWinUI>
     <WinUIDSKReferences>false</WinUIDSKReferences>
     <EnableMsixTooling>true</EnableMsixTooling>
