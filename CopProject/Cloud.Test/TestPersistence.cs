@@ -141,7 +141,11 @@ public class TestPersistence
         Assert.IsFalse(found);
     }
 
+
     [TestMethod]
+    ///<summary>
+    /// Creating multiple items creates them and stops on duplicates.
+    ///</summary>
     public async Task CreateAllCreatesItemsAndStopsOnDuplicate()
     {
         string firstKey = NewKey();
@@ -163,6 +167,9 @@ public class TestPersistence
     }
 
     [TestMethod]
+    ///<summary>
+    /// Reading multiple items returns their data and reports missing keys.
+    ///</summary>
     public async Task ReadAllReturnsRequestedItemsOrEmptyResultOnMissingKey()
     {
         string firstKey = NewKey();
@@ -189,6 +196,9 @@ public class TestPersistence
     }
 
     [TestMethod]
+    ///<summary>
+    /// Gets all keys in the container and includes a newly created key.
+    ///</summary>
     public async Task GetAllKeysIncludesCreatedKey()
     {
         string key = NewKey();
@@ -200,6 +210,9 @@ public class TestPersistence
     }
 
     [TestMethod]
+    ///<summary>
+    /// Reading all Etags returns Etags for stored items.
+    /// </summary>
     public async Task ReadAllEtagsReturnsEtagsForStoredItems()
     {
         string key = NewKey();
@@ -212,6 +225,9 @@ public class TestPersistence
     }
 
     [TestMethod]
+    ///<summary>
+    /// Updating multiple items updates them and rejects stale Etags.
+    /// </summary>
     public async Task UpdateAllUpdatesAllItemsAndRejectsStaleEtag()
     {
         string firstKey = NewKey();
