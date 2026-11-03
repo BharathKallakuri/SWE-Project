@@ -2,18 +2,12 @@
     <Project Path="Authentication/Auth.csproj" />
     <Project Path="Chat.Test/Chat.Test.csproj" />
     <Project Path="Chat/Chat.csproj" />
-<<<<<<< HEAD
     <Project Path="Cloud.Test/Cloud.Test.csproj" />
-    <Project Path="Cloud/Cloud.csproj" />
-    <Project Path="Controller/Controller.csproj" />
-=======
     <Project Path="Cloud/Cloud.csproj" />
     <Project Path="Controller/Controller.csproj" />
     <Project Path="FileSync/Filesync.csproj" />
     <Project Path="FileSync.Console/FileSync.Console.csproj" />
->>>>>>> origin/main
     <Project Path="Filesync.Test/Filesync.Test.csproj" />
-    <Project Path="FileSync/Filesync.csproj" />
     <Project Path="Incidents/Incidents.csproj" />
     <Project Path="Insights/Insights.csproj" />
     <Project Path="Location/Location.csproj" />
