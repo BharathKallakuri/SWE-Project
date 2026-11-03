@@ -41,6 +41,10 @@ public class WhiteboardClient : IMessageListener
 
     public WhiteboardClient(ICommunicator communicator, IPEndPoint serverEndpoint, string userId)
     {
+        ArgumentNullException.ThrowIfNull(communicator);
+        ArgumentNullException.ThrowIfNull(serverEndpoint);
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+
         _communicator = communicator;
         _serverEndpoint = serverEndpoint;
         UserId = userId;
