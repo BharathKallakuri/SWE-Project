@@ -14,10 +14,8 @@ using Whiteboard.Network.Serializations;
 
 namespace Whiteboard.Client;
 
-/// <summary>
-/// Whiteboard client state manager
-/// </summary>
-public class WhiteboardClient : IMessageListener
+/// <inheritdoc/>
+public class WhiteboardClient : IWhiteboardClient
 {
     /// <summary>
     /// Client communicator
@@ -29,14 +27,8 @@ public class WhiteboardClient : IMessageListener
     /// </summary>
     private readonly IPEndPoint _serverEndpoint;
 
-    /// <summary>
-    /// Client whiteboard state
-    /// </summary>
     public IWhiteboard Canvas { get; } = new WhiteboardCanvas();
 
-    /// <summary>
-    /// Username of the current client
-    /// </summary>
     public string UserId { get; }
 
     public WhiteboardClient(ICommunicator communicator, IPEndPoint serverEndpoint, string userId)
@@ -63,42 +55,26 @@ public class WhiteboardClient : IMessageListener
         _communicator.SendMessage(_serverEndpoint, serialized, Constants.WhiteboardModuleId, priority: Constants.WhiteboardModulePriority);
     }
 
-    /// <summary>
-    /// Request a complete whiteboard sync to the server
-    /// </summary>
     public void RequestSync()
     {
         SendToServer(new ClientMessage.ReqUpdate());
     }
 
-    /// <summary>
-    /// Request to add an <see cref="IItem"/> to the server
-    /// </summary>
-    /// <param name="item">Item to add</param>
     public void AddItem(IItem item)
     {
         SendToServer(new ClientMessage.ReqAddItem(item.Id, ItemMapper.ToDto(item)));
     }
 
-    /// <summary>
-    /// Request to delete an <see cref="IItem"/> to the server
-    /// </summary>
-    /// <param name="id">Item Id to delete</param>
     public void DeleteItem(Guid id)
     {
         SendToServer(new ClientMessage.ReqDeleteItem(id));
     }
 
-    /// <summary>
-    /// Request to edit an <see cref="IITem"/> to the server
-    /// </summary>
-    /// <param name="item">Item to edit</param>
     public void EditItem(IItem item)
     {
         SendToServer(new ClientMessage.ReqUpdateItem(item.Id, ItemMapper.ToDto(item)));
     }
 
-    /// <inheritdoc/>
     public void OnMessageReceived(byte[] message)
     {
         ServerMessage notification = new ServerMessageByteSerializer().Deserialize(message);
