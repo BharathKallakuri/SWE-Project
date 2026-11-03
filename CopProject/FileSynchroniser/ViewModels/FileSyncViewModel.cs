@@ -24,6 +24,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     private readonly ISync _sync;
     private readonly IFileOperations _files;
     private readonly Action<Action> _runOnUi;
+    private readonly Func<string, IEnumerable<FileInfo>> _enumerateFiles;
     private readonly RelayCommand _deleteSelectedCommand;
 
     private SyncFileItem? _selectedFile;
@@ -42,14 +43,18 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     /// <summary>
     /// Testable constructor. <paramref name="runOnUi"/> is used to marshal events back to the UI thread;
     /// when null, actions are run inline on the calling thread.
+    /// <paramref name="enumerateFiles"/> lists every file under the given root directory;
+    /// when null, the real file system is used.
     /// </summary>
-    public FileSyncViewModel(Synchroniser synchroniser, Action<Action>? runOnUi)
+    public FileSyncViewModel(Synchroniser synchroniser, Action<Action>? runOnUi,
+        Func<string, IEnumerable<FileInfo>>? enumerateFiles = null)
     {
         ArgumentNullException.ThrowIfNull(synchroniser);
 
         _sync = synchroniser;
         _files = synchroniser;
         _runOnUi = runOnUi ?? (action => action());
+        _enumerateFiles = enumerateFiles ?? EnumerateAllFiles;
 
         RefreshCommand = new RelayCommand(Refresh);
         _deleteSelectedCommand = new RelayCommand(DeleteSelected, CanDeleteSelected);
@@ -146,8 +151,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
-            IEnumerable<FileInfo> infos = new DirectoryInfo(RootDirectory)
-                .EnumerateFiles("*", SearchOption.AllDirectories)
+            IEnumerable<FileInfo> infos = _enumerateFiles(RootDirectory)
                 .OrderBy(f => f.FullName, StringComparer.OrdinalIgnoreCase);
 
             foreach (FileInfo info in infos)
@@ -185,6 +189,11 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     private void RunOnUi(Action action)
     {
         _runOnUi(action);
+    }
+
+    private static IEnumerable<FileInfo> EnumerateAllFiles(string root)
+    {
+        return new DirectoryInfo(root).EnumerateFiles("*", SearchOption.AllDirectories);
     }
 
     private static string FormatSize(long bytes)
