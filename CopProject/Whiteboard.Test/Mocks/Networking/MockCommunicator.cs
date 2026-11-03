@@ -55,7 +55,7 @@ internal class MockCommunicator : ICommunicator
 
     public void BroadcastMessage(byte[] message, int module, int priority)
     {
-        _mockNetwork.SendAll(message);
+        _mockNetwork.SendAll(this, message);
     }
 
     public void JoinMulticastGroup(int group, IPEndPoint clientIp)

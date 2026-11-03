@@ -50,11 +50,15 @@ internal class MockNetwork
     /// Send a message to all mock devices
     /// </summary>
     /// <param name="message">Message to send</param>
-    public void SendAll(byte[] message)
+    /// <param name="sender">Sender communicator</param>
+    public void SendAll(MockCommunicator sender, byte[] message)
     {
-        foreach (MockCommunicator communicator in _deviceCommunicators)
+        foreach (MockCommunicator communicator in _deviceCommunicators.ToList())
         {
-            communicator.InvokeSubscriber(message);
+            if (communicator != sender)
+            {
+                communicator.InvokeSubscriber(message);
+            }
         }
     }
 }
