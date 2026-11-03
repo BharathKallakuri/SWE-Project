@@ -50,6 +50,7 @@ public class WhiteboardClient : IMessageListener
         UserId = userId;
 
         _communicator.AddSubscriber(Constants.WhiteboardModuleId, this);
+        RequestSync();
     }
 
     /// <summary>
