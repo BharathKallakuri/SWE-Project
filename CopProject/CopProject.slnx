@@ -5,13 +5,6 @@
         <Platform Name="x64" />
         <Platform Name="x86" />
     </Configurations>
-    <Project Path="App2/App2.csproj" Id="a06392a2-b5fb-455a-b52a-87e8b01790f6">
-        <Platform Solution="*|Any CPU" Project="x64" />
-        <Platform Solution="*|ARM64" Project="ARM64" />
-        <Platform Solution="*|x64" Project="x64" />
-        <Platform Solution="*|x86" Project="x86" />
-        <Deploy />
-    </Project>
     <Project Path="Authentication/Auth.csproj" />
     <Project Path="Chat.Test/Chat.Test.csproj" />
     <Project Path="Chat/Chat.csproj" />
