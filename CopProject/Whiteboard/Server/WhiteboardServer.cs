@@ -14,19 +14,14 @@ using Whiteboard.Network.Serializations;
 
 namespace Whiteboard.Server;
 
-/// <summary>
-/// Whiteboard server state manager
-/// </summary>
-public class WhiteboardServer : IMessageListener
+/// <inheritdoc/>
+public class WhiteboardServer : IWhiteboardServer
 {
     /// <summary>
     /// Server communicator
     /// </summary>
     private readonly ICommunicator _communicator;
 
-    /// <summary>
-    /// Server whiteboard state
-    /// </summary>
     public IWhiteboard Canvas { get; } = new WhiteboardCanvas();
 
     public WhiteboardServer(ICommunicator communicator)
@@ -38,7 +33,6 @@ public class WhiteboardServer : IMessageListener
         _communicator.AddSubscriber(Constants.WhiteboardModuleId, this);
     }
 
-    /// <inheritdoc/>
     public void OnMessageReceived(byte[] message)
     {
         ClientMessage request = new ClientMessageByteSerializer().Deserialize(message);
