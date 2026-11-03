@@ -7,7 +7,7 @@ namespace Cloud.Networking;
 /// <summary>
 /// Defines the operations available to clients.
 /// </summary>
-public interface IMessenger
+public interface IMessenger : IAsyncDisposable
 {
     /// <summary>
     /// Connects to the server.
