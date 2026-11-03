@@ -11,6 +11,11 @@ namespace Whiteboard.Interfaces.Shapes;
 public interface ISquare : IShape
 {
     /// <summary>
+    /// Center of the square
+    /// </summary>
+    public Point2D Center { get; init; }
+
+    /// <summary>
     /// Side length of the square
     /// </summary>
     public double SideLegth { get; set; }

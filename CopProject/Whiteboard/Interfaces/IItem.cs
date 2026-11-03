@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Whiteboard.Interfaces;
 
@@ -26,11 +27,6 @@ public interface IItem
     /// Date and time of creation
     /// </summary>
     DateTime CreatedDateTime { get; set; }
-
-    /// <summary>
-    /// User who last modified the item
-    /// </summary>
-    string LastModifiedBy { get; set; }
 
     /// <summary>
     /// Date and time of last modification
@@ -68,41 +64,25 @@ public interface IItem
 /// <summary>
 /// Represents a point in the whiteboard
 /// </summary>
-public struct Point2D
-{
-    /// <summary>
-    /// X-coordinate of the point
-    /// </summary>
-    public double X { get; set; }
-
-    /// <summary>
-    /// Y-coordinate of the point
-    /// </summary>
-    public double Y { get; set; }
-}
+/// <param name="X">X-coordinate of the point</param>
+/// <param name="Y">Y-coordinate of the point</param>
+[ExcludeFromCodeCoverage]
+public record Point2D(
+    double X,
+    double Y
+);
 
 /// <summary>
 /// Represents an always-upright rectangle on the whiteboard (not a UI element)
 /// </summary>
-public struct Rect2D
-{
-    /// <summary>
-    /// X-coordinate of the leftmost edge of the rectangle
-    /// </summary>
-    public double Left { get; set; }
-
-    /// <summary>
-    /// Y-coordinate of the topmost edge of the rectangle
-    /// </summary>
-    public double Top { get; set; }
-
-    /// <summary>
-    /// Width of the rectangle
-    /// </summary>
-    public double Width { get; set; }
-
-    /// <summary>
-    /// Height of the rectangle
-    /// </summary>
-    public double Height { get; set; }
-}
+/// <param name="Left">X-coordinate of the leftmost edge of the rectangle</param>
+/// <param name="Top">Y-coordinate of the topmost edge of the rectangle</param>
+/// <param name="Width">Width of the rectangle</param>
+/// <param name="Height">Height of the rectangle</param>
+[ExcludeFromCodeCoverage]
+public record Rect2D(
+    double Left,
+    double Top,
+    double Width,
+    double Height
+);

@@ -19,9 +19,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Dependencies\" />
-    <Folder Include="Controls\" />
-    <Folder Include="Services\" />
+    <Folder Include="Client\" />
+    <Folder Include="Server\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Networking\Networking.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cloud\Cloud.csproj" />
   </ItemGroup>
 
   <ItemGroup>

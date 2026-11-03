@@ -10,6 +10,11 @@ namespace Whiteboard.Interfaces.Shapes;
 public interface IEllipse : IShape
 {
     /// <summary>
+    /// Center of the ellipse
+    /// </summary>
+    public Point2D Center { get; }
+
+    /// <summary>
     /// Length of the major axis of the ellipse
     /// </summary>
     public double Width { get; set; }

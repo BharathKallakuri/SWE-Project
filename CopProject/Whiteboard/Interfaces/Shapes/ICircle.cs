@@ -10,6 +10,11 @@ namespace Whiteboard.Interfaces.Shapes;
 public interface ICircle : IShape
 {
     /// <summary>
+    /// Center of the circle
+    /// </summary>
+    public Point2D Center { get; }
+
+    /// <summary>
     /// Radius of the circle
     /// </summary>
     public double Radius { get; set; }

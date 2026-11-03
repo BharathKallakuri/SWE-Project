@@ -21,6 +21,7 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
     private bool _disposed;
 
     public int ListenPort { get; }
+    public IPAddress ListenIpAddress { get; }
 
     /// <summary>
     /// initializes the TCP communicator, starts the listener, and launches the background listening loop
@@ -28,7 +29,8 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
     public SimulatedCommunicator(int port)
     {
         ListenPort = port;
-        _listener = new TcpListener(IPAddress.Any, port);
+        ListenIpAddress = IPAddress.Any;
+        _listener = new TcpListener(ListenIpAddress, port);
         _listener.Start();
 
         // start background loop to listen for incoming peer messages
@@ -104,12 +106,12 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
     /// <summary>
     /// joins the specified multicast group
     /// </summary>
-    public void JoinMulticastGroup(int multicastGroup) { }
+    public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp) { }
 
     /// <summary>
     /// leaves the specified multicast group
     /// </summary>
-    public void LeaveMulticastGroup(int multicastGroup) { }
+    public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp) { }
 
     /// <summary>
     /// sends a message to the specified multicast group by broadcasting it to registered peers

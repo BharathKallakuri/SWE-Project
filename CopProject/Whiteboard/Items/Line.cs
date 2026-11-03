@@ -12,8 +12,8 @@ public class Line : Item, ILine
 {
 
     public const double DefaultHitThreshold = 5.0;
-    public Point2D Begin { get; set; } = new Point2D { X = 0, Y = 0 };
-    public Point2D End { get; set; } = new Point2D { X = 1, Y = 1 };
+    public Point2D Begin { get; set; } = new Point2D(0, 0);
+    public Point2D End { get; set; } = new Point2D(1, 1);
 
     public override Rect2D BoundingBox
     {
@@ -23,24 +23,18 @@ public class Line : Item, ILine
             double right = Math.Max(Begin.X, End.X);
             double bottom = Math.Max(Begin.Y, End.Y);
 
-            return new Rect2D {
-                Left = left,
-                Top = top,
-                Width = right - left,
-                Height = bottom - top
-            };
+            return new Rect2D(
+                left,
+                top,
+                right - left,
+                bottom - top
+            );
         }
         set {
             // Refit line to the diagonal of the new bounding box.
-            Begin = new Point2D {
-                X = value.Left,
-                Y = value.Top
-            };
+            Begin = new Point2D(value.Left, value.Top);
 
-            End = new Point2D {
-                X = value.Left + value.Width,
-                Y = value.Top + value.Height
-            };
+            End = new Point2D(value.Left + value.Width, value.Top + value.Height);
         }
     }
 

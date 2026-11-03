@@ -11,14 +11,16 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class EqTriangle : Shape, IEqTriangle
 {
+    public Point2D Center { get; init; } = new(0, 0);
+
     public override Rect2D BoundingBox
     {
-        get => new Rect2D {
-            Left = Left,
-            Top = Top,
-            Width = SideLength,
-            Height = GetTriangleHeight(SideLength)
-        };
+        get => new(
+            Left,
+            Top,
+            SideLength,
+            GetTriangleHeight(SideLength)
+        );
         set {
             Left = value.Left;
             Top = value.Top;
@@ -31,9 +33,9 @@ public class EqTriangle : Shape, IEqTriangle
 
     public override bool HitTest(Point2D point)
     {
-        Point2D p1 = new Point2D { X = Left + (SideLength / 2.0), Y = Top };
-        Point2D p2 = new Point2D { X = Left, Y = Top + GetTriangleHeight(SideLength) };
-        Point2D p3 = new Point2D { X = Left + SideLength, Y = Top + GetTriangleHeight(SideLength) };
+        Point2D p1 = new Point2D(Left + (SideLength / 2.0), Top);
+        Point2D p2 = new Point2D(Left, Top + GetTriangleHeight(SideLength));
+        Point2D p3 = new Point2D(Left + SideLength, Top + GetTriangleHeight(SideLength));
 
         bool b1 = Sign(point, p1, p2) < 0.0;
         bool b2 = Sign(point, p2, p3) < 0.0;

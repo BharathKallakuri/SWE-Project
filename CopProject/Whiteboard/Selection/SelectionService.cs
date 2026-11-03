@@ -59,10 +59,10 @@ public class SelectionService : ISelectionService
 
         if (item is Line line)
         {
-            line.End = new Point2D {
-                X = line.Begin.X + ((line.End.X - line.Begin.X) * factor),
-                Y = line.Begin.Y + ((line.End.Y - line.Begin.Y) * factor)
-            };
+            line.End = new Point2D(
+                line.Begin.X + ((line.End.X - line.Begin.X) * factor),
+                line.Begin.Y + ((line.End.Y - line.Begin.Y) * factor)
+            );
             return true;
         }
 

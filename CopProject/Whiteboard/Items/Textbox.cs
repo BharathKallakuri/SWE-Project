@@ -1,4 +1,5 @@
-﻿using Microsoft.UI;
+﻿using System.Reflection.Metadata.Ecma335;
+using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
 using Windows.UI;
@@ -8,18 +9,20 @@ namespace Whiteboard.Items;
 /// <inheritdoc/>
 public class Textbox : Item, ITextbox
 {
+    public Point2D Center { get; init; } = new(0, 0);
+
     // Model size for selection/hit-testing (not UI control size)
     public double Width { get; set; } = 150;
     public double Height { get; set; } = 40;
 
     public override Rect2D BoundingBox
     {
-        get => new Rect2D {
-            Left = Left,
-            Top = Top,
-            Width = Width,
-            Height = Height
-        };
+        get => new(
+            Left,
+            Top,
+            Width,
+            Height
+        );
 
         set {
             Left = value.Left;
@@ -40,7 +43,8 @@ public class Textbox : Item, ITextbox
     }
 
     public string Content { get; set; } = string.Empty;
-    public FontFamily FontFamily { get; set; } = new FontFamily("Segoe UI");
+    public string FontFamily { get; set; } = "Segoe UI";
     public int FontSize { get; set; } = 15;
-    public Color FontColor { get; set; } = Colors.Black;
+    public Color FontColor { get; set; } = Color.FromArgb(255, 0, 0, 0);    // Black
+
 }
