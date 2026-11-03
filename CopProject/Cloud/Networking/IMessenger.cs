@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.AspNetCore.SignalR.Client;
+
 namespace Cloud.Networking;
 
 /// <summary>
@@ -9,6 +11,11 @@ namespace Cloud.Networking;
 /// </summary>
 public interface IMessenger : IAsyncDisposable
 {
+    /// <summary>
+    /// Gets the current connection state.
+    /// </summary>
+    HubConnectionState State { get; }
+
     /// <summary>
     /// Connects to the server.
     /// </summary>
@@ -28,4 +35,19 @@ public interface IMessenger : IAsyncDisposable
     /// Notify the subscribers when a message is received.
     /// </summary>
     event Action<Message>? MessageReceived;
+
+    /// <summary>
+    /// Gets called when the connection is lost and the client is trying to reconnect.
+    /// </summary>
+    event Action<Exception?>? Reconnecting;
+
+    /// <summary>
+    /// Gets called when the client reconnects to the server (with a new connection ID).
+    /// </summary>
+    event Action<string?>? Reconnected;
+
+    /// <summary>
+    /// Gets called when the connection is closed, either normally or due to an error.
+    /// </summary>
+    event Action<Exception?>? Closed;
 }
