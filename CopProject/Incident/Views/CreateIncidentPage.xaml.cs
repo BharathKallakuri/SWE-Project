@@ -10,6 +10,7 @@ namespace Incident_module.Views;
 public sealed partial class CreateIncidentPage : Page
 {
     public CreateIncidentPageViewModel? ViewModel => DataContext as CreateIncidentPageViewModel;
+    private IncidentPageContext? _context;
 
     public CreateIncidentPage()
     {
@@ -20,14 +21,18 @@ public sealed partial class CreateIncidentPage : Page
     {
         base.OnNavigatedTo(e);
 
-        if (e.Parameter is Guid currentUserId)
+        if (e.Parameter is IncidentPageContext context)
+        {
+            _context = context;
+        }
+
+        if (_context != null && DataContext is not CreateIncidentPageViewModel)
         {
             var vm = new CreateIncidentPageViewModel(
-                AppServices.IncidentController,
-                currentUserId
+                _context.IncidentController,
+                _context.CurrentUserId
             );
 
-            // Subscribe to successful creation event to navigate back
             vm.IncidentCreated += (s, args) => {
                 if (this.Frame.CanGoBack)
                 {
@@ -49,7 +54,12 @@ public sealed partial class CreateIncidentPage : Page
 
     private async void AddEvidence_Click(object _, RoutedEventArgs __)
     {
-        AddEvidenceDialogViewModel dialogViewModel = new();
+        if (_context == null)
+        {
+            return;
+        }
+
+        AddEvidenceDialogViewModel dialogViewModel = new(_context.WindowHandle);
 
         AddEvidenceDialog dialog = new() {
             XamlRoot = this.XamlRoot, // Use Page's XamlRoot
@@ -60,7 +70,7 @@ public sealed partial class CreateIncidentPage : Page
 
         if (result == ContentDialogResult.Primary && dialogViewModel.IsValid && ViewModel != null)
         {
-            IncidentEvidence evidence = dialogViewModel.BuildEvidence(AppServices.CurrentUserId);
+            IncidentEvidence evidence = dialogViewModel.BuildEvidence(_context.CurrentUserId);
             ViewModel.Evidences.Add(evidence);
         }
     }

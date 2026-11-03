@@ -1,14 +1,16 @@
-﻿using Microsoft.UI.Xaml;
+﻿using Incident_module.ViewModels;
+using Incident_module.ViewModels.Utils;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using Incident_module.ViewModels;
-using Incident_module.ViewModels.Utils;
+using Windows.UI;
 
 namespace Incident_module.Views;
 
 public sealed partial class AllIncidentsPage : Page
 {
     private AllIncidentsPageViewModel? ViewModel => DataContext as AllIncidentsPageViewModel;
+    private IncidentPageContext? _context;
 
     public AllIncidentsPage()
     {
@@ -19,11 +21,21 @@ public sealed partial class AllIncidentsPage : Page
     {
         base.OnNavigatedTo(e);
 
+        if (e.Parameter is IncidentPageContext context)
+        {
+            _context = context;
+        }
+
+        if (_context == null)
+        {
+            return;
+        }
+
         if (DataContext is not AllIncidentsPageViewModel)
         {
             DataContext = new AllIncidentsPageViewModel(
-                AppServices.IncidentController,
-                AppServices.CurrentUserId
+                _context.IncidentController,
+                _context.CurrentUserId
             );
         }
 
@@ -35,14 +47,20 @@ public sealed partial class AllIncidentsPage : Page
 
     private void CreateIncident_Click(object _, RoutedEventArgs __)
     {
-        this.Frame.Navigate(typeof(CreateIncidentPage), AppServices.CurrentUserId);
+        if (_context != null)
+        {
+            this.Frame.Navigate(typeof(CreateIncidentPage), _context);
+        }
     }
 
     private void Incident_ItemClick(object _, ItemClickEventArgs e)
     {
-        if (e.ClickedItem is Incident incident)
+        if (e.ClickedItem is Incident incident && _context != null)
         {
-            this.Frame.Navigate(typeof(IncidentDetailsPage), incident.Id);
+            this.Frame.Navigate(
+                typeof(IncidentDetailsPage),
+                new IncidentDetailsPageParameters(_context, incident.Id)
+            );
         }
     }
 }

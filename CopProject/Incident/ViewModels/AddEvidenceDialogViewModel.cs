@@ -12,9 +12,11 @@ public sealed class AddEvidenceDialogViewModel : ViewModelBase
 {
     private string _filePath = string.Empty;
     private string _description = string.Empty;
+    private readonly IntPtr _windowHandle;
 
-    public AddEvidenceDialogViewModel()
+    public AddEvidenceDialogViewModel(IntPtr windowHandle)
     {
+        _windowHandle = windowHandle;
         BrowseFileCommand = new RelayCommand(async () => await BrowseFileAsync());
     }
 
@@ -48,15 +50,14 @@ public sealed class AddEvidenceDialogViewModel : ViewModelBase
     {
         try
         {
-            IntPtr windowHandle = AppServices.WindowHandle;
-            if (windowHandle == IntPtr.Zero)
+            if (_windowHandle == IntPtr.Zero)
             {
                 Debug.WriteLine("AppServices.WindowHandle is IntPtr.Zero!");
                 return;
             }
 
             FileOpenPicker picker = new();
-            InitializeWithWindow.Initialize(picker, windowHandle);
+            InitializeWithWindow.Initialize(picker, _windowHandle);
 
             picker.ViewMode = PickerViewMode.Thumbnail;
             picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;

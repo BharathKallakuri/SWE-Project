@@ -10,6 +10,7 @@ namespace Incident_module.Views;
 public sealed partial class IncidentDetailsPage : Page
 {
     private IncidentDetailsPageViewModel? ViewModel => DataContext as IncidentDetailsPageViewModel;
+    private IncidentPageContext? _context;
 
     public IncidentDetailsPage()
     {
@@ -20,19 +21,21 @@ public sealed partial class IncidentDetailsPage : Page
     {
         base.OnNavigatedTo(e);
 
-        if (e.Parameter is Guid incidentId)
+        if (e.Parameter is IncidentDetailsPageParameters parameters)
         {
+            _context = parameters.Context;
+
             if (DataContext is not IncidentDetailsPageViewModel)
             {
                 DataContext = new IncidentDetailsPageViewModel(
-                    AppServices.IncidentController,
-                    AppServices.CurrentUserId
+                    _context.IncidentController,
+                    _context.CurrentUserId
                 );
             }
 
             if (ViewModel != null)
             {
-                await ViewModel.LoadIncidentAsync(incidentId);
+                await ViewModel.LoadIncidentAsync(parameters.IncidentId);
             }
         }
     }
@@ -47,24 +50,25 @@ public sealed partial class IncidentDetailsPage : Page
 
     private async void AddEvidence_Click(object _, RoutedEventArgs __)
     {
-        AddEvidenceDialogViewModel dialogViewModel = new();
+        if (_context == null)
+        {
+            return;
+        }
 
-        AddEvidenceDialog dialog = new AddEvidenceDialog {
+        AddEvidenceDialogViewModel dialogViewModel = new(_context.WindowHandle);
+
+        AddEvidenceDialog dialog = new() {
             XamlRoot = this.XamlRoot,
             DataContext = dialogViewModel
         };
 
         ContentDialogResult result = await dialog.ShowAsync();
 
-        if (result == ContentDialogResult.Primary &&
-            dialogViewModel.IsValid)
+        if (result == ContentDialogResult.Primary && dialogViewModel.IsValid && ViewModel != null)
         {
-            IncidentEvidence evidence = dialogViewModel.BuildEvidence(AppServices.CurrentUserId);
+            IncidentEvidence evidence = dialogViewModel.BuildEvidence(_context.CurrentUserId);
 
-            if (ViewModel != null)
-            {
-                await ViewModel.AddEvidenceItemsAsync([evidence]);
-            }
+            await ViewModel.AddEvidenceItemsAsync([evidence]);
         }
     }
 }

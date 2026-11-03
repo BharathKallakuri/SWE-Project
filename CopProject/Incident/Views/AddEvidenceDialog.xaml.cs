@@ -8,7 +8,5 @@ public sealed partial class AddEvidenceDialog : ContentDialog
     public AddEvidenceDialog()
     {
         InitializeComponent();
-
-        DataContext = new AddEvidenceDialogViewModel();
     }
 }
