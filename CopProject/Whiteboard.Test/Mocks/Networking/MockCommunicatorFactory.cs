@@ -9,7 +9,7 @@ namespace Whiteboard.Test.Mocks.Networking;
 /// <summary>
 /// Factory for mock communicators
 /// </summary>
-internal class MockCommunicatorFactory
+public class MockCommunicatorFactory
 {
     /// <summary>
     /// Singleton mock server communicator

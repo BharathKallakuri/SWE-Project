@@ -8,7 +8,7 @@ using Networking;
 namespace Whiteboard.Test.Mocks.Networking;
 
 /// <inheritdoc/>
-internal class MockCommunicator : ICommunicator
+public class MockCommunicator : ICommunicator
 {
     /// <summary>
     /// The network this communicator connects to

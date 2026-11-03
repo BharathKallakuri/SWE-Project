@@ -9,7 +9,7 @@ namespace Whiteboard.Test.Mocks.Networking;
 /// <summary>
 /// Mocks a LAN network
 /// </summary>
-internal class MockNetwork
+public class MockNetwork
 {
     /// <summary>
     /// Communicators of all mock device connected to the network
