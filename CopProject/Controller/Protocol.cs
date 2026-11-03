@@ -1,35 +1,28 @@
+using System.Text.Json;
 namespace Controller;
 
 // Centralizes the wire protocol for Controller messages.
-// All message types, the separator character, and Format/Parse helpers
-// Wire format: "TYPE:userId" or "TYPE:userId:ip:port"
-// Notification format: "TYPE:payload"
+
 public static class Protocol
 {
     public const int ControllerSubscriberId = 1;
     public const string Join  = "JOIN";
     public const string Leave = "LEAVE";
-    public const string Start = "START";
     public const string End   = "END";
 
     // notification format for diff types of notifications.
     public const string NotifyUserJoined   = "USER_JOINED";
     public const string NotifyUserLeft     = "USER_LEFT";
-    public const string NotifyCountChanged = "COUNT_CHANGED";
     public const string NotifySessionEnded = "SESSION_ENDED";
-    public const string NotifySessionStarted = "SESSION_STARTED";
 
-    private const char Separator = ':';
+    public const char Separator = '|';
 
     // Format helpers 
-    // To join the meeting the format type is "join:userId:IP:port"
-    public static string FormatJoinRequest(string userId, string senderIp, int senderPort)
-        => $"{Join}{Separator}{userId}{Separator}{senderIp}{Separator}{senderPort}";
+    public static string FormatJoinRequest(ControllerUser user)
+        => $"{Join}{Separator}{JsonSerializer.Serialize(user)}";
 
-    // To leave a meeting the format type is "leave:userId"
-    // where userId is taken at start. So, we don't need to specify userId once again.
-    public static string FormatLeaveRequest(string userId)
-        => $"{Leave}{Separator}{userId}";
+    public static string FormatLeaveRequest(string username)
+        => $"{Leave}{Separator}{username}";
 
     // A notification sent from host back to participants.
     public static string FormatNotification(string notificationType, string payload)
@@ -59,6 +52,7 @@ public sealed class ParsedMessage
 {
     public string Type { get; }
     public string UserId { get; }
+    public string Payload => UserId;
     public string[] Extra { get; }
 
     public ParsedMessage(string type, string userId, string[] extra)

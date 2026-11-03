@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Networking;
 
 namespace Controller;
@@ -10,17 +11,15 @@ namespace Controller;
 
 public sealed class HostController : IControllerService
 {
-    private readonly string _hostUserId;
+    private readonly ControllerUser _hostUser;
     private readonly ICommunicator _communicator;
     private readonly SessionManager _sessionManager;
     private bool _disposed;
 
     //Events 
-    public event EventHandler<SessionStartedEventArgs>? SessionStarted;
-    public event EventHandler<SessionEndedEventArgs>? SessionEnded;
+    public event EventHandler<MeetingEndedEventArgs>? MeetingEnded;
     public event EventHandler<UserJoinedEventArgs>? UserJoined;
     public event EventHandler<UserLeftEventArgs>? UserLeft;
-    public event EventHandler<CountChangedEventArgs>? CountChanged;
 
     public int ListenPort => _communicator.ListenPort;
 
@@ -28,53 +27,50 @@ public sealed class HostController : IControllerService
 
     public SessionManager SessionManager => _sessionManager;
 
-    public HostController(string hostUserId, ICommunicator communicator)
+    public HostController(ControllerUser hostUser, ICommunicator communicator)
     {
-        _hostUserId = hostUserId ?? throw new ArgumentNullException(nameof(hostUserId));
+        _hostUser = hostUser ?? throw new ArgumentNullException(nameof(hostUser));
         _communicator = communicator ?? throw new ArgumentNullException(nameof(communicator));
         _sessionManager = new SessionManager();
-
+        _hostUser.IsHost = true;
+        _hostUser.Ip = NetworkUtils.GetLocalIpAddress();
+        _hostUser.Port = _communicator.ListenPort;
         _communicator.AddSubscriber(Protocol.ControllerSubscriberId, new SessionMessageListener(_sessionManager));
 
         // Forward SessionManager events to our own event surface and broadcast to participants
         _sessionManager.UserJoined += OnUserJoined;
         _sessionManager.UserLeft += OnUserLeft;
-        _sessionManager.CountChanged += OnCountChanged;
-        _sessionManager.SessionStarted += OnSessionStarted;
-        _sessionManager.SessionEnded += OnSessionEnded;
+        _sessionManager.MeetingEnded += OnMeetingEnded;
     }
 
     // IControllerService functions implementation 
     // Creates and starts a new meeting. The host user is added as the first participant.
     public bool StartMeeting()
     {
-        var hostPeer = new PeerInfo(_hostUserId, NetworkUtils.GetLocalIpAddress(), _communicator.ListenPort);
-
-        SessionInfo? session = _sessionManager.CreateSession(_hostUserId, hostPeer);
+        SessionInfo? session = _sessionManager.CreateSession(_hostUser);
         if (session == null)
         {
             Trace.TraceWarning("StartMeeting failed: a session already exists.");
             return false;
         }
 
-        bool started = _sessionManager.StartSession(_hostUserId);
+        bool started = _sessionManager.StartSession(_hostUser);
         if (!started)
         {
             Trace.TraceWarning("StartMeeting failed: could not transition session to Active.");
             return false;
         }
 
-        Trace.TraceInformation($"Meeting started by host '{_hostUserId}'.");
+        Trace.TraceInformation($"Meeting started by host '{_hostUser.Username}'.");
         return true;
     }
 
     // Ends the meeting. Broadcasts a session-ended notification to all participants.
     public bool EndMeeting()
     {
-        // Get peers before ending so we can notify them
-        List<PeerInfo> peers = _sessionManager.GetPeers();
+        List<ControllerUser> users = _sessionManager.GetActiveUsers();
 
-        bool ended = _sessionManager.EndSession(_hostUserId);
+        bool ended = _sessionManager.EndSession(_hostUser.Username);
         if (!ended)
         {
             Trace.TraceWarning("EndMeeting failed.");
@@ -82,46 +78,33 @@ public sealed class HostController : IControllerService
         }
         
         // Broadcast end notification to all participants
-        BroadcastToSession(peers, Protocol.FormatNotification(Protocol.NotifySessionEnded, _hostUserId));
-        Trace.TraceInformation($"Meeting ended by host '{_hostUserId}'.");
+        string payload = JsonSerializer.Serialize(_hostUser);
+        Broadcast(Protocol.FormatNotification(Protocol.NotifySessionEnded, payload));
+        Trace.TraceInformation($"Meeting ended by host '{_hostUser.Username}'.");
         return true;
     }
 
     // Not applicable on the host side
-    public void JoinMeeting(string hostIp, int hostPort, string userId)
+    public void JoinMeeting(string hostIp, int hostPort, ControllerUser user)
     {
         Trace.TraceWarning("JoinMeeting called on HostController. Use a ClientController to join remote meetings.");
     }
 
-    public void LeaveMeeting(string userId)
+    public void LeaveMeeting(ControllerUser user)
     {
         Trace.TraceWarning("LeaveMeeting called on HostController. Use a ClientController to leave remote meetings.");
     }
 
     public int GetActiveUserCount() => _sessionManager.GetActiveUserCount();
 
-    public List<string> GetActiveUsers() => _sessionManager.GetActiveUsers();
+    public List<ControllerUser> GetActiveUsers() => _sessionManager.GetActiveUsers();
 
     // Broadcasting 
     // Sends a message to every participant in the given peer list.
-    private void BroadcastToSession(List<PeerInfo> peers, string message)
+    private void Broadcast(string message)
     {
         byte[] data = Encoding.UTF8.GetBytes(message);
-        foreach (PeerInfo peer in peers)
-        {
-            // Do not send broadcast packets to the host itself
-            if (peer.Port == _communicator.ListenPort) continue;
-
-            try
-            {
-                var endPoint = new IPEndPoint(IPAddress.Parse(peer.IpAddress), peer.Port);
-                _communicator.SendMessage(endPoint, data, Protocol.ControllerSubscriberId, 1);
-            }
-            catch (Exception ex)
-            {
-                Trace.TraceError($"Failed to send to {peer}: {ex.Message}");
-            }
-        }
+        _communicator.BroadcastMessage(data, Protocol.ControllerSubscriberId, 1);
     }
 
     // Event handlers 
@@ -129,35 +112,23 @@ public sealed class HostController : IControllerService
     private void OnUserJoined(object? sender, UserJoinedEventArgs e)
     {
         UserJoined?.Invoke(this, e);
-
-        List<PeerInfo> peers = _sessionManager.GetPeers();
-        string userList = string.Join(",", _sessionManager.GetActiveUsers());
-        BroadcastToSession(peers, Protocol.FormatNotification(Protocol.NotifyUserJoined, $"{e.UserId}:{e.NewCount}:{userList}"));
+        List<ControllerUser> allUsers = _sessionManager.GetActiveUsers();
+        string payload = $"{JsonSerializer.Serialize(e.User)}{Protocol.Separator}{JsonSerializer.Serialize(allUsers)}";
+        Broadcast(Protocol.FormatNotification(Protocol.NotifyUserJoined, payload));
     }
 
     private void OnUserLeft(object? sender, UserLeftEventArgs e)
     {
         UserLeft?.Invoke(this, e);
 
-        List<PeerInfo> peers = _sessionManager.GetPeers();
-        string userList = string.Join(",", _sessionManager.GetActiveUsers());
-        BroadcastToSession(peers, Protocol.FormatNotification(
-            Protocol.NotifyUserLeft, $"{e.UserId}:{e.NewCount}:{userList}"));
+        List<ControllerUser> allUsers = _sessionManager.GetActiveUsers();
+        string payload = $"{JsonSerializer.Serialize(e.User)}{Protocol.Separator}{JsonSerializer.Serialize(allUsers)}";
+        Broadcast(Protocol.FormatNotification(Protocol.NotifyUserLeft, payload));
     }
 
-    private void OnCountChanged(object? sender, CountChangedEventArgs e)
+    private void OnMeetingEnded(object? sender, MeetingEndedEventArgs e)
     {
-        CountChanged?.Invoke(this, e);
-    }
-
-    private void OnSessionStarted(object? sender, SessionStartedEventArgs e)
-    {
-        SessionStarted?.Invoke(this, e);
-    }
-
-    private void OnSessionEnded(object? sender, SessionEndedEventArgs e)
-    {
-        SessionEnded?.Invoke(this, e);
+        MeetingEnded?.Invoke(this, e);
     }
 
     public void Dispose()
@@ -167,9 +138,7 @@ public sealed class HostController : IControllerService
 
         _sessionManager.UserJoined -= OnUserJoined;
         _sessionManager.UserLeft -= OnUserLeft;
-        _sessionManager.CountChanged -= OnCountChanged;
-        _sessionManager.SessionStarted -= OnSessionStarted;
-        _sessionManager.SessionEnded -= OnSessionEnded;
+        _sessionManager.MeetingEnded -= OnMeetingEnded;
 
         _communicator.RemoveSubscriber(Protocol.ControllerSubscriberId);
     }

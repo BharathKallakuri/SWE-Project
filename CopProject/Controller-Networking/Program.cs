@@ -26,16 +26,15 @@ else
 void RunHost()
 {
     Console.Write("Enter your host user ID: ");
-    string hostUser = Console.ReadLine()?.Trim() ?? "host";
+    string hostName = Console.ReadLine()?.Trim() ?? "host";
+    var hostUser = new ControllerUser(hostName, $"{hostName}@example.com", null, string.Empty, 0, isHost: true);
 
     using IControllerService host = ControllerFactory.CreateHost(hostUser);
 
-    // Subscribe to events — this is what the UX team will do
-    host.UserJoined += (_, e) => Console.WriteLine($"  + {e.UserId} joined (total: {e.NewCount})");
-    host.UserLeft += (_, e) => Console.WriteLine($"  - {e.UserId} left (total: {e.NewCount})");
-    host.CountChanged += (_, e) => Console.WriteLine($"  ~ {e.NewCount} user(s) in session");
-    host.SessionStarted += (_, e) => Console.WriteLine($"  ● Meeting is live");
-    host.SessionEnded += (_, e) => Console.WriteLine($"  ■ Meeting ended");
+    // Subscribe to the 3 unified events
+    host.UserJoined += (_, e) => Console.WriteLine($"  + [{(e.User.IsHost ? "Host" : "Participant")}] {e.User.Username} joined (total: {e.NewCount})");
+    host.UserLeft += (_, e) => Console.WriteLine($"  - {e.User.Username} left (total: {e.NewCount})");
+    host.MeetingEnded += (_, e) => Console.WriteLine($"  ■ Meeting ended by {e.Host.Username}");
 
     Console.WriteLine($"Listening on port {host.ListenPort}");
     Console.WriteLine("Commands: start | end | count | users | quit");
@@ -83,8 +82,8 @@ void RunHost()
                 }
                 else
                 {
-                    List<string> users = host.GetActiveUsers();
-                    Console.WriteLine($"{users.Count} user(s): {string.Join(", ", users)}");
+                    List<ControllerUser> users = host.GetActiveUsers();
+                    Console.WriteLine($"{users.Count} user(s): {string.Join(", ", users.Select(u => $"[{(u.IsHost ? "Host" : "Participant")}] {u.Username} ({u.Gmail}) @ {u.Ip}:{u.Port}"))}");
                 }
                 break;
 
@@ -102,16 +101,17 @@ void RunHost()
 void RunClient()
 {
     Console.Write("Enter your user ID: ");
-    string userId = Console.ReadLine()?.Trim() ?? "user";
+    string userName = Console.ReadLine()?.Trim() ?? "user";
+    var clientUser = new ControllerUser(userName, $"{userName}@example.com", null, string.Empty, 0, isHost: false);
 
-    using IControllerService client = ControllerFactory.CreateClient(userId);
+    using IControllerService client = ControllerFactory.CreateClient(clientUser);
 
-    // Subscribe to events — UX team does this
-    client.UserJoined += (_, e) => Console.WriteLine($"  + {e.UserId} joined (total: {e.NewCount})");
-    client.UserLeft += (_, e) => Console.WriteLine($"  - {e.UserId} left (total: {e.NewCount})");
-    client.SessionEnded += (_, e) => Console.WriteLine($"  ■ Meeting ended");
+    // Subscribe to the 3 unified events
+    client.UserJoined += (_, e) => Console.WriteLine($"  + [{(e.User.IsHost ? "Host" : "Participant")}] {e.User.Username} joined (total: {e.NewCount})");
+    client.UserLeft += (_, e) => Console.WriteLine($"  - {e.User.Username} left (total: {e.NewCount})");
+    client.MeetingEnded += (_, e) => Console.WriteLine($"  ■ Meeting ended by {e.Host.Username}");
 
-    Console.WriteLine($"Client initialized for user '{userId}'.");
+    Console.WriteLine($"Client initialized for user '{clientUser.Username}'.");
     Console.WriteLine("Commands: join <hostIp> <hostPort> | leave | users | count | quit");
 
     while (true)
@@ -126,7 +126,7 @@ void RunClient()
         switch (command)
         {
             case "join" when parts.Length >= 3:
-                client.JoinMeeting(parts[1], int.Parse(parts[2]), userId);
+                client.JoinMeeting(parts[1], int.Parse(parts[2]), clientUser);
                 Console.WriteLine($"Connected to {parts[1]}:{parts[2]} (local port: {client.ListenPort}).");
                 break;
 
@@ -136,7 +136,7 @@ void RunClient()
                     Console.WriteLine("You're not in a meeting.");
                     break;
                 }
-                client.LeaveMeeting(userId);
+                client.LeaveMeeting(clientUser);
                 Console.WriteLine("Left the meeting.");
                 break;
 
@@ -147,8 +147,8 @@ void RunClient()
                 }
                 else
                 {
-                    List<string> users = client.GetActiveUsers();
-                    Console.WriteLine($"{users.Count} user(s): {string.Join(", ", users)}");
+                    List<ControllerUser> users = client.GetActiveUsers();
+                    Console.WriteLine($"{users.Count} user(s): {string.Join(", ", users.Select(u => $"[{(u.IsHost ? "Host" : "Participant")}] {u.Username} ({u.Gmail}) @ {u.Ip}:{u.Port}"))}");
                 }
                 break;
 

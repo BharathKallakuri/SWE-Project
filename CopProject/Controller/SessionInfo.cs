@@ -1,22 +1,23 @@
 namespace Controller;
 
 // Holds all metadata about a single meeting session, including its lifecycle
-// state, the host who created it, and all current participants with their
-// network addresses (PeerInfo).
+// state, the host who created it, and all current participants(ControllerUser's).
 public sealed class SessionInfo
 {
-    private readonly Dictionary<string, PeerInfo> _peers = new();
+    private readonly Dictionary<string, ControllerUser> _users = new();
     private readonly object _lock = new();
 
-    public string HostUserId { get; }
+    public ControllerUser HostUser { get; }
     public DateTime CreatedAt { get; }
     public SessionState State { get; private set; }
 
-    public SessionInfo(string hostUserId)
+    public SessionInfo(ControllerUser hostUser)
     {
-        HostUserId = hostUserId ?? throw new ArgumentNullException(nameof(hostUserId));
+        HostUser = hostUser ?? throw new ArgumentNullException(nameof(hostUser));
         CreatedAt = DateTime.UtcNow;
         State = SessionState.Created;
+        // Add host as the first participant
+        _users[hostUser.Username] = hostUser;
     }
 
     //Transitions the session to the Active state.
@@ -45,51 +46,47 @@ public sealed class SessionInfo
 
     //Adds a participant with their network address.
     //True if the user was added
-    public bool AddPeer(PeerInfo peer)
+    public bool AddUser(ControllerUser user)
     {
         lock (_lock)
         {
             if (State == SessionState.Ended) return false;
-            if (_peers.ContainsKey(peer.UserId)) return false;
-            _peers[peer.UserId] = peer;
+            if (_users.ContainsKey(user.Username)) return false;
+            _users[user.Username] = user;
             return true;
         }
     }
 
     //Removes a participant.
     //True if the user was found and removed.
-    public bool RemovePeer(string userId)
+    public bool RemoveUser(string username, out ControllerUser? removedUser)
     {
         lock (_lock)
         {
-            return _peers.Remove(userId);
+            if (_users.TryGetValue(username, out removedUser))
+            {
+                return _users.Remove(username);
+            }
+            removedUser = null;
+            return false;
         }
     }
 
     //Gets the current number of participants.
-    public int PeerCount
+    public int UserCount
     {
-        get { lock (_lock) { return _peers.Count; } }
+        get { lock (_lock) { return _users.Count; } }
     }
 
     //Gets a snapshot of all current participant user IDs.
-    public List<string> GetUserIds()
+    public List<ControllerUser> GetUsers()
     {
         lock (_lock)
         {
-            return _peers.Keys.ToList();
-        }
-    }
-
-    //Gets a snapshot of all current participants with their network info.
-    public List<PeerInfo> GetPeers()
-    {
-        lock (_lock)
-        {
-            return _peers.Values.ToList();
+            return _users.Values.ToList();
         }
     }
 
     //Checks whether the given user is the host of this session.
-    public bool IsHost(string userId) => HostUserId == userId;
+    public bool IsHost(string username) => HostUser.Username == username;
 }

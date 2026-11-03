@@ -8,11 +8,8 @@ public class SessionManager
     private readonly object _lock = new();
     private SessionInfo? _session;
 
-    //Raised when a new session is created.
-    public event EventHandler<SessionStartedEventArgs>? SessionStarted;
-
     //Raised when a session ends.
-    public event EventHandler<SessionEndedEventArgs>? SessionEnded;
+    public event EventHandler<MeetingEndedEventArgs>? MeetingEnded;
 
     //Raised when a user joins the session.
     public event EventHandler<UserJoinedEventArgs>? UserJoined;
@@ -20,28 +17,22 @@ public class SessionManager
     //Raised when a user leaves the session.
     public event EventHandler<UserLeftEventArgs>? UserLeft;
 
-    //Raised whenever the active user count of the session changes.
-    public event EventHandler<CountChangedEventArgs>? CountChanged;
-
     // Creates a new session with the given host.
-    // The host is automatically added as the first participant.
-    public SessionInfo? CreateSession(string hostUserId, PeerInfo hostPeer)
+    public SessionInfo? CreateSession(ControllerUser hostUser)
     {
         lock (_lock)
         {
             if (_session != null)
                 return null;
 
-            var session = new SessionInfo(hostUserId);
-            session.AddPeer(hostPeer);
+            var session = new SessionInfo(hostUser);
             _session = session;
             return session;
         }
     }
 
-    // Starts the meeting (transitions from Created → Active).
-    //True if the transition succeeded.
-    public bool StartSession(string requestingUserId)
+    // Starts the meeting (transitions from Created -> Started).
+    public bool StartSession(ControllerUser hostUser)
     {
         SessionInfo? session;
         lock (_lock)
@@ -50,20 +41,18 @@ public class SessionManager
             if (session == null)
                 return false;
 
-            if (!session.IsHost(requestingUserId))
+            if (!session.IsHost(hostUser.Username))
                 return false;
 
             if (!session.Start())
                 return false;
         }
 
-        // Raise event outside the lock to avoid deadlocks
-        SessionStarted?.Invoke(this, new SessionStartedEventArgs(requestingUserId));
+        UserJoined?.Invoke(this, new UserJoinedEventArgs(session.HostUser, 1));
         return true;
     }
 
     // Ends the meeting. Only the host can end it.
-    //True if the session was ended successfully.
     public bool EndSession(string requestingUserId)
     {
         SessionInfo? session;
@@ -82,14 +71,12 @@ public class SessionManager
             _session = null;
         }
 
-        SessionEnded?.Invoke(this, new SessionEndedEventArgs(requestingUserId));
+        MeetingEnded?.Invoke(this, new MeetingEndedEventArgs(session.HostUser));
         return true;
     }
 
-    /// Adds a user to the active session.
-    // The session must exist and not be in the Ended state.
-    //True if the user was added.
-    public bool JoinSession(PeerInfo peer)
+    // Adds a user to the active session.
+    public bool JoinSession(ControllerUser user)
     {
         int newCount;
         lock (_lock)
@@ -97,35 +84,33 @@ public class SessionManager
             if (_session == null)
                 return false;
 
-            if (!_session.AddPeer(peer))
+            if (!_session.AddUser(user))
                 return false;
 
-            newCount = _session.PeerCount;
+            newCount = _session.UserCount;
         }
 
-        UserJoined?.Invoke(this, new UserJoinedEventArgs(peer.UserId, newCount));
-        CountChanged?.Invoke(this, new CountChangedEventArgs(newCount));
+        UserJoined?.Invoke(this, new UserJoinedEventArgs(user, newCount));
         return true;
     }
 
     // Removes a user from the session.
-    //True if the user was found and removed.
-    public bool LeaveSession(string userId)
+    public bool LeaveSession(string username)
     {
         int newCount;
+        ControllerUser? removedUser;
         lock (_lock)
         {
             if (_session == null)
                 return false;
 
-            if (!_session.RemovePeer(userId))
+            if (!_session.RemoveUser(username, out removedUser) || removedUser == null)
                 return false;
 
-            newCount = _session.PeerCount;
+            newCount = _session.UserCount;
         }
 
-        UserLeft?.Invoke(this, new UserLeftEventArgs(userId, newCount));
-        CountChanged?.Invoke(this, new CountChangedEventArgs(newCount));
+        UserLeft?.Invoke(this, new UserLeftEventArgs(removedUser, newCount));
         return true;
     }
 
@@ -135,26 +120,17 @@ public class SessionManager
         lock (_lock)
         {
             if (!HasActiveSession()) return 0;
-            return _session?.PeerCount ?? 0;
+            return _session?.UserCount ?? 0;
         }
     }
 
     //Gets the user IDs of all participants in the session.
-    public List<string> GetActiveUsers()
+    public List<ControllerUser> GetActiveUsers()
     {
         lock (_lock)
         {
-            if (!HasActiveSession()) return new List<string>();
-            return _session?.GetUserIds() ?? new List<string>();
-        }
-    }
-
-    //Gets all peers for the session. Used by host to broadcast.
-    public List<PeerInfo> GetPeers()
-    {
-        lock (_lock)
-        {
-            return _session?.GetPeers() ?? new List<PeerInfo>();
+            if (!HasActiveSession()) return new List<ControllerUser>();
+            return _session?.GetUsers() ?? new List<ControllerUser>();
         }
     }
 

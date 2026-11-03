@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 using Networking;
 
 namespace Controller;
 
 // Receives messages from the Networking module and updates the SessionManager accordingly.
 // Single Responsibility: Only translates network messages into SessionManager calls.
-// Open-Closed: Add new message types by adding a case — no existing code changes.
 public class SessionMessageListener : IMessageListener
 {
     private readonly SessionManager _sessionManager;
@@ -31,7 +31,7 @@ public class SessionMessageListener : IMessageListener
             return;
         }
 
-        string[] parts = rawMessage.Split(':');
+        string[] parts = rawMessage.Split(Protocol.Separator, 2);
         if (parts.Length < 2)
         {
             Trace.TraceWarning($"Controller received malformed message: {rawMessage}");
@@ -43,19 +43,11 @@ public class SessionMessageListener : IMessageListener
         switch (type)
         {
             case Protocol.Join:
-                HandleJoin(parts);
+                HandleJoin(parts[1]);
                 break;
 
             case Protocol.Leave:
-                HandleLeave(parts);
-                break;
-
-            case Protocol.Start:
-                HandleStart(parts);
-                break;
-
-            case Protocol.End:
-                HandleEnd(parts);
+                HandleLeave(parts[1]);
                 break;
 
             default:
@@ -63,97 +55,49 @@ public class SessionMessageListener : IMessageListener
         }
     }
 
-    /// <summary>
-    /// Handles JOIN messages.
-    /// Format: "JOIN:userId:ip:port"
-    /// </summary>
-    private void HandleJoin(string[] parts)
+    // Handles JOIN: deserializes the ControllerUser from JSON and joins session
+    private void HandleJoin(string userJson)
     {
-        string userId;
-        string ip;
-        int port;
-
-        if (parts.Length >= 4)
-        {
-            // Format: JOIN:userId:ip:port
-            userId = parts[1];
-            ip = parts[2];
-            port = int.TryParse(parts[3], out int p) ? p : 0;
-        }
-        else
-        {
-            Trace.TraceWarning($"JOIN message has too few fields: {string.Join(':', parts)}");
-            return;
-        }
-
         if (!_sessionManager.HasActiveSession())
         {
-            Trace.TraceWarning($"Join failed for {userId}: no active session on this host.");
+            Trace.TraceWarning("Join failed: no active session on this host.");
             return;
         }
-
-        var peer = new PeerInfo(userId, ip, port);
-        bool joined = _sessionManager.JoinSession(peer);
-
-        if (joined)
-            Trace.TraceInformation($"{userId} joined session from {ip}:{port}");
-        else
-            Trace.TraceWarning($"Join failed for {userId} (session not found or ended)");
+        try
+        {
+            ControllerUser? user = JsonSerializer.Deserialize<ControllerUser>(userJson);
+            if (user == null)
+            {
+                Trace.TraceWarning("Join failed: malformed user payload.");
+                return;
+            }
+            user.IsHost = false; // Joined users are clients/participants
+            bool joined = _sessionManager.JoinSession(user);
+            if (joined)
+                Trace.TraceInformation($"{user.Username} joined session from {user.Ip}:{user.Port}");
+            else
+                Trace.TraceWarning($"Join failed for {user.Username} (could not add to session)");
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"Failed to process JOIN payload: {ex.Message}");
+        }
     }
 
     // Handles LEAVE messages.Format: "LEAVE:userId"
-    private void HandleLeave(string[] parts)
+    private void HandleLeave(string username)
     {
-        string userId;
-
-        if (parts.Length >= 2)
-        {
-            // Format: LEAVE:userId
-            userId = parts[1];
-        }
-        else
-        {
-            Trace.TraceWarning($"LEAVE message has too few fields: {string.Join(':', parts)}");
-            return;
-        }
-
         if (!_sessionManager.HasActiveSession())
         {
-            Trace.TraceWarning($"Leave failed for {userId}: no active session on this host.");
+            Trace.TraceWarning($"Leave failed for {username}: no active session on this host.");
             return;
         }
 
-        bool left = _sessionManager.LeaveSession(userId);
+        bool left = _sessionManager.LeaveSession(username);
 
         if (left)
-            Trace.TraceInformation($"{userId} left session");
+            Trace.TraceInformation($"{username} left session");
         else
-            Trace.TraceWarning($"Leave failed for {userId}");
-    }
-
-    private void HandleStart(string[] parts)
-    {
-        ParsedMessage? parsed = Protocol.Parse(string.Join(':', parts));
-        if (parsed == null) return;
-
-        bool started = _sessionManager.StartSession(parsed.UserId);
-
-        if (started)
-            Trace.TraceInformation($"Session started by {parsed.UserId}");
-        else
-            Trace.TraceWarning($"Start failed by {parsed.UserId}");
-    }
-
-    private void HandleEnd(string[] parts)
-    {
-        ParsedMessage? parsed = Protocol.Parse(string.Join(':', parts));
-        if (parsed == null) return;
-
-        bool ended = _sessionManager.EndSession(parsed.UserId);
-
-        if (ended)
-            Trace.TraceInformation($"Session ended by {parsed.UserId}");
-        else
-            Trace.TraceWarning($"End failed by {parsed.UserId}");
+            Trace.TraceWarning($"Leave failed for {username}");
     }
 }
