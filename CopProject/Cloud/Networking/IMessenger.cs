@@ -5,7 +5,7 @@
 namespace Cloud.Networking;
 
 /// <summary>
-/// Defines the operations available to clients.
+/// Clients use this interface to communicate with server.
 /// </summary>
 public interface IMessenger : IAsyncDisposable
 {
@@ -20,7 +20,7 @@ public interface IMessenger : IAsyncDisposable
     Task SendMessageAsync(string content);
 
     /// <summary>
-    /// Disconnects from the server.
+    /// Disconnects from the server, but does not dispose the connection.
     /// </summary>
     Task DisconnectAsync();
 
