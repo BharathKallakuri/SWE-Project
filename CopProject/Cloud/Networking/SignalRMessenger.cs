@@ -12,12 +12,21 @@ namespace Cloud.Networking;
 public sealed class SignalRMessenger : IMessenger
 {
     private readonly HubConnection _connection;
+
+    /* events that functions can subscribe to */
     public event Action<Message>? MessageReceived;
+    public event Action<Exception?>? Reconnecting;
+    public event Action<string?>? Reconnected;
+    public event Action<Exception?>? Closed;
 
     /// <summary>
-    /// Build a hub connection and register a handler.
+    /// Gets the current state of the SignalR connection.
     /// </summary>
-    /// <param name="serverurl"></param>
+    public HubConnectionState State => _connection.State;
+
+    /// <summary>
+    /// Creates a new SignalR connection and registers the required handlers.
+    /// </summary>
     public SignalRMessenger(string serverUrl)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(serverUrl);
@@ -27,9 +36,28 @@ public sealed class SignalRMessenger : IMessenger
             .WithAutomaticReconnect()
             .Build();
 
+        // Listen for messages coming from the server.
         _connection.On<Message>(
             Contract.ReceiveMessage,
             message => MessageReceived?.Invoke(message));
+
+        // Called when SignalR starts trying to reconnect.
+        _connection.Reconnecting += exception => {
+            Reconnecting?.Invoke(exception);
+            return Task.CompletedTask;
+        };
+
+        // Called when the connection is successfully restored.
+        _connection.Reconnected += connectionId => {
+            Reconnected?.Invoke(connectionId);
+            return Task.CompletedTask;
+        };
+
+        // Called when the connection is closed.
+        _connection.Closed += exception => {
+            Closed?.Invoke(exception);
+            return Task.CompletedTask;
+        };
     }
 
     /// <summary>
