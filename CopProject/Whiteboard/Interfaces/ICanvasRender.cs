@@ -8,10 +8,10 @@ public interface ICanvasRender
     /// <summary>
     /// Converts UI element to PNG byte data 
     /// </summary>
-    Task<byte> RenderToPngAsync(UIElement element);
+    Task<byte[]> RenderToPngAsync(UIElement element);
 
     /// <summary>
     /// Converts UI element to JPEG byte data 
     /// </summary>
-    Task<byte> RenderToJpegAsync(UIElement element);
+    Task<byte[]> RenderToJpegAsync(UIElement element);
 }
