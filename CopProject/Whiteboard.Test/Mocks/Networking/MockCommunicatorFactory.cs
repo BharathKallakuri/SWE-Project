@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Net;
 using Networking;
 
 namespace Whiteboard.Test.Mocks.Networking;
@@ -26,10 +27,18 @@ public class MockCommunicatorFactory
     /// </summary>
     private int _nextPort;
 
+    /// <summary>
+    /// Mock IP endpoint for the server
+    /// </summary>
+    public IPEndPoint ServerEndPoint { get; private set; }
+
     public MockCommunicatorFactory()
     {
-        _serverCommunicator = new MockCommunicator(_mockNetwork, _nextPort++);
+        int serverPort = _nextPort++;
+
+        _serverCommunicator = new MockCommunicator(_mockNetwork, serverPort);
         _mockNetwork.AddCommunicator(_serverCommunicator);
+        ServerEndPoint = new IPEndPoint(IPAddress.Loopback, serverPort);
     }
 
     /// <summary>
