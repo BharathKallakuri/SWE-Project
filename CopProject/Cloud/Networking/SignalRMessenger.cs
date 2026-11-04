@@ -43,6 +43,8 @@ public sealed class SignalRMessenger : IMessenger
     // Test constructor: lets you pass a mock IHubConnection.
     internal SignalRMessenger(IHubConnection connection)
     {
+        ArgumentNullException.ThrowIfNull(connection);
+
         _connection = connection;
 
         _connection.On<Message>(
