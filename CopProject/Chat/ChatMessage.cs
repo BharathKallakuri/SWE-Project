@@ -129,6 +129,19 @@ public class ChatMessage : IChatMessage
         }
     }
 
+    internal virtual ChatMessage DeepClone()
+    {
+        ChatMessage clone = new()
+        {
+            Timestamp = Timestamp,
+            SenderName = SenderName,
+            Mentions = Mentions.Clone(),
+            Content = Content
+        };
+        clone.CopyMutableStateFrom(this);
+        return clone;
+    }
+
     /// <summary>
     /// Copies mutable state from a ChatMessage.
     /// </summary>

@@ -265,29 +265,6 @@ public class Chatroom : IChatroom
     }
 
     /// <summary>
-    /// Creates a clone of a room or thread message.
-    /// </summary>
-    /// <param name="message">The message to clone.</param>
-    /// <returns>A clone of the message.</returns>
-    internal static ChatMessage CloneMessage(ChatMessage message)
-    {
-        if (message is ChatMessageWithThreads threadedMessage)
-        {
-            return threadedMessage.DeepClone();
-        }
-
-        ChatMessage clone = new()
-        {
-            Timestamp = message.Timestamp,
-            SenderName = message.SenderName,
-            Mentions = message.Mentions.Clone(),
-            Content = message.Content
-        };
-        clone.CopyMutableStateFrom(message);
-        return clone;
-    }
-
-    /// <summary>
     /// Finds a room message or a message within the specified thread.
     /// </summary>
     /// <param name="id">The target message ID.</param>

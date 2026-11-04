@@ -48,7 +48,7 @@ public class ChatMessageWithThreads : ChatMessage, IChatMessageWithThreads
         }
     }
 
-    internal ChatMessageWithThreads DeepClone()
+    internal override ChatMessageWithThreads DeepClone()
     {
         ChatMessageWithThreads clone = DeepCloneWithoutThreadMessages();
 
@@ -56,7 +56,7 @@ public class ChatMessageWithThreads : ChatMessage, IChatMessageWithThreads
         {
             foreach ((Guid id, ChatMessage reply) in ThreadById)
             {
-                clone.AddMessageToThread(id, Chatroom.CloneMessage(reply));
+                clone.AddMessageToThread(id, reply.DeepClone());
             }
         }
 
