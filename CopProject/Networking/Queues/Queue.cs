@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,24 +16,22 @@ public class Queue : IQueue
 {
     private ConcurrentQueue<Packet> _queue;
 
-    private readonly object _lock;
-
     public Queue()
     {
         this._queue = new ConcurrentQueue<Packet>();
     }
 
 
-    public void Enqueue(Packet packet)
+    public virtual void Enqueue(Packet packet)
     {
         Trace.WriteLine($"[Networking] Enqueuing to the queue {this.GetType().Name}");
         _queue.Enqueue(packet);
     }
 
-    public Packet Dequeue()
+    public virtual Packet? Dequeue()
     {
         Trace.WriteLine($"[Networking] Dequeuing to the queue {this.GetType().Name}");
-        if (!_queue.TryDequeue(out Packet top))
+        if (!_queue.TryDequeue(out Packet? top))
         {
             Trace.WriteLine($"[Networking] Unable to dequeue {this.GetType().Name}, queue is empty");
         }
@@ -41,26 +39,26 @@ public class Queue : IQueue
     }
 
 
-    public Packet Peek()
+    public virtual Packet? Peek()
     {
-        if (!_queue.TryPeek(out Packet peek))
+        if (!_queue.TryPeek(out Packet? peek))
         {
             Trace.WriteLine($"[Networking] Unable to peek {this.GetType().Name}, queue is empty");
         }
         return peek;
     }
 
-    public void Clear()
+    public virtual void Clear()
     {
         _queue.Clear();
     }
 
-    public int Size()
+    public virtual int Size()
     {
         return _queue.Count();
     }
 
-    public bool IsEmpty()
+    public virtual bool IsEmpty()
     {
         return _queue.IsEmpty;
     }

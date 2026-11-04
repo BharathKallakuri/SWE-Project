@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Filesync;
+namespace FileSynchroniser.Models;
 
 /// <summary>
 /// Declares File Operations that synchroniser can use on  files across shared folder

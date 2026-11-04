@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "FileSynchroniser.UIharness (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "FileSynchroniser.UIharness (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
