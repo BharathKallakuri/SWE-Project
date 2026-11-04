@@ -23,6 +23,11 @@ public sealed record Sync() : ChatClientRequest;
 public sealed record Reset() : ChatClientRequest;
 
 /// <summary>
+/// Base type for requests that change the chatroom.
+/// </summary>
+public abstract record ChatRoomChangeRequest : ChatClientRequest;
+
+/// <summary>
 /// Sends a message to the room or to a message's thread.
 /// </summary>
 /// <param name="Timestamp">The time at which the message was composed.</param>
@@ -33,7 +38,7 @@ public sealed record SendMessage(
     DateTimeOffset Timestamp,
     Mentions Mentions,
     string Content,
-    Guid? ParentMessageId) : ChatClientRequest;
+    Guid? ParentMessageId) : ChatRoomChangeRequest;
 
 /// <summary>
 /// Requests an edit to a room message or thread message.
@@ -44,14 +49,14 @@ public sealed record SendMessage(
 public sealed record EditMessage(
     Guid MessageId,
     string NewContent,
-    Guid? ParentMessageId) : ChatClientRequest;
+    Guid? ParentMessageId) : ChatRoomChangeRequest;
 
 /// <summary>
 /// Requests deletion of a room message or thread message.
 /// </summary>
 /// <param name="MessageId">The message ID.</param>
 /// <param name="ParentMessageId">The thread root message ID, or <see langword="null"/> for the room.</param>
-public sealed record DeleteMessage(Guid MessageId, Guid? ParentMessageId) : ChatClientRequest;
+public sealed record DeleteMessage(Guid MessageId, Guid? ParentMessageId) : ChatRoomChangeRequest;
 
 /// <summary>
 /// Toggles a reaction on a room message or thread message.
@@ -62,7 +67,7 @@ public sealed record DeleteMessage(Guid MessageId, Guid? ParentMessageId) : Chat
 public sealed record ToggleReaction(
     Guid MessageId,
     string Emoji,
-    Guid? ParentMessageId) : ChatClientRequest;
+    Guid? ParentMessageId) : ChatRoomChangeRequest;
 
 /// <summary>
 /// Wraps a client request with its ID and username.
