@@ -49,6 +49,7 @@ jobs:
           COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
         run: >
           dotnet test CopProject --configuration Release --no-build
+          --settings CopProject/ci.runsettings
           --collect:"XPlat Code Coverage"
           --results-directory ./coverage
 
