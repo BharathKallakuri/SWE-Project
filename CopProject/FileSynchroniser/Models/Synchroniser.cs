@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Security;
 
-namespace Filesync;
+namespace FileSynchroniser.Models;
 
 /// <summary>
 /// Provides local file operations for the synchronised root directory.
