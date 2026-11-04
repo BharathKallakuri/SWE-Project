@@ -43,7 +43,7 @@ public class ChatMessage : IChatMessage
     /// <summary>
     /// Gets or sets the ID of the message this message replies to, if any.
     /// </summary>
-    public Guid? ParentMessageId;
+    public Guid? ParentMessageId { get; set; }
 
     /// <summary>
     /// Gets the emoji reactions and the users who used each reaction.
