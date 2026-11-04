@@ -1,7 +1,9 @@
-using System;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Whiteboard.Interfaces;
 
+[ExcludeFromCodeCoverage]
 public class CanvasExportData
 {
     public byte[] ImageData { get; set; }
