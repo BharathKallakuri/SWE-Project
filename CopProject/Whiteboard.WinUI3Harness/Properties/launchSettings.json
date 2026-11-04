@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Whiteboard.WinUI3Harness (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Whiteboard.WinUI3Harness (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
