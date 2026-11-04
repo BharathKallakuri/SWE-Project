@@ -24,7 +24,7 @@ public class ScreenShareIntegrationTests
         }
 
         // 2. Initialize the receiver with the original full frame.
-        stitcher.ApplyFullFrame(originalFrame);
+        stitcher.ApplyFullFrame(0,originalFrame);
 
         // 3. Create the next frame with changes in two different tiles.
         using var modifiedFrame = new Bitmap(originalFrame);
@@ -33,7 +33,7 @@ public class ScreenShareIntegrationTests
         modifiedFrame.SetPixel(100, 100, Color.Blue);
 
         // 4. Generate the delta that would be transmitted over the network.
-        ImageDiffResult result = differ.Compare(
+        using ImageDiffResult result = differ.Compare(
             originalFrame,
             modifiedFrame);
 
@@ -42,10 +42,8 @@ public class ScreenShareIntegrationTests
         Assert.Equal(2, result.ChangedTiles.Count);
 
         // 5. Apply the transmitted tiles at the receiver.
-        foreach (Tile tile in result.ChangedTiles)
-        {
-            stitcher.ApplyChangedTile(tile);
-        }
+        Assert.True(stitcher.ApplyChangedTiles(1, result.ChangedTiles));
+
 
         // 6. Retrieve the reconstructed screen.
         using Bitmap? reconstructedFrame = stitcher.GetCurrentFrame();
@@ -86,10 +84,10 @@ public class ScreenShareIntegrationTests
         }
 
         // Initialize the receiver with the original frame.
-        stitcher.ApplyFullFrame(originalFrame);
+        stitcher.ApplyFullFrame(0,originalFrame);
 
         // Compare the original and modified frames.
-        ImageDiffResult result = differ.Compare(originalFrame, modifiedFrame);
+        using ImageDiffResult result = differ.Compare(originalFrame, modifiedFrame);
 
         // The entire frame changed, so a full frame should be sent.
         Assert.True(result.IsFullFrame);
@@ -97,7 +95,7 @@ public class ScreenShareIntegrationTests
         Assert.NotNull(result.FullFrame);
 
         // Simulate the receiver applying the full-frame packet.
-        stitcher.ApplyFullFrame(result.FullFrame!);
+        Assert.True(stitcher.ApplyFullFrame(1,result.FullFrame!));
 
         using Bitmap? reconstructedFrame = stitcher.GetCurrentFrame();
 
