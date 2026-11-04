@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -336,6 +336,22 @@ public class CommunicatorTests
 
         client.Dispose();
         client.Dispose();
+    }
+
+    /// <summary>
+    /// Checks that AcceptClientConnections safely terminates without unhandled exception when server socket is disposed.
+    /// </summary>
+    [TestMethod]
+    public void CommunicatorServer_AcceptClientConnections_HandlesDisposedSocketGracefully()
+    {
+        int port = GetAvailablePort();
+        IPEndPoint serverEndpoint = new(IPAddress.Loopback, port);
+        CommunicatorServer server = new(serverEndpoint);
+
+        server.Dispose();
+
+        // Calling AcceptClientConnections on disposed server must not throw ObjectDisposedException
+        server.AcceptClientConnections();
     }
 
     /// <summary>
