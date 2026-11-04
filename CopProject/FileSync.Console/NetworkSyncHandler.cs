@@ -2,7 +2,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Filesync;
+using FileSynchroniser.Models;
 using Networking;
 
 namespace FileSync.ConsoleApp;

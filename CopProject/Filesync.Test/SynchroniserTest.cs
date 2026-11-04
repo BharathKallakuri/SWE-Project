@@ -4,7 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Security;
 using System.Text;
-using Filesync;
+using FileSynchroniser.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [assembly: DoNotParallelize]

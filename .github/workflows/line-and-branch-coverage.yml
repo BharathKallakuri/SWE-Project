@@ -43,7 +43,6 @@ jobs:
       - name: Build dotnet projects
         run: dotnet build CopProject --configuration Release --no-restore
 
-        # NOTE: Requires the coverlet.collector package in the test projects.
       - name: Test dotnet projects with coverage
         env:
           COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
