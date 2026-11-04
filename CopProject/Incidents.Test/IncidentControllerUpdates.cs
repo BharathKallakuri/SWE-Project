@@ -1,8 +1,7 @@
-﻿using Incident_module;
+﻿using Filesync;
+using Incident_module;
 using Incident_module.Implementations;
-using Filesync;
 using Persistence;
-using WinRT.IncidentVtableClasses;
 
 namespace Incidents.Test;
 
@@ -14,6 +13,23 @@ public sealed class IncidentControllerUpdatesTest
 {
     private IncidentController _incidentController = null!;
     private readonly List<Incident> _mockIncidents = [];
+
+    // An incident that does not even exist in the cloud
+    private readonly Incident _invalidIncident = new Incident(
+            id: Guid.NewGuid(),
+            title: "Invalid Incident",
+            description: "This is an invalid Incident",
+            createdBy: Guid.Empty,
+            location: new IncidentLocation(Latitude: 0.0, Longitude: 0.0),
+            status: IncidentStatus.InProgress,
+            category: IncidentCategory.Accident,
+            severity: IncidentSeverity.Critical,
+            creationTime: DateTime.Now,
+            updateTime: DateTime.Now,
+            evidence: [],
+            changes: [],
+            edges: []
+          );
 
     /// <summary>
     /// Initialiazes IncidentController
@@ -63,6 +79,17 @@ public sealed class IncidentControllerUpdatesTest
     ];
 
     /// <summary>
+    /// Generate random number in the range [-min,+min]
+    /// </summary>
+    /// <param name="min"></param>
+    /// <param name="max"></param>
+    /// <returns></returns>
+    public static double RandomDouble(double min, double max)
+    {
+        return Random.Shared.NextDouble() * (max - min) + min;
+    }
+
+    /// <summary>
     /// Creates few incidents for testing
     /// </summary>
     /// <returns></returns>
@@ -76,39 +103,204 @@ public sealed class IncidentControllerUpdatesTest
 
 
     [TestMethod]
-    [DataRow(null, IncidentStatus.InProgress)]
-    public async Task UpdateCategory_InvalidIncident_ThrowsArgumentNullException(Incident incident, IncidentStatus status)
+    public async Task UpdateCategory_NullIncident_ThrowsArgumentNullException()
     {
         await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => {
-            await _incidentController.UpdateStatus(incident, status);
+            await _incidentController.UpdateStatus(null!, IncidentStatus.InProgress);
         });
     }
 
     [TestMethod]
-    [DataRow(null, IncidentStatus.InProgress)]
-    public async Task UpdateLocation_InvalidIncident_ThrowsArgumentNullException(Incident incident, IncidentStatus status)
+    public async Task UpdateCategory_InvalidCategory_ThrowsArgumentOutOfRangeException()
     {
-        await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => {
-            await _incidentController.UpdateStatus(incident, status);
+        Incident incident = _mockIncidents[0];
+        await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(async () => {
+            await _incidentController.UpdateCategory(incident, (IncidentCategory)int.MaxValue!);
         });
     }
 
     [TestMethod]
-    [DataRow(null, IncidentStatus.InProgress)]
-    public async Task UpdateSeverity_InvalidIncident_ThrowsArgumentNullException(Incident incident, IncidentStatus status)
+    public async Task UpdateCategory_InvalidIncident_ThrowsInvalidOperationException()
+    {
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => {
+            await _incidentController.UpdateCategory(_invalidIncident, IncidentCategory.Theft);
+        });
+    }
+
+    /// <summary>
+    /// Update location of incident which is valid but same location it is currently in. 
+    /// todo(@shreesh): update this test when backend changes
+    /// </summary>
+    /// <returns></returns>
+    [TestMethod]
+    public async Task UpdateCategory_ValidIncidentSameCategory_ReturnsTrue()
+    {
+        Incident incident = _mockIncidents[0];
+        Assert.AreEqual(IncidentCategory.Accident, incident.Category);
+        bool result = await _incidentController.UpdateCategory(incident, IncidentCategory.Accident);
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod]
+    public async Task UpdateCategory_ValidIncidentDifferentCategory_ReturnsTrue()
+    {
+        Incident incident = _mockIncidents[0];
+        Assert.AreNotEqual(IncidentCategory.DrunkDriving, incident.Category);
+        bool result = await _incidentController.UpdateCategory(incident, IncidentCategory.DrunkDriving);
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod]
+    public async Task UpdateLocation_NullIncident_ThrowsArgumentNullException()
     {
         await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => {
-            await _incidentController.UpdateStatus(incident, status);
+            await _incidentController.UpdateStatus(null!, IncidentStatus.InProgress);
         });
+    }
+
+    [TestMethod]
+    public async Task UpdateLocation_InvalidLocation_ThrowsArgumentNullException()
+    {
+        Incident incident = _mockIncidents[0];
+        await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => {
+            await _incidentController.UpdateLocation(incident, null!);
+        });
+    }
+
+    [TestMethod]
+    public async Task UpdateLocation_InvalidIncident_ThrowsInvalidOperationException()
+    {
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => {
+            await _incidentController.UpdateLocation(_invalidIncident,
+                new IncidentLocation(Latitude: 0.0, Longitude: 0.0));
+        });
+    }
+
+    /// <summary>
+    /// Update location of incident which is valid but same location it is currently in. 
+    /// </summary>
+    /// <returns></returns>
+    [TestMethod]
+    public async Task UpdateLocation_ValidIncidentSameLocation_ReturnsTrue()
+    {
+        Incident incident = _mockIncidents[0];
+
+        Assert.AreEqual(new IncidentLocation(Latitude: 0.0, Longitude: 0.0), incident.Location);
+        bool result = await _incidentController.UpdateLocation(incident, new IncidentLocation(Latitude: 0.0, Longitude: 0.0));
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod]
+    public async Task UpdateLocation_ValidIncidentDifferentLocation_ReturnsTrue()
+    {
+        Incident incident = _mockIncidents[0];
+        IncidentLocation newLocation = new IncidentLocation(
+                    Latitude: RandomDouble(-90, 90),
+                    Longitude: RandomDouble(-180, 180)
+            );
+
+        Assert.AreNotEqual(newLocation, incident.Location);
+        bool result = await _incidentController.UpdateLocation(incident, newLocation);
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod]
+    public async Task UpdateSeverity_NullIncident_ThrowsArgumentNullException()
+    {
+        await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => {
+            await _incidentController.UpdateSeverity(null!, IncidentSeverity.High);
+        });
+    }
+
+    [TestMethod]
+    public async Task UpdateSeverity_InvalidSeverity_ThrowsArgumentOutOfRangeException()
+    {
+        Incident incident = _mockIncidents[0];
+        await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(async () => {
+            await _incidentController.UpdateSeverity(incident, (IncidentSeverity)int.MaxValue!);
+        });
+    }
+
+    [TestMethod]
+    public async Task UpdateSeverity_InvalidIncident_ThrowsInvalidOperationException()
+    {
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => {
+            await _incidentController.UpdateSeverity(_invalidIncident, IncidentSeverity.High);
+        });
+    }
+
+    /// <summary>
+    /// Update severity of incident which is valid but same severity it is currently in. 
+    /// todo(@shreesh): update this test when backend changes
+    /// </summary>
+    /// <returns></returns>
+    [TestMethod]
+    public async Task UpdateSeverity_ValidIncidentSameSeverity_ReturnsTrue()
+    {
+        Incident incident = _mockIncidents[0];
+
+        Assert.AreEqual(IncidentSeverity.Medium, incident.Severity);
+        bool result = await _incidentController.UpdateSeverity(incident, IncidentSeverity.Medium);
+        Assert.IsTrue(result);
     }
 
 
     [TestMethod]
-    [DataRow(null, IncidentStatus.InProgress)]
-    public async Task UpdateStatus_InvalidIncident_ThrowsArgumentNullException(Incident incident, IncidentStatus status)
+    public async Task UpdateSeverity_ValidIncidentDifferentSeverity_ReturnsTrue()
+    {
+        Incident incident = _mockIncidents[0];
+        Assert.AreNotEqual(IncidentSeverity.High, incident.Severity);
+        bool result = await _incidentController.UpdateSeverity(incident, IncidentSeverity.High);
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod]
+    public async Task UpdateStatus_NullIncident_ThrowsArgumentNullException()
     {
         await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => {
-            await _incidentController.UpdateStatus(incident, status);
+            await _incidentController.UpdateStatus(null!, IncidentStatus.Resolved);
         });
+    }
+
+    [TestMethod]
+    public async Task UpdateStatus_InvalidStatus_ThrowsArgumentOutOfRangeException()
+    {
+        Incident incident = _mockIncidents[0];
+        await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(async () => {
+            await _incidentController.UpdateStatus(incident, (IncidentStatus)int.MaxValue!);
+        });
+    }
+
+    [TestMethod]
+    public async Task UpdateStatus_InvalidIncident_ThrowsInvalidOperationException()
+    {
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => {
+            await _incidentController.UpdateStatus(_invalidIncident, IncidentStatus.InProgress);
+        });
+    }
+
+
+    /// <summary>
+    /// Update status of incident which is valid but same status it is currently in. 
+    /// todo(@shreesh): update this test when backend changes
+    /// </summary>
+    /// <returns></returns>
+    [TestMethod]
+    public async Task UpdateStatus_ValidIncidentSameStatus_ReturnsTrue()
+    {
+        Incident incident = _mockIncidents[0];
+
+        Assert.AreEqual(IncidentStatus.InProgress, incident.Status);
+        bool result = await _incidentController.UpdateStatus(incident, IncidentStatus.InProgress);
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod]
+    public async Task UpdateStatus_ValidIncidentDifferentStatus_ReturnsTrue()
+    {
+        Incident incident = _mockIncidents[0];
+        Assert.AreNotEqual(IncidentStatus.Resolved, incident.Status);
+        bool result = await _incidentController.UpdateStatus(incident, IncidentStatus.Resolved);
+        Assert.IsTrue(result);
     }
 }
