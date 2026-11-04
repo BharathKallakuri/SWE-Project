@@ -34,6 +34,7 @@
     <Project Path="Location.Test/Location.Test.csproj" />
     <Project Path="Networking.Test/Networking.Test.csproj" />
     <Project Path="Networking/Networking.csproj" />
+    <Project Path="Networking.Test/Networking.Test.csproj" />
     <Project Path="Screenshare/Screenshare.csproj" />
     <Project Path="UX/UX.csproj">
         <Platform Solution="*|Any CPU" Project="x64" />
