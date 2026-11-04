@@ -47,7 +47,7 @@ jobs:
       - name: Test dotnet projects with coverage
         run: >
           dotnet test CopProject --configuration Release --no-build
-          --settings CopProject/test.runsettings
+          --settings CopProject/ci.runsettings
           --collect:"XPlat Code Coverage"
           --results-directory ./coverage
 
