@@ -32,16 +32,56 @@
                     Orientation="Horizontal"
                     Spacing="8">
 
-                    <Button Content="Undo"/>
-                    <Button Content="Redo"/>
-                    <Button Content="Select"/>
-                    <Button Content="Pen"/>
-                    <Button Content="Eraser"/>
-                    <Button Content="Text" Click="TextButton_Click"/>
-                    <Button Content="Shape"/>
-                    <Button Content="Delete"/>
-                    <Button Content="Clear"/>
-                    <Button Content="Export"/>
+                    <Button
+                        ToolTipService.ToolTip="Pen">
+                        <FontIcon Glyph="&#xF67B;"/>
+                    </Button>
+
+                    <Button
+                        ToolTipService.ToolTip="Undo">
+                        <FontIcon Glyph="&#xE7A7;"/>
+                    </Button>
+
+                    <Button
+                        ToolTipService.ToolTip="Redo">
+                        <FontIcon Glyph="&#xE7A6;"/>
+                    </Button>
+
+                    <Button
+                        ToolTipService.ToolTip="Select items">
+                        <FontIcon Glyph="&#xE8B0;"/>
+                    </Button>
+
+                    <Button
+                        ToolTipService.ToolTip="Erase items">
+                        <FontIcon Glyph="&#xE75C;"/>
+                    </Button>
+
+                    <Button
+                        ToolTipService.ToolTip="Textbox"
+                        Click="TextButton_Click">
+                        <FontIcon Glyph="&#xE8AC;"/>
+                    </Button>
+
+                    <Button
+                        ToolTipService.ToolTip="Square">
+                        <FontIcon Glyph="&#xE739;" />
+                    </Button>
+
+                    <Button
+                        ToolTipService.ToolTip="Delete selected items">
+                        <FontIcon Glyph="&#xE74D;"/>
+                    </Button>
+
+                    <Button
+                        ToolTipService.ToolTip="Delete all owned items">
+                        <FontIcon Glyph="&#xED62;"/>
+                    </Button>
+
+                    <Button
+                        ToolTipService.ToolTip="Upload to cloud">
+                        <FontIcon Glyph="&#xE898;" />
+                    </Button>
 
                 </StackPanel>
             </ScrollViewer>
