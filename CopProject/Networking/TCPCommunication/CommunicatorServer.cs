@@ -29,6 +29,7 @@ public class CommunicatorServer : ICommunicator, IDisposable
     private ConcurrentDictionary<IPEndPoint, SocketListener> _clientToSocketListenerMap = new ConcurrentDictionary<IPEndPoint, SocketListener>();
     private ConcurrentDictionary<int, ConcurrentDictionary<IPEndPoint, byte>> _multicastGroupMap = new ConcurrentDictionary<int, ConcurrentDictionary<IPEndPoint, byte>>();
     private bool _isRunning;
+    private bool _disposed;
     private object _isRunningLock;
     private IPEndPoint? _thisIpEndPoint;
 
@@ -102,15 +103,17 @@ public class CommunicatorServer : ICommunicator, IDisposable
                     AddClient(clientEp, clientTcpClient);
                 }
             }
-            catch (SocketException e)
+            catch (Exception e) when (e is SocketException or ObjectDisposedException or InvalidOperationException)
             {
-                if (e.SocketErrorCode == SocketError.Interrupted)
+                Trace.WriteLine($"[Networking] CommunicatorServer: TCP Listener Socket stopped or closed: {e.Message}");
+                break;
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine($"[Networking] CommunicatorServer.AcceptClientConnections unexpected exception: {e.Message}");
+                if (!IsRunning)
                 {
-                    Trace.WriteLine("[Networking] Error in CommunicatorServer in connecting to TCP Listener Socket. Socket has been closed");
-                }
-                else
-                {
-                    Trace.WriteLine($"[Networking] Error in CommunicatorServer.AcceptClientConnections. Exception: {e.Message}");
+                    break;
                 }
             }
         }
@@ -332,8 +335,14 @@ public class CommunicatorServer : ICommunicator, IDisposable
     {
         lock (_isRunningLock)
         {
+            if (_disposed)
+            {
+                return;
+            }
+            _disposed = true;
             _isRunning = false;
         }
+
         _tcpClientRequestListener?.Stop();
         _sendingQueueListenerServer?.Dispose();
         _receivingQueueListener?.Dispose();
