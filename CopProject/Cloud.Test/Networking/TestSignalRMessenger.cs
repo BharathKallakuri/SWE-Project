@@ -37,7 +37,8 @@ public class TestSignalRMessenger
     [TestMethod]
     public void ConstructorRejectsNullUrl()
     {
-        Assert.Throws<ArgumentNullException>(() => new SignalRMessenger(null!));
+        Assert.Throws<ArgumentNullException>(() => new SignalRMessenger((string)null!));
+        //Assert.Throws<ArgumentNullException>(() => new SignalRMessenger((IHubConnection)null!));
     }
 
     [TestMethod]
