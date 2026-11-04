@@ -13,7 +13,7 @@
     Publisher="CN=LocationTracker"
     Version="1.0.0.0" />
 
-  <mp:PhoneIdentity PhoneProductId="LocationTracker" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="6f5c5a5a-8d0d-4c3f-9a6b-7f6d2c1e4b90" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>LocationTracker</DisplayName>
