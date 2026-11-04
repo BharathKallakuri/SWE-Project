@@ -17,6 +17,17 @@ public class MockCommunicator : ICommunicator
 
     public int ListenPort { get; }
     public IPAddress ListenIpAddress { get; } = IPAddress.Loopback;
+    public IPEndPoint EndPoint => new(ListenIpAddress, ListenPort);
+
+    /// <summary>
+    /// A log of all direct messages sent through this communicator
+    /// </summary>
+    public List<(IPEndPoint Dest, byte[] Message, int Module, int Priority)> SentMessages { get; } = [];
+
+    /// <summary>
+    /// A log of all broadcast messages sent through this communicator
+    /// </summary>
+    public List<(byte[] Message, int Module, int Priority)> BroadcastMessages { get; } = [];
 
     /// <summary>
     /// Subscriber callback function
@@ -32,9 +43,9 @@ public class MockCommunicator : ICommunicator
         _subscriber?.OnMessageReceived(message);
     }
 
-    public MockCommunicator(MockNetwork network, int port)
+    public MockCommunicator(MockNetwork? network = null, int port = 0)
     {
-        _mockNetwork = network;
+        _mockNetwork = network ?? new MockNetwork();
         ListenPort = port;
     }
 
@@ -50,11 +61,13 @@ public class MockCommunicator : ICommunicator
 
     public void SendMessage(IPEndPoint dest, byte[] message, int module, int priority)
     {
+        SentMessages.Add((dest, message, module, priority));
         _mockNetwork.SendTo(dest, message);
     }
 
     public void BroadcastMessage(byte[] message, int module, int priority)
     {
+        BroadcastMessages.Add((message, module, priority));
         _mockNetwork.SendAll(this, message);
     }
 
