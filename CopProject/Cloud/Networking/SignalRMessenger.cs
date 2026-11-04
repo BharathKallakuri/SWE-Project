@@ -7,57 +7,74 @@ using Microsoft.AspNetCore.SignalR.Client;
 namespace Cloud.Networking;
 
 /// <summary>
-/// Implements IMessenger using SignalR.
+/// Implements IMessenger interface using SignalR.
+/// It uses a connection which is <see cref="HubConnectionProxy"/> class that wraps 
+/// <see cref="HubConnection"/> (all of this is just for mocking it)
 /// </summary>
+/// 
+/// <remarks>
+/// SignalR's events are <see cref="Func{T, Task}"/> delegates. 
+/// This class makes them into <see cref="Action{T}"/> events,
+/// so that consumers can subscribe with simple synchronous handlers, 
+/// without having to return a <see cref="Task"/>.
+/// </remarks>
 public sealed class SignalRMessenger : IMessenger
 {
-    private readonly HubConnection _connection;
+    private readonly IHubConnection _connection;
 
-    /* events that functions can subscribe to */
-    public event Action<Message>? MessageReceived;
     public event Action<Exception?>? Reconnecting;
     public event Action<string?>? Reconnected;
     public event Action<Exception?>? Closed;
+    public event Action<Message>? MessageReceived;
 
     /// <summary>
     /// Gets the current state of the SignalR connection.
     /// </summary>
     public HubConnectionState State => _connection.State;
 
-    /// <summary>
-    /// Creates a new SignalR connection and registers the required handlers.
-    /// </summary>
+
+
+    // Production constructor: builds the real connection.
     public SignalRMessenger(string serverUrl)
+        : this(CreateConnection(serverUrl))
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(serverUrl);
+    }
 
-        _connection = new HubConnectionBuilder()
-            .WithUrl(serverUrl)
-            .WithAutomaticReconnect()
-            .Build();
+    // Test constructor: lets you pass a mock IHubConnection.
+    internal SignalRMessenger(IHubConnection connection)
+    {
+        _connection = connection;
 
-        // Listen for messages coming from the server.
         _connection.On<Message>(
             Contract.ReceiveMessage,
             message => MessageReceived?.Invoke(message));
 
-        // Called when SignalR starts trying to reconnect.
         _connection.Reconnecting += exception => {
             Reconnecting?.Invoke(exception);
             return Task.CompletedTask;
         };
 
-        // Called when the connection is successfully restored.
         _connection.Reconnected += connectionId => {
             Reconnected?.Invoke(connectionId);
             return Task.CompletedTask;
         };
 
-        // Called when the connection is closed.
         _connection.Closed += exception => {
             Closed?.Invoke(exception);
             return Task.CompletedTask;
         };
+    }
+
+    private static HubConnectionProxy CreateConnection(string serverUrl)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(serverUrl);
+
+        HubConnection connection = new HubConnectionBuilder()
+            .WithUrl(serverUrl)
+            .WithAutomaticReconnect()
+            .Build();
+
+        return new HubConnectionProxy(connection);
     }
 
     /// <summary>
