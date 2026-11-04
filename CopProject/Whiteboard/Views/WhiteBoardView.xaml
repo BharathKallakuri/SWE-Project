@@ -33,52 +33,62 @@
                     Spacing="8">
 
                     <Button
+                        x:Name="ButtonPen"
                         ToolTipService.ToolTip="Pen">
                         <FontIcon Glyph="&#xF67B;"/>
                     </Button>
 
                     <Button
+                        x:Name="ButtonUndo"
                         ToolTipService.ToolTip="Undo">
                         <FontIcon Glyph="&#xE7A7;"/>
                     </Button>
 
                     <Button
+                        x:Name="ButtonRedo"
                         ToolTipService.ToolTip="Redo">
                         <FontIcon Glyph="&#xE7A6;"/>
                     </Button>
 
                     <Button
+                        x:Name="ButtonSelectItems"
                         ToolTipService.ToolTip="Select items">
                         <FontIcon Glyph="&#xE8B0;"/>
                     </Button>
 
                     <Button
+                        x:Name="ButtonEraseItems"
                         ToolTipService.ToolTip="Erase items">
                         <FontIcon Glyph="&#xE75C;"/>
                     </Button>
 
                     <Button
+                        x:Name="ButtonTextBox"
                         ToolTipService.ToolTip="Textbox"
                         Click="TextButton_Click">
                         <FontIcon Glyph="&#xE8AC;"/>
                     </Button>
 
                     <Button
+                        x:Name="ButtonSquare"
                         ToolTipService.ToolTip="Square">
                         <FontIcon Glyph="&#xE739;" />
                     </Button>
 
                     <Button
+                        x:Name="ButtonDeleteSelectedItems"
                         ToolTipService.ToolTip="Delete selected items">
                         <FontIcon Glyph="&#xE74D;"/>
                     </Button>
 
                     <Button
+                        x:Name="ButtonDeleteAllOwnedItems"
                         ToolTipService.ToolTip="Delete all owned items">
                         <FontIcon Glyph="&#xED62;"/>
                     </Button>
 
                     <Button
+                        x:Name="ButtonUploadToCloud"
                         ToolTipService.ToolTip="Upload to cloud">
                         <FontIcon Glyph="&#xE898;" />
                     </Button>
