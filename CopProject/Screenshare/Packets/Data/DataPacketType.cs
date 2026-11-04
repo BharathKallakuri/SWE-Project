@@ -13,5 +13,10 @@ public enum DataPacketType
     /// <summary>
     /// indicates that the packet contains only changed screen tiles.
     /// </summary>
-    ChangedTiles
+    ChangedTiles,
+
+    /// <summary>
+    /// indicates that the screen did not change.
+    /// </summary>
+    Pulse
 }
