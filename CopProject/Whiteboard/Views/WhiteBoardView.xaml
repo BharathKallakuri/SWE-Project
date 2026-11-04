@@ -34,7 +34,8 @@
 
                     <Button
                         x:Name="ButtonPen"
-                        ToolTipService.ToolTip="Pen">
+                        ToolTipService.ToolTip="Pen"
+                        Click="ButtonPen_Click">
                         <FontIcon Glyph="&#xF67B;"/>
                     </Button>
 
@@ -70,7 +71,8 @@
 
                     <Button
                         x:Name="ButtonSquare"
-                        ToolTipService.ToolTip="Square">
+                        ToolTipService.ToolTip="Square"
+                        Click="ButtonSquare_Click">
                         <FontIcon Glyph="&#xE739;" />
                     </Button>
 
@@ -98,22 +100,23 @@
 
         <!-- WHITEBOARD -->
         <Grid
-            Grid.Row="1"
-            Margin="16">
-
+            Grid.Row="1">
             <Border
                 Background="White"
-                BorderBrush="#CCCCCC"
                 BorderThickness="1"
-                CornerRadius="4">
+                SizeChanged="CanvasContainer_SizeChanged">
 
                 <Canvas
                     x:Name="WhiteboardCanvas"
-                    Background="White"/>
-
+                    Background="Transparent"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    PointerPressed="WhiteboardCanvas_PointerPressed"
+                    PointerMoved="WhiteboardCanvas_PointerMoved"
+                    PointerReleased="WhiteboardCanvas_PointerReleased"
+                    PointerCaptureLost="WhiteboardCanvas_PointerCaptureLost"/>
             </Border>
         </Grid>
-
         <!-- STATUS BAR -->
         <Border
             Grid.Row="2"
