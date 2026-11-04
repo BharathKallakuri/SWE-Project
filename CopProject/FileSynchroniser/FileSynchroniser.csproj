@@ -9,6 +9,9 @@
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <NoWarn>$(NoWarn);CS8632</NoWarn> <!-- To prevent this stupid warning , because it fix is to use var , but .editor config will throw error if i did so-->
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Views\FileSyncPage.xaml" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="*" />
@@ -18,6 +21,8 @@
     <InternalsVisibleTo Include="Filesync.Test" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Views\" />
+    <Page Update="Views\FileSyncPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 </Project>
