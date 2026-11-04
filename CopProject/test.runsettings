@@ -12,6 +12,7 @@
                 <ModulePath>.*\\filesync\.dll$</ModulePath>
                 <ModulePath>.*\\chat\.dll$</ModulePath>
                 <ModulePath>.*\\networking\.dll$</ModulePath>
+                <ModulePath>.*\\cloud\.dll$</ModulePath>  
               </Include>
             </ModulePaths>
             <Sources>
