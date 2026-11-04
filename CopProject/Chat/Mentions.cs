@@ -15,6 +15,17 @@ public sealed class Mentions : IMentions
     /// </summary>
     public HashSet<string> Usernames { get; } = new();
 
+    /// <summary>
+    /// Creates a copy of these mentions.
+    /// </summary>
+    /// <returns>A new mentions object with the same values.</returns>
+    public Mentions Clone()
+    {
+        Mentions clone = new() { All = All };
+        clone.Usernames.UnionWith(Usernames);
+        return clone;
+    }
+
     /// <inheritdoc />
     public bool IsUserMentioned(string username)
     {
