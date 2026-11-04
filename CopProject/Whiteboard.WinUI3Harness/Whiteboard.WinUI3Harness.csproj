@@ -37,6 +37,7 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Whiteboard.Test\Whiteboard.Test.csproj" />
     <ProjectReference Include="..\Whiteboard\Whiteboard.csproj" />
   </ItemGroup>
 

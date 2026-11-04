@@ -10,5 +10,4 @@
     mc:Ignorable="d"
     Title="Whiteboard.WinUI3Harness">
 
-    <views:WhiteBoardView x:Name="RootLayout" />
 </Window>
