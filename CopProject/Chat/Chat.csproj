@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Chat.Test" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Networking\Networking.csproj" />
   </ItemGroup>
 
