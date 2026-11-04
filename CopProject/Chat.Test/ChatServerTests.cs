@@ -571,11 +571,11 @@ public class ChatServerTests
         {
         }
 
-        public void JoinMulticastGroup(int multicastGroup)
+        public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
         {
         }
 
-        public void LeaveMulticastGroup(int multicastGroup)
+        public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
         {
         }
 

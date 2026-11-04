@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -443,11 +443,11 @@ public class ChatClientTests
         {
         }
 
-        public void JoinMulticastGroup(int multicastGroup)
+        public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
         {
         }
 
-        public void LeaveMulticastGroup(int multicastGroup)
+        public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
         {
         }
 
