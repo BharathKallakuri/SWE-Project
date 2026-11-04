@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 using FileSynchroniser.Models;
 using FileSynchroniser.ViewModels;
 using Microsoft.UI;
@@ -12,6 +10,7 @@ using WinRT.Interop;
 
 namespace FileSynchroniser.Views;
 
+[ExcludeFromCodeCoverage]
 /// <summary>
 /// Page that lists the synchronised folder and lets the user add, delete and refresh files.
 /// </summary>
