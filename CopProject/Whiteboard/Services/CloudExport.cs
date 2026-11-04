@@ -1,51 +1,61 @@
-// using System;
-// using System.Threading.Tasks;
-// using Cloud.Persistence;
-// using Microsoft.UI.Xaml;
-// using Whiteboard.Interfaces;
-// using Whiteboard.Models;
+using System;
+using System.Threading.Tasks;
+using Cloud.Persistence;
+using Microsoft.UI.Xaml;
+using Whiteboard.Interfaces;
+using Whiteboard.Models;
+using System.Text.Json;
 
-// namespace Whiteboard.Services;
+namespace Whiteboard.Services;
 
-// public class CloudExport 
-// {
-//     private readonly ICanvasRender _canvasRender;
-//     private readonly IStorage _storage;
+public class CloudExport
+{
+    private readonly ICanvasRender _canvasRender;
+    private IStorage? _storage;
 
-//     public CloudExport(ICanvasRender canvasRender, IStorage storage = null)
-//     {
-//         _canvasRender = canvasRender ?? throw new ArgumentNullException(nameof(canvasRender));
-//         _storage = storage ?? StorageFactory.CreateStorage();
-//     }
+    public CloudExport(ICanvasRender canvasRender, IStorage? storage = null)
+    {
+        _canvasRender = canvasRender ?? throw new ArgumentNullException(nameof(canvasRender));
+        _storage = storage;
+    }
 
-//     public async Task<bool> ExportToCloudAsync(UIElement element, string whiteboardId, string userId, bool isJpeg = false)
-//     {
-//         if (element == null)
-//         {
-//             throw new ArgumentNullException(nameof(element));
-//         }
+    public async Task<bool> ExportToCloudAsync(UIElement element, string whiteboardId, string userId, bool isJpeg = false)
+    {
+        if (element == null)
+        {
+            throw new ArgumentNullException(nameof(element));
+        }
 
-//         CanvasExportData exportData = await _canvasRender.CreateExportDataAsync(element, whiteboardId, isJpeg);
+        _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
 
-//         var record = new PersistenceItem
-//         {
-//             Id = exportData.FileName,
-//             PartitionKey = userId,
-//             ModuleType = ModuleTypes.Whiteboard,
-//             Data = new
-//             {
-//                 BoardId = whiteboardId,
-//                 OwnerId = userId,
-//                 FileName = exportData.FileName,
-//                 ContentType = exportData.ContentType,
-//                 Dimensions = $"{exportData.PixelWidth}x{exportData.PixelHeight}",
-//                 ExportedAt = exportData.ExportDateTime,
-//                 ImageBase64 = Convert.ToBase64String(exportData.ImageData)
-//             }
-//         };
+        CanvasExportData exportData = await _canvasRender.CreateExportDataAsync(element, whiteboardId, isJpeg);
 
-//         return await _storage.SaveAsync(record);
-//     }
-// }
+        return await SaveExportDataToCloudAsync(exportData, whiteboardId, userId);
+    }
 
-// Code commented out until cloud services are pushed to main to prevent distrupting build flow
+    public async Task<bool> SaveExportDataToCloudAsync(CanvasExportData exportData, string whiteboardId, string userId)
+    {
+        if (exportData == null)
+        {
+            throw new ArgumentNullException(nameof(exportData));
+        }
+        
+        _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
+
+        var record = new
+        {
+            BoardId = whiteboardId,
+            OwnerId = userId,
+            FileName = exportData.FileName,
+            ContentType = exportData.ContentType,
+            Dimensions = $"{exportData.PixelWidth}x{exportData.PixelHeight}",
+            ExportedAt = exportData.ExportDateTime,
+            ImageData = exportData.ImageData
+        };
+
+        byte[] data = JsonSerializer.SerializeToUtf8Bytes(record);
+        string key = $"{userId}:{whiteboardId}:{exportData.FileName}";
+
+        return await _storage.Create(key, data);
+    }
+}
