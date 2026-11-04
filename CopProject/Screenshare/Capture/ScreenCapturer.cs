@@ -21,7 +21,7 @@ public class ScreenCapturer : IImageSource
     private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new(-4);
 
     /// <summary>
-    /// captures the current contents of the primary display
+    /// captures the current contents of the primary display 
     /// </summary>
     /// <returns>a bitmap containing the captured screen</returns>
     /// <exception cref="InvalidOperationException">

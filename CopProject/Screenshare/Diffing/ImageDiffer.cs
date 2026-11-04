@@ -7,7 +7,7 @@ namespace ScreenShare;
 
 public class ImageDiffer : IImageDiffer
 {
-    private const int TILE_SIZE = 64;
+    public const int TILE_SIZE = 64;
 
     /*if more than this percentage of the screen has changed, sending individual tiles becomes less useful, so we send the complete frame.*/
     private const double FULL_FRAME_THRESHOLD = 0.50;
@@ -271,13 +271,6 @@ public class ImageDiffer : IImageDiffer
             rectangle,
             PixelFormat.Format32bppArgb);
 
-        using MemoryStream stream = new MemoryStream();
-
-        tileBitmap.Save(
-            stream,
-            ImageFormat.Png
-        );
-
-        return stream.ToArray();
+        return PngEncoder.Encode(tileBitmap);
     }
 }
