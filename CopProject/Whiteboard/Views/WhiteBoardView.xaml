@@ -9,43 +9,14 @@
     <Grid Background="#F3F4F6">
 
         <Grid.RowDefinitions>
-            <RowDefinition Height="56"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="32"/>
         </Grid.RowDefinitions>
 
-        <!-- HEADER -->
-        <Border
-            Grid.Row="0"
-            Background="White"
-            BorderBrush="#DDDDDD"
-            BorderThickness="0,0,0,1">
-
-            <Grid Padding="16,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock
-                    Text="Whiteboard"
-                    FontSize="20"
-                    FontWeight="SemiBold"
-                    Foreground="#222222"
-                    VerticalAlignment="Center"/>
-
-                <TextBlock
-                    Grid.Column="1"
-                    Text="● Connected"
-                    Foreground="Green"
-                    VerticalAlignment="Center"/>
-            </Grid>
-        </Border>
-
         <!-- TOOLBAR -->
         <Border
-            Grid.Row="1"
+            Grid.Row="0"
             Background="White"
             Padding="12"
             BorderBrush="#DDDDDD"
@@ -78,7 +49,7 @@
 
         <!-- WHITEBOARD -->
         <Grid
-            Grid.Row="2"
+            Grid.Row="1"
             Margin="16">
 
             <Border
@@ -96,7 +67,7 @@
 
         <!-- STATUS BAR -->
         <Border
-            Grid.Row="3"
+            Grid.Row="2"
             Background="White"
             Padding="12,0"
             BorderBrush="#DDDDDD"
