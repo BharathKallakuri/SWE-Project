@@ -9,8 +9,10 @@ namespace Cloud.Persistence;
 public static class StorageFactory
 {
     // A single instance of CosmosClient is created and reused for all storage instances.
-    private static readonly CosmosClient s_cosmosClient =
-        new(CosmosSettings.Endpoint, CosmosSettings.Key);
+
+    // Delay construction so container-name mapping can be tested without Cosmos credentials.
+    private static readonly Lazy<CosmosClient> s_cosmosClient = new(
+        () => new CosmosClient(CosmosSettings.Endpoint, CosmosSettings.Key));
 
     /// <summary>
     /// This method asynchronously creates an IStorage instance for the specified module type if it doesn't exist .
@@ -22,7 +24,7 @@ public static class StorageFactory
         string containerName = GetContainerName(module);
 
         CosmosStorage storage = new CosmosStorage(
-            s_cosmosClient,
+            s_cosmosClient.Value,
             CosmosSettings.DatabaseName,
             containerName);
 
@@ -31,7 +33,7 @@ public static class StorageFactory
         return storage;
     }
 
-    private static string GetContainerName(ModuleType module)
+    internal static string GetContainerName(ModuleType module)
     {
         return module switch {
             ModuleType.Chat => "Chat",

@@ -3,6 +3,7 @@
 /// </summary>
 
 namespace Cloud.Persistence;
+
 internal static class CosmosSettings
 {
     internal const string DatabaseName = "PersistenceDB";
