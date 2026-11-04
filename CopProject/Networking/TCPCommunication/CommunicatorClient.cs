@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -74,13 +74,13 @@ public class CommunicatorClient : ICommunicator, IDisposable
     }
 
     [ExcludeFromCodeCoverage]
-    public void JoinMulticastGroup(int multicastGroup)
+    public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
         throw new NotImplementedException();
     }
 
     [ExcludeFromCodeCoverage]
-    public void LeaveMulticastGroup(int multicastGroup)
+    public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
         throw new NotImplementedException();
     }
