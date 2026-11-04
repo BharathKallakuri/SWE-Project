@@ -40,22 +40,7 @@ public sealed partial class LocationMapView : UserControl
             return;
         }
 
-        var filter = BuildFilter();
-
-        string incidents = JsonSerializer.Serialize(
-            _map.GetIncidentsForMap(filter).Select(incident => new
-            {
-                incident.Title,
-                incident.Description,
-                Category = incident.Category.ToString(),
-                Severity = incident.Severity.ToString(),
-                Status = incident.Status.ToString(),
-                Latitude = incident.Location.Latitude,
-                Longitude = incident.Location.Longitude,
-                incident.Location.Address
-            }));
-
-        await MapView.ExecuteScriptAsync($"renderIncidents({incidents});");
+        await RefreshIncidentsAsync();
     }
 
     private IncidentFilter BuildFilter()
@@ -63,9 +48,9 @@ public sealed partial class LocationMapView : UserControl
         string? title = string.IsNullOrWhiteSpace(TitleFilterBox.Text)
             ? null : TitleFilterBox.Text;
 
-        IncidentCategory? category = ReadEnum<IncidentCategory>(CategoryFilterBox);
-        IncidentSeverity? severity = ReadEnum<IncidentSeverity>(SeverityFilterBox);
-        IncidentStatus? status = ReadEnum<IncidentStatus>(StatusFilterBox);
+        IncidentCategory? category = GetCategory();
+        IncidentSeverity? severity = GetSeverity();
+        IncidentStatus? status = GetStatus();
 
         DateTime? from = FromDatePicker.Date?.DateTime;
         DateTime? to = ToDatePicker.Date?.DateTime;
@@ -73,29 +58,78 @@ public sealed partial class LocationMapView : UserControl
         return new IncidentFilter(title, status, category, severity, from, to, null, null);
     }
 
-    private T? ReadEnum<T>(ComboBox box) where T : struct, Enum
+    private IncidentCategory? GetCategory()
     {
-        if (box.SelectedItem is ComboBoxItem item)
+        string value = (CategoryFilterBox.SelectedItem as ComboBoxItem)?
+            .Content?.ToString() ?? "All";
+
+        if (value != "All" && Enum.TryParse<IncidentCategory>(value, out var result))
         {
-            string text = item.Content?.ToString() ?? "";
-            if (text != "All" && Enum.TryParse<T>(text, out var result))
-            {
-                return result;
-            }
+            return result;
         }
+
         return null;
     }
 
-    private void FilterChanged(object sender, object e)
+    private IncidentSeverity? GetSeverity()
     {
-        // Ignore changes during initialization (before _map and CoreWebView2 are ready).
+        string value = (SeverityFilterBox.SelectedItem as ComboBoxItem)?
+            .Content?.ToString() ?? "All";
+
+        if (value != "All" && Enum.TryParse<IncidentSeverity>(value, out var result))
+        {
+            return result;
+        }
+
+        return null;
+    }
+
+    private IncidentStatus? GetStatus()
+    {
+        string value = (StatusFilterBox.SelectedItem as ComboBoxItem)?
+            .Content?.ToString() ?? "All";
+
+        if (value != "All" && Enum.TryParse<IncidentStatus>(value, out var result))
+        {
+            return result;
+        }
+
+        return null;
+    }
+
+    private async void FilterChanged(object sender, object e)
+    {
         if (_map is null || MapView.CoreWebView2 is null)
         {
             return;
         }
 
-        // Reload the map page so NavigationCompleted fires again with the new filter.
-        MapView.NavigateToString(MapPage);
+        await RefreshIncidentsAsync();
+    }
+
+    private async Task RefreshIncidentsAsync()
+    {
+        if (_map is null)
+        {
+            return;
+        }
+
+        var incidentList = _map.GetIncidentsForMap(BuildFilter());
+
+        var incidentData = incidentList.Select(incident => new
+        {
+            incident.Title,
+            incident.Description,
+            Category = incident.Category.ToString(),
+            Severity = incident.Severity.ToString(),
+            Status = incident.Status.ToString(),
+            Latitude = incident.Location.Latitude,
+            Longitude = incident.Location.Longitude,
+            incident.Location.Address
+        }).ToList();
+
+        string incidents = JsonSerializer.Serialize(incidentData);
+        await MapView.ExecuteScriptAsync($"setIncidents({incidents});");
     }
 
     private const string MapPage = """
@@ -115,17 +149,19 @@ public sealed partial class LocationMapView : UserControl
           <div id="map"></div>
           <script>
             const map = L.map('map').setView([10.79, 76.68], 12);
+            const incidentMarkers = L.layerGroup().addTo(map);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
               attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
-            function renderIncidents(incidents) {
+            function setIncidents(incidents) {
+              incidentMarkers.clearLayers();
               incidents.forEach(incident => {
                 const popup = `<strong>${incident.Title}</strong><br>
                   ${incident.Category} · ${incident.Severity}<br>
                   ${incident.Address ?? ''}<br>${incident.Description}`;
                 L.marker([incident.Latitude, incident.Longitude])
-                  .addTo(map)
+                  .addTo(incidentMarkers)
                   .bindPopup(popup);
               });
             }
