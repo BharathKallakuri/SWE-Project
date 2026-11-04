@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Whiteboard.Interfaces;
+namespace Whiteboard.Models;
 
 [ExcludeFromCodeCoverage]
 public class CanvasExportData
