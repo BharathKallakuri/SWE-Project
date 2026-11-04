@@ -2,137 +2,274 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Diagnostics;
-using System.Net;
-using System.Net.Sockets;
-
 using Cloud.Networking;
 using Microsoft.AspNetCore.SignalR.Client;
+using Moq;
 
 namespace Cloud.Test;
 
 [TestClass]
 public class TestSignalRMessenger
 {
-    // never contacted just some placeholder but valid url 
-    private const string ValidUrl = "http://localhost/hub";
+    private Mock<IHubConnection> _hub = null!;
 
-    /* 
-     * Tests that need a live hub are not covered here 
-     * The things i.e not covered identify that by just running this
-     * for coverage analysis.
-     * 
-     * NOTE: await using will dispose off the connection so dont change it
-     */
+    /* Simulates the server pushing a message: we capture the handler that the
+     * messenger registered with On<Message> and call it ourselves. */
+    private Action<Message>? _onMessage;
 
+    [TestInitialize]
+    public void Init()
+    {
+        _hub = new Mock<IHubConnection>();
+
+        _hub.Setup(h => h.On(Contract.ReceiveMessage, It.IsAny<Action<Message>>()))
+            .Callback<string, Action<Message>>((_, handler) => _onMessage = handler)
+            .Returns(Mock.Of<IDisposable>());
+
+        _hub.SetupGet(h => h.State).Returns(HubConnectionState.Disconnected);
+    }
+
+    private SignalRMessenger CreateMessenger()
+    {
+        return new(_hub.Object);
+    }
+
+    private static Message NewMessage(string content = "hello")
+    {
+        return new() { SenderId = "sender-123", Content = content };
+    }
+
+    /* constructors */
     [TestMethod]
     [DataRow("")]
     [DataRow("   ")]
-    [DataRow("       ")]
-    public void ConstructorRejectsEmptyUrl(string url)
+    public void PublicConstructorRejectsBlankUrl(string url)
     {
         Assert.Throws<ArgumentException>(() => new SignalRMessenger(url));
     }
 
     [TestMethod]
-    public void ConstructorRejectsNullUrl()
+    public void PublicConstructorRejectsNullUrl()
     {
         Assert.Throws<ArgumentNullException>(() => new SignalRMessenger((string)null!));
-        //Assert.Throws<ArgumentNullException>(() => new SignalRMessenger((IHubConnection)null!));
+    }
+
+    [TestMethod]
+    public void InternalConstructorRejectsNullConnection()
+    {
+        Assert.Throws<ArgumentNullException>(() => new SignalRMessenger((IHubConnection)null!));
+    }
+
+    [TestMethod]
+    public async Task PublicConstructorWithValidUrlIsInDisconnectedState()
+    {
+        await using SignalRMessenger messenger = new("http://localhost/hub");
+        Assert.AreEqual(HubConnectionState.Disconnected, messenger.State);
+    }
+
+    [TestMethod]
+    public void ConstructorRegistersReceiveHandlerOnce()
+    {
+        CreateMessenger();
+        _hub.Verify(h => h.On(Contract.ReceiveMessage, It.IsAny<Action<Message>>()), Times.Once);
+    }
+
+    /* state */
+    [TestMethod]
+    [DataRow(HubConnectionState.Disconnected)]
+    [DataRow(HubConnectionState.Connecting)]
+    [DataRow(HubConnectionState.Connected)]
+    [DataRow(HubConnectionState.Reconnecting)]
+    public void StateReflectsTheConnectionState(HubConnectionState state)
+    {
+        _hub.SetupGet(h => h.State).Returns(state);
+        Assert.AreEqual(state, CreateMessenger().State);
+    }
+
+    /* message recieved */
+    [TestMethod]
+    public void IncomingMessageRaisesMessageReceived()
+    {
+        SignalRMessenger messenger = CreateMessenger();
+        Message? received = null;
+        messenger.MessageReceived += m => received = m;
+        Message sent = NewMessage();
+        _onMessage!(sent);
+        Assert.AreSame(sent, received);
+    }
+
+    [TestMethod]
+    public void IncomingMessageReachesEverySubscriber()
+    {
+        SignalRMessenger messenger = CreateMessenger();
+        int calls = 0;
+        messenger.MessageReceived += _ => calls++;
+        messenger.MessageReceived += _ => calls++;
+        _onMessage!(NewMessage());
+        Assert.AreEqual(2, calls);
+    }
+
+    [TestMethod]
+    public void IncomingMessageDoesNotReachAnUnsubscriber()
+    {
+        SignalRMessenger messenger = CreateMessenger();
+        int calls = 0;
+        Action<Message> handler = _ => calls++;
+        messenger.MessageReceived += handler;
+        _onMessage!(NewMessage());
+        Assert.AreEqual(1, calls);
+
+        messenger.MessageReceived -= handler;
+        _onMessage!(NewMessage());
+        Assert.AreEqual(1, calls);
+    }
+
+    /* events */
+    [TestMethod]
+    public void ReconnectingIsForwarded()
+    {
+        SignalRMessenger messenger = CreateMessenger();
+        Exception? received = null;
+        messenger.Reconnecting += e => received = e;
+        InvalidOperationException error = new();
+        _hub.Raise(h => h.Reconnecting += null, error);
+        Assert.AreSame(error, received);
+    }
+
+    [TestMethod]
+    public void ReconnectedIsForwarded()
+    {
+        SignalRMessenger messenger = CreateMessenger();
+        string? received = null;
+        messenger.Reconnected += id => received = id;
+        _hub.Raise(h => h.Reconnected += null, "new-id");
+        Assert.AreEqual("new-id", received);
+    }
+
+    [TestMethod]
+    public void ClosedIsForwarded()
+    {
+        SignalRMessenger messenger = CreateMessenger();
+        Exception? received = null;
+        messenger.Closed += e => received = e;
+        InvalidOperationException error = new();
+        _hub.Raise(h => h.Closed += null, error);
+        Assert.AreSame(error, received);
+    }
+
+    /* ConnectAsync*/
+    [TestMethod]
+    public async Task ConnectAsyncStartsTheConnection()
+    {
+        await CreateMessenger().ConnectAsync();
+        _hub.Verify(h => h.StartAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task ConnectAsyncDoesNothingWhenAlreadyConnected()
+    {
+        _hub.SetupGet(h => h.State).Returns(HubConnectionState.Connected);
+        await CreateMessenger().ConnectAsync();
+        _hub.Verify(h => h.StartAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestMethod]
+    [DataRow(HubConnectionState.Connecting)]
+    [DataRow(HubConnectionState.Reconnecting)]
+    public async Task ConnectAsyncWhenNotInDisconnectedStateThrows(HubConnectionState state)
+    {
+        _hub.SetupGet(h => h.State).Returns(state);
+        await Assert.ThrowsAsync<InvalidOperationException>(CreateMessenger().ConnectAsync);
+        _hub.Verify(h => h.StartAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestMethod]
+    public async Task ConnectAsyncRetriesOnce()
+    {
+        _hub.SetupSequence(h => h.StartAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException())
+            .Returns(Task.CompletedTask);
+
+        await CreateMessenger().ConnectAsync();
+        _hub.Verify(h => h.StartAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [TestMethod]
+    public async Task ConnectAsyncAfterThreeAttemptsThrows()
+    {
+        HttpRequestException last = new("third");
+        _hub.SetupSequence(h => h.StartAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("first"))
+            .ThrowsAsync(new HttpRequestException("second"))
+            .ThrowsAsync(last);
+
+        HttpRequestException thrown = await Assert.ThrowsAsync<HttpRequestException>(CreateMessenger().ConnectAsync);
+        Assert.AreSame(last, thrown);
+        _hub.Verify(h => h.StartAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
+    }
+
+    /*SendMessageAsync*/
+    [TestMethod]
+    public async Task SendMessageAsyncInvokesProperly()
+    {
+        await CreateMessenger().SendMessageAsync("Hello");
+        _hub.Verify(h => h.InvokeAsync(Contract.SendMessage, "Hello", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [TestMethod]
     [DataRow("")]
     [DataRow("   ")]
-    [DataRow("       ")]
-    public async Task SendMessageAsyncRejectsEmptyContent(string content)
+    public async Task SendMessageAsyncRejectsBlankContent(string content)
     {
-        await using SignalRMessenger messenger = new SignalRMessenger(ValidUrl);
+        SignalRMessenger messenger = CreateMessenger();
         await Assert.ThrowsAsync<ArgumentException>(() => messenger.SendMessageAsync(content));
+        _hub.Verify(h => h.InvokeAsync(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [TestMethod]
     public async Task SendMessageAsyncRejectsNullContent()
     {
-        await using SignalRMessenger messenger = new SignalRMessenger(ValidUrl);
+        SignalRMessenger messenger = CreateMessenger();
         await Assert.ThrowsAsync<ArgumentNullException>(() => messenger.SendMessageAsync(null!));
+        _hub.Verify(h => h.InvokeAsync(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [TestMethod]
-    public async Task MessengerStartsInDisconnectedState()
+    public async Task SendMessageAsyncPropagatesHubFailure()
     {
-        await using SignalRMessenger messenger = new SignalRMessenger(ValidUrl);
-        Assert.AreEqual(HubConnectionState.Disconnected, messenger.State);
+        InvalidOperationException error = new("not connected");
+        _hub.Setup(h => h.InvokeAsync(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>())).ThrowsAsync(error);
+        InvalidOperationException thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => CreateMessenger().SendMessageAsync("Hello"));
+        Assert.AreSame(error, thrown);
+    }
+
+    /*DisconnectAsync*/
+    [TestMethod]
+    public async Task DisconnectAsyncStopsTheConnection()
+    {
+        await CreateMessenger().DisconnectAsync();
+        _hub.Verify(h => h.StopAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [TestMethod]
-    public async Task SendMessageAsyncThrowsWhenInDisconnectedState()
+    public async Task DisconnectAsyncDoesNotDisposeTheConnection()
     {
-        await using SignalRMessenger messenger = new SignalRMessenger(ValidUrl);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => messenger.SendMessageAsync("Hello"));
+        await CreateMessenger().DisconnectAsync();
+        _hub.Verify(h => h.DisposeAsync(), Times.Never);
+    }
+
+    /*DisposeAsync*/
+    [TestMethod]
+    public async Task DisposeAsyncDisposesTheConnection()
+    {
+        await CreateMessenger().DisposeAsync();
+        _hub.Verify(h => h.DisposeAsync(), Times.Once);
     }
 
     [TestMethod]
-    public async Task DisconnectAsyncWhenInDisconnectedStateDoesNothing()
+    public async Task DisposeAsyncDoesNotStopTheConnectionSeparately()
     {
-        await using SignalRMessenger messenger = new SignalRMessenger(ValidUrl);
-        await messenger.DisconnectAsync();
-        Assert.AreEqual(HubConnectionState.Disconnected, messenger.State);
-    }
-
-    [TestMethod]
-    public async Task DisposeAsyncCanBeCalledAfterDisposing()
-    {
-        SignalRMessenger messenger = new SignalRMessenger(ValidUrl);
-
-        await messenger.DisposeAsync();
-        await messenger.DisposeAsync();
-    }
-
-    [TestMethod]
-    public async Task AfterDisposeAsyncRestWillThrow()
-    {
-        SignalRMessenger messenger = new SignalRMessenger(ValidUrl);
-        await messenger.DisposeAsync();
-
-        await Assert.ThrowsAsync<ObjectDisposedException>(messenger.ConnectAsync);
-        await Assert.ThrowsAsync<ObjectDisposedException>(messenger.DisconnectAsync);
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => messenger.SendMessageAsync("Hello"));
-    }
-
-    [TestMethod]
-    public async Task ConnectAsyncRetriesThenThrowsWhenConnectionIsRefused()
-    {
-        TcpListener listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-
-        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
-
-        await using SignalRMessenger messenger = new SignalRMessenger($"http://127.0.0.1:{port}/hub");
-
-        await Assert.ThrowsAsync<Exception>(messenger.ConnectAsync);
-        Assert.AreEqual(HubConnectionState.Disconnected, messenger.State);
-    }
-
-    [TestMethod]
-    public async Task ConnectAsyncThrowsWhenNotInConnectingState()
-    {
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-
-        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-
-        // disconnected
-        await using var messenger = new SignalRMessenger($"http://127.0.0.1:{port}/hub");
-
-        Task firstConnection = messenger.ConnectAsync();
-        // disconnected to connecting/reconnecting
-        while (messenger.State != HubConnectionState.Connecting)
-        {
-            await Task.Delay(10);
-        }
-
-        await Assert.ThrowsAsync<InvalidOperationException>(messenger.ConnectAsync);
+        await CreateMessenger().DisposeAsync();
+        _hub.Verify(h => h.StopAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 }
