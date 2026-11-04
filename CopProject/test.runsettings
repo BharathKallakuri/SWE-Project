@@ -9,7 +9,7 @@
           <CodeCoverage>
             <ModulePaths>
               <Include>
-                <ModulePath>.*\\filesync\.dll$</ModulePath>
+                <ModulePath>.*\\filesynchroniser\.dll$</ModulePath>
                 <ModulePath>.*\\chat\.dll$</ModulePath>
                 <ModulePath>.*\\networking\.dll$</ModulePath>
                 <ModulePath>.*\\cloud\.dll$</ModulePath>  
