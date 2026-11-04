@@ -64,8 +64,7 @@
 
                     <Button
                         x:Name="ButtonTextBox"
-                        ToolTipService.ToolTip="Textbox"
-                        Click="TextButton_Click">
+                        ToolTipService.ToolTip="Textbox">
                         <FontIcon Glyph="&#xE8AC;"/>
                     </Button>
 
