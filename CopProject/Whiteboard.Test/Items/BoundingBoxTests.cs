@@ -23,4 +23,19 @@ public class BoundingBoxTests : BaseGenerator
         Assert.Equal(circle.Radius * 2, circle.BoundingBox.Width);
         Assert.Equal(circle.Radius * 2, circle.BoundingBox.Height);
     }
+
+    [Fact]
+    public void Ellipse()
+    {
+        IEllipse ellipse = new Whiteboard.Items.Shapes.Ellipse() {
+            Center = RandomPointGenerator.Generate(),
+            Width = Rng.NextDouble() * 100,
+            Height = Rng.NextDouble() * 100
+        };
+
+        Assert.Equal(ellipse.Center.X - (ellipse.Width / 2), ellipse.BoundingBox.Left);
+        Assert.Equal(ellipse.Center.Y + (ellipse.Height / 2), ellipse.BoundingBox.Top);
+        Assert.Equal(ellipse.Width, ellipse.BoundingBox.Width);
+        Assert.Equal(ellipse.Height, ellipse.BoundingBox.Height);
+    }
 }

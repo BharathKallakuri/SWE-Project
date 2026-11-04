@@ -16,7 +16,7 @@ public class Ellipse : Shape, IEllipse
     {
         get => new(
             Center.X - (Width / 2.0),
-            Center.Y - (Height / 2.0),
+            Center.Y + (Height / 2.0),
             Width,
             Height
         );
