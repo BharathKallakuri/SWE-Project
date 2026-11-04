@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Chat;
 
 namespace Chat.Test;
@@ -78,10 +77,7 @@ public class ChatMessageWithThreadsTests
         ChatMessageWithThreads message = new() { SenderName = "guest" };
         Guid id = Guid.NewGuid();
 
-        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
-            () => AddMessageToThreadWithId(message, id, null!));
-
-        Assert.IsType<ArgumentNullException>(exception.InnerException);
+        Assert.Throws<ArgumentNullException>(() => message.AddMessageToThread(id, null!));
         Assert.Empty(message.ThreadById);
     }
 
@@ -91,12 +87,9 @@ public class ChatMessageWithThreadsTests
         ChatMessageWithThreads message = new() { SenderName = "guest" };
         Guid replyId = Guid.NewGuid();
         ChatMessage reply = new() { SenderName = "host" };
-        AddMessageToThreadWithId(message, replyId, reply);
+        message.AddMessageToThread(replyId, reply);
 
-        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
-            () => AddMessageToThreadWithId(message, replyId, reply));
-
-        Assert.IsType<ArgumentException>(exception.InnerException);
+        Assert.Throws<ArgumentException>(() => message.AddMessageToThread(replyId, reply));
         Assert.Single(message.ThreadById);
     }
 
@@ -106,9 +99,9 @@ public class ChatMessageWithThreadsTests
         ChatMessageWithThreads message = new() { SenderName = "guest" };
         Guid replyId = Guid.NewGuid();
         ChatMessage reply = new() { SenderName = "host", Content = "Reply" };
-        AddMessageToThreadWithId(message, replyId, reply);
+        message.AddMessageToThread(replyId, reply);
 
-        (bool found, ChatMessage? result) = TryGetThreadMessage(message, replyId);
+        bool found = message.TryGetThreadMessage(replyId, out ChatMessage result);
 
         Assert.True(found);
         Assert.Same(reply, result);
@@ -119,7 +112,7 @@ public class ChatMessageWithThreadsTests
     {
         ChatMessageWithThreads message = new() { SenderName = "guest" };
 
-        (bool found, ChatMessage? result) = TryGetThreadMessage(message, Guid.NewGuid());
+        bool found = message.TryGetThreadMessage(Guid.NewGuid(), out ChatMessage? result);
 
         Assert.False(found);
         Assert.Null(result);
@@ -133,9 +126,9 @@ public class ChatMessageWithThreadsTests
         ChatMessage reply = new() { SenderName = "host", Content = "Reply" };
         reply.Edit("Edited reply");
         reply.ToggleReaction("👍", "guest");
-        AddMessageToThreadWithId(message, replyId, reply);
+        message.AddMessageToThread(replyId, reply);
 
-        ChatMessageWithThreads clone = DeepClone(message);
+        ChatMessageWithThreads clone = message.DeepClone();
         clone.ThreadById[replyId].Reactions["👍"].Add("clone-only");
 
         Assert.NotSame(message, clone);
@@ -152,7 +145,7 @@ public class ChatMessageWithThreadsTests
     {
         ChatMessageWithThreads message = new() { SenderName = "guest", Content = "Root" };
 
-        ChatMessageWithThreads clone = DeepClone(message);
+        ChatMessageWithThreads clone = message.DeepClone();
 
         Assert.NotSame(message, clone);
         Assert.Equal(message.Content, clone.Content);
@@ -166,52 +159,11 @@ public class ChatMessageWithThreadsTests
         ChatMessageWithThreads message = new() { SenderName = "guest", Content = "Root" };
         message.AddMessageToThread(new ChatMessage { SenderName = "host", Content = "Reply" });
 
-        ChatMessageWithThreads clone = DeepCloneWithoutThreadMessages(message);
+        ChatMessageWithThreads clone = message.DeepCloneWithoutThreadMessages();
 
         Assert.Equal(message.Content, clone.Content);
         Assert.Empty(clone.ThreadById);
         Assert.Empty(clone.ThreadByTime);
     }
 
-    private static void AddMessageToThreadWithId(
-        ChatMessageWithThreads message,
-        Guid id,
-        ChatMessage reply)
-    {
-        MethodInfo method = typeof(ChatMessageWithThreads).GetMethod(
-            "AddMessageToThread",
-            BindingFlags.Instance | BindingFlags.NonPublic,
-            binder: null,
-            types: new[] { typeof(Guid), typeof(ChatMessage) },
-            modifiers: null)!;
-        method.Invoke(message, new object[] { id, reply });
-    }
-
-    private static (bool Found, ChatMessage? Message) TryGetThreadMessage(
-        ChatMessageWithThreads message,
-        Guid id)
-    {
-        MethodInfo method = typeof(ChatMessageWithThreads).GetMethod(
-            "TryGetThreadMessage",
-            BindingFlags.Instance | BindingFlags.NonPublic)!;
-        object?[] arguments = { id, null };
-        bool found = (bool)method.Invoke(message, arguments)!;
-        return (found, (ChatMessage?)arguments[1]);
-    }
-
-    private static ChatMessageWithThreads DeepClone(ChatMessageWithThreads message)
-    {
-        MethodInfo method = typeof(ChatMessageWithThreads).GetMethod(
-            "DeepClone",
-            BindingFlags.Instance | BindingFlags.NonPublic)!;
-        return (ChatMessageWithThreads)method.Invoke(message, null)!;
-    }
-
-    private static ChatMessageWithThreads DeepCloneWithoutThreadMessages(ChatMessageWithThreads message)
-    {
-        MethodInfo method = typeof(ChatMessageWithThreads).GetMethod(
-            "DeepCloneWithoutThreadMessages",
-            BindingFlags.Instance | BindingFlags.NonPublic)!;
-        return (ChatMessageWithThreads)method.Invoke(message, null)!;
-    }
 }

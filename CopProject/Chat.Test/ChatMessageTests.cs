@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Linq;
-using System.Reflection;
 using Chat;
 
 namespace Chat.Test;
@@ -160,7 +159,7 @@ public class ChatMessageTests
         message.ToggleReaction("👍", "host");
         message.Delete("moderator");
 
-        ChatMessage clone = DeepClone(message);
+        ChatMessage clone = message.DeepClone();
         clone.Reactions["👍"].Add("clone-only");
 
         Assert.Equal(message.Timestamp, clone.Timestamp);
@@ -177,21 +176,7 @@ public class ChatMessageTests
     public void CopyMutableStateFromThrowsForNullSource()
     {
         ChatMessage target = new() { SenderName = "guest" };
-        MethodInfo method = typeof(ChatMessage).GetMethod(
-            "CopyMutableStateFrom",
-            BindingFlags.Instance | BindingFlags.NonPublic)!;
 
-        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
-            () => method.Invoke(target, new object?[] { null }));
-
-        Assert.IsType<ArgumentNullException>(exception.InnerException);
-    }
-
-    private static ChatMessage DeepClone(ChatMessage message)
-    {
-        MethodInfo method = typeof(ChatMessage).GetMethod(
-            "DeepClone",
-            BindingFlags.Instance | BindingFlags.NonPublic)!;
-        return (ChatMessage)method.Invoke(message, null)!;
+        Assert.Throws<ArgumentNullException>(() => target.CopyMutableStateFrom(null!));
     }
 }
