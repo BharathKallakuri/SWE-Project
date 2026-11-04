@@ -290,8 +290,8 @@ public sealed class IncidentControllerUpdatesTest
     {
         Incident incident = _mockIncidents[0];
 
-        Assert.AreEqual(IncidentStatus.InProgress, incident.Status);
-        bool result = await _incidentController.UpdateStatus(incident, IncidentStatus.InProgress);
+        Assert.AreEqual(IncidentStatus.Reported, incident.Status);
+        bool result = await _incidentController.UpdateStatus(incident, IncidentStatus.Reported);
         Assert.IsTrue(result);
     }
 
