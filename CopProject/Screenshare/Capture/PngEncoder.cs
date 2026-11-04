@@ -13,7 +13,7 @@ namespace ScreenShare;
 /// </summary>
 internal static class PngEncoder
 {
-    private const int LookupAttempts = 5;
+    private const int _LookupAttempts = 5;
 
     private static readonly ImageCodecInfo Codec = FindPngCodec();
 
@@ -31,7 +31,7 @@ internal static class PngEncoder
 
     private static ImageCodecInfo FindPngCodec()
     {
-        for (int attempt = 1; attempt <= LookupAttempts; attempt++)
+        for (int attempt = 1; attempt <= _LookupAttempts; attempt++)
         {
             ImageCodecInfo? codec = ImageCodecInfo.GetImageEncoders()
                 .FirstOrDefault(c => c.FormatID == ImageFormat.Png.Guid);

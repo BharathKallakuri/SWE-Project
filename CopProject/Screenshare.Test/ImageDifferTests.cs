@@ -14,7 +14,7 @@ public class ImageDifferTests
         using var previousFrame = new Bitmap(128, 128);
         using var currentFrame = new Bitmap(128, 128);
 
-        ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
+        using ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
 
         Assert.True(result.IsUnchanged);
         Assert.False(result.IsFullFrame);
@@ -32,7 +32,7 @@ public class ImageDifferTests
         // change one pixel in current frame
         currentFrame.SetPixel(10, 10, Color.Red);
 
-        ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
+        using ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
 
         Assert.False(result.IsUnchanged);
         Assert.False(result.IsFullFrame);
@@ -50,7 +50,7 @@ public class ImageDifferTests
         using var previousFrame = new Bitmap(128, 128);
         using var currentFrame = new Bitmap(256, 128);
 
-        ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
+        using ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
 
         Assert.False(result.IsUnchanged);
         Assert.True(result.IsFullFrame);
@@ -63,6 +63,24 @@ public class ImageDifferTests
     }
 
     [Fact]
+    public void Dispose_ReleasesFullFrame()
+    {
+        IImageDiffer differ = new ImageDiffer();
+
+        using var previousFrame = new Bitmap(128, 128);
+        using var currentFrame = new Bitmap(256, 128);
+
+        ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
+        Bitmap fullFrame = result.FullFrame!;
+
+        result.Dispose();
+
+        // a disposed bitmap throws when its properties are read
+        Assert.Throws<ArgumentException>(() => fullFrame.Width);
+    }
+
+
+    [Fact]
     public void Compare_HandlesPartialTileAtBottomRightEdge()
     {
         IImageDiffer differ = new ImageDiffer();
@@ -72,7 +90,7 @@ public class ImageDifferTests
 
         // change a pixel in the bottom-right parital tile
         currentFrame.SetPixel(99, 99, Color.Red);
-        ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
+        using ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
 
         Assert.False(result.IsUnchanged);
         Assert.False(result.IsFullFrame);
@@ -97,7 +115,7 @@ public class ImageDifferTests
         // change a pizel in the rightmost partial tile
         currentFrame.SetPixel(99, 10, Color.Red);
 
-        ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
+        using ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
 
         Assert.False(result.IsUnchanged);
         Assert.False(result.IsFullFrame);
