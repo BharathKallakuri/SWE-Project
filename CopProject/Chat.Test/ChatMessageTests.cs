@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using Chat;
 
 namespace Chat.Test;
@@ -143,5 +144,54 @@ public class ChatMessageTests
         message.Delete("moderator");
 
         Assert.Throws<InvalidOperationException>(() => message.ToggleReaction("👍", "guest"));
+    }
+
+    [Fact]
+    public void CloneCopiesMutableStateAndReactionSets()
+    {
+        ChatMessage message = new()
+        {
+            Timestamp = DateTimeOffset.Parse("2026-01-01T12:00:00+00:00"),
+            SenderName = "guest",
+            Content = "Original",
+            ParentMessageId = Guid.NewGuid()
+        };
+        message.Edit("Edited");
+        message.ToggleReaction("👍", "host");
+        message.Delete("moderator");
+
+        ChatMessage clone = DeepClone(message);
+        clone.Reactions["👍"].Add("clone-only");
+
+        Assert.Equal(message.Timestamp, clone.Timestamp);
+        Assert.Equal(message.SenderName, clone.SenderName);
+        Assert.Equal(message.Content, clone.Content);
+        Assert.Equal(message.EditCount, clone.EditCount);
+        Assert.Equal(message.DeletedByUser, clone.DeletedByUser);
+        Assert.Equal(message.ParentMessageId, clone.ParentMessageId);
+        Assert.Contains("host", clone.Reactions["👍"]);
+        Assert.DoesNotContain("clone-only", message.Reactions["👍"]);
+    }
+
+    [Fact]
+    public void CopyMutableStateFromThrowsForNullSource()
+    {
+        ChatMessage target = new() { SenderName = "guest" };
+        MethodInfo method = typeof(ChatMessage).GetMethod(
+            "CopyMutableStateFrom",
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
+            () => method.Invoke(target, new object?[] { null }));
+
+        Assert.IsType<ArgumentNullException>(exception.InnerException);
+    }
+
+    private static ChatMessage DeepClone(ChatMessage message)
+    {
+        MethodInfo method = typeof(ChatMessage).GetMethod(
+            "DeepClone",
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+        return (ChatMessage)method.Invoke(message, null)!;
     }
 }

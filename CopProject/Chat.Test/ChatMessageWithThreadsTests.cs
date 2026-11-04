@@ -100,6 +100,79 @@ public class ChatMessageWithThreadsTests
         Assert.Single(message.ThreadById);
     }
 
+    [Fact]
+    public void TryGetThreadMessageReturnsReplyWhenPresent()
+    {
+        ChatMessageWithThreads message = new() { SenderName = "guest" };
+        Guid replyId = Guid.NewGuid();
+        ChatMessage reply = new() { SenderName = "host", Content = "Reply" };
+        AddMessageToThreadWithId(message, replyId, reply);
+
+        (bool found, ChatMessage? result) = TryGetThreadMessage(message, replyId);
+
+        Assert.True(found);
+        Assert.Same(reply, result);
+    }
+
+    [Fact]
+    public void TryGetThreadMessageReturnsFalseWhenReplyIsMissing()
+    {
+        ChatMessageWithThreads message = new() { SenderName = "guest" };
+
+        (bool found, ChatMessage? result) = TryGetThreadMessage(message, Guid.NewGuid());
+
+        Assert.False(found);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void DeepCloneCopiesRepliesAndTheirMutableState()
+    {
+        ChatMessageWithThreads message = new() { SenderName = "guest", Content = "Root" };
+        Guid replyId = Guid.NewGuid();
+        ChatMessage reply = new() { SenderName = "host", Content = "Reply" };
+        reply.Edit("Edited reply");
+        reply.ToggleReaction("👍", "guest");
+        AddMessageToThreadWithId(message, replyId, reply);
+
+        ChatMessageWithThreads clone = DeepClone(message);
+        clone.ThreadById[replyId].Reactions["👍"].Add("clone-only");
+
+        Assert.NotSame(message, clone);
+        Assert.Equal("Root", clone.Content);
+        Assert.Equal("Edited reply", clone.ThreadById[replyId].Content);
+        Assert.Equal(1, clone.ThreadById[replyId].EditCount);
+        Assert.Contains("guest", clone.ThreadById[replyId].Reactions["👍"]);
+        Assert.DoesNotContain("clone-only", reply.Reactions["👍"]);
+        Assert.Single(clone.ThreadByTime);
+    }
+
+    [Fact]
+    public void DeepCloneOfMessageWithoutRepliesHasNoThreadReplies()
+    {
+        ChatMessageWithThreads message = new() { SenderName = "guest", Content = "Root" };
+
+        ChatMessageWithThreads clone = DeepClone(message);
+
+        Assert.NotSame(message, clone);
+        Assert.Equal(message.Content, clone.Content);
+        Assert.Empty(clone.ThreadById);
+        Assert.Empty(clone.ThreadByTime);
+    }
+
+    [Fact]
+    public void DeepCloneWithoutThreadMessagesLeavesRepliesBehind()
+    {
+        ChatMessageWithThreads message = new() { SenderName = "guest", Content = "Root" };
+        message.AddMessageToThread(new ChatMessage { SenderName = "host", Content = "Reply" });
+
+        ChatMessageWithThreads clone = DeepCloneWithoutThreadMessages(message);
+
+        Assert.Equal(message.Content, clone.Content);
+        Assert.Empty(clone.ThreadById);
+        Assert.Empty(clone.ThreadByTime);
+    }
+
     private static void AddMessageToThreadWithId(
         ChatMessageWithThreads message,
         Guid id,
@@ -112,5 +185,33 @@ public class ChatMessageWithThreadsTests
             types: new[] { typeof(Guid), typeof(ChatMessage) },
             modifiers: null)!;
         method.Invoke(message, new object[] { id, reply });
+    }
+
+    private static (bool Found, ChatMessage? Message) TryGetThreadMessage(
+        ChatMessageWithThreads message,
+        Guid id)
+    {
+        MethodInfo method = typeof(ChatMessageWithThreads).GetMethod(
+            "TryGetThreadMessage",
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+        object?[] arguments = { id, null };
+        bool found = (bool)method.Invoke(message, arguments)!;
+        return (found, (ChatMessage?)arguments[1]);
+    }
+
+    private static ChatMessageWithThreads DeepClone(ChatMessageWithThreads message)
+    {
+        MethodInfo method = typeof(ChatMessageWithThreads).GetMethod(
+            "DeepClone",
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+        return (ChatMessageWithThreads)method.Invoke(message, null)!;
+    }
+
+    private static ChatMessageWithThreads DeepCloneWithoutThreadMessages(ChatMessageWithThreads message)
+    {
+        MethodInfo method = typeof(ChatMessageWithThreads).GetMethod(
+            "DeepCloneWithoutThreadMessages",
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+        return (ChatMessageWithThreads)method.Invoke(message, null)!;
     }
 }
