@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="Incident_module.Views.AddEvidenceDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Add Evidence"
+    PrimaryButtonText="Add"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    IsPrimaryButtonEnabled="{Binding IsValid}">
+
+    <StackPanel Spacing="16" Width="400" Margin="0,12,0,0">
+        <!-- File Picker Input -->
+        <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                Grid.Column="0"
+                Header="Selected File"
+                IsReadOnly="True"
+                PlaceholderText="No file selected..."
+                Text="{Binding FilePath, Mode=OneWay}" />
+
+            <Button
+                Grid.Column="1"
+                Content="Browse..."
+                VerticalAlignment="Bottom"
+                Command="{Binding BrowseFileCommand}" />
+        </Grid>
+
+        <!-- Description Input -->
+        <TextBox
+            Header="Description"
+            PlaceholderText="Describe this evidence item..."
+            Height="80"
+            TextWrapping="Wrap"
+            AcceptsReturn="True"
+            Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+    </StackPanel>
+</ContentDialog>

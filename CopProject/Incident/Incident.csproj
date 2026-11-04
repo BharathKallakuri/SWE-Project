@@ -12,10 +12,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Remove="Views\TestUserControl.xaml" />
+      <None Remove="Views\AddEvidenceDialog.xaml" />
+      <None Remove="Views\AllIncidentsPage.xaml" />
+      <None Remove="Views\CreateIncidentPage.xaml" />
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="10.1.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
     </ItemGroup>
@@ -27,7 +33,25 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Page Update="Views\TestUserControl.xaml">
+      <Page Update="Views\IncidentDetailsPage.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Update="Views\AddEvidenceDialog.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Update="Views\CreateIncidentPage.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Update="Views\AllIncidentsPage.xaml">
         <Generator>MSBuild:Compile</Generator>
       </Page>
     </ItemGroup>
