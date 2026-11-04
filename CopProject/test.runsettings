@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+
+      <!-- Visual Studio (Microsoft Code Coverage) -->
+      <DataCollector friendlyName="Code Coverage">
+        <Configuration>
+          <CodeCoverage>
+            <ModulePaths>
+              <Include>
+                <ModulePath>.*\\filesync\.dll$</ModulePath>
+                <ModulePath>.*\\chat\.dll$</ModulePath>
+                <ModulePath>.*\\networking\.dll$</ModulePath>
+              </Include>
+            </ModulePaths>
+            <Sources>
+              <Exclude>
+                <Source>.*\\obj\\.*</Source>
+                <Source>.*\.xaml\.cs$</Source>
+                <Source>.*\.g\.cs$</Source>
+                <Source>.*\.g\.i\.cs$</Source>
+              </Exclude>
+            </Sources>
+            <Attributes>
+              <Exclude>
+                <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
+              </Exclude>
+            </Attributes>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+
+      <!-- GitHub Actions (Coverlet) -->
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Include>[FileSync]*,[Chat]*,[Networking]*</Include>
+          <ExcludeByAttribute>ExcludeFromCodeCoverage</ExcludeByAttribute>
+          <ExcludeByFile>**/obj/**,**/*.g.cs,**/*.g.i.cs,**/*.xaml.cs</ExcludeByFile>
+        </Configuration>
+      </DataCollector>
+
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
