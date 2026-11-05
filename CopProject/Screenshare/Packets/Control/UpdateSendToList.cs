@@ -9,7 +9,7 @@ namespace ScreenShare;
 /// </summary>
 public sealed record UpdateSendToList : IScreenShareMessage
 {
-    string StreamId { get; }
+    public string StreamId { get; }
     public IReadOnlyList<IPEndPoint> SendTo { get; }
 
     public ScreenShareMessageKind Kind => ScreenShareMessageKind.UpdateSendToList;

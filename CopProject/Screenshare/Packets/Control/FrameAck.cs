@@ -1,7 +1,4 @@
-﻿using Microsoft.Windows.ApplicationModel.WindowsAppRuntime;
-using ScreenShare.Models;
-
-namespace ScreenShare;
+﻿namespace ScreenShare;
 
 public sealed record FrameAck : IScreenShareMessage
 {
