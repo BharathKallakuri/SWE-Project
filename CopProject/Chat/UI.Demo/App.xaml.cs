@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Net;
 using UI.Demo.Services;
+using Windows.Graphics;
 
 namespace UI.Demo;
 
@@ -15,6 +16,7 @@ public partial class App : Application
     private Func<string, DispatcherQueue, DemoParticipantSession>? _participantFactory;
     private IPEndPoint? _serverEndpoint;
     private bool _canOpenAnotherParticipant;
+    private readonly List<MainWindow> _participantWindows = new();
 
     private int _nextParticipantNumber = 1;
     private int _openWindowCount;
@@ -30,6 +32,7 @@ public partial class App : Application
         _connectionWindow.HostRequested += StartHost;
         _connectionWindow.JoinRequested += StartClient;
         _connectionWindow.Activate();
+        _connectionWindow.AppWindow.Resize(new SizeInt32(520, 620));
     }
 
     private void StartHost(string username, IPAddress bindAddress, int port)
@@ -44,8 +47,8 @@ public partial class App : Application
             _participantFactory = _demoHost.CreateParticipant;
             _serverEndpoint = _demoHost.ServerEndpoint;
             _canOpenAnotherParticipant = true;
-            _connectionWindow?.Close();
             OpenParticipant(username);
+            _connectionWindow?.Close();
         }
         catch (Exception exception)
         {
@@ -63,8 +66,8 @@ public partial class App : Application
             _participantFactory = _demoClient.CreateParticipant;
             _serverEndpoint = serverEndpoint;
             _canOpenAnotherParticipant = false;
-            _connectionWindow?.Close();
             OpenParticipant(username);
+            _connectionWindow?.Close();
         }
         catch (Exception exception)
         {
@@ -143,9 +146,12 @@ public partial class App : Application
                 session,
                 _canOpenAnotherParticipant ? OpenAnotherParticipant : null,
                 _serverEndpoint);
+            window.AppWindow.Resize(new SizeInt32(1200, 800));
+            _participantWindows.Add(window);
 
             window.Closed += (_, _) =>
             {
+                _participantWindows.Remove(window);
                 _openWindowCount--;
 
                 if (_openWindowCount == 0)
