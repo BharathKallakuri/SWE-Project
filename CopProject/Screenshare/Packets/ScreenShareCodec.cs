@@ -1,8 +1,8 @@
-using System.Buffers.Binary;
+﻿using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
-using ScreenShare.Packets.Control;
+//using ScreenShare.Packets.Control;
 
 namespace ScreenShare;
 
