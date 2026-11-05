@@ -3,6 +3,7 @@ using Cloud.Persistence;
 using Microsoft.UI.Xaml;
 using Whiteboard.Interfaces;
 using Whiteboard.Services;
+using Whiteboard.Models;
 
 namespace Whiteboard.Test.Services;
 
