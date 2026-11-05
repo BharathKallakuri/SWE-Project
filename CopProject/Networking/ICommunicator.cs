@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 
 namespace Networking;
 
@@ -11,6 +11,11 @@ public interface ICommunicator
     /// Gets the port that is used for listening.
     /// </summary>
     int ListenPort { get; }
+
+    /// <summary>
+    /// Gets the IPAddress that is used for listening.
+    /// </summary>
+    IPAddress ListenIpAddress { get; }
 
     /// <summary>
     /// Adds a subscriber.
@@ -48,14 +53,16 @@ public interface ICommunicator
     /// <summary>
     /// Join a Multicast Group
     /// </summary>
-    /// <param name="multicastGroup">IP Endpoint of the joining Multicast group</param>
-    void JoinMulticastGroup(int multicastGroup);
+    /// <param name="multicastGroup">Multicast group id</param>
+    /// <param name="clientIp">IP Endpoint of the joining client</param>
+    void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp);
 
     /// <summary>
     /// Leave a Multicast group
     /// </summary>
-    /// <param name="multicastGroup">IP Endpoint of the leaving Mutlicast group</param>
-    void LeaveMulticastGroup(int multicastGroup);
+    /// <param name="multicastGroup">Multicast group id</param>
+    /// <param name="clientIp">IP Endpoint of the leaving client</param>
+    void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp);
 
 
     /// <summary>

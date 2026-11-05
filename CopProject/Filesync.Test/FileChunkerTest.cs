@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Filesync;
+using FileSynchroniser.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Filesync.Test;
