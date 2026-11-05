@@ -2,6 +2,7 @@ using System.Text.Json;
 using Cloud.Persistence;
 using Microsoft.UI.Xaml;
 using Whiteboard.Interfaces;
+using Whiteboard.Models;
 using Whiteboard.Services;
 
 namespace Whiteboard.Test.Services;
