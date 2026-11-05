@@ -1,6 +1,8 @@
 using System;
+using System.Threading;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Threading.Tasks;
 using SecureMeet.Shared.Models;
 using SecureMeet.Shared.Modules;
 using SecureMeet.Shared.Mvvm;
@@ -75,25 +77,68 @@ public sealed class DashboardViewModel : ObservableObject
     }
 
     // CONTROLLER TEAM: connect in your MeetingStarted handler.
-    public bool TryJoin()
+            public async Task<bool> TryJoinAsync(CancellationToken cancellationToken = default)
     {
         string id = MeetingId.Trim();
         string portText = Port.Trim();
 
         if (id == "")
-            Error = "Please enter the meeting ID.";
-        else if (!int.TryParse(portText, out int number) || number < 1 || number > 65535)
+        {
+            Error = "Please enter the meeting ID (Host IP).";
+            Refresh();
+            return false;
+        }
+
+        if (!int.TryParse(portText, out int number) || number < 1 || number > 65535)
+        {
             Error = "Port must be a number between 1 and 65535.";
-        else
+            Refresh();
+            return false;
+        }
+
+        Error = "Connecting to host...";
+        Refresh();
+
+        // 1. Run the blocking TCP connect in the background
+        var connectTask = Task.Run(() => meetingService.JoinMeeting(id, number));
+
+        // 2. Set up cancellation and a 3-second timeout
+        var cancelTask = Task.Delay(Timeout.Infinite, cancellationToken);
+        var timeoutTask = Task.Delay(3000);
+
+        var completed = await Task.WhenAny(connectTask, cancelTask, timeoutTask);
+
+        // If the user clicked Cancel on the UI:
+        if (cancellationToken.IsCancellationRequested || completed == cancelTask)
+        {
+            return false; // Silently exit, dialog is already closed
+        }
+
+        // If connection timed out:
+        if (completed == timeoutTask)
+        {
+            Error = $"Connection timed out. Host at {id}:{number} is unreachable.";
+            Refresh();
+            return false;
+        }
+
+        bool success = await connectTask;
+        if (!success)
+        {
+            Error = $"Could not connect to host at {id}:{number}. Please check the IP and port.";
+            Refresh();
+            return false;
+        }
+
+        // Check again before launching meeting in case user cancelled at the last second
+        if (!cancellationToken.IsCancellationRequested)
         {
             session.StartMeeting(new MeetingInfo(id, portText, IsHost: false));
             return true;
         }
 
-        Refresh();
         return false;
     }
-
     void AddToHistory()
     {
         if (current == null) return;

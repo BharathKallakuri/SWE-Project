@@ -21,4 +21,5 @@ public interface IMeetingModule : IAppModule
 public interface IMeetingService : IAppModule
 {
     (string Id, string Port) CreateMeeting();
+    bool JoinMeeting(string hostIp, int hostPort);
 }

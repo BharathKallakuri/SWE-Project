@@ -64,4 +64,5 @@ public sealed class PlaceholderMeetingService : IMeetingService
 {
     public void Initialize(IMeetingSession session) { }
     public (string Id, string Port) CreateMeeting() => ("123-456-789", "5000");
+    public bool JoinMeeting(string hostIp, int hostPort) => true;
 }

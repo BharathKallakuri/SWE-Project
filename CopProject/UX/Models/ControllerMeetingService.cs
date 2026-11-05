@@ -72,50 +72,9 @@ public sealed class ControllerMeetingService : IMeetingService
         }
         else
         {
-            // Client joining remote host
-            CleanupController();
-            _isHost = false;
-
-            var currentUser = _session.CurrentUser;
-            string username = !string.IsNullOrWhiteSpace(currentUser?.UserId) ? currentUser.UserId : "Participant";
-            string email = !string.IsNullOrWhiteSpace(currentUser?.Email) ? currentUser.Email : $"{username}@example.com";
-
-            var clientUser = new ControllerUser(username, email, null, NetworkUtils.GetLocalIpAddress(), 0, isHost: false);
-            var client = ControllerFactory.CreateClient(clientUser);
-            _activeController = client;
-
-            HookControllerEvents(client);
-
-            string targetHost = info.Id.Trim();
-            if (targetHost.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+            if (_activeController != null)
             {
-                targetHost = "127.0.0.1";
-            }
-            else if (!IPAddress.TryParse(targetHost, out _))
-            {
-                try
-                {
-                    var addresses = Dns.GetHostAddresses(targetHost);
-                    var ipv4 = addresses.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
-                    if (ipv4 != null)
-                    {
-                        targetHost = ipv4.ToString();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Trace.TraceError($"Failed to resolve host '{targetHost}': {ex.Message}");
-                }
-            }
-
-            if (int.TryParse(info.Port, out int hostPort))
-            {
-                client.JoinMeeting(targetHost, hostPort, clientUser);
-                UpdateParticipantCount(client.GetActiveUserCount());
-            }
-            else
-            {
-                Trace.TraceError($"Invalid port '{info.Port}' passed to JoinMeeting.");
+                UpdateParticipantCount(_activeController.GetActiveUserCount());
             }
         }
     }
@@ -209,5 +168,38 @@ public sealed class ControllerMeetingService : IMeetingService
             _activeController.Dispose();
             _activeController = null;
         }
+    }
+
+    public bool JoinMeeting(string hostIp, int hostPort)
+    {
+        CleanupController();
+        _isHost = false;
+
+        var currentUser = _session?.CurrentUser;
+        string username = !string.IsNullOrWhiteSpace(currentUser?.UserId) ? currentUser.UserId : "Participant";
+        string email = !string.IsNullOrWhiteSpace(currentUser?.Email) ? currentUser.Email : $"{username}@example.com";
+
+        var clientUser = new ControllerUser(username, email, null, NetworkUtils.GetLocalIpAddress(), 0, isHost: false);
+        var client = ControllerFactory.CreateClient(clientUser);
+
+        // Resolve localhost / hostnames if needed
+        string targetHost = hostIp.Trim();
+        if (targetHost.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            targetHost = "127.0.0.1";
+        }
+
+        // Call your updated bool JoinMeeting!
+        bool joined = client.JoinMeeting(targetHost, hostPort, clientUser);
+        if (!joined)
+        {
+            client.Dispose();
+            return false;
+        }
+
+        _activeController = client;
+        HookControllerEvents(client);
+        UpdateParticipantCount(client.GetActiveUserCount());
+        return true;
     }
 }
