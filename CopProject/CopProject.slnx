@@ -17,6 +17,7 @@
     </Project>
     <Project Path="FileSynchroniser/FileSynchroniser.csproj" Id="0cec58f5-7206-4b15-be62-94efcd01d056" />
     <Project Path="Incidents/Incidents.csproj" />
+    <Project Path="Insights.Test/Insights.Test.csproj" />
     <Project Path="Insights/Insights.csproj" />
     <Project Path="Location/Location.csproj" />
     <Project Path="Networking.Test/Networking.Test.csproj" />
