@@ -66,7 +66,7 @@ public class ScreenSharingServiceTests
         Assert.False(secondResult.IsFullFrame);
         Assert.NotEmpty(secondResult.ChangedTiles);
 
- 
+
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public class ScreenSharingServiceTests
 
         service.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => service.ProcessFrame());
+        Assert.Throws<ObjectDisposedException>(service.ProcessFrame);
     }
 
     /// <summary>

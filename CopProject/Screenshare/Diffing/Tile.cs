@@ -35,16 +35,22 @@ public sealed class Tile
         ArgumentNullException.ThrowIfNull(data);
 
         if (x < 0 || y < 0)
+        {
             throw new ArgumentOutOfRangeException(
                 nameof(x), "Tile coordinates cannot be negative.");
+        }
 
         if (width <= 0 || height <= 0)
+        {
             throw new ArgumentOutOfRangeException(
                 nameof(width), "Tile dimensions must be positive.");
+        }
 
         if (data.Length == 0)
+        {
             throw new ArgumentException(
                 "Tile image data cannot be empty.", nameof(data));
+        }
 
         X = x;
         Y = y;

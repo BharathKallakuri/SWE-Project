@@ -15,4 +15,8 @@
     <PackageReference Include="System.Drawing.Common" Version="10.0.12" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Networking\Networking.csproj" />
+  </ItemGroup>
+
 </Project>

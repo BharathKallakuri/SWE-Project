@@ -13,10 +13,14 @@ public class StreamFrameCacheTests
         using var red = new Bitmap(32, 32);
 
         using (Graphics g = Graphics.FromImage(blue))
+        {
             g.Clear(Color.Blue);
+        }
 
         using (Graphics g = Graphics.FromImage(red))
+        {
             g.Clear(Color.Red);
+        }
 
         cache.Update("stream-A", blue);
         cache.Update("stream-B", red);
@@ -45,13 +49,19 @@ public class StreamFrameCacheTests
         using var green = new Bitmap(32, 32);
 
         using (Graphics g = Graphics.FromImage(blue))
+        {
             g.Clear(Color.Blue);
+        }
 
         using (Graphics g = Graphics.FromImage(red))
+        {
             g.Clear(Color.Red);
+        }
 
         using (Graphics g = Graphics.FromImage(green))
+        {
             g.Clear(Color.Green);
+        }
 
         cache.Update("stream-A", blue);
         cache.Update("stream-B", red);
@@ -89,10 +99,14 @@ public class StreamFrameCacheTests
         using var red = new Bitmap(32, 32);
 
         using (Graphics g = Graphics.FromImage(blue))
+        {
             g.Clear(Color.Blue);
+        }
 
         using (Graphics g = Graphics.FromImage(red))
+        {
             g.Clear(Color.Red);
+        }
 
         cache.Update("stream-A", blue);
         cache.Update("stream-B", red);
