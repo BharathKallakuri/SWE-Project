@@ -10,7 +10,7 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class Circle : Shape, ICircle
 {
-    public Point2D Center { get; init; } = new(0, 0);
+    public Point2D Center { get; set; } = new(0, 0);
 
     public double Radius { get; set; } = 10;
 
@@ -18,14 +18,17 @@ public class Circle : Shape, ICircle
     {
         get => new(
             Center.X - Radius,
-            Center.Y + Radius,
+            Center.Y - Radius,
             Radius * 2,
             Radius * 2
         );
 
         set {
-            Left = value.Left + (value.Width / 2.0);
-            Top = value.Top + (value.Height / 2.0);
+            Left = value.Left;
+            Top = value.Top;
+            Center = new(
+                value.Left + (value.Width / 2.0),
+                value.Top + (value.Height / 2.0));
             Radius = value.Width < value.Height ? value.Width / 2.0 : value.Height / 2.0;
         }
     }
@@ -33,8 +36,8 @@ public class Circle : Shape, ICircle
     public override bool HitTest(Point2D point)
     {   
         
-        double dx = point.X - Left;
-        double dy = point.Y - Top;
+        double dx = point.X - Center.X;
+        double dy = point.Y - Center.Y;
         double distanceSquared = (dx * dx) + (dy * dy);
         double radiusSquared = Radius * Radius;
         return distanceSquared <= radiusSquared;

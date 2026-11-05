@@ -70,10 +70,19 @@
                     </Button>
 
                     <Button
-                        x:Name="ButtonSquare"
-                        ToolTipService.ToolTip="Square"
-                        Click="ButtonSquare_Click">
-                        <FontIcon Glyph="&#xE739;" />
+                        x:Name="ButtonShapes"
+                        Content="Shapes"
+                        ToolTipService.ToolTip="Choose a shape">
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem
+                                    Text="Square"
+                                    Click="ButtonSquare_Click"/>
+                                <MenuFlyoutItem
+                                    Text="Circle"
+                                    Click="ButtonCircle_Click"/>
+                            </MenuFlyout>
+                        </Button.Flyout>
                     </Button>
 
                     <Button
