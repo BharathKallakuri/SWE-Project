@@ -1,7 +1,8 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Linq;
 using Whiteboard.Interfaces.Shapes;
 using Whiteboard.Test.RandomGenerators;
 
@@ -96,5 +97,26 @@ public class BoundingBoxTests : BaseGenerator
         Assert.Equal(rectangle.Center.Y + (rectangle.Height / 2), rectangle.BoundingBox.Top);
         Assert.Equal(rectangle.Width, rectangle.BoundingBox.Width);
         Assert.Equal(rectangle.Height, rectangle.BoundingBox.Height);
+    }
+
+    /// <summary>
+    /// Test bounding box for polygon is calculated properly
+    /// </summary>
+    [Fact]
+    public void Polygon()
+    {
+        var polygon = new Whiteboard.Items.Shapes.Polygon() {
+            Vertices = RandomPointListGenerator.Generate()
+        };
+
+        double minX = polygon.Vertices.Min(p => p.X);
+        double maxX = polygon.Vertices.Max(p => p.X);
+        double minY = polygon.Vertices.Min(p => p.Y);
+        double maxY = polygon.Vertices.Max(p => p.Y);
+
+        Assert.Equal(minX, polygon.BoundingBox.Left);
+        Assert.Equal(maxY, polygon.BoundingBox.Top);
+        Assert.Equal(maxX - minX, polygon.BoundingBox.Width);
+        Assert.Equal(maxY - minY, polygon.BoundingBox.Height);
     }
 }
