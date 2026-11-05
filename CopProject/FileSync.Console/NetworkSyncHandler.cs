@@ -57,6 +57,7 @@ public class NetworkSyncHandler : IMessageListener
 
         if (DefaultPeerEndpoint != null)
         {
+
             _communicator.SendMessage(DefaultPeerEndpoint, req, ModuleId, priority: 1);
         }
         else

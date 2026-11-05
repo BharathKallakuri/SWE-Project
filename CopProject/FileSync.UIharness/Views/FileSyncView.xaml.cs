@@ -14,4 +14,35 @@ public sealed partial class FileSyncView : UserControl
     {
         InitializeComponent();
     }
+
+    /// <summary>
+    /// handles click event on the sync button
+    /// </summary>
+    private void OnSyncButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        string selectedPeer = (PeerSelector.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Default Peer";
+        StatusTextBlock.Text = $"Synchronising with {selectedPeer}...";
+
+        // trigger synchronisation on background task
+        System.Threading.Tasks.Task.Run(() =>
+        {
+            try
+            {
+                var synchroniser = new Filesync.Synchroniser();
+                synchroniser.Synchronise();
+
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    StatusTextBlock.Text = $"Synchronisation with {selectedPeer} completed successfully!";
+                });
+            }
+            catch (System.Exception ex)
+            {
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    StatusTextBlock.Text = $"Sync error: {ex.Message}";
+                });
+            }
+        });
+    }
 }
