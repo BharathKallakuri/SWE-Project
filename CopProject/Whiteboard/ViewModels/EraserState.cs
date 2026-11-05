@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -26,7 +25,7 @@ public class EraserState : IViewModelState
     public void PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         Point point = e.GetCurrentPoint(_canvas).Position;
-        IReadOnlyList<UIElement> hitElements = VisualTreeHelper.FindElementsInHostCoordinates(point, _canvas);
+        var hitElements = VisualTreeHelper.FindElementsInHostCoordinates(point, _canvas);
 
         foreach (UIElement element in hitElements)
         {
