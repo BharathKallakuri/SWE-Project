@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -23,8 +23,8 @@ public class Circle : Shape, ICircle
 
     public override bool HitTest(Point2D point)
     {
-        double dx = point.X - Left;
-        double dy = point.Y - Top;
+        double dx = point.X - Center.X;
+        double dy = point.Y - Center.Y;
         double distanceSquared = (dx * dx) + (dy * dy);
         double radiusSquared = Radius * Radius;
         return distanceSquared <= radiusSquared;
