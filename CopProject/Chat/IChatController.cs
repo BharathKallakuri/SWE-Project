@@ -8,6 +8,11 @@ namespace Chat;
 public interface IChatController
 {
     /// <summary>
+    /// Gets the username of the meeting host.
+    /// </summary>
+    string HostName { get; }
+
+    /// <summary>
     /// Raised when a participant joins the meeting.
     /// </summary>
     event Action<string>? ParticipantAdded;
