@@ -26,7 +26,6 @@
             </StackPanel>
         </Grid>
 
-
         <!-- Login screen -->
         <Grid x:Name="LoginView" Grid.Row="1">
             <Border Background="White" Width="400" Padding="30" CornerRadius="10"
@@ -84,7 +83,7 @@
                         HorizontalAlignment="Stretch"/>
                 <Button Grid.Column="4" Content="Cloud" Click="Cloud_Click"
                         Height="100" FontSize="20" Background="White"
-                        HorizontalAlignment="Stretch"/> 
+                        HorizontalAlignment="Stretch"/>
                 <Button Grid.Column="5" Content="FileSync" Click="FileSync_Click"
                         Height="100" FontSize="20" Background="White"
                         HorizontalAlignment="Stretch"/>
@@ -114,12 +113,13 @@
                 <TextBlock Text="Incidents" FontSize="32" FontWeight="SemiBold"/>
             </StackPanel>
 
-            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20"/>
-            <Grid>
-                <!-- INCIDENTS TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
-
-            </Grid>
+            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
+                <Grid>
+                    <!-- INCIDENTS TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
+                </Grid>
+            </Border>
         </Grid>
+
         <!-- Locations page -->
         <Grid x:Name="LocationView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
             <Grid.RowDefinitions>
@@ -132,12 +132,13 @@
                 <TextBlock Text="Location" FontSize="32" FontWeight="SemiBold"/>
             </StackPanel>
 
-            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20"/>
-            <Grid>
-                <!-- LOCATION TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
-
-            </Grid>
+            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
+                <Grid>
+                    <!-- LOCATION TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
+                </Grid>
+            </Border>
         </Grid>
+
         <!-- Cloud page -->
         <Grid x:Name="CloudView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
             <Grid.RowDefinitions>
@@ -150,12 +151,13 @@
                 <TextBlock Text="Cloud" FontSize="32" FontWeight="SemiBold"/>
             </StackPanel>
 
-            <Border Grid.Row="1" Background="White" CornerRadius="10"/>
-            <Grid>
-                <!-- CLOUD TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
-
-            </Grid>
+            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
+                <Grid>
+                    <!-- CLOUD TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
+                </Grid>
+            </Border>
         </Grid>
+
         <!-- FileSync page -->
         <Grid x:Name="FileSyncView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
             <Grid.RowDefinitions>
@@ -168,13 +170,14 @@
                 <TextBlock Text="FileSync" FontSize="32" FontWeight="SemiBold"/>
             </StackPanel>
 
-            <Border Grid.Row="1" Background="White" CornerRadius="10"/>
-            <Grid>
-                <!-- FILESYNC TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
-
-            </Grid>
+            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
+                <Grid>
+                    <!-- FILESYNC TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
+                </Grid>
+            </Border>
         </Grid>
 
+        <!-- Meeting screen -->
         <Grid x:Name="MeetingView" Grid.Row="1" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -218,7 +221,6 @@
                 <Button x:Name="EndBtn" Content="End Meeting" Click="End_Click" Width="120" Height="50"
                         Background="#D13438" Foreground="White"/>
             </StackPanel>
-
 
             <Border x:Name="ChatPanel" Grid.Column="1" Grid.RowSpan="2" Width="320"
                     Background="White" CornerRadius="10" Margin="0,16,16,16"
