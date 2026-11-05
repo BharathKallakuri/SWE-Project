@@ -29,8 +29,8 @@ public class Ellipse : Shape, IEllipse
             return false;
         }
 
-        double dx = point.X - Left;
-        double dy = point.Y - Top;
+        double dx = point.X - Center.X;
+        double dy = point.Y - Center.Y;
 
         double normalized = ((dx * dx) / (rx * rx)) + ((dy * dy) / (ry * ry));
         return normalized <= 1.0;
