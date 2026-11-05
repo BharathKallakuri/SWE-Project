@@ -29,7 +29,8 @@ public class ScreenSharingService : IDisposable
 
     /// <summary>
     /// Captures the current frame and compares it with the previous frame.
-    /// The first frame is always returned as a full frame
+    /// The first frame is always returned as a full frame.
+    /// The caller owns the returned result and must dispose it.
     /// </summary>
     public ImageDiffResult ProcessFrame()
     {
@@ -43,8 +44,6 @@ public class ScreenSharingService : IDisposable
         {
             _previousFrame = new Bitmap(currentFrame);
 
-            // currentFrame.Dispose();
-
             return ImageDiffResult.CreateFullFrame(new Bitmap(_previousFrame));
         }
 
@@ -56,8 +55,6 @@ public class ScreenSharingService : IDisposable
         _previousFrame.Dispose();
 
         _previousFrame = newPreviousFrame;
-
-        currentFrame.Dispose();
 
         return result;
     }
@@ -80,7 +77,10 @@ public class ScreenSharingService : IDisposable
     public void Dispose()
     {
         if (_disposed)
+        {
             return;
+        }
+
         _previousFrame?.Dispose();
         _previousFrame = null;
 
