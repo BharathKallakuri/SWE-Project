@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+
+      <!-- Visual Studio (Microsoft Code Coverage) -->
+      <DataCollector friendlyName="Code Coverage">
+        <Configuration>
+          <CodeCoverage>
+            <ModulePaths>
+              <Include>
+                <ModulePath>.*\\filesynchroniser\.dll$</ModulePath>
+                <ModulePath>.*\\chat\.dll$</ModulePath>
+                <ModulePath>.*\\networking\.dll$</ModulePath>
+                <ModulePath>.*\\cloud\.dll$</ModulePath>  
+              </Include>
+            </ModulePaths>
+            <Sources>
+              <Exclude>
+                <Source>.*\\obj\\.*</Source>
+                <Source>.*\.xaml\.cs$</Source>
+                <Source>.*\.g\.cs$</Source>
+                <Source>.*\.g\.i\.cs$</Source>
+              </Exclude>
+            </Sources>
+            <Attributes>
+              <Exclude>
+                <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
+              </Exclude>
+            </Attributes>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
