@@ -2,6 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+/****
+    * Filename  : WhiteboardHistoryService.cs
+    * Owner     : Sangam
+    * Roll No   : 112201006
+****/
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,22 +16,37 @@ using Whiteboard.Interfaces;
 
 namespace Whiteboard.Services;
 
-public class WhiteboardHistoryService
+/// <summary>
+/// Stores and applies undo and redo actions for one local user.
+/// </summary>
+public class WhiteboardHistoryService : IWhiteboardHistory
 {
     private readonly IWhiteboard _whiteboard;
     private readonly string _userId;
 
+    // Each stack stores the next actions to execute.
     private readonly Stack<IWhiteboardAction> _undo = new();
     private readonly Stack<IWhiteboardAction> _redo = new();
 
     private bool _isChangingHistory;
 
+    /// <inheritdoc/>
     public bool CanUndo => _undo.Count > 0;
+
+    /// <inheritdoc/>
     public bool CanRedo => _redo.Count > 0;
 
+    /// <inheritdoc/>
     public event Action HistoryChanged = delegate { };
 
-    public WhiteboardHistoryService(IWhiteboard whiteboard, string userId)
+    /// <summary>
+    /// Creates an empty history for the given board and user.
+    /// </summary>
+    /// <param name="whiteboard">Board that actions will modify.</param>
+    /// <param name="userId">User who owns this history.</param>
+    public WhiteboardHistoryService(
+        IWhiteboard whiteboard,
+        string userId)
     {
         ArgumentNullException.ThrowIfNull(whiteboard);
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
@@ -34,6 +55,10 @@ public class WhiteboardHistoryService
         _userId = userId;
     }
 
+    /// <summary>
+    /// Performs a new action and saves its inverse for undo.
+    /// </summary>
+    /// <param name="action">Action to perform.</param>
     public void Execute(IWhiteboardAction action)
     {
         ArgumentNullException.ThrowIfNull(action);
@@ -41,14 +66,20 @@ public class WhiteboardHistoryService
         ChangeHistory(() => {
             ValidateUser(action);
 
+            // Update history only after the action and its inverse succeed.
             action.Perform(_whiteboard);
             IWhiteboardAction inverse = GetInverse(action);
 
             _undo.Push(inverse);
+
+            // A new action replaces the previous redo path.
             _redo.Clear();
         });
     }
 
+    /// <summary>
+    /// Applies the next undo action and saves its inverse for redo.
+    /// </summary>
     public void Undo()
     {
         if (!CanUndo)
@@ -59,6 +90,9 @@ public class WhiteboardHistoryService
         ChangeHistory(() => Transfer(_undo, _redo));
     }
 
+    /// <summary>
+    /// Applies the next redo action and saves its inverse for undo.
+    /// </summary>
     public void Redo()
     {
         if (!CanRedo)
@@ -69,11 +103,16 @@ public class WhiteboardHistoryService
         ChangeHistory(() => Transfer(_redo, _undo));
     }
 
+    /// <summary>
+    /// Executes an action from one stack and stores its inverse in the other.
+    /// </summary>
+    /// <param name="source">Stack containing the action.</param>
+    /// <param name="destination">Stack receiving the inverse.</param>
     private void Transfer(
         Stack<IWhiteboardAction> source,
         Stack<IWhiteboardAction> destination)
     {
-        // Keep the entry in its original stack until execution succeeds.
+        // Keep the entry in place if execution fails.
         IWhiteboardAction action = source.Peek();
         ValidateUser(action);
 
@@ -84,6 +123,11 @@ public class WhiteboardHistoryService
         destination.Push(inverse);
     }
 
+    /// <summary>
+    /// Creates and validates an action's inverse.
+    /// </summary>
+    /// <param name="action">Action to reverse.</param>
+    /// <returns>An inverse belonging to the same user.</returns>
     private IWhiteboardAction GetInverse(IWhiteboardAction action)
     {
         IWhiteboardAction inverse = action.CreateInverse();
@@ -100,6 +144,10 @@ public class WhiteboardHistoryService
         return inverse;
     }
 
+    /// <summary>
+    /// Checks that the action belongs to this history's user.
+    /// </summary>
+    /// <param name="action">Action to check.</param>
     private void ValidateUser(IWhiteboardAction action)
     {
         if (!string.Equals(action.UserId, _userId, StringComparison.Ordinal))
@@ -109,6 +157,10 @@ public class WhiteboardHistoryService
         }
     }
 
+    /// <summary>
+    /// Runs a history operation and notifies listeners when it succeeds.
+    /// </summary>
+    /// <param name="operation">History operation to run.</param>
     private void ChangeHistory(Action operation)
     {
         if (_isChangingHistory)
@@ -125,10 +177,10 @@ public class WhiteboardHistoryService
         }
         finally
         {
+            // Allow future operations even if this one fails.
             _isChangingHistory = false;
         }
 
-        // Reached only when the operation completed successfully.
         HistoryChanged();
     }
 }

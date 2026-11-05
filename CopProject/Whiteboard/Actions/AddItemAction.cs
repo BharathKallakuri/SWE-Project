@@ -2,6 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+/****
+    * Filename  : AddItemAction.cs
+    * Owner     : Sangam
+    * Roll No   : 112201006
+****/
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,19 +17,37 @@ using Whiteboard.Services;
 
 namespace Whiteboard.Actions;
 
+/// <summary>
+/// Adds one or more items as a single reversible action.
+/// </summary>
 public class AddItemAction : IWhiteboardAction
 {
     private readonly IItem[] _snapshots;
 
+    /// <inheritdoc/>
     public Guid ActionId { get; set; } = Guid.NewGuid();
+
+    /// <inheritdoc/>
     public string UserId { get; set; }
+
+    /// <inheritdoc/>
     public DateTime ActionDateTime { get; set; } = DateTime.UtcNow;
 
+    /// <summary>
+    /// Creates an action for adding one item.
+    /// </summary>
+    /// <param name="item">Item to add.</param>
+    /// <param name="userId">User performing the action.</param>
     public AddItemAction(IItem item, string userId)
         : this(new[] { item }, userId)
     {
     }
 
+    /// <summary>
+    /// Creates an action for adding a group of items.
+    /// </summary>
+    /// <param name="items">Items to add together.</param>
+    /// <param name="userId">User performing the action.</param>
     public AddItemAction(IEnumerable<IItem> items, string userId)
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -54,14 +78,20 @@ public class AddItemAction : IWhiteboardAction
         }
 
         UserId = userId;
+
+        // Save copies before the caller can change the original items.
         _snapshots = suppliedItems.Select(ItemSnapshot.Copy).ToArray();
     }
 
+    /// <summary>
+    /// Adds fresh copies of the saved items to the board.
+    /// </summary>
+    /// <param name="whiteboard">Board receiving the items.</param>
     public void Perform(IWhiteboard whiteboard)
     {
         ArgumentNullException.ThrowIfNull(whiteboard);
 
-        // Validate the whole group before changing the board.
+        // Check the whole group before adding anything.
         foreach (IItem snapshot in _snapshots)
         {
             if (whiteboard.Items.ContainsKey(snapshot.Id))
@@ -71,7 +101,7 @@ public class AddItemAction : IWhiteboardAction
             }
         }
 
-        // Editable board objects must be separate from saved snapshots.
+        // Keep editable board items separate from history snapshots.
         IItem[] itemsToAdd = _snapshots
             .Select(ItemSnapshot.Copy)
             .ToArray();
@@ -82,6 +112,10 @@ public class AddItemAction : IWhiteboardAction
         }
     }
 
+    /// <summary>
+    /// Creates an action that deletes the added items.
+    /// </summary>
+    /// <returns>The corresponding delete action.</returns>
     public IWhiteboardAction CreateInverse()
     {
         return new DeleteItemsAction(

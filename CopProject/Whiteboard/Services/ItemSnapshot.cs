@@ -2,18 +2,32 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+/****
+    * Filename  : ItemSnapshot.cs
+    * Owner     : Sangam
+    * Roll No   : 112201006
+****/
+
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Items.Shapes;
-using Whiteboard.Interfaces;
 
 namespace Whiteboard.Services;
 
+/// <summary>
+/// Creates independent copies of items for undo and redo.
+/// </summary>
 public static class ItemSnapshot
 {
+    /// <summary>
+    /// Copies an item along with its properties and metadata.
+    /// </summary>
+    /// <param name="source">Item to copy.</param>
+    /// <returns>An independent copy of the item.</returns>
     public static IItem Copy(IItem source)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -76,6 +90,7 @@ public static class ItemSnapshot
                 $"Snapshots do not support {source.GetType().Name}.")
         };
 
+        // Keep the original identity when restoring an item.
         copy.Id = source.Id;
         copy.Zindex = source.Zindex;
         copy.CreatedBy = source.CreatedBy;
@@ -95,6 +110,9 @@ public static class ItemSnapshot
         return copy;
     }
 
+    /// <summary>
+    /// Copies a point, or returns null if it is missing.
+    /// </summary>
     private static Point2D CopyPoint(Point2D point)
     {
         return point is null
@@ -102,6 +120,9 @@ public static class ItemSnapshot
             : new Point2D(point.X, point.Y);
     }
 
+    /// <summary>
+    /// Copies a bounding rectangle, or returns null if it is missing.
+    /// </summary>
     private static Rect2D CopyRect(Rect2D rectangle)
     {
         return rectangle is null
@@ -113,6 +134,9 @@ public static class ItemSnapshot
                 rectangle.Height);
     }
 
+    /// <summary>
+    /// Copies the list and its points so later edits do not affect history.
+    /// </summary>
     private static List<Point2D> CopyPoints(List<Point2D> points)
     {
         return points?.Select(CopyPoint).ToList();
