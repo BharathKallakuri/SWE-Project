@@ -1,10 +1,20 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Cloud.Persistence;
+using FileSynchroniser.Models;
+using Incident_module;
+using Incident_module.Implementations;
+using Incident_module.Views;
+using LocationTracker.Services;
+using LocationTracker.Views;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using WinRT.Interop;
 using Microsoft.UI.Xaml.Media;
 
 namespace UX;
@@ -14,7 +24,7 @@ public sealed partial class MainWindow : Window
     private const string ParticipantRole = "Participant";
     private const string AllowedDomain = "@smail.iitpkd.ac.in";
     private readonly ObservableCollection<string> _records = new() { "Weekly Review - Mon, 28 Sep - 45 min", "Patrol Planning - Fri, 25 Sep - 30 min", "Case Briefing - Wed, 23 Sep - 1 hr 10 min" };
-
+    private Task<IncidentPageContext>? incidentContextTask;
     private string _userId = string.Empty;
     private string _meetingId = string.Empty;
     private string _meetingPort = string.Empty;
@@ -94,6 +104,8 @@ public sealed partial class MainWindow : Window
     private void SignOut_Click(object sender, RoutedEventArgs e)
     {
         _inMeeting = false;
+        LocationHost.Content = null;
+        incidentContextTask = null;
         ShowScreen("login");
     }
     private void Start_Click(object sender, RoutedEventArgs e)
@@ -231,15 +243,86 @@ public sealed partial class MainWindow : Window
         _resizingChat = false;
         ChatResizer.ReleasePointerCapture(e.Pointer);
     }
-    private void Incidents_Click(object sender, RoutedEventArgs e)
+    private async Task<IncidentPageContext> GetIncidentContextAsync()
     {
-        ShowScreen("incidents");
+        incidentContextTask ??= InitializeIncidentContextAsync();
+        return await incidentContextTask;
     }
 
-    private void Location_Click(object sender, RoutedEventArgs e)
+    private async Task<IncidentPageContext> InitializeIncidentContextAsync()
     {
-        ShowScreen("location");
+        IStorage storage = await StorageFactory.CreateAsync(ModuleType.IncidentManagement);
+        IFileOperations fileSynchronizer = new Synchroniser();
+        IIncidentController controller = await IncidentController.CreateAsync(storage, fileSynchronizer);
+
+        Guid currentUserId = Guid.TryParse(_userId, out Guid parsedUserId)
+            ? parsedUserId
+            : Guid.NewGuid();
+
+        IntPtr windowHandle = WindowNative.GetWindowHandle(this);
+        return new IncidentPageContext(controller, currentUserId, windowHandle);
     }
+
+    private async void Incidents_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            IncidentsFrame.Navigate(typeof(AllIncidentsPage), context);
+            ShowScreen("incidents");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load incidents", ex.Message);
+        }
+    }
+
+    private async void Location_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            var geocoding = new NominatimGeocodingService(new HttpClient());
+            var map = new LocationMapView();
+            map.IncidentSelected += LocationIncidentSelected;
+            map.Initialize(new MapService(context.IncidentController, geocoding));
+            LocationHost.Content = map;
+            ShowScreen("location");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load location", ex.Message);
+        }
+    }
+
+    private async void LocationIncidentSelected(Guid incidentId)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            IncidentsFrame.Navigate(
+                typeof(IncidentDetailsPage),
+                new IncidentDetailsPageParameters(context, incidentId));
+            LocationHost.Content = null;
+            ShowScreen("incidents");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load incident", ex.Message);
+        }
+    }
+
+    private async Task ShowErrorAsync(string title, string message)
+    {
+        await new ContentDialog
+        {
+            Title = title,
+            Content = message,
+            CloseButtonText = "OK",
+            XamlRoot = Root.XamlRoot
+        }.ShowAsync();
+    }
+
     private void Cloud_Click(object sender, RoutedEventArgs e)
     {
         ShowScreen("cloud");
@@ -268,6 +351,7 @@ public sealed partial class MainWindow : Window
     {
         ShowScreen("dash");
     }
+
 }
 public sealed class ResizeHandle : ContentControl
 {
