@@ -1,4 +1,4 @@
-using Incidents;
+using Incident_module;
 using Location.Test.Fakes;
 using LocationTracker.Models;
 using LocationTracker.Services;
@@ -30,11 +30,11 @@ public class MapServiceTests
     /// Without a filter the service should return whatever the controller returns.
     /// </summary>
     [TestMethod]
-    public void GetIncidentsNoFilter()
+    public async Task GetIncidentsNoFilter()
     {
         _incidents.Incidents = [FakeIncidentController.MakeIncident()];
 
-        List<Incident> result = _service.GetIncidentsForMap();
+        List<Incident> result = await _service.GetIncidentsForMapAsync();
 
         Assert.HasCount(1, result);
         Assert.IsNull(_incidents.LastFilter);
@@ -44,11 +44,11 @@ public class MapServiceTests
     /// A filter should be passed straight through to the controller.
     /// </summary>
     [TestMethod]
-    public void GetIncidentsWithFilter()
+    public async Task GetIncidentsWithFilter()
     {
         IncidentFilter filter = new("Theft", null, null, null, null, null, null, null);
 
-        _service.GetIncidentsForMap(filter);
+        await _service.GetIncidentsForMapAsync(filter);
 
         Assert.AreSame(filter, _incidents.LastFilter);
     }
@@ -57,12 +57,12 @@ public class MapServiceTests
     /// Looking up an incident by id should return the controller's incident.
     /// </summary>
     [TestMethod]
-    public void GetIncidentById()
+    public async Task GetIncidentById()
     {
         Incident incident = FakeIncidentController.MakeIncident();
         _incidents.IncidentById = incident;
 
-        Incident result = _service.GetIncidentById(Guid.NewGuid());
+        Incident result = await _service.GetIncidentByIdAsync(Guid.NewGuid());
 
         Assert.AreSame(incident, result);
     }
@@ -71,9 +71,9 @@ public class MapServiceTests
     /// Recent incidents should use a filter with only FromDateTime set.
     /// </summary>
     [TestMethod]
-    public void GetRecentIncidents()
+    public async Task GetRecentIncidents()
     {
-        _service.GetRecentIncidents(TimeSpan.FromHours(2));
+        await _service.GetRecentIncidentsAsync(TimeSpan.FromHours(2));
 
         Assert.IsNotNull(_incidents.LastFilter);
         Assert.IsNotNull(_incidents.LastFilter.FromDateTime);
@@ -84,11 +84,11 @@ public class MapServiceTests
     /// Nearby search should build a location filter with the given values.
     /// </summary>
     [TestMethod]
-    public void GetNearbyIncidentsValidInput()
+    public async Task GetNearbyIncidentsValidInput()
     {
-        _service.GetNearbyIncidents(10.8, 76.7, 5);
+        await _service.GetNearbyIncidentsAsync(10.8, 76.7, 5);
 
-        IncidentLocation? location = _incidents.LastFilter?.Location;
+        IncidentLocationFilter? location = _incidents.LastFilter?.Location;
         Assert.IsNotNull(location);
         Assert.AreEqual(10.8, location.Latitude);
         Assert.AreEqual(76.7, location.Longitude);
@@ -99,18 +99,20 @@ public class MapServiceTests
     /// Invalid coordinates should throw.
     /// </summary>
     [TestMethod]
-    public void GetNearbyIncidentsInvalidCoordinates()
+    public async Task GetNearbyIncidentsInvalidCoordinates()
     {
-        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => _service.GetNearbyIncidents(91, 0, 5));
+        await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(
+            () => _service.GetNearbyIncidentsAsync(91, 0, 5));
     }
 
     /// <summary>
     /// A negative radius should throw.
     /// </summary>
     [TestMethod]
-    public void GetNearbyIncidentsNegativeRadius()
+    public async Task GetNearbyIncidentsNegativeRadius()
     {
-        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => _service.GetNearbyIncidents(10, 10, -1));
+        await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(
+            () => _service.GetNearbyIncidentsAsync(10, 10, -1));
     }
 
     /// <summary>

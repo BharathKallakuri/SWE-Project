@@ -29,6 +29,7 @@
     </Project>
     <Project Path="Insights/Insights.csproj" />
     <Project Path="Location/Location.csproj" />
+    <Project Path="Location.Test/Location.Test.csproj" />
     <Project Path="Networking.Test/Networking.Test.csproj" />
     <Project Path="Networking/Networking.csproj" />
     <Project Path="Screenshare/Screenshare.csproj" />
