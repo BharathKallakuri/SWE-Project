@@ -12,7 +12,8 @@
                 <ModulePath>.*\\filesynchroniser\.dll$</ModulePath>
                 <ModulePath>.*\\chat\.dll$</ModulePath>
                 <ModulePath>.*\\networking\.dll$</ModulePath>
-                <ModulePath>.*\\cloud\.dll$</ModulePath>  
+                <ModulePath>.*\\cloud\.dll$</ModulePath>
+                <ModulePath>.*\\incident\.dll$</ModulePath>
                 <ModulePath>.*\\whiteboard\.dll$</ModulePath>  
               </Include>
             </ModulePaths>
