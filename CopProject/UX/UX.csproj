@@ -12,7 +12,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Module DLLs that teams put in the Modules folder are copied next to the app. -->
     <None Remove="Modules\**" />
     <Content Include="Modules\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
