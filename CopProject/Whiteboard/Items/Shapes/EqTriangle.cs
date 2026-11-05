@@ -13,23 +13,12 @@ public class EqTriangle : Shape, IEqTriangle
 {
     public Point2D Center { get; init; } = new(0, 0);
 
-    public override Rect2D BoundingBox
-    {
-        get => new(
-            Center.X - (SideLength / 2.0),
-            Center.Y + ((2.0 / 3.0) * GetTriangleHeight(SideLength)),
-            SideLength,
-            GetTriangleHeight(SideLength)
-        );
-        set {
-            Left = value.Left;
-            Top = value.Top;
-
-            double sideFromWidth = value.Width;
-            double sideFromHeight = value.Height * 2.0 / Math.Sqrt(3.0);
-            SideLength = sideFromWidth < sideFromHeight ? sideFromWidth : sideFromHeight;
-        }
-    }
+    public override Rect2D BoundingBox => new(
+        Center.X - (SideLength / 2.0),
+        Center.Y + ((2.0 / 3.0) * GetTriangleHeight(SideLength)),
+        SideLength,
+        GetTriangleHeight(SideLength)
+    );
 
     public override bool HitTest(Point2D point)
     {

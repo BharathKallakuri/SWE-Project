@@ -33,10 +33,6 @@ public class Polygon : Shape, IPolygon
                 maxY - minY
             );
         }
-        set {
-            Left = value.Left;
-            Top = value.Top;
-        }
     }
 
     public override bool HitTest(Point2D point)

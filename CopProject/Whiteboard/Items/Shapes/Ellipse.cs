@@ -12,22 +12,12 @@ public class Ellipse : Shape, IEllipse
 {
     public Point2D Center { get; init; } = new(0, 0);
 
-    public override Rect2D BoundingBox
-    {
-        get => new(
-            Center.X - (Width / 2.0),
-            Center.Y + (Height / 2.0),
-            Width,
-            Height
-        );
-
-        set {
-            Left = value.Left + (value.Width / 2.0);
-            Top = value.Top + (value.Height / 2.0);
-            Width = value.Width;
-            Height = value.Height;
-        }
-    }
+    public override Rect2D BoundingBox => new(
+        Center.X - (Width / 2.0),
+        Center.Y + (Height / 2.0),
+        Width,
+        Height
+    );
 
     public override bool HitTest(Point2D point)
     {

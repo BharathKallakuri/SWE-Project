@@ -15,22 +15,12 @@ public class Textbox : Item, ITextbox
     public double Width { get; set; } = 150;
     public double Height { get; set; } = 40;
 
-    public override Rect2D BoundingBox
-    {
-        get => new(
-            Left,
-            Top,
-            Width,
-            Height
-        );
-
-        set {
-            Left = value.Left;
-            Top = value.Top;
-            Width = value.Width;
-            Height = value.Height;
-        }
-    }
+    public override Rect2D BoundingBox => new(
+        Left,
+        Top,
+        Width,
+        Height
+    );
 
     public override bool HitTest(Point2D point)
     {

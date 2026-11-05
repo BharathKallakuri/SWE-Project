@@ -7,7 +7,7 @@ namespace Whiteboard.Items;
 
 public class FreehandItem : Item, IFreehand
 {
-    public override Rect2D BoundingBox { get; set; }
+    public override Rect2D BoundingBox { get; }
     public List<Point2D> Points { get; set; }
     public Color StrokeColor { get; set; }
     public double StrokeWidth { get; set; }

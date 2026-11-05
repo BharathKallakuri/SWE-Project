@@ -14,21 +14,12 @@ public class Circle : Shape, ICircle
 
     public double Radius { get; set; } = 10;
 
-    public override Rect2D BoundingBox
-    {
-        get => new(
-            Center.X - Radius,
-            Center.Y + Radius,
-            Radius * 2,
-            Radius * 2
-        );
-
-        set {
-            Left = value.Left + (value.Width / 2.0);
-            Top = value.Top + (value.Height / 2.0);
-            Radius = value.Width < value.Height ? value.Width / 2.0 : value.Height / 2.0;
-        }
-    }
+    public override Rect2D BoundingBox => new(
+        Center.X - Radius,
+        Center.Y + Radius,
+        Radius * 2,
+        Radius * 2
+    );
 
     public override bool HitTest(Point2D point)
     {   

@@ -18,7 +18,7 @@ public abstract class Item : IItem
     public double Left { get; set; } = 0;
     public double Top { get; set; } = 0;
     public double Orientation { get; set; } = 0;
-    public abstract Rect2D BoundingBox { get; set; }
+    public abstract Rect2D BoundingBox { get; }
     public abstract bool HitTest(Point2D point);
 
     /// <summary>

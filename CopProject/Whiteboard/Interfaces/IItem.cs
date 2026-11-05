@@ -51,7 +51,7 @@ public interface IItem
     /// <summary>
     /// Minimal rectangle containing the item
     /// </summary>
-    Rect2D BoundingBox { get; set; }
+    Rect2D BoundingBox { get; }
 
     /// <summary>
     /// Check if a point intersects with the item

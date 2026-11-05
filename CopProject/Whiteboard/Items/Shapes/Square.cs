@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -13,21 +13,12 @@ public class Square : Shape, ISquare
 {
     public Point2D Center { get; init; } = new(0, 0);
 
-    public override Rect2D BoundingBox
-    {
-        get => new(
-            Center.X - (SideLegth / 2.0),
-            Center.Y + (SideLegth / 2.0),
-            SideLegth,
-            SideLegth
-        );
-        set {
-            Left = value.Left;
-            Top = value.Top;
-            // Keep square invariant: use smaller side
-            SideLegth = value.Width < value.Height ? value.Width : value.Height;
-        }
-    }
+    public override Rect2D BoundingBox => new(
+        Center.X - (SideLegth / 2.0),
+        Center.Y + (SideLegth / 2.0),
+        SideLegth,
+        SideLegth
+    );
 
     public override bool HitTest(Point2D point)
     {

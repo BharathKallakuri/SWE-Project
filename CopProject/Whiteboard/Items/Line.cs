@@ -30,12 +30,6 @@ public class Line : Item, ILine
                 bottom - top
             );
         }
-        set {
-            // Refit line to the diagonal of the new bounding box.
-            Begin = new Point2D(value.Left, value.Top);
-
-            End = new Point2D(value.Left + value.Width, value.Top + value.Height);
-        }
     }
 
     public override bool HitTest(Point2D point)
