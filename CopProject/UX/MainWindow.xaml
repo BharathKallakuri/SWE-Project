@@ -16,18 +16,16 @@
 
             <StackPanel x:Name="UserPanel" Orientation="Horizontal" Spacing="12"
                         HorizontalAlignment="Right" Visibility="Collapsed">
-                
+
                 <TextBlock x:Name="MeetingInfoText" Foreground="White" FontSize="12"
                            VerticalAlignment="Center" Visibility="Collapsed"/>
-
-                <Button Content="Incidents" Click="Incidents_Click" Foreground="White"
-                        Background="#1F4A78"/>
                 <PersonPicture x:Name="ProfilePic" Width="30" Height="30"/>
                 <TextBlock x:Name="ProfileName" Foreground="White" VerticalAlignment="Center"/>
                 <Button Content="Sign out" Click="SignOut_Click" Foreground="White"
                         Background="#1F4A78"/>
             </StackPanel>
         </Grid>
+
 
         <!-- Login screen -->
         <Grid x:Name="LoginView" Grid.Row="1">
@@ -62,8 +60,11 @@
 
             <TextBlock x:Name="GreetingText" FontSize="32" FontWeight="SemiBold"/>
 
-            <Grid Grid.Row="1" ColumnSpacing="20">
+            <Grid Grid.Row="1" ColumnSpacing="5">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
                     <ColumnDefinition/>
                     <ColumnDefinition/>
                     <ColumnDefinition/>
@@ -76,6 +77,15 @@
                         Height="100" FontSize="20" Background="White"
                         HorizontalAlignment="Stretch"/>
                 <Button Grid.Column="2" Content="Incidents" Click="Incidents_Click"
+                        Height="100" FontSize="20" Background="White"
+                        HorizontalAlignment="Stretch"/>
+                <Button Grid.Column="3" Content="Location" Click="Location_Click"
+                        Height="100" FontSize="20" Background="White"
+                        HorizontalAlignment="Stretch"/>
+                <Button Grid.Column="4" Content="Cloud" Click="Cloud_Click"
+                        Height="100" FontSize="20" Background="White"
+                        HorizontalAlignment="Stretch"/> 
+                <Button Grid.Column="5" Content="FileSync" Click="FileSync_Click"
                         Height="100" FontSize="20" Background="White"
                         HorizontalAlignment="Stretch"/>
             </Grid>
@@ -104,7 +114,65 @@
                 <TextBlock Text="Incidents" FontSize="32" FontWeight="SemiBold"/>
             </StackPanel>
 
+            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20"/>
+            <Grid>
+                <!-- INCIDENTS TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
+
+            </Grid>
+        </Grid>
+        <!-- Locations page -->
+        <Grid x:Name="LocationView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <Button Content="Back" Click="LocationBack_Click" Background="White"/>
+                <TextBlock Text="Location" FontSize="32" FontWeight="SemiBold"/>
+            </StackPanel>
+
+            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20"/>
+            <Grid>
+                <!-- LOCATION TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
+
+            </Grid>
+        </Grid>
+        <!-- Cloud page -->
+        <Grid x:Name="CloudView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <Button Content="Back" Click="CloudBack_Click" Background="White"/>
+                <TextBlock Text="Cloud" FontSize="32" FontWeight="SemiBold"/>
+            </StackPanel>
+
             <Border Grid.Row="1" Background="White" CornerRadius="10"/>
+            <Grid>
+                <!-- CLOUD TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
+
+            </Grid>
+        </Grid>
+        <!-- FileSync page -->
+        <Grid x:Name="FileSyncView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <Button Content="Back" Click="FileSyncBack_Click" Background="White"/>
+                <TextBlock Text="FileSync" FontSize="32" FontWeight="SemiBold"/>
+            </StackPanel>
+
+            <Border Grid.Row="1" Background="White" CornerRadius="10"/>
+            <Grid>
+                <!-- FILESYNC TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
+
+            </Grid>
         </Grid>
 
         <Grid x:Name="MeetingView" Grid.Row="1" Visibility="Collapsed">
@@ -146,9 +214,12 @@
                 <ToggleButton x:Name="ChatBtn" Content="Chat" Click="ChatBtn_Click"
                               Width="100" Height="50"/>
                 <Button Content="Incidents" Click="Incidents_Click" Width="100" Height="50"/>
+                <Button Content="Location" Click="Location_Click" Width="100" Height="50"/>
                 <Button x:Name="EndBtn" Content="End Meeting" Click="End_Click" Width="120" Height="50"
                         Background="#D13438" Foreground="White"/>
             </StackPanel>
+
+
             <Border x:Name="ChatPanel" Grid.Column="1" Grid.RowSpan="2" Width="320"
                     Background="White" CornerRadius="10" Margin="0,16,16,16"
                     Visibility="Collapsed">
