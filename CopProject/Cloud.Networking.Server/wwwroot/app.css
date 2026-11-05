@@ -1,0 +1,26 @@
+﻿:root {
+    --fg: #1c1f25;
+    --muted: #646b75;
+    --line: #d9dce1;
+    --bg: #ffffff;
+    --ok: #1a7f4b;
+    --bad: #b3261e;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --fg: #e6e8eb;
+        --muted: #9aa1ab;
+        --line: #343a42;
+        --bg: #16191d;
+        --ok: #5cc98f;
+        --bad: #ff8a80;
+    }
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 15px/1.5 system-ui, sans-serif;
+}

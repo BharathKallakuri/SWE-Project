@@ -2,6 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Cloud.Networking.Server.Components;
+using Cloud.Networking.Server.Models;
+using Cloud.Networking.Server.ViewModels;
+using Microsoft.AspNetCore.SignalR;
+
 namespace Cloud.Networking.Server;
 
 public class Program
@@ -24,18 +29,22 @@ public class Program
         return app;
     }
 
-    public static WebApplicationBuilder CreateBuilder(string[] args)
-    {
-        return WebApplication.CreateBuilder(args);
-    }
-
     public static void ConfigureServices(IServiceCollection services)
     {
-        services.AddSignalR();
+        services.AddSingleton<ServerMonitor>(); /*only one instance of ServerMonitor will exist*/
+        services.AddScoped<DashboardViewModel>(); /*one instance per user circuit (per browser tab)*/
+        services.AddSignalR().AddHubOptions<MessageHub>(options => options.AddFilter<MonitorHubFilter>()); /* this filter connects ServerMonitor and MessageHub */
+        services.AddRazorComponents().AddInteractiveServerComponents(); /* needed for interactivity in server components */
     }
 
     public static void ConfigureEndpoints(WebApplication app)
     {
+        // middlewares
+        app.UseStaticFiles(); /* serves from wwwroot */
+        app.UseAntiforgery(); /* protection from cross-site request forgery */
+
+        // mappings
         app.MapHub<MessageHub>("/hub");
+        app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
     }
 }
