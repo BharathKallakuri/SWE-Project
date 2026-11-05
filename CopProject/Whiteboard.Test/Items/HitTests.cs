@@ -142,4 +142,32 @@ public class HitTests : BaseGenerator
         Assert.False(square.HitTest(new Point2D(square.BoundingBox.Left - 5.0, square.Center.Y)));
         Assert.False(square.HitTest(new Point2D(square.Center.X, square.BoundingBox.Top + square.BoundingBox.Height + 5.0)));
     }
+
+    /// <summary>
+    /// Test hit testing for equilateral triangle for inside, vertices, and outside points.
+    /// </summary>
+    [Fact]
+    public void EqTriangle()
+    {
+        var triangle = new Whiteboard.Items.Shapes.EqTriangle() {
+            Center = RandomPointGenerator.Generate(),
+            SideLength = (Rng.NextDouble() * 100) + 2.0
+        };
+
+        // Center should hit
+        Assert.True(triangle.HitTest(triangle.Center));
+
+        // Vertices should hit
+        var topVertex = new Point2D(triangle.BoundingBox.Left + (triangle.BoundingBox.Width / 2.0), triangle.BoundingBox.Top);
+        var bottomLeftVertex = new Point2D(triangle.BoundingBox.Left, triangle.BoundingBox.Top + triangle.BoundingBox.Height);
+        var bottomRightVertex = new Point2D(triangle.BoundingBox.Left + triangle.BoundingBox.Width, triangle.BoundingBox.Top + triangle.BoundingBox.Height);
+
+        Assert.True(triangle.HitTest(topVertex));
+        Assert.True(triangle.HitTest(bottomLeftVertex));
+        Assert.True(triangle.HitTest(bottomRightVertex));
+
+        // Points outside should miss
+        Assert.False(triangle.HitTest(new Point2D(triangle.Center.X, triangle.BoundingBox.Top - 5.0)));
+        Assert.False(triangle.HitTest(new Point2D(triangle.Center.X, triangle.BoundingBox.Top + triangle.BoundingBox.Height + 5.0)));
+    }
 }
