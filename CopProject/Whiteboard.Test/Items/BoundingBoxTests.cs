@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -22,7 +22,7 @@ public class BoundingBoxTests : BaseGenerator
         };
 
         Assert.Equal(circle.Center.X - circle.Radius, circle.BoundingBox.Left);
-        Assert.Equal(circle.Center.Y + circle.Radius, circle.BoundingBox.Top);
+        Assert.Equal(circle.Center.Y - circle.Radius, circle.BoundingBox.Top);
         Assert.Equal(circle.Radius * 2, circle.BoundingBox.Width);
         Assert.Equal(circle.Radius * 2, circle.BoundingBox.Height);
     }
@@ -40,7 +40,7 @@ public class BoundingBoxTests : BaseGenerator
         };
 
         Assert.Equal(ellipse.Center.X - (ellipse.Width / 2), ellipse.BoundingBox.Left);
-        Assert.Equal(ellipse.Center.Y + (ellipse.Height / 2), ellipse.BoundingBox.Top);
+        Assert.Equal(ellipse.Center.Y - (ellipse.Height / 2), ellipse.BoundingBox.Top);
         Assert.Equal(ellipse.Width, ellipse.BoundingBox.Width);
         Assert.Equal(ellipse.Height, ellipse.BoundingBox.Height);
     }
@@ -59,7 +59,7 @@ public class BoundingBoxTests : BaseGenerator
         double height = (Math.Sqrt(3.0) / 2.0) * eqTriangle.SideLength;
 
         Assert.Equal(eqTriangle.Center.X - (eqTriangle.SideLength / 2), eqTriangle.BoundingBox.Left);
-        Assert.Equal(eqTriangle.Center.Y + ((2.0 / 3.0) * height), eqTriangle.BoundingBox.Top);
+        Assert.Equal(eqTriangle.Center.Y - ((2.0 / 3.0) * height), eqTriangle.BoundingBox.Top);
         Assert.Equal(eqTriangle.SideLength, eqTriangle.BoundingBox.Width);
         Assert.Equal(height, eqTriangle.BoundingBox.Height);
     }
@@ -76,7 +76,7 @@ public class BoundingBoxTests : BaseGenerator
         };
 
         Assert.Equal(square.Center.X - (square.SideLegth / 2), square.BoundingBox.Left);
-        Assert.Equal(square.Center.Y + (square.SideLegth / 2), square.BoundingBox.Top);
+        Assert.Equal(square.Center.Y - (square.SideLegth / 2), square.BoundingBox.Top);
         Assert.Equal(square.SideLegth, square.BoundingBox.Width);
         Assert.Equal(square.SideLegth, square.BoundingBox.Height);
     }
@@ -94,7 +94,7 @@ public class BoundingBoxTests : BaseGenerator
         };
 
         Assert.Equal(rectangle.Center.X - (rectangle.Width / 2), rectangle.BoundingBox.Left);
-        Assert.Equal(rectangle.Center.Y + (rectangle.Height / 2), rectangle.BoundingBox.Top);
+        Assert.Equal(rectangle.Center.Y - (rectangle.Height / 2), rectangle.BoundingBox.Top);
         Assert.Equal(rectangle.Width, rectangle.BoundingBox.Width);
         Assert.Equal(rectangle.Height, rectangle.BoundingBox.Height);
     }
@@ -115,7 +115,7 @@ public class BoundingBoxTests : BaseGenerator
         double maxY = polygon.Vertices.Max(p => p.Y);
 
         Assert.Equal(minX, polygon.BoundingBox.Left);
-        Assert.Equal(maxY, polygon.BoundingBox.Top);
+        Assert.Equal(minY, polygon.BoundingBox.Top);
         Assert.Equal(maxX - minX, polygon.BoundingBox.Width);
         Assert.Equal(maxY - minY, polygon.BoundingBox.Height);
     }

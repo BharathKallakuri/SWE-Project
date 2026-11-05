@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -15,7 +15,7 @@ public class EqTriangle : Shape, IEqTriangle
 
     public override Rect2D BoundingBox => new(
         Center.X - (SideLength / 2.0),
-        Center.Y + ((2.0 / 3.0) * GetTriangleHeight(SideLength)),
+        Center.Y - ((2.0 / 3.0) * GetTriangleHeight(SideLength)),
         SideLength,
         GetTriangleHeight(SideLength)
     );
