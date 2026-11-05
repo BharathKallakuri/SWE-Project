@@ -41,6 +41,10 @@ public sealed class IncidentControllerUpdatesTest
         await SetupMockIncidents();
     }
 
+    /// <summary>
+    /// Setups the Incident Controller with CloudService and FileSyncronizer
+    /// </summary>
+    /// <returns></returns>
     private async Task SetupIncidentController()
     {
         IStorage cloudStorageService = new IncidentCloudStorageService();
@@ -101,15 +105,22 @@ public sealed class IncidentControllerUpdatesTest
         }));
     }
 
-
+    /// <summary>
+    /// Controller throws when null inicdent passed as argument to UpdateCategory
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateCategory_NullIncident_ThrowsArgumentNullException()
     {
         await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => {
-            await _incidentController.UpdateStatus(null!, IncidentStatus.InProgress);
+            await _incidentController.UpdateCategory(null!, IncidentCategory.Theft);
         });
     }
 
+    /// <summary>
+    /// Controller throws when invalid category passed as argument to UpdateCategory
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateCategory_InvalidCategory_ThrowsArgumentOutOfRangeException()
     {
@@ -119,6 +130,10 @@ public sealed class IncidentControllerUpdatesTest
         });
     }
 
+    /// <summary>
+    /// Controller throws when invalid Incident passed as argument to UpdateCategory
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateCategory_InvalidIncident_ThrowsInvalidOperationException()
     {
@@ -141,6 +156,10 @@ public sealed class IncidentControllerUpdatesTest
         Assert.IsTrue(result);
     }
 
+    /// <summary>
+    /// Check whether a valid Incident is updated with a valid but different category
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateCategory_ValidIncidentDifferentCategory_ReturnsTrue()
     {
@@ -150,14 +169,26 @@ public sealed class IncidentControllerUpdatesTest
         Assert.IsTrue(result);
     }
 
+    /// <summary>
+    /// Controller throws when null inicdent passed as argument to UpdateLocation
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateLocation_NullIncident_ThrowsArgumentNullException()
     {
         await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => {
-            await _incidentController.UpdateStatus(null!, IncidentStatus.InProgress);
+            await _incidentController.UpdateLocation(null!, 
+                new IncidentLocation(
+                    Latitude: RandomDouble(-90, 90),
+                    Longitude: RandomDouble(-180, 180))
+                );
         });
     }
 
+    /// <summary>
+    /// Controller throws when null location passed as argument to UpdateLocation
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateLocation_InvalidLocation_ThrowsArgumentNullException()
     {
@@ -167,6 +198,10 @@ public sealed class IncidentControllerUpdatesTest
         });
     }
 
+    /// <summary>
+    /// Controller throws when invalid incident passed as argument to UpdateLocation
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateLocation_InvalidIncident_ThrowsInvalidOperationException()
     {
@@ -177,7 +212,7 @@ public sealed class IncidentControllerUpdatesTest
     }
 
     /// <summary>
-    /// Update location of incident which is valid but same location it is currently in. 
+    /// Update location of incident which is valid but same location it is currently in
     /// </summary>
     /// <returns></returns>
     [TestMethod]
@@ -190,6 +225,10 @@ public sealed class IncidentControllerUpdatesTest
         Assert.IsTrue(result);
     }
 
+    /// <summary>
+    /// Update location of incident which is valid with different location it is currently in
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateLocation_ValidIncidentDifferentLocation_ReturnsTrue()
     {
@@ -204,6 +243,10 @@ public sealed class IncidentControllerUpdatesTest
         Assert.IsTrue(result);
     }
 
+    /// <summary>
+    /// Controller throws when null inicdent passed as argument to UpdateSeverity
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateSeverity_NullIncident_ThrowsArgumentNullException()
     {
@@ -212,6 +255,10 @@ public sealed class IncidentControllerUpdatesTest
         });
     }
 
+    /// <summary>
+    /// Controller throws when invalid severity passed as argument to UpdateSeverity
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateSeverity_InvalidSeverity_ThrowsArgumentOutOfRangeException()
     {
@@ -221,6 +268,10 @@ public sealed class IncidentControllerUpdatesTest
         });
     }
 
+    /// <summary>
+    /// Controller throws when invalid incident passed as argument to UpdateSeverity
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateSeverity_InvalidIncident_ThrowsInvalidOperationException()
     {
@@ -244,7 +295,10 @@ public sealed class IncidentControllerUpdatesTest
         Assert.IsTrue(result);
     }
 
-
+    /// <summary>
+    /// Update severity of incident which is valid with a different severity then it is currently in. 
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateSeverity_ValidIncidentDifferentSeverity_ReturnsTrue()
     {
@@ -254,6 +308,10 @@ public sealed class IncidentControllerUpdatesTest
         Assert.IsTrue(result);
     }
 
+    /// <summary>
+    /// Controller throws when null incident is passed as argument to UpdateStatus
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateStatus_NullIncident_ThrowsArgumentNullException()
     {
@@ -262,6 +320,10 @@ public sealed class IncidentControllerUpdatesTest
         });
     }
 
+    /// <summary>
+    /// Controller throws when invalid status is passed as argument to UpdateStatus
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateStatus_InvalidStatus_ThrowsArgumentOutOfRangeException()
     {
@@ -271,6 +333,10 @@ public sealed class IncidentControllerUpdatesTest
         });
     }
 
+    /// <summary>
+    /// Controller throws when invalid incident is passed as argument to UpdateStatus
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateStatus_InvalidIncident_ThrowsInvalidOperationException()
     {
@@ -295,6 +361,10 @@ public sealed class IncidentControllerUpdatesTest
         Assert.IsTrue(result);
     }
 
+    /// <summary>
+    /// Update status of incident which is valid but different status then it is currently in. 
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task UpdateStatus_ValidIncidentDifferentStatus_ReturnsTrue()
     {
