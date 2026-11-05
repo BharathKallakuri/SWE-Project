@@ -217,4 +217,29 @@ public class HitTests : BaseGenerator
         // Point far outside should miss
         Assert.False(freehand.HitTest(new Point2D(25, threshold + 5.0)));
     }
+
+    /// <summary>
+    /// Test hit testing for textbox item.
+    /// </summary>
+    [Fact]
+    public void Textbox()
+    {
+        var textbox = new Textbox() {
+            Left = 50,
+            Top = 50,
+            Width = 100,
+            Height = 40
+        };
+
+        // Inside should hit
+        Assert.True(textbox.HitTest(new Point2D(70, 70)));
+
+        // Boundary should hit
+        Assert.True(textbox.HitTest(new Point2D(50, 50)));
+        Assert.True(textbox.HitTest(new Point2D(150, 90)));
+
+        // Outside should miss
+        Assert.False(textbox.HitTest(new Point2D(40, 50)));
+        Assert.False(textbox.HitTest(new Point2D(160, 90)));
+    }
 }
