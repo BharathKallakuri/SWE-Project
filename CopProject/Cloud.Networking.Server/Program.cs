@@ -17,7 +17,7 @@ public class Program
 
     public static WebApplication CreateApplication(string[] args)
     {
-        WebApplicationBuilder builder = CreateBuilder(args);
+        WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         ConfigureServices(builder.Services);
         WebApplication app = builder.Build();
         ConfigureEndpoints(app);
