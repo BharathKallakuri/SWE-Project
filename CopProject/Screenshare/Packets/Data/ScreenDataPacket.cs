@@ -92,7 +92,7 @@ public class ScreenDataPacket : IScreenShareMessage
         DataPacketType type,
         byte[]? fullFrameData = null,
         IReadOnlyList<Tile>? changedTiles = null,
-        int tileSize = 64)
+        int tileSize = ImageDiffer.TILE_SIZE)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
 
