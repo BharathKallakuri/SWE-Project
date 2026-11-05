@@ -10,12 +10,35 @@ using Windows.UI;
 
 namespace Whiteboard.ViewModels;
 
+/// <summary>
+/// Represents the state when the Pen tool is selected
+/// </summary>
+/// <inheritdoc/>
 public class PenState : IViewModelState
 {
+    /// <summary>
+    /// The whiteboard client
+    /// </summary>
     private readonly IWhiteboardClient _whiteboardClient;
+
+    /// <summary>
+    /// The whiteboard canvas UI
+    /// </summary>
     private readonly Canvas _canvas;
+
+    /// <summary>
+    /// Current toolbar information
+    /// </summary>
     private readonly ToolbarInfo _toolbarInfo;
+
+    /// <summary>
+    /// Active freehand model
+    /// </summary>
     private FreehandItem? _freehand;
+
+    /// <summary>
+    /// Flag to check whether the user is currently drawing on screen
+    /// </summary>
     private bool _isDrawing;
 
     public PenState(IWhiteboardClient whiteboardClient, Canvas canvas, ToolbarInfo toolbarInfo)
@@ -31,12 +54,16 @@ public class PenState : IViewModelState
 
     public void PointerPressed(object sender, PointerRoutedEventArgs e)
     {
+        // Try capturing the pointer.
         if (!_canvas.CapturePointer(e.Pointer))
         {
             return;
         }
 
+        // Record the location where the pointer was pressed.
         Point point = e.GetCurrentPoint(_canvas).Position;
+
+        // Create the domain model using the selected toolbar properties.
         _freehand = new FreehandItem {
             CreatedBy = _whiteboardClient.UserId,
             StrokeColor = GetColor(_toolbarInfo.BorderBrush),
@@ -44,6 +71,8 @@ public class PenState : IViewModelState
             Points = [new Point2D(point.X, point.Y)]
         };
         _isDrawing = true;
+
+        // Add the model to the board so the renderer can display it.
         _whiteboardClient.Canvas.AddItem(_freehand);
         e.Handled = true;
     }
@@ -55,9 +84,11 @@ public class PenState : IViewModelState
             return;
         }
 
+        // Get the current pointer position and append it to the model.
         Point point = e.GetCurrentPoint(_canvas).Position;
         _freehand.Points.Add(new Point2D(point.X, point.Y));
         UpdateBounds(_freehand);
+        // Notify the board so the renderer refreshes the preview.
         _whiteboardClient.Canvas.EditItem(_freehand);
         e.Handled = true;
     }
@@ -69,9 +100,12 @@ public class PenState : IViewModelState
             return;
         }
 
+        // Unset flag to stop drawing.
         _isDrawing = false;
+        // Release the captured pointer.
         _canvas.ReleasePointerCapture(e.Pointer);
         UpdateBounds(_freehand);
+        // Add the completed model through the client for synchronization.
         _whiteboardClient.AddItem(_freehand);
         _freehand = null;
         e.Handled = true;
@@ -84,9 +118,11 @@ public class PenState : IViewModelState
             return;
         }
 
+        // Unset flag to stop drawing.
         _isDrawing = false;
         if (_freehand is not null)
         {
+            // Remove the incomplete model from the board.
             _whiteboardClient.Canvas.DeleteItem(_freehand.Id);
             _freehand = null;
         }
@@ -101,6 +137,7 @@ public class PenState : IViewModelState
 
     private static void UpdateBounds(FreehandItem item)
     {
+        // Keep the model bounds in sync with the collected points.
         if (item.Points.Count == 0)
         {
             item.BoundingBox = new Rect2D(0, 0, 0, 0);
