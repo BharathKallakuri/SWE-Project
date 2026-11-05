@@ -28,7 +28,7 @@ public sealed partial class FileSyncView : UserControl
         {
             try
             {
-                var synchroniser = new Filesync.Synchroniser();
+                var synchroniser = new FileSynchroniser.Models.Synchroniser();
                 synchroniser.Synchronise();
 
                 DispatcherQueue.TryEnqueue(() =>
