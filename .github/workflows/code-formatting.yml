@@ -51,13 +51,21 @@ jobs:
           URL: ${{ steps.upload.outputs.artifact-url }}
         run: |
           {
+            echo "<!-- format-report -->"
             echo "## Code formatting report"
             echo "Formatting did not match expected formatting."
             echo "Run \`dotnet format CopProject\` to fix."
             echo
             echo "**Log artifact:** [download]($URL)"
           } > comment.md
-          gh pr comment "$PR" --body-file comment.md --edit-last --create-if-none
+
+          # Target only this workflow comment so other comments (like coverage) are preserved
+          COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --jq '.[] | select(.body | contains("<!-- format-report -->")) | .id' | tail -n 1)
+          if [ -n "$COMMENT_ID" ]; then
+            gh api "repos/${{ github.repository }}/issues/comments/$COMMENT_ID" -X PATCH -F body=@comment.md
+          else
+            gh pr comment "$PR" --body-file comment.md
+          fi
 
       - name: Enforce
         if: steps.check.outputs.failed == 'true'
