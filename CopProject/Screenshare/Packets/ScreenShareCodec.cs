@@ -264,6 +264,13 @@ public static class ScreenShareCodec
                     int y = reader.ReadInt32();
                     int tileWidth = reader.ReadInt32();
                     int tileHeight = reader.ReadInt32();
+
+                    if (x < 0 || y < 0 || tileWidth <= 0 || tileHeight <= 0
+                         || (long)x + tileWidth > width || (long)y + tileHeight > height)
+                    {
+                        throw new FormatException("tile does not fit the frame");
+                    }
+
                     ulong hash = reader.ReadUInt64();
                     byte[] data = reader.ReadBytes(remainingBytes);
                     remainingBytes -= data.Length;
