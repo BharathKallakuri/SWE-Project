@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Incident_module.ViewModels.Utils;
 using Windows.Storage;
@@ -46,6 +47,14 @@ public sealed class AddEvidenceDialogViewModel : ViewModelBase
 
     public bool IsValid => !string.IsNullOrWhiteSpace(FilePath) && !string.IsNullOrWhiteSpace(Description);
 
+    /// <summary>
+    /// Opens a Windows File Picker and assigns the selected file's path to FilePath.
+    /// </summary>
+    /// <remarks>
+    /// Excluded from code coverage because it directly interacts with Windows UI APIs,
+    /// which require actual UI interaction and are unsuitable for unit testing.
+    /// </remarks>
+    [ExcludeFromCodeCoverage]
     private async Task BrowseFileAsync()
     {
         try
