@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Chat;
 
 namespace Chat.Test;
@@ -40,6 +40,21 @@ public class MentionsTests
 
         Assert.True(mentions.IsUserMentioned("guest"));
         Assert.True(mentions.IsUserMentioned("host"));
+    }
+
+    [Fact]
+    public void CloneCopiesAllFlagAndUsernamesWithoutSharingUsernameSet()
+    {
+        Mentions mentions = new() { All = true };
+        mentions.Usernames.Add("guest");
+
+        Mentions clone = mentions.Clone();
+        clone.Usernames.Add("host");
+
+        Assert.True(clone.All);
+        Assert.Contains("guest", clone.Usernames);
+        Assert.Contains("host", clone.Usernames);
+        Assert.DoesNotContain("host", mentions.Usernames);
     }
 
     [Fact]

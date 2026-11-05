@@ -47,4 +47,32 @@ public class ChatMessageWithThreads : ChatMessage, IChatMessageWithThreads
             return ThreadById.TryGetValue(id, out message!);
         }
     }
+
+    internal override ChatMessageWithThreads DeepClone()
+    {
+        ChatMessageWithThreads clone = DeepCloneWithoutThreadMessages();
+
+        lock (_threadSyncRoot)
+        {
+            foreach ((Guid id, ChatMessage reply) in ThreadById)
+            {
+                clone.AddMessageToThread(id, reply.DeepClone());
+            }
+        }
+
+        return clone;
+    }
+
+    internal ChatMessageWithThreads DeepCloneWithoutThreadMessages()
+    {
+        ChatMessageWithThreads clone = new()
+        {
+            Timestamp = Timestamp,
+            SenderName = SenderName,
+            Mentions = Mentions.Clone(),
+            Content = Content
+        };
+        clone.CopyMutableStateFrom(this);
+        return clone;
+    }
 }
