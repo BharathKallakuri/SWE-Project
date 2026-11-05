@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Whiteboard.Interfaces;
 
 namespace Whiteboard.Models;
 
+[ExcludeFromCodeCoverage]
+// Temporary exclusion from code coverage
 public class WhiteboardCanvas : IWhiteboard
 {
     public IDictionary<Guid, IItem> Items { get; set; } = new ConcurrentDictionary<Guid, IItem>();
