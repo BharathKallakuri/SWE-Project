@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
+using ScreenShare.Packets.Control;
 
 namespace ScreenShare;
 
@@ -39,7 +40,7 @@ public static class ScreenShareCodec
     /// <summary>
     /// to weed off invalid UTF-8
     /// </summary>
-    private static readonly UTF8Encoding StrictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+    private static readonly UTF8Encoding s_strictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
 
     // summary here
@@ -118,7 +119,6 @@ public static class ScreenShareCodec
     }
 
 
-    // summary here
     public static bool Decode(byte[]? data, [NotNullWhen(true)] out IScreenShareMessage? message)
     {
         message = null;
@@ -139,8 +139,7 @@ public static class ScreenShareCodec
 
             var kind = (ScreenShareMessageKind)reader.ReadByte();
 
-            IScreenShareMessage? decoded = kind switch
-            {
+            IScreenShareMessage? decoded = kind switch {
                 ScreenShareMessageKind.Data => ReadDataPacket(reader),
                 ScreenShareMessageKind.StreamStarted => new StreamStarted(
                     reader.ReadString(MaxIdBytes),
@@ -352,7 +351,7 @@ public static class ScreenShareCodec
 
     private static void WriteString(BinaryWriter writer, string value, int maxBytes)
     {
-        byte[] bytes = StrictUtf8.GetBytes(value);
+        byte[] bytes = s_strictUtf8.GetBytes(value);
         if (bytes.Length > maxBytes)
         {
             throw new ArgumentException($"text cannot exceed {maxBytes} UTF-8 bytes", nameof(value));
@@ -391,13 +390,26 @@ public static class ScreenShareCodec
 
         public bool IsAtEnd => _position == _data.Length;
 
-        public byte ReadByte() => Take(1)[0];
+        public byte ReadByte()
+        {
+            return Take(1)[0];
+        }
 
-        public int ReadInt32() => BinaryPrimitives.ReadInt32LittleEndian(Take(4));
 
-        public long ReadInt64() => BinaryPrimitives.ReadInt64LittleEndian(Take(8));
+        public int ReadInt32()
+        {
+            return BinaryPrimitives.ReadInt32LittleEndian(Take(4));
+        }
 
-        public ulong ReadUInt64() => BinaryPrimitives.ReadUInt64LittleEndian(Take(8));
+        public long ReadInt64()
+        {
+            return BinaryPrimitives.ReadInt64LittleEndian(Take(8));
+        }
+
+        public ulong ReadUInt64()
+        {
+            return BinaryPrimitives.ReadUInt64LittleEndian(Take(8));
+        }
 
         public string ReadString(int maxBytes)
         {
@@ -407,7 +419,7 @@ public static class ScreenShareCodec
                 throw new FormatException("text is longer than allowed");
             }
 
-            return StrictUtf8.GetString(Take(length));
+            return s_strictUtf8.GetString(Take(length));
         }
 
         public byte[] ReadBytes(int maxBytes)

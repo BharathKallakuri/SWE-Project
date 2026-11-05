@@ -1,34 +1,31 @@
 ﻿namespace ScreenShare;
 
 /// <summary>
-/// sent  by the viewer to start recieving a stream
+/// sent by a viewer to the host to start receiving a stream, or to change its quality
 /// </summary>
-public sealed record Subscribe
+public sealed record Subscribe : IScreenShareMessage
 {
-    public string StreamId { get; }
+    /// <summary>gets the viewer asking for the stream</summary>
     public Participant Viewer { get; }
+
+    /// <summary>gets the id of the requested stream</summary>
+    public string StreamId { get; }
+
+    /// <summary>gets the largest frame height the viewer wants, e.g. 720 or 480</summary>
     public int MaxHeight { get; }
 
     public ScreenShareMessageKind Kind => ScreenShareMessageKind.Subscribe;
 
-
-    /// <summary>
-    /// <exception cref="ArgumentException"> streamId is null or whitespace</exception>
-    /// <exception cref="ArgumentNullException">viewer is null </exception> viewer is null
-    /// <exception cref="ArgumentOutOfRangeException"> dimentions are invalid</exception>
-    /// </summary>
-    /// <param name="streamId">gets the id of requested stream</param>
-    /// <param name="viewer">get the viewer asking for stream</param>
-    /// <param name="maxHeight">gets the largest frame height viewer wants</param>
-    public Subscribe(string streamId, Participant viewer, int maxHeight)
+    /// <exception cref="ArgumentNullException">the viewer is null</exception>
+    /// <exception cref="ArgumentException">the stream id is empty or the height is not positive</exception>
+    public Subscribe(Participant viewer, string streamId, int maxHeight)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(streamId, nameof(streamId));
-        ArgumentNullException.ThrowIfNull(viewer, nameof(viewer));
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxHeight, nameof(maxHeight));
-        StreamId = streamId;
+        ArgumentNullException.ThrowIfNull(viewer);
+        ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxHeight);
+
         Viewer = viewer;
+        StreamId = streamId;
         MaxHeight = maxHeight;
     }
-
-
 }

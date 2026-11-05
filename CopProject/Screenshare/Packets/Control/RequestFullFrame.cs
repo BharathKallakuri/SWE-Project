@@ -1,6 +1,6 @@
 ﻿using ScreenShare;
 
-namespace Screenshare.Packets.Control;
+namespace ScreenShare.Packets.Control;
 
 /// <summary>
 /// sent by viewer, throught host to a sharer when viewer missed a frame or joined mid-stream and 
