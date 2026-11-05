@@ -6,13 +6,36 @@ namespace Cloud.Networking.Server;
 
 public class Program
 {
+    /* Testing a Main function is quite difficult unless you seperate
+    * business logic into something that can be tested (like a function or a class)*/
+
     public static void Main(string[] args)
     {
-        WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddSignalR();
-        WebApplication app = builder.Build();
-
-        app.MapHub<MessageHub>("/hub");
+        WebApplication app = CreateApplication(args);
         app.Run();
+    }
+
+    public static WebApplication CreateApplication(string[] args)
+    {
+        WebApplicationBuilder builder = CreateBuilder(args);
+        ConfigureServices(builder.Services);
+        WebApplication app = builder.Build();
+        ConfigureEndpoints(app);
+        return app;
+    }
+
+    public static WebApplicationBuilder CreateBuilder(string[] args)
+    {
+        return WebApplication.CreateBuilder(args);
+    }
+
+    public static void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSignalR();
+    }
+
+    public static void ConfigureEndpoints(WebApplication app)
+    {
+        app.MapHub<MessageHub>("/hub");
     }
 }
