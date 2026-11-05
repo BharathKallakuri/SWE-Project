@@ -5,7 +5,13 @@
     </Folder>
     <Project Path="Authentication/Auth.csproj" />
     <Project Path="Chat.Test/Chat.Test.csproj" />
+    <Project Path="Chat.Console/Chat.Console.csproj" />
     <Project Path="Chat/Chat.csproj" />
+    <Project Path="Chat/UI/UI.csproj" />
+    <Project Path="Chat/UI.Demo/UI.Demo.csproj">
+        <Platform Solution="Debug|*" Project="x64" />
+        <Deploy Solution="Debug|*" />
+    </Project>
     <Project Path="Cloud.Test/Cloud.Test.csproj" />
     <Project Path="Cloud/Cloud.csproj" />
     <Project Path="Controller/Controller.csproj" />
