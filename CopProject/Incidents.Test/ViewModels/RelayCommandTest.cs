@@ -11,7 +11,7 @@ namespace Incidents.Test.ViewModels;
 public sealed class RelayCommandTest
 {
     /// <summary>
-    /// 1. Command executes the supplied action.
+    /// Command executes the supplied action.
     /// </summary>
     [TestMethod]
     public void Execute_RunsSuppliedAction()
@@ -24,7 +24,7 @@ public sealed class RelayCommandTest
     }
 
     /// <summary>
-    /// 2. Command can always execute.
+    /// Command can always execute.
     /// </summary>
     [TestMethod]
     public void CanExecute_AlwaysReturnsTrue()
@@ -35,16 +35,16 @@ public sealed class RelayCommandTest
     }
 
     /// <summary>
-    /// 3. Command rejects a null action.
+    /// Command rejects a null action.
     /// </summary>
     [TestMethod]
     public void Constructor_NullAction_ThrowsArgumentNullException()
     {
-        Assert.ThrowsExactly<ArgumentNullException>(() => new RelayCommand(null!));
+        Assert.Throws<ArgumentNullException>(() => new RelayCommand(null!));
     }
 
     /// <summary>
-    /// 4. Command executes the action only when Execute is called.
+    /// Command executes the action only when Execute is called.
     /// </summary>
     [TestMethod]
     public void Constructor_DoesNotExecuteActionImmediately()
@@ -60,7 +60,7 @@ public sealed class RelayCommandTest
     }
 
     /// <summary>
-    /// 5. Command can execute multiple times.
+    /// Command can execute multiple times.
     /// </summary>
     [TestMethod]
     public void Execute_MultipleCalls_ExecutesActionMultipleTimes()

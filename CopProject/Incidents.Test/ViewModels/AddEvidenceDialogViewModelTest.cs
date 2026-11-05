@@ -24,7 +24,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 1. Default property values are initialized correctly.
+    /// Default property values are initialized correctly.
     /// </summary>
     [TestMethod]
     public void Constructor_InitializesDefaultValues()
@@ -35,7 +35,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 2. Setting FilePath updates its value.
+    /// Setting FilePath updates its value.
     /// </summary>
     [TestMethod]
     public void FilePath_SetValue_UpdatesProperty()
@@ -46,7 +46,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 3. Setting Description updates its value.
+    /// Setting Description updates its value.
     /// </summary>
     [TestMethod]
     public void Description_SetValue_UpdatesProperty()
@@ -57,7 +57,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 4. IsValid returns true when both fields are populated.
+    /// IsValid returns true when both fields are populated.
     /// </summary>
     [TestMethod]
     public void IsValid_BothFieldsPopulated_ReturnsTrue()
@@ -69,7 +69,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 5. IsValid returns false when FilePath is empty.
+    /// IsValid returns false when FilePath is empty.
     /// </summary>
     [TestMethod]
     public void IsValid_EmptyFilePath_ReturnsFalse()
@@ -80,7 +80,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 6. IsValid returns false when Description is empty.
+    /// IsValid returns false when Description is empty.
     /// </summary>
     [TestMethod]
     public void IsValid_EmptyDescription_ReturnsFalse()
@@ -91,7 +91,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 7. FilePath setter raises PropertyChanged notifications.
+    /// FilePath setter raises PropertyChanged notifications.
     /// </summary>
     [TestMethod]
     public void FilePath_SetValue_RaisesPropertyChangedEvents()
@@ -112,7 +112,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 8. Description setter raises PropertyChanged notifications.
+    /// Description setter raises PropertyChanged notifications.
     /// </summary>
     [TestMethod]
     public void Description_SetValue_RaisesPropertyChangedEvents()
@@ -133,7 +133,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 9. BuildEvidence creates an evidence object with the supplied details.
+    /// BuildEvidence creates an evidence object with the supplied details.
     /// </summary>
     [TestMethod]
     public void BuildEvidence_CreatesEvidenceWithCorrectValues()
@@ -153,7 +153,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 10. BuildEvidence generates a unique ID for each evidence object.
+    /// BuildEvidence generates a unique ID for each evidence object.
     /// </summary>
     [TestMethod]
     public void BuildEvidence_GeneratesUniqueIds()
@@ -168,7 +168,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 11. Setting FilePath to the same value does not raise PropertyChanged events.
+    /// Setting FilePath to the same value does not raise PropertyChanged events.
     /// </summary>
     [TestMethod]
     public void FilePath_SetSameValue_DoesNotRaisePropertyChanged()
@@ -182,7 +182,7 @@ public sealed class AddEvidenceDialogViewModelTest
     }
 
     /// <summary>
-    /// 12. Setting Description to the same value does not raise PropertyChanged events.
+    /// Setting Description to the same value does not raise PropertyChanged events.
     /// </summary>
     [TestMethod]
     public void Description_SetSameValue_DoesNotRaisePropertyChanged()

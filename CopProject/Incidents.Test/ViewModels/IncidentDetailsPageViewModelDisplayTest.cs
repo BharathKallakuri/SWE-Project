@@ -36,7 +36,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     // Constructor Initialization tests
 
     /// <summary>
-    /// Test 1: Constructor initializes the incident and state properties
+    /// Constructor initializes the incident and state properties
     /// with their default values.
     /// </summary>
     [TestMethod]
@@ -61,7 +61,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 2: Constructor initializes StatusOptions using all IncidentStatus enum values.
+    /// Constructor initializes StatusOptions using all IncidentStatus enum values.
     /// </summary>
     [TestMethod]
     public void Constructor_InitializesStatusOptions()
@@ -71,7 +71,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 3: Constructor initializes CategoryOptions using all IncidentCategory enum values.
+    /// Constructor initializes CategoryOptions using all IncidentCategory enum values.
     /// </summary>
     [TestMethod]
     public void Constructor_InitializesCategoryOptions()
@@ -81,7 +81,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 4: Constructor initializes SeverityOptions using all IncidentSeverity enum values.
+    /// Constructor initializes SeverityOptions using all IncidentSeverity enum values.
     /// </summary>
     [TestMethod]
     public void Constructor_InitializesSeverityOptions()
@@ -91,26 +91,19 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 5: Constructor throws ArgumentNullException when controller is null.
+    /// Constructor throws ArgumentNullException when controller is null.
     /// </summary>
     [TestMethod]
     public void Constructor_NullController_ThrowsArgumentNullException()
     {
-        try
-        {
-            new IncidentDetailsPageViewModel(null!, _currentUserId);
-            Assert.Fail("Expected ArgumentNullException was not thrown.");
-        }
-        catch (ArgumentNullException)
-        {
-            // Expected exception.
-        }
+        Assert.Throws<ArgumentNullException>(() =>
+            new IncidentDetailsPageViewModel(null!, _currentUserId));
     }
 
     // IsEditMode and derived property tests
 
     /// <summary>
-    /// Test 6: Changing IsEditMode raises PropertyChanged for IsEditMode
+    /// Changing IsEditMode raises PropertyChanged for IsEditMode
     /// and all dependent properties.
     /// </summary>
     [TestMethod]
@@ -139,7 +132,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 7: Setting IsEditMode to its existing value does not raise PropertyChanged.
+    /// Setting IsEditMode to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void IsEditMode_SameValue_DoesNotRaisePropertyChanged()
@@ -151,7 +144,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 8: EditVisibility is Visible when IsEditMode is true.
+    /// EditVisibility is Visible when IsEditMode is true.
     /// </summary>
     [TestMethod]
     public void EditVisibility_EditModeEnabled_ReturnsVisible()
@@ -162,7 +155,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 9: EditVisibility is Collapsed when IsEditMode is false.
+    /// EditVisibility is Collapsed when IsEditMode is false.
     /// </summary>
     [TestMethod]
     public void EditVisibility_EditModeDisabled_ReturnsCollapsed()
@@ -173,7 +166,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 10: ReadOnlyVisibility is Visible when IsEditMode is false.
+    /// ReadOnlyVisibility is Visible when IsEditMode is false.
     /// </summary>
     [TestMethod]
     public void ReadOnlyVisibility_EditModeDisabled_ReturnsVisible()
@@ -184,7 +177,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 11: ReadOnlyVisibility is Collapsed when IsEditMode is true.
+    /// ReadOnlyVisibility is Collapsed when IsEditMode is true.
     /// </summary>
     [TestMethod]
     public void ReadOnlyVisibility_EditModeEnabled_ReturnsCollapsed()
@@ -195,7 +188,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 12: EditButtonText returns the appropriate text based on edit mode.
+    /// EditButtonText returns the appropriate text based on edit mode.
     /// </summary>
     [TestMethod]
     public void EditButtonText_ReturnsTextBasedOnEditMode()
@@ -210,7 +203,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     // IsBusy tests
 
     /// <summary>
-    /// Test 13: Changing IsBusy raises PropertyChanged for IsBusy and IsNotBusy.
+    /// Changing IsBusy raises PropertyChanged for IsBusy and IsNotBusy.
     /// </summary>
     [TestMethod]
     public void IsBusy_ChangedValue_RaisesPropertyChanged()
@@ -235,7 +228,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 14: Setting IsBusy to its existing value does not raise PropertyChanged.
+    /// Setting IsBusy to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void IsBusy_SameValue_DoesNotRaisePropertyChanged()
@@ -252,7 +245,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     // ErrorMessage and ErrorVisibility tests
 
     /// <summary>
-    /// Test 15: Changing ErrorMessage raises PropertyChanged for ErrorMessage
+    /// Changing ErrorMessage raises PropertyChanged for ErrorMessage
     /// and ErrorVisibility.
     /// </summary>
     [TestMethod]
@@ -277,7 +270,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 16: Setting ErrorMessage to its existing value does not raise PropertyChanged.
+    /// Setting ErrorMessage to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void ErrorMessage_SameValue_DoesNotRaisePropertyChanged()
@@ -291,7 +284,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 17: ErrorVisibility is Visible when ErrorMessage contains text.
+    /// ErrorVisibility is Visible when ErrorMessage contains text.
     /// </summary>
     [TestMethod]
     public void ErrorVisibility_NonEmptyErrorMessage_ReturnsVisible()
@@ -302,7 +295,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 18: ErrorVisibility is Collapsed when ErrorMessage is empty.
+    /// ErrorVisibility is Collapsed when ErrorMessage is empty.
     /// </summary>
     [TestMethod]
     public void ErrorVisibility_EmptyErrorMessage_ReturnsCollapsed()
@@ -313,7 +306,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 19: ErrorVisibility is Collapsed when ErrorMessage contains only whitespace.
+    /// ErrorVisibility is Collapsed when ErrorMessage contains only whitespace.
     /// </summary>
     [TestMethod]
     public void ErrorVisibility_WhitespaceErrorMessage_ReturnsCollapsed()
@@ -326,7 +319,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     // Editable property setter tests
 
     /// <summary>
-    /// Test 20: Changing EditableStatus raises PropertyChanged.
+    /// Changing EditableStatus raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void EditableStatus_ChangedValue_RaisesPropertyChanged()
@@ -338,7 +331,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 21: Setting EditableStatus to its existing value does not raise PropertyChanged.
+    /// Setting EditableStatus to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void EditableStatus_SameValue_DoesNotRaisePropertyChanged()
@@ -350,7 +343,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 22: Changing EditableCategory raises PropertyChanged.
+    /// Changing EditableCategory raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void EditableCategory_ChangedValue_RaisesPropertyChanged()
@@ -362,7 +355,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 23: Setting EditableCategory to its existing value does not raise PropertyChanged.
+    /// Setting EditableCategory to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void EditableCategory_SameValue_DoesNotRaisePropertyChanged()
@@ -374,7 +367,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 24: Changing EditableSeverity raises PropertyChanged.
+    /// Changing EditableSeverity raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void EditableSeverity_ChangedValue_RaisesPropertyChanged()
@@ -386,7 +379,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 25: Setting EditableSeverity to its existing value does not raise PropertyChanged.
+    /// Setting EditableSeverity to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void EditableSeverity_SameValue_DoesNotRaisePropertyChanged()
@@ -398,7 +391,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 26: Changing EditableLatitude raises PropertyChanged.
+    /// Changing EditableLatitude raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void EditableLatitude_ChangedValue_RaisesPropertyChanged()
@@ -410,7 +403,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 27: Setting EditableLatitude to its existing value does not raise PropertyChanged.
+    /// Setting EditableLatitude to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void EditableLatitude_SameValue_DoesNotRaisePropertyChanged()
@@ -422,7 +415,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 28: Changing EditableLongitude raises PropertyChanged.
+    /// Changing EditableLongitude raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void EditableLongitude_ChangedValue_RaisesPropertyChanged()
@@ -433,7 +426,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 29: Setting EditableLongitude to its existing value does not raise PropertyChanged.
+    /// Setting EditableLongitude to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void EditableLongitude_SameValue_DoesNotRaisePropertyChanged()
@@ -445,7 +438,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 30: Changing EditableAddress raises PropertyChanged.
+    /// Changing EditableAddress raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void EditableAddress_ChangedValue_RaisesPropertyChanged()
@@ -457,7 +450,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 31: Setting EditableAddress to null when it is already null
+    /// Setting EditableAddress to null when it is already null
     /// does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
@@ -474,7 +467,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     // LoadIncidentAsync tests
 
     /// <summary>
-    /// Test 32: Loading an existing incident assigns it to the ViewModel.
+    /// Loading an existing incident assigns it to the ViewModel.
     /// </summary>
     [TestMethod]
     public async Task LoadIncidentAsync_ExistingIncident_LoadsIncident()
@@ -491,7 +484,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 33: Loading an incident raises PropertyChanged for Incident.
+    /// Loading an incident raises PropertyChanged for Incident.
     /// </summary>
     [TestMethod]
     public async Task LoadIncidentAsync_ExistingIncident_RaisesPropertyChanged()
@@ -513,7 +506,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 34: Loading an incident resets the editable properties
+    /// Loading an incident resets the editable properties
     /// to the incident's current values.
     /// </summary>
     [TestMethod]
@@ -539,7 +532,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 35: Loading an incident resets IsBusy after the operation completes.
+    /// Loading an incident resets IsBusy after the operation completes.
     /// </summary>
     [TestMethod]
     public async Task LoadIncidentAsync_ExistingIncident_ResetsIsBusy()
@@ -553,7 +546,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 36: Loading an incident clears an existing error message.
+    /// Loading an incident clears an existing error message.
     /// </summary>
     [TestMethod]
     public async Task LoadIncidentAsync_ExistingIncident_ClearsErrorMessage()
@@ -569,7 +562,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 37: Loading an incident refreshes the evidence and change timeline collections.
+    /// Loading an incident refreshes the evidence and change timeline collections.
     /// </summary>
     [TestMethod]
     public async Task LoadIncidentAsync_ExistingIncident_RefreshesCollections()
@@ -585,7 +578,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     // ToggleEditMode tests
 
     /// <summary>
-    /// Test 38: ToggleEditMode does nothing when no incident is loaded.
+    /// ToggleEditMode does nothing when no incident is loaded.
     /// </summary>
     [TestMethod]
     public void ToggleEditMode_NoIncident_DoesNothing()
@@ -597,7 +590,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 39: ToggleEditMode enables edit mode when an incident is loaded.
+    /// ToggleEditMode enables edit mode when an incident is loaded.
     /// </summary>
     [TestMethod]
     public async Task ToggleEditMode_IncidentLoaded_EnablesEditMode()
@@ -611,7 +604,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 40: Calling ToggleEditMode again disables edit mode.
+    /// Calling ToggleEditMode again disables edit mode.
     /// </summary>
     [TestMethod]
     public async Task ToggleEditMode_AlreadyEditing_DisablesEditMode()
@@ -626,7 +619,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 41: ToggleEditMode resets editable fields before enabling edit mode.
+    /// ToggleEditMode resets editable fields before enabling edit mode.
     /// </summary>
     [TestMethod]
     public async Task ToggleEditMode_EditableFieldsModified_ResetsEditableFields()
@@ -653,7 +646,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     // CancelEdit tests
 
     /// <summary>
-    /// Test 42: CancelEdit disables edit mode when no incident is loaded.
+    /// CancelEdit disables edit mode when no incident is loaded.
     /// </summary>
     [TestMethod]
     public void CancelEdit_NoIncident_DisablesEditMode()
@@ -666,7 +659,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 43: CancelEdit disables edit mode for a loaded incident.
+    /// CancelEdit disables edit mode for a loaded incident.
     /// </summary>
     [TestMethod]
     public async Task CancelEdit_IncidentLoaded_DisablesEditMode()
@@ -682,7 +675,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     }
 
     /// <summary>
-    /// Test 44: CancelEdit discards changes made to editable fields.
+    /// CancelEdit discards changes made to editable fields.
     /// </summary>
     [TestMethod]
     public async Task CancelEdit_EditableFieldsModified_ResetsEditableFields()

@@ -36,7 +36,7 @@ public class CreateIncidentPageViewModelTest
     // Constructor Initialization tests
 
     /// <summary>
-    /// Test 1: Constructor initializes all properties with their default values.
+    /// Constructor initializes all properties with their default values.
     /// </summary>
     [TestMethod]
     public void Constructor_InitializesDefaultValues()
@@ -60,7 +60,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 2: Constructor initializes Categories using all IncidentCategory enum values.
+    /// Constructor initializes Categories using all IncidentCategory enum values.
     /// </summary>
     [TestMethod]
     public void Constructor_InitializesCategories()
@@ -71,7 +71,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 3: Constructor initializes Severities using all IncidentSeverity enum values.
+    /// Constructor initializes Severities using all IncidentSeverity enum values.
     /// </summary>
     [TestMethod]
     public void Constructor_InitializesSeverities()
@@ -82,7 +82,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 4: Constructor selects the first available category and severity.
+    /// Constructor selects the first available category and severity.
     /// </summary>
     [TestMethod]
     public void Constructor_SelectsFirstCategoryAndSeverity()
@@ -92,26 +92,19 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 5: Constructor throws ArgumentNullException when controller is null.
+    /// Constructor throws ArgumentNullException when controller is null.
     /// </summary>
     [TestMethod]
     public void Constructor_NullController_ThrowsArgumentNullException()
     {
-        try
-        {
-            new CreateIncidentPageViewModel(null!, _currentUserId);
-            Assert.Fail("Expected ArgumentNullException was not thrown.");
-        }
-        catch (ArgumentNullException)
-        {
-            // Expected exception.
-        }
+        Assert.Throws<ArgumentNullException>(() =>
+            new CreateIncidentPageViewModel(null!, _currentUserId));
     }
 
     // Property setter tests
 
     /// <summary>
-    /// Test 6: Changing Title raises PropertyChanged.
+    /// Changing Title raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void Title_ChangedValue_RaisesPropertyChanged()
@@ -123,7 +116,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 7: Setting Title to its existing value does not raise PropertyChanged.
+    /// Setting Title to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void Title_SameValue_DoesNotRaisePropertyChanged()
@@ -137,7 +130,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 8: Changing Description raises PropertyChanged.
+    /// Changing Description raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void Description_ChangedValue_RaisesPropertyChanged()
@@ -149,7 +142,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 9: Setting Description to its existing value does not raise PropertyChanged.
+    /// Setting Description to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void Description_SameValue_DoesNotRaisePropertyChanged()
@@ -163,7 +156,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 10: Changing SelectedCategory raises PropertyChanged.
+    /// Changing SelectedCategory raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void SelectedCategory_ChangedValue_RaisesPropertyChanged()
@@ -175,7 +168,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 11: Setting SelectedCategory to its existing value does not raise PropertyChanged.
+    /// Setting SelectedCategory to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void SelectedCategory_SameValue_DoesNotRaisePropertyChanged()
@@ -189,7 +182,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 12: Changing SelectedSeverity raises PropertyChanged.
+    /// Changing SelectedSeverity raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void SelectedSeverity_ChangedValue_RaisesPropertyChanged()
@@ -201,7 +194,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 13: Setting SelectedSeverity to its existing value does not raise PropertyChanged.
+    /// Setting SelectedSeverity to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void SelectedSeverity_SameValue_DoesNotRaisePropertyChanged()
@@ -215,7 +208,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 14: Changing Latitude raises PropertyChanged.
+    /// Changing Latitude raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void Latitude_ChangedValue_RaisesPropertyChanged()
@@ -227,7 +220,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 15: Setting Latitude to its existing value does not raise PropertyChanged.
+    /// Setting Latitude to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void Latitude_SameValue_DoesNotRaisePropertyChanged()
@@ -241,7 +234,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 16: Changing Longitude raises PropertyChanged.
+    /// Changing Longitude raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void Longitude_ChangedValue_RaisesPropertyChanged()
@@ -253,7 +246,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 17: Setting Longitude to its existing value does not raise PropertyChanged.
+    /// Setting Longitude to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void Longitude_SameValue_DoesNotRaisePropertyChanged()
@@ -267,7 +260,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 18: Changing Address raises PropertyChanged.
+    /// Changing Address raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void Address_ChangedValue_RaisesPropertyChanged()
@@ -279,7 +272,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 19: Setting Address to null when it is already null does not raise PropertyChanged.
+    /// Setting Address to null when it is already null does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void Address_NullValue_DoesNotRaisePropertyChanged()
@@ -295,7 +288,7 @@ public class CreateIncidentPageViewModelTest
     // ErrorMessage and ErrorVisibility tests
 
     /// <summary>
-    /// Test 20: Setting ErrorMessage raises PropertyChanged for ErrorMessage and ErrorVisibility.
+    /// Setting ErrorMessage raises PropertyChanged for ErrorMessage and ErrorVisibility.
     /// </summary>
     [TestMethod]
     public void ErrorMessage_ChangedValue_RaisesPropertyChanged()
@@ -319,7 +312,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 21: Setting ErrorMessage to its existing value does not raise PropertyChanged.
+    /// Setting ErrorMessage to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void ErrorMessage_SameValue_DoesNotRaisePropertyChanged()
@@ -333,7 +326,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 22: ErrorVisibility is Visible when ErrorMessage contains text.
+    /// ErrorVisibility is Visible when ErrorMessage contains text.
     /// </summary>
     [TestMethod]
     public void ErrorVisibility_NonEmptyErrorMessage_ReturnsVisible()
@@ -344,7 +337,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 23: ErrorVisibility is Collapsed when ErrorMessage is empty.
+    /// ErrorVisibility is Collapsed when ErrorMessage is empty.
     /// </summary>
     [TestMethod]
     public void ErrorVisibility_EmptyErrorMessage_ReturnsCollapsed()
@@ -355,7 +348,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 24: ErrorVisibility is Collapsed when ErrorMessage contains only whitespace.
+    /// ErrorVisibility is Collapsed when ErrorMessage contains only whitespace.
     /// </summary>
     [TestMethod]
     public void ErrorVisibility_WhitespaceErrorMessage_ReturnsCollapsed()
@@ -368,7 +361,7 @@ public class CreateIncidentPageViewModelTest
     // IsSubmitting tests
 
     /// <summary>
-    /// Test 25: Changing IsSubmitting raises PropertyChanged for IsSubmitting and IsNotSubmitting.
+    /// Changing IsSubmitting raises PropertyChanged for IsSubmitting and IsNotSubmitting.
     /// </summary>
     [TestMethod]
     public void IsSubmitting_ChangedValue_RaisesPropertyChanged()
@@ -393,7 +386,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 26: Setting IsSubmitting to its existing value does not raise PropertyChanged.
+    /// Setting IsSubmitting to its existing value does not raise PropertyChanged.
     /// </summary>
     [TestMethod]
     public void IsSubmitting_SameValue_DoesNotRaisePropertyChanged()
@@ -410,7 +403,7 @@ public class CreateIncidentPageViewModelTest
     // Submission validation tests
 
     /// <summary>
-    /// Test 27: Submitting without a title sets the required-title error message.
+    /// Submitting without a title sets the required-title error message.
     /// </summary>
     [TestMethod]
     public async Task SubmitAsync_EmptyTitle_SetsErrorMessage()
@@ -423,7 +416,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 28: Submitting with a whitespace-only title sets the required-title error message.
+    /// Submitting with a whitespace-only title sets the required-title error message.
     /// </summary>
     [TestMethod]
     public async Task SubmitAsync_WhitespaceTitle_SetsErrorMessage()
@@ -437,7 +430,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 29: Submitting without a description sets the required-description error message.
+    /// Submitting without a description sets the required-description error message.
     /// </summary>
     [TestMethod]
     public async Task SubmitAsync_EmptyDescription_SetsErrorMessage()
@@ -450,7 +443,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 30: Submitting with a whitespace-only description sets the required-description error message.
+    /// Submitting with a whitespace-only description sets the required-description error message.
     /// </summary>
     [TestMethod]
     public async Task SubmitAsync_WhitespaceDescription_SetsErrorMessage()
@@ -464,7 +457,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 31: Submitting with latitude below -90 sets a validation error.
+    /// Submitting with latitude below -90 sets a validation error.
     /// </summary>
     [TestMethod]
     public async Task SubmitAsync_LatitudeBelowMinimum_SetsErrorMessage()
@@ -478,7 +471,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 32: Submitting with latitude above 90 sets a validation error.
+    /// Submitting with latitude above 90 sets a validation error.
     /// </summary>
     [TestMethod]
     public async Task SubmitAsync_LatitudeAboveMaximum_SetsErrorMessage()
@@ -492,7 +485,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 33: Submitting with longitude below -180 sets a validation error.
+    /// Submitting with longitude below -180 sets a validation error.
     /// </summary>
     [TestMethod]
     public async Task SubmitAsync_LongitudeBelowMinimum_SetsErrorMessage()
@@ -506,7 +499,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 34: Submitting with longitude above 180 sets a validation error.
+    /// Submitting with longitude above 180 sets a validation error.
     /// </summary>
     [TestMethod]
     public async Task SubmitAsync_LongitudeAboveMaximum_SetsErrorMessage()
@@ -522,7 +515,7 @@ public class CreateIncidentPageViewModelTest
     // Successful submission tests
 
     /// <summary>
-    /// Test 35: Submitting valid details creates an incident through the real controller
+    /// Submitting valid details creates an incident through the real controller
     /// and raises the IncidentCreated event.
     /// </summary>
     [TestMethod]
@@ -551,7 +544,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 36: Successful submission trims whitespace from the title and description.
+    /// Successful submission trims whitespace from the title and description.
     /// </summary>
     [TestMethod]
     public async Task SubmitAsync_ValidDetails_TrimsTitleAndDescription()
@@ -570,7 +563,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 37: Successful submission clears an existing error message.
+    /// Successful submission clears an existing error message.
     /// </summary>
     [TestMethod]
     public async Task SubmitAsync_ValidDetails_ClearsExistingErrorMessage()
@@ -584,7 +577,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 38: Successful submission resets IsSubmitting to false.
+    /// Successful submission resets IsSubmitting to false.
     /// </summary>
     [TestMethod]
     public async Task SubmitAsync_ValidDetails_ResetsIsSubmitting()
@@ -598,7 +591,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 39: An exception during submission sets the failure error message
+    /// An exception during submission sets the failure error message
     /// and resets IsSubmitting.
     /// </summary>
     [TestMethod]
@@ -617,7 +610,7 @@ public class CreateIncidentPageViewModelTest
     }
 
     /// <summary>
-    /// Test 40: Successful submission without IncidentCreated subscribers
+    /// Successful submission without IncidentCreated subscribers
     /// still creates the incident.
     /// </summary>
     [TestMethod]

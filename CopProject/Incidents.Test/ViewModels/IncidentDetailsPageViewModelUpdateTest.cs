@@ -36,7 +36,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     // SaveChangesAsync tests
 
     /// <summary>
-    /// Test 1: SaveChangesAsync does nothing when no incident is loaded.
+    /// SaveChangesAsync does nothing when no incident is loaded.
     /// </summary>
     [TestMethod]
     public async Task SaveChangesAsync_NoIncident_DoesNothing()
@@ -52,7 +52,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 2: Saving changed status, category, severity, and location
+    /// Saving changed status, category, severity, and location
     /// updates the incident through the real controller.
     /// </summary>
     [TestMethod]
@@ -79,7 +79,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 3: Saving without modifying any editable fields
+    /// Saving without modifying any editable fields
     /// leaves the incident values unchanged.
     /// </summary>
     [TestMethod]
@@ -98,7 +98,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 4: SaveChangesAsync updates the location when only latitude changes.
+    /// SaveChangesAsync updates the location when only latitude changes.
     /// </summary>
     [TestMethod]
     public async Task SaveChangesAsync_LatitudeChanged_UpdatesLocation()
@@ -111,7 +111,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 5: SaveChangesAsync updates the location when only longitude changes.
+    /// SaveChangesAsync updates the location when only longitude changes.
     /// </summary>
     [TestMethod]
     public async Task SaveChangesAsync_LongitudeChanged_UpdatesLocation()
@@ -124,7 +124,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 6: SaveChangesAsync updates the location when only address changes.
+    /// SaveChangesAsync updates the location when only address changes.
     /// </summary>
     [TestMethod]
     public async Task SaveChangesAsync_AddressChanged_UpdatesLocation()
@@ -137,7 +137,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 7: Successful SaveChangesAsync resets editable fields
+    /// Successful SaveChangesAsync resets editable fields
     /// to the latest incident values.
     /// </summary>
     [TestMethod]
@@ -163,7 +163,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 8: Successful SaveChangesAsync disables edit mode.
+    /// Successful SaveChangesAsync disables edit mode.
     /// </summary>
     [TestMethod]
     public async Task SaveChangesAsync_Success_DisablesEditMode()
@@ -179,7 +179,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 9: Successful SaveChangesAsync resets IsBusy.
+    /// Successful SaveChangesAsync resets IsBusy.
     /// </summary>
     [TestMethod]
     public async Task SaveChangesAsync_Success_ResetsIsBusy()
@@ -192,7 +192,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 10: Successful SaveChangesAsync clears an existing error message.
+    /// Successful SaveChangesAsync clears an existing error message.
     /// </summary>
     [TestMethod]
     public async Task SaveChangesAsync_Success_ClearsErrorMessage()
@@ -206,7 +206,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 11: Successful SaveChangesAsync refreshes the change timeline.
+    /// Successful SaveChangesAsync refreshes the change timeline.
     /// </summary>
     [TestMethod]
     public async Task SaveChangesAsync_Success_RefreshesChangeTimeline()
@@ -221,7 +221,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     // AddEvidenceItemsAsync tests
 
     /// <summary>
-    /// Test 12: AddEvidenceItemsAsync does nothing when no incident is loaded.
+    /// AddEvidenceItemsAsync does nothing when no incident is loaded.
     /// </summary>
     [TestMethod]
     public async Task AddEvidenceItemsAsync_NoIncident_DoesNothing()
@@ -236,7 +236,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 13: AddEvidenceItemsAsync does nothing when the evidence list is empty.
+    /// AddEvidenceItemsAsync does nothing when the evidence list is empty.
     /// </summary>
     [TestMethod]
     public async Task AddEvidenceItemsAsync_EmptyEvidenceList_DoesNothing()
@@ -249,7 +249,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 14: AddEvidenceItemsAsync adds evidence through the real controller.
+    /// AddEvidenceItemsAsync adds evidence through the real controller.
     /// </summary>
     [TestMethod]
     public async Task AddEvidenceItemsAsync_ValidEvidence_AddsEvidence()
@@ -272,7 +272,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 15: Successful AddEvidenceItemsAsync refreshes the incident object.
+    /// Successful AddEvidenceItemsAsync refreshes the incident object.
     /// </summary>
     [TestMethod]
     public async Task AddEvidenceItemsAsync_ValidEvidence_RefreshesIncident()
@@ -294,7 +294,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 16: Successful AddEvidenceItemsAsync resets IsBusy.
+    /// Successful AddEvidenceItemsAsync resets IsBusy.
     /// </summary>
     [TestMethod]
     public async Task AddEvidenceItemsAsync_ValidEvidence_ResetsIsBusy()
@@ -315,7 +315,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     }
 
     /// <summary>
-    /// Test 17: Successful AddEvidenceItemsAsync clears an existing error message.
+    /// Successful AddEvidenceItemsAsync clears an existing error message.
     /// </summary>
     [TestMethod]
     public async Task AddEvidenceItemsAsync_ValidEvidence_ClearsErrorMessage()

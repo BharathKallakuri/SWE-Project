@@ -26,7 +26,7 @@ public sealed class ViewModelBaseTest
     }
 
     /// <summary>
-    /// 1. PropertyChanged event is raised when a property changes.
+    /// PropertyChanged event is raised when a property changes.
     /// </summary>
     [TestMethod]
     public void OnPropertyChanged_RaisesPropertyChangedEvent()
@@ -42,7 +42,7 @@ public sealed class ViewModelBaseTest
     }
 
     /// <summary>
-    /// 2. PropertyChanged event provides the correct property name.
+    /// PropertyChanged event provides the correct property name.
     /// </summary>
     [TestMethod]
     public void OnPropertyChanged_ReturnsCorrectPropertyName()
@@ -59,7 +59,7 @@ public sealed class ViewModelBaseTest
     }
 
     /// <summary>
-    /// 3. Setting a property to its existing value does not raise an event.
+    /// Setting a property to its existing value does not raise an event.
     /// </summary>
     [TestMethod]
     public void PropertySetter_SameValue_DoesNotRaiseEvent()

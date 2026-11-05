@@ -94,7 +94,7 @@ public class AllIncidentsPageViewModelTests
     // Constructor tests
 
     /// <summary>
-    /// Test 1: Constructor initializes all filter selections to their defaults.
+    /// Constructor initializes all filter selections to their defaults.
     /// </summary>
     [TestMethod]
     public void Constructor_DefaultValues_InitializesCorrectly()
@@ -114,7 +114,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 2: Constructor creates dropdown options from the enums.
+    /// Constructor creates dropdown options from the enums.
     /// </summary>
     [TestMethod]
     public void Constructor_CreatesDropdownOptions()
@@ -152,7 +152,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 3: Constructor throws an exception when the controller is null.
+    /// Constructor throws an exception when the controller is null.
     /// </summary>
     [TestMethod]
     public void Constructor_NullController_ThrowsArgumentNullException()
@@ -164,7 +164,7 @@ public class AllIncidentsPageViewModelTests
     // Load tests
 
     /// <summary>
-    /// Test 4: LoadAsync retrieves incidents from the controller.
+    /// LoadAsync retrieves incidents from the controller.
     /// </summary>
     [TestMethod]
     public async Task LoadAsync_LoadsIncidentsFromController()
@@ -177,7 +177,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 5: LoadAsync sorts incidents by UpdateTime in descending order.
+    /// LoadAsync sorts incidents by UpdateTime in descending order.
     /// </summary>
     [TestMethod]
     public async Task LoadAsync_SortsIncidentsByUpdateTimeDescending()
@@ -195,7 +195,7 @@ public class AllIncidentsPageViewModelTests
     // Filter tests
 
     /// <summary>
-    /// Test 6: SearchText filters incidents by their title.
+    /// SearchText filters incidents by their title.
     /// </summary>
     [TestMethod]
     public void SearchText_MatchingTitle_ReturnsMatchingIncidents()
@@ -207,7 +207,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 7: SearchText trims leading and trailing whitespace.
+    /// SearchText trims leading and trailing whitespace.
     /// </summary>
     [TestMethod]
     public void SearchText_ContainsWhitespace_TrimsSearchText()
@@ -219,7 +219,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 8: SearchText treats regex special characters literally.
+    /// SearchText treats regex special characters literally.
     /// </summary>
     [TestMethod]
     public void SearchText_RegexSpecialCharacters_SearchesLiterally()
@@ -231,7 +231,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 9: SearchText returns no incidents when there are no matches.
+    /// SearchText returns no incidents when there are no matches.
     /// </summary>
     [TestMethod]
     public void SearchText_NoMatchingTitle_ReturnsEmptyCollection()
@@ -242,7 +242,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 10: SelectedStatus filters incidents by status.
+    /// SelectedStatus filters incidents by status.
     /// </summary>
     [TestMethod]
     public void SelectedStatus_FiltersByStatus()
@@ -254,7 +254,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 11: SelectedCategory filters incidents by category.
+    /// SelectedCategory filters incidents by category.
     /// </summary>
     [TestMethod]
     public void SelectedCategory_FiltersByCategory()
@@ -266,7 +266,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 12: SelectedSeverity filters incidents by severity.
+    /// SelectedSeverity filters incidents by severity.
     /// </summary>
     [TestMethod]
     public void SelectedSeverity_FiltersBySeverity()
@@ -278,7 +278,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 13: FromDate includes incidents from the selected date.
+    /// FromDate includes incidents from the selected date.
     /// </summary>
     [TestMethod]
     public void FromDate_FiltersIncidentsFromSelectedDate()
@@ -289,7 +289,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 14: FromDate excludes incidents before the selected date.
+    /// FromDate excludes incidents before the selected date.
     /// </summary>
     [TestMethod]
     public void FromDate_FutureDate_ReturnsNoIncidents()
@@ -300,7 +300,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 15: ToDate includes incidents before the selected date.
+    /// ToDate includes incidents before the selected date.
     /// </summary>
     [TestMethod]
     public void ToDate_FutureDate_ReturnsAllIncidents()
@@ -311,7 +311,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 16: ToDate excludes incidents after the selected date.
+    /// ToDate excludes incidents after the selected date.
     /// </summary>
     [TestMethod]
     public void ToDate_PastDate_ReturnsNoIncidents()
@@ -322,7 +322,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 17: FromDate and ToDate together filter a date range.
+    /// FromDate and ToDate together filter a date range.
     /// </summary>
     [TestMethod]
     public void FromDateAndToDate_DateRange_ReturnsMatchingIncidents()
@@ -334,7 +334,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 18: CreatedByInput filters incidents using a valid GUID.
+    /// CreatedByInput filters incidents using a valid GUID.
     /// </summary>
     [TestMethod]
     public void CreatedByInput_ValidGuid_FiltersByCreator()
@@ -346,7 +346,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 19: CreatedByInput trims whitespace around a valid GUID.
+    /// CreatedByInput trims whitespace around a valid GUID.
     /// </summary>
     [TestMethod]
     public void CreatedByInput_ValidGuidWithWhitespace_FiltersByCreator()
@@ -357,7 +357,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 20: Invalid GUID input does not apply a creator filter.
+    /// Invalid GUID input does not apply a creator filter.
     /// </summary>
     [TestMethod]
     public void CreatedByInput_InvalidGuid_DoesNotFilterIncidents()
@@ -368,7 +368,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 21: Multiple filters are applied together.
+    /// Multiple filters are applied together.
     /// </summary>
     [TestMethod]
     public void MultipleFilters_AppliedTogether_ReturnsMatchingIncidents()
@@ -389,7 +389,7 @@ public class AllIncidentsPageViewModelTests
     // ClearFilters tests
 
     /// <summary>
-    /// Test 22: ClearFilters resets all filter properties.
+    /// ClearFilters resets all filter properties.
     /// </summary>
     [TestMethod]
     public void ClearFilters_ResetsAllFilters()
@@ -417,7 +417,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 23: ClearFiltersCommand executes ClearFilters.
+    /// ClearFiltersCommand executes ClearFilters.
     /// </summary>
     [TestMethod]
     public void ClearFiltersCommand_Execute_ClearsFilters()
@@ -433,7 +433,7 @@ public class AllIncidentsPageViewModelTests
     // Empty message visibility tests
 
     /// <summary>
-    /// Test 24: EmptyMessageVisibility is Visible when no incidents match.
+    /// EmptyMessageVisibility is Visible when no incidents match.
     /// </summary>
     [TestMethod]
     public void EmptyMessageVisibility_NoMatchingIncidents_ReturnsVisible()
@@ -444,7 +444,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 25: EmptyMessageVisibility is Collapsed when incidents exist.
+    /// EmptyMessageVisibility is Collapsed when incidents exist.
     /// </summary>
     [TestMethod]
     public void EmptyMessageVisibility_IncidentsExist_ReturnsCollapsed()
@@ -455,7 +455,7 @@ public class AllIncidentsPageViewModelTests
     // Property notification tests
 
     /// <summary>
-    /// Test 26: Changing SearchText raises PropertyChanged.
+    /// Changing SearchText raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void SearchText_Changed_RaisesPropertyChanged()
@@ -467,7 +467,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 27: Setting SearchText to the same value raises no notification.
+    /// Setting SearchText to the same value raises no notification.
     /// </summary>
     [TestMethod]
     public void SearchText_SameValue_DoesNotRaisePropertyChanged()
@@ -479,7 +479,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 28: Changing SelectedStatus raises PropertyChanged.
+    /// Changing SelectedStatus raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void SelectedStatus_Changed_RaisesPropertyChanged()
@@ -492,7 +492,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 29: Changing FromDate raises PropertyChanged.
+    /// Changing FromDate raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void FromDate_Changed_RaisesPropertyChanged()
@@ -504,7 +504,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 30: ClearFilters raises notifications for all filter properties.
+    /// ClearFilters raises notifications for all filter properties.
     /// </summary>
     [TestMethod]
     public void ClearFilters_RaisesPropertyChangedForAllFilters()
@@ -543,7 +543,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 31: Setting SelectedStatus to its existing value raises no notification.
+    /// Setting SelectedStatus to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void SelectedStatus_SameValue_DoesNotRaisePropertyChanged()
@@ -555,7 +555,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 32: Setting SelectedCategory to its existing value raises no notification.
+    /// Setting SelectedCategory to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void SelectedCategory_SameValue_DoesNotRaisePropertyChanged()
@@ -567,7 +567,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 33: Setting SelectedSeverity to its existing value raises no notification.
+    /// Setting SelectedSeverity to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void SelectedSeverity_SameValue_DoesNotRaisePropertyChanged()
@@ -579,7 +579,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 34: Setting FromDate to its existing value raises no notification.
+    /// Setting FromDate to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void FromDate_SameValue_DoesNotRaisePropertyChanged()
@@ -594,7 +594,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 35: Setting FromDate to null when it is already null raises no notification.
+    /// Setting FromDate to null when it is already null raises no notification.
     /// </summary>
     [TestMethod]
     public void FromDate_NullValue_DoesNotRaisePropertyChanged()
@@ -608,7 +608,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 36: Setting FromDate to null after assigning a date raises PropertyChanged.
+    /// Setting FromDate to null after assigning a date raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void FromDate_ResetToNull_RaisesPropertyChanged()
@@ -624,7 +624,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 37: Setting ToDate to its existing value raises no notification.
+    /// Setting ToDate to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void ToDate_SameValue_DoesNotRaisePropertyChanged()
@@ -639,7 +639,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 38: Setting ToDate to null when it is already null raises no notification.
+    /// Setting ToDate to null when it is already null raises no notification.
     /// </summary>
     [TestMethod]
     public void ToDate_NullValue_DoesNotRaisePropertyChanged()
@@ -653,7 +653,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 39: Setting ToDate to null after assigning a date raises PropertyChanged.
+    /// Setting ToDate to null after assigning a date raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void ToDate_ResetToNull_RaisesPropertyChanged()
@@ -669,7 +669,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 40: Setting CreatedByInput to its existing value raises no notification.
+    /// Setting CreatedByInput to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void CreatedByInput_SameValue_DoesNotRaisePropertyChanged()
@@ -684,7 +684,7 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 41: Changing CreatedByInput raises PropertyChanged.
+    /// Changing CreatedByInput raises PropertyChanged.
     /// </summary>
     [TestMethod]
     public void CreatedByInput_ChangedValue_RaisesPropertyChanged()
