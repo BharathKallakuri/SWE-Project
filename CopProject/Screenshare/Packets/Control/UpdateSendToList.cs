@@ -7,7 +7,7 @@ namespace ScreenShare;
 /// sent by the host to a sharer with the full list of wiewers to send the strem to. 
 /// reserved for peer to peer model, may not be useful now
 /// </summary>
-public sealed record UpdateSendToList
+public sealed record UpdateSendToList : IScreenShareMessage
 {
     string StreamId { get; }
     public IReadOnlyList<IPEndPoint> SendTo { get; }

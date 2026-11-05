@@ -3,7 +3,7 @@
 /// <summary>
 /// sent  by the viewer to start recieving a stream
 /// </summary>
-public sealed record Subscribe
+public sealed record Subscribe : IScreenShareMessage
 {
     public string StreamId { get; }
     public Participant Viewer { get; }
