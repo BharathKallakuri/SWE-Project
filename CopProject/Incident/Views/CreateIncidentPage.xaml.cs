@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Incident_module.ViewModels;
 using Incident_module.ViewModels.Utils;
 using Microsoft.UI.Xaml;
@@ -7,6 +8,7 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace Incident_module.Views;
 
+[ExcludeFromCodeCoverage]
 public sealed partial class CreateIncidentPage : Page
 {
     public CreateIncidentPageViewModel? ViewModel => DataContext as CreateIncidentPageViewModel;

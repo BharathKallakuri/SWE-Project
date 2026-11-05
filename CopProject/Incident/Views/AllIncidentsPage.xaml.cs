@@ -1,4 +1,5 @@
-﻿using Incident_module.ViewModels;
+﻿using System.Diagnostics.CodeAnalysis;
+using Incident_module.ViewModels;
 using Incident_module.ViewModels.Utils;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -7,6 +8,7 @@ using Windows.UI;
 
 namespace Incident_module.Views;
 
+[ExcludeFromCodeCoverage]
 public sealed partial class AllIncidentsPage : Page
 {
     private AllIncidentsPageViewModel? ViewModel => DataContext as AllIncidentsPageViewModel;
