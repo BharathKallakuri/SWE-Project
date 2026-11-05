@@ -18,7 +18,7 @@ public interface IControllerService : IDisposable
     bool EndMeeting();
 
     // Joins an existing meeting on a remote host.
-    void JoinMeeting(string hostIp, int hostPort, ControllerUser user);
+    bool JoinMeeting(string hostIp, int hostPort, ControllerUser user);
 
     // Leaves a meeting that was previously joined.
     void LeaveMeeting(ControllerUser user);

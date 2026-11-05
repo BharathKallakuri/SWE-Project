@@ -126,8 +126,20 @@ void RunClient()
         switch (command)
         {
             case "join" when parts.Length >= 3:
-                client.JoinMeeting(parts[1], int.Parse(parts[2]), clientUser);
-                Console.WriteLine($"Connected to {parts[1]}:{parts[2]} (local port: {client.ListenPort}).");
+                if (!int.TryParse(parts[2], out int hostPort))
+                {
+                    Console.WriteLine("Invalid port format. Please enter a valid number (e.g. 57200).");
+                    break;
+                }
+
+                if (client.JoinMeeting(parts[1], hostPort, clientUser))
+                {
+                    Console.WriteLine($"Connected to {parts[1]}:{hostPort} (local port: {client.ListenPort}).");
+                }
+                else
+                {
+                    Console.WriteLine($"Could not connect to host at {parts[1]}:{hostPort}. Please verify the host IP and port.");
+                }
                 break;
 
             case "leave":

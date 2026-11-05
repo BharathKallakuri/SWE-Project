@@ -50,32 +50,45 @@ public sealed class ClientController : IControllerService
     }
 
     // Sends a JOIN message to the host machine after formatting.
-    public void JoinMeeting(string hostIp, int hostPort, ControllerUser user)
+    public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user)
     {
-        // Remember the host so leave/users don't need the address again
+        if (!IPAddress.TryParse(hostIp, out IPAddress? ipAddress))
+        {
+            Trace.TraceWarning($"JoinMeeting failed: '{hostIp}' is not a valid IP address.");
+            return false;
+        }
+        var serverEndPoint = new IPEndPoint(IPAddress.Parse(hostIp),hostPort);
+        if(_communicator != null){
+            _communicator.RemoveSubscriber(Protocol.ControllerSubscriberId);
+            if(_communicator is IDisposable disposable){
+                disposable.Dispose();
+            }
+            _communicator = null ;
+        }
+
+        ICommunicator? comm = CommunicatorFactory.CreateCommunicator(serverEndPoint,isServer:false,isClient:true);
+        if(comm == null || comm.ListenPort == 0){
+            (comm as IDisposable)?.Dispose() ;
+            Trace.TraceWarning($"failed to connect to host at {hostIp}:{hostPort}");
+            return false;
+        }
+        _communicator = comm ;
+        _communicator.AddSubscriber(Protocol.ControllerSubscriberId, new ClientNotificationListener(this));
         _hostIp = hostIp;
         _hostPort = hostPort;
         _currentUser = user;
-        if (_communicator == null)
-        {
-            var serverEndPoint = new IPEndPoint(IPAddress.Parse(hostIp), hostPort);
-            _communicator = CommunicatorFactory.CreateCommunicator(serverEndPoint, isServer: false, isClient: true)
-                ?? throw new InvalidOperationException($"Failed to connect to host at {hostIp}:{hostPort}.");
-            _communicator.AddSubscriber(Protocol.ControllerSubscriberId, new ClientNotificationListener(this));
-        }
         user.IsHost = false;
         user.Ip = NetworkUtils.GetLocalIpAddress();
         user.Port = _communicator.ListenPort;
         lock (_knownUsers)
         {   
-            _knownUsers[user.Username]=user;
+            _knownUsers[user.Username] = user;
         }
-
-        string message = Protocol.FormatJoinRequest(user);
+         string message = Protocol.FormatJoinRequest(user);
         SendToHost(hostIp, hostPort, message);
         Trace.TraceInformation($"Sent JOIN for user '{user.Username}' to {hostIp}:{hostPort}.");
+        return true;
     }
-
     //Sends a LEAVE message to the host the client previously joined.
     public void LeaveMeeting(ControllerUser user)
     {

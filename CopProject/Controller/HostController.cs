@@ -85,9 +85,10 @@ public sealed class HostController : IControllerService
     }
 
     // Not applicable on the host side
-    public void JoinMeeting(string hostIp, int hostPort, ControllerUser user)
+    public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user)
     {
         Trace.TraceWarning("JoinMeeting called on HostController. Use a ClientController to join remote meetings.");
+        return false;
     }
 
     public void LeaveMeeting(ControllerUser user)
