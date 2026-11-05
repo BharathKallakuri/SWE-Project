@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -118,5 +118,30 @@ public class BoundingBoxTests : BaseGenerator
         Assert.Equal(maxY, polygon.BoundingBox.Top);
         Assert.Equal(maxX - minX, polygon.BoundingBox.Width);
         Assert.Equal(maxY - minY, polygon.BoundingBox.Height);
+    }
+
+    /// <summary>
+    /// Test bounding box for line is calculated properly
+    /// </summary>
+    [Fact]
+    public void Line()
+    {
+        var line = new Whiteboard.Items.Line() {
+            Begin = RandomPointGenerator.Generate(),
+            End = RandomPointGenerator.Generate()
+        };
+
+        double left = Math.Min(line.Begin.X, line.End.X);
+        double top = Math.Min(line.Begin.Y, line.End.Y);
+        double right = Math.Max(line.Begin.X, line.End.X);
+        double bottom = Math.Max(line.Begin.Y, line.End.Y);
+
+        double width = right - left;
+        double height = bottom - top;
+
+        Assert.Equal(left, line.BoundingBox.Left);
+        Assert.Equal(top, line.BoundingBox.Top);
+        Assert.Equal(width, line.BoundingBox.Width);
+        Assert.Equal(height, line.BoundingBox.Height);
     }
 }
