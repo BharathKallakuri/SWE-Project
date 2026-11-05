@@ -191,4 +191,30 @@ public class HitTests : BaseGenerator
         // Beyond default threshold should miss
         Assert.False(line.HitTest(new Point2D(60, 10 + Whiteboard.Items.Line.DefaultHitThreshold + 1.0)));
     }
+
+    /// <summary>
+    /// Test hit testing for freehand item.
+    /// </summary>
+    [Fact]
+    public void Freehand()
+    {
+        var freehand = new FreehandItem() {
+            StrokeWidth = 4.0
+        };
+        freehand.Points.Add(new Point2D(0, 0));
+        freehand.Points.Add(new Point2D(50, 0));
+        freehand.Points.Add(new Point2D(50, 50));
+
+        double threshold = (freehand.StrokeWidth / 2.0) + 5.0;
+
+        // Points on strokes should hit
+        Assert.True(freehand.HitTest(new Point2D(25, 0)));
+        Assert.True(freehand.HitTest(new Point2D(50, 25)));
+
+        // Point near stroke within threshold should hit
+        Assert.True(freehand.HitTest(new Point2D(25, threshold - TestTolerance)));
+
+        // Point far outside should miss
+        Assert.False(freehand.HitTest(new Point2D(25, threshold + 5.0)));
+    }
 }
