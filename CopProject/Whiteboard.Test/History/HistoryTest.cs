@@ -54,7 +54,7 @@ public class HistoryTests
 
         history.Redo();
 
-        var restored = Assert.IsType<RectangleItem>(board.Items[item.Id]);
+        RectangleItem restored = Assert.IsType<RectangleItem>(board.Items[item.Id]);
         Assert.Equal(100d, restored.Width);
     }
 
@@ -155,7 +155,7 @@ public class HistoryTests
         Assert.Throws<InvalidOperationException>(() =>
             history.Execute(new AddItemAction(duplicate, User)));
 
-        var current = Assert.IsType<RectangleItem>(board.Items[first.Id]);
+        RectangleItem current = Assert.IsType<RectangleItem>(board.Items[first.Id]);
         Assert.Equal(100d, current.Width);
 
         // Only the original successful add should need undoing.
@@ -185,7 +185,7 @@ public class HistoryTests
 
         history.Execute(new AddItemAction(stroke, User));
 
-        var boardStroke =
+        FreehandItem boardStroke =
             Assert.IsType<FreehandItem>(board.Items[stroke.Id]);
 
         history.Execute(new DeleteItemsAction(stroke.Id, User));
@@ -196,7 +196,7 @@ public class HistoryTests
 
         history.Undo();
 
-        var restored =
+        FreehandItem restored =
             Assert.IsType<FreehandItem>(board.Items[stroke.Id]);
 
         Assert.Equal(2, restored.Points.Count);
