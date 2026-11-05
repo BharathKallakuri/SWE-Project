@@ -76,6 +76,27 @@ public sealed class IncidentControllerCorrelationTest
                 ],
             evidence: [],
             edges: []
+        ),
+        new Incident(
+            id: Guid.NewGuid(),
+            title: "Test Incident 4",
+            description: "This is a test incident 4.",
+            createdBy: Guid.Empty,
+            status: IncidentStatus.Resolved,
+            category: IncidentCategory.DrunkDriving,
+            severity: IncidentSeverity.High,
+            location: new IncidentLocation(Latitude: 4.0, Longitude: 4.0),
+            creationTime: DateTime.Today.AddDays(-2),
+            updateTime: DateTime.Today.AddDays(-1),
+            changes: [
+                    new CategoryChange(
+                        Description: "Changed Category from In progess to resolved",
+                        ChangedTime: DateTime.Today.AddDays(-1),
+                        ChangedBy:Guid.Empty
+                    )
+                ],
+            evidence: [],
+            edges: []
         )
     ];
 
@@ -173,5 +194,63 @@ public sealed class IncidentControllerCorrelationTest
         Incident incident2 = _existingIncidents[1];
         bool result = await _incidentController.CorrelateIncident(incident1, incident2);
         Assert.IsTrue(result);
+    }
+
+    /// <summary>
+    /// Checking whether correlating valid Incident returns true
+    /// </summary>
+    /// <returns></returns>
+    [TestMethod]
+    public async Task CorrelateIncident_ResolvedIncidents_ThrowsInvalidOperationException()
+    {
+        Incident incident1 = _existingIncidents[2];
+        Incident incident2 = _existingIncidents[3];
+        Assert.AreEqual(IncidentStatus.Resolved, incident1.Status);
+        Assert.AreEqual(IncidentStatus.Resolved, incident2.Status);
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => {
+            await _incidentController.CorrelateIncident(incident1, incident2);
+        });
+    }
+
+    /// <summary>
+    /// Updating Severity of a Resolved Incident throws InvalidOperationException
+    /// </summary>
+    /// <returns></returns>
+    [TestMethod]
+    public async Task UpdateSeverity_ResolvedIncident_ThrowsInvalidOperationException()
+    {
+        Incident incident = _existingIncidents[2];
+        Assert.AreEqual(IncidentStatus.Resolved, incident.Status);
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => {
+            await _incidentController.UpdateSeverity(incident, IncidentSeverity.High);
+        });
+    }
+
+    /// <summary>
+    /// Updating Location of a Resolved Incident throws InvalidOperationException
+    /// </summary>
+    /// <returns></returns>
+    [TestMethod]
+    public async Task UpdateLocation_ResolvedIncident_ThrowsInvalidOperationException()
+    {
+        Incident incident = _existingIncidents[2];
+        Assert.AreEqual(IncidentStatus.Resolved, incident.Status);
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => {
+            await _incidentController.UpdateLocation(incident, new IncidentLocation(Latitude: 0.0, Longitude: 0.0));
+        });
+    }
+
+    /// <summary>
+    /// Updating Category of a Resolved Incident throws InvalidOperationException
+    /// </summary>
+    /// <returns></returns>
+    [TestMethod]
+    public async Task UpdateCategory_ResolvedIncident_ThrowsInvalidOperationException()
+    {
+        Incident incident = _existingIncidents[2];
+        Assert.AreEqual(IncidentStatus.Resolved, incident.Status);
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => {
+            await _incidentController.UpdateCategory(incident, IncidentCategory.DrunkDriving);
+        });
     }
 }
