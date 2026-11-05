@@ -1,11 +1,15 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿/// Owner   : Raagam Hitesh Parmar
+/// LICENSE : MIT
 
 using System;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Shapes;
 using Whiteboard.Client;
+using Whiteboard.Interfaces;
+using Whiteboard.Interfaces.Shapes;
 
 namespace Whiteboard.ViewModels;
 
@@ -36,6 +40,80 @@ public class WhiteBoardViewModel
         _squareState = new ShapeSquareState(_whiteboardClient, canvas, toolbarInfo);
 
         _currentState = _penState;
+
+        // Render any existing items already on the client whiteboard
+        foreach (IItem item in _whiteboardClient.Canvas.Items.Values)
+        {
+            RenderItem(item, canvas);
+        }
+
+        // Listen for new items added
+        _whiteboardClient.Canvas.ItemAdded += item => {
+            canvas.DispatcherQueue?.TryEnqueue(() => {
+                RenderItem(item, canvas);
+            });
+        };
+    }
+
+    private static void RenderItem(IItem item, Canvas canvas)
+    {
+        // Skip if this item was already rendered locally
+        foreach (UIElement child in canvas.Children)
+        {
+            if (child is FrameworkElement fe && fe.Tag is Guid id && id == item.Id)
+            {
+                return;
+            }
+        }
+
+        if (item is IFreehand freehand)
+        {
+            var polyline = new Polyline {
+                Stroke = new SolidColorBrush(freehand.StrokeColor),
+                StrokeThickness = freehand.StrokeWidth,
+                StrokeLineJoin = PenLineJoin.Round,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+                Tag = item.Id
+            };
+
+            foreach (Point2D pt in freehand.Points)
+            {
+                polyline.Points.Add(new Windows.Foundation.Point(pt.X, pt.Y));
+            }
+
+            ToolTip toolTip = new(item.CreatedBy, item.CreatedDateTime);
+            ToolTipService.SetToolTip(polyline, toolTip);
+
+            canvas.Children.Add(polyline);
+        }
+        else if (item is ISquare square)
+        {
+            var rect = new Rectangle {
+                Width = square.SideLegth,
+                Height = square.SideLegth,
+                Stroke = new SolidColorBrush(square.BorderColor),
+                StrokeThickness = square.BorderWidth,
+                Fill = new SolidColorBrush(square.FillColor),
+                Tag = item.Id
+            };
+
+            double left = square.Left;
+            double top = square.Top;
+            if (left == 0 && top == 0 && (square.Center.X != 0 || square.Center.Y != 0))
+            {
+                left = square.Center.X - (square.SideLegth / 2);
+                top = square.Center.Y - (square.SideLegth / 2);
+            }
+
+            Canvas.SetLeft(rect, left);
+            Canvas.SetTop(rect, top);
+
+            ToolTip toolTip = new(item.CreatedBy, item.CreatedDateTime);
+            ToolTipService.SetToolTip(rect, toolTip);
+
+            canvas.Children.Add(rect);
+        }
     }
 
     /// <summary>
