@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Filesync;
+namespace FileSynchroniser.Models;
 
 /// <summary>
 /// Represents a single chunk of a large file.

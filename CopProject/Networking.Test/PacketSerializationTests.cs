@@ -132,4 +132,31 @@ public class PacketSerializationTests
         Assert.AreEqual(5050, deserialized.Port);
         Assert.AreEqual("192.168.1.100", deserialized.Address.ToString());
     }
+
+    /// <summary>
+    /// Checks that malformed payload data returns null via catch block.
+    /// </summary>
+    [TestMethod]
+    public void PacketSerializer_CorruptedPayload_ReturnsNull()
+    {
+        PacketSerializer serializer = new();
+        byte[] corrupted = new byte[] { 0, 0, 0, 4, 0xFF, 0xFF, 0xFF, 0xFF };
+
+        Packet? result = serializer.BytesToPacket(corrupted);
+        Assert.IsNull(result);
+    }
+
+    /// <summary>
+    /// Checks IPEndPointConverter direct read with null token.
+    /// </summary>
+    [TestMethod]
+    public void IPEndPointConverter_DirectRead_HandlesNull()
+    {
+        IPEndPointConverter converter = new();
+        byte[] json = Encoding.UTF8.GetBytes("null");
+        Utf8JsonReader reader = new(json);
+        reader.Read();
+        IPEndPoint? ep = converter.Read(ref reader, typeof(IPEndPoint), new JsonSerializerOptions());
+        Assert.IsNull(ep);
+    }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -70,6 +70,11 @@ public class SendingQueueListenerServer : IDisposable
 
     public void SendDataToClient(byte[] data, IPEndPoint destination)
     {
+        if (destination != null && destination.Address.IsIPv4MappedToIPv6)
+        {
+            destination = new IPEndPoint(destination.Address.MapToIPv4(), destination.Port);
+        }
+
         if (destination == null || !_clientToTcpListenerMap.TryGetValue(destination, out TcpClient? socket) || socket == null)
         {
             Trace.WriteLine($"[Networking] SendingQueueListenerServer.SendDataToClient: Destination client {destination} not found in client map.");

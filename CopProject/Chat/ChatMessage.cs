@@ -43,7 +43,7 @@ public class ChatMessage : IChatMessage
     /// <summary>
     /// Gets or sets the ID of the message this message replies to, if any.
     /// </summary>
-    public Guid? ParentMessageId;
+    public Guid? ParentMessageId { get; set; }
 
     /// <summary>
     /// Gets the emoji reactions and the users who used each reaction.
@@ -126,6 +126,38 @@ public class ChatMessage : IChatMessage
 
             users.Add(user);
             return true;
+        }
+    }
+
+    internal virtual ChatMessage DeepClone()
+    {
+        ChatMessage clone = new()
+        {
+            Timestamp = Timestamp,
+            SenderName = SenderName,
+            Mentions = Mentions.Clone(),
+            Content = Content
+        };
+        clone.CopyMutableStateFrom(this);
+        return clone;
+    }
+
+    /// <summary>
+    /// Copies mutable state from a ChatMessage.
+    /// </summary>
+    /// <param name="source">The source ChatMessage object.</param>
+    internal void CopyMutableStateFrom(ChatMessage source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        Content = source.Content;
+        EditCount = source.EditCount;
+        DeletedByUser = source.DeletedByUser;
+        ParentMessageId = source.ParentMessageId;
+
+        foreach ((string emoji, HashSet<string> users) in source.Reactions)
+        {
+            Reactions.Add(emoji, new HashSet<string>(users));
         }
     }
 }
