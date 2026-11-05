@@ -1,6 +1,5 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿/// Owner   : Raagam Hitesh Parmar
+/// LICENSE : MIT
 
 using System;
 using Microsoft.UI.Xaml.Controls;
@@ -8,7 +7,10 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Whiteboard.Client;
+using Whiteboard.Interfaces;
 using Windows.Foundation;
+using Windows.UI;
+using Square = Whiteboard.Items.Shapes.Square;
 
 namespace Whiteboard.ViewModels;
 
@@ -143,6 +145,30 @@ public class ShapeSquareState : IViewModelState
 
         if (_square is not null)
         {
+            double left = Canvas.GetLeft(_square);
+            double top = Canvas.GetTop(_square);
+            double side = _square.Width;
+
+            // Get the brush color for stroke and fill
+            // TODO too complicated, simplify
+            Color strokeColor = _toolbarInfo.BorderBrush is SolidColorBrush sb ? sb.Color : Color.FromArgb(255, 0, 0, 0);
+            Color fillColor = _toolbarInfo.FillBrush is SolidColorBrush fb ? fb.Color : Color.FromArgb(0, 0, 0, 0);
+
+            // Create a freehand item to sync with client
+            var square = new Square {
+                Left = left,
+                Top = top,
+                SideLegth = side,
+                Center = new Point2D(left + side / 2, top + side / 2),
+                BorderColor = strokeColor,
+                BorderWidth = _toolbarInfo.StrokeThickness,
+                FillColor = fillColor,
+                CreatedBy = _whiteboardClient.UserId
+            };
+
+            // Tag the polyline with the ID of the item
+            _square.Tag = square.Id;
+
             // Add tooltip
             ToolTip toolTip = new(_whiteboardClient.UserId, DateTime.Now);
             ToolTipService.SetToolTip(_square, toolTip);
@@ -150,6 +176,8 @@ public class ShapeSquareState : IViewModelState
             // Enable hit testing on the square
             _square.IsHitTestVisible = true;
 
+            // Send to whiteboard client state manager
+            _whiteboardClient.AddItem(square);
         }
 
         // Reset square state back to null
@@ -161,7 +189,6 @@ public class ShapeSquareState : IViewModelState
 
     public void PointerCaptureLost(object sender, PointerRoutedEventArgs e)
     {
-
         // Return early if the user is not drawing
         if (!_isDrawing)
         {
