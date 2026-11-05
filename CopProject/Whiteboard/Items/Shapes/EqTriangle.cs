@@ -16,8 +16,8 @@ public class EqTriangle : Shape, IEqTriangle
     public override Rect2D BoundingBox
     {
         get => new(
-            Left,
-            Top,
+            Center.X - (SideLength / 2.0),
+            Center.Y + ((2.0 / 3.0) * GetTriangleHeight(SideLength)),
             SideLength,
             GetTriangleHeight(SideLength)
         );
