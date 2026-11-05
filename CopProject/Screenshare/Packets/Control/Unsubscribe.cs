@@ -1,4 +1,4 @@
-﻿namespace ScreenShare; 
+﻿namespace ScreenShare;
 
 
 /// <summary>

@@ -20,7 +20,7 @@ public sealed record Subscribe : IScreenShareMessage
     /// <param name="streamId">gets the id of requested stream</param>
     /// <param name="viewer">get the viewer asking for stream</param>
     /// <param name="maxHeight">gets the largest frame height viewer wants</param>
-    public Subscribe(string streamId, Participant viewer, int maxHeight)
+    public Subscribe(Participant viewer, string streamId, int maxHeight)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(streamId, nameof(streamId));
         ArgumentNullException.ThrowIfNull(viewer, nameof(viewer));
