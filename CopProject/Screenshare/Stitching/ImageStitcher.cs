@@ -1,12 +1,12 @@
 ﻿using System.Drawing;
-using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 
 namespace ScreenShare;
 
 public class ImageStitcher : IImageStitcher, IDisposable
 {
-    private Bitmap? currentFrame;
+    private Bitmap? _currentFrame;
 
     public long LastFrameNumber { get; private set; } = -1;
 
@@ -28,8 +28,8 @@ public class ImageStitcher : IImageStitcher, IDisposable
         }
 
         Bitmap newFrame = new Bitmap(frame);
-        currentFrame?.Dispose();
-        currentFrame = newFrame;
+        _currentFrame?.Dispose();
+        _currentFrame = newFrame;
 
         LastFrameNumber = frameNumber;
         NeedsFullFrame = false;
@@ -68,7 +68,7 @@ public class ImageStitcher : IImageStitcher, IDisposable
                 decoded.Add((tile, DecodeTile(tile)));
             }
 
-            using Graphics graphics = Graphics.FromImage(currentFrame!);
+            using Graphics graphics = Graphics.FromImage(_currentFrame!);
 
             // tiles replace pixels; the default SourceOver would blend non-opaque pixels with the old frame
             graphics.CompositingMode = CompositingMode.SourceCopy;
@@ -119,13 +119,13 @@ public class ImageStitcher : IImageStitcher, IDisposable
 
     public Bitmap? GetCurrentFrame()
     {
-        return currentFrame == null ? null : new Bitmap(currentFrame);
+        return _currentFrame == null ? null : new Bitmap(_currentFrame);
     }
 
     public void Reset()
     {
-        currentFrame?.Dispose();
-        currentFrame = null;
+        _currentFrame?.Dispose();
+        _currentFrame = null;
         LastFrameNumber = -1;
         NeedsFullFrame = true;
     }
@@ -166,8 +166,8 @@ public class ImageStitcher : IImageStitcher, IDisposable
         }
 
         // using subtraction to avoid integer overflow in X+width or Y+height
-        if (tile.X > currentFrame!.Width - tile.Width ||
-            tile.Y > currentFrame.Height - tile.Height)
+        if (tile.X > _currentFrame!.Width - tile.Width ||
+            tile.Y > _currentFrame.Height - tile.Height)
         {
             throw new ArgumentException("tile lies outside the current frame", nameof(tile));
         }

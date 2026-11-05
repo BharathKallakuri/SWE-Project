@@ -13,9 +13,9 @@ namespace ScreenShare;
 /// </summary>
 public static class PngEncoder
 {
-    private const int _LookupAttempts = 5;
+    private const int LookupAttempts = 5;
 
-    private static readonly ImageCodecInfo Codec = FindPngCodec();
+    private static readonly ImageCodecInfo s_codec = FindPngCodec();
 
     /// <summary>
     /// encodes the bitmap as png bytes
@@ -25,13 +25,13 @@ public static class PngEncoder
         ArgumentNullException.ThrowIfNull(bitmap);
 
         using var stream = new MemoryStream();
-        bitmap.Save(stream, Codec, null);
+        bitmap.Save(stream, s_codec, null);
         return stream.ToArray();
     }
 
     private static ImageCodecInfo FindPngCodec()
     {
-        for (int attempt = 1; attempt <= _LookupAttempts; attempt++)
+        for (int attempt = 1; attempt <= LookupAttempts; attempt++)
         {
             ImageCodecInfo? codec = ImageCodecInfo.GetImageEncoders()
                 .FirstOrDefault(c => c.FormatID == ImageFormat.Png.Guid);

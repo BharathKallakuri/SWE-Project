@@ -24,7 +24,7 @@ public class ScreenShareIntegrationTests
         }
 
         // 2. Initialize the receiver with the original full frame.
-        stitcher.ApplyFullFrame(0,originalFrame);
+        stitcher.ApplyFullFrame(0, originalFrame);
 
         // 3. Create the next frame with changes in two different tiles.
         using var modifiedFrame = new Bitmap(originalFrame);
@@ -84,7 +84,7 @@ public class ScreenShareIntegrationTests
         }
 
         // Initialize the receiver with the original frame.
-        stitcher.ApplyFullFrame(0,originalFrame);
+        stitcher.ApplyFullFrame(0, originalFrame);
 
         // Compare the original and modified frames.
         using ImageDiffResult result = differ.Compare(originalFrame, modifiedFrame);
@@ -95,7 +95,7 @@ public class ScreenShareIntegrationTests
         Assert.NotNull(result.FullFrame);
 
         // Simulate the receiver applying the full-frame packet.
-        Assert.True(stitcher.ApplyFullFrame(1,result.FullFrame!));
+        Assert.True(stitcher.ApplyFullFrame(1, result.FullFrame!));
 
         using Bitmap? reconstructedFrame = stitcher.GetCurrentFrame();
 

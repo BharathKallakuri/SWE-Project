@@ -18,7 +18,7 @@ public class ScreenCapturer : IImageSource
     private const int SM_CXSCREEN = 0;
     private const int SM_CYSCREEN = 1;
 
-    private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new(-4);
+    private static readonly IntPtr s_dpiAwarenessContextPerMonitorAwareV2 = new(-4);
 
     /// <summary>
     /// captures the current contents of the primary display 
@@ -33,7 +33,7 @@ public class ScreenCapturer : IImageSource
         // a dpi-unaware thread sees scaled-down metrics (e.g. 1536 wide on a 1920 display at 125%)
         // and captures only part of the screen. switch only this thread, so the host's
         // process-wide dpi setting is left alone, and restore it afterwards.
-        IntPtr previousContext = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        IntPtr previousContext = SetThreadDpiAwarenessContext(s_dpiAwarenessContextPerMonitorAwareV2);
 
         try
         {
@@ -71,11 +71,9 @@ public class ScreenCapturer : IImageSource
 
         try
         {
-            using (Graphics graphics = Graphics.FromImage(screenshot))
-            {
-                graphics.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
-                return screenshot;
-            }
+            using Graphics graphics = Graphics.FromImage(screenshot);
+            graphics.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
+            return screenshot;
         }
         catch
         {

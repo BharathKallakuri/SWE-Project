@@ -80,7 +80,10 @@ public class ScreenSharingService : IDisposable
     public void Dispose()
     {
         if (_disposed)
+        {
             return;
+        }
+
         _previousFrame?.Dispose();
         _previousFrame = null;
 

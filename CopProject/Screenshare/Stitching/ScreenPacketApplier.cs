@@ -113,7 +113,7 @@ public sealed class ScreenPacketApplier
         }
 
         _lastFullFrameRequest = now;
-        FullFrameRequested?.Invoke(StreamId);   
+        FullFrameRequested?.Invoke(StreamId);
     }
 
     private static Bitmap? TryDecodeImage(byte[] data)

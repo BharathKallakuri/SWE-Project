@@ -8,7 +8,7 @@ namespace Screenshare.Tests;
 public class ScreenPacketApplierTests
 {
     private const string StreamId = "alice-screen";
-    private static readonly DateTime CaptureTime = new(2026, 11, 3, 10, 30, 0, DateTimeKind.Utc);
+    private static readonly DateTime s_captureTime = new(2026, 11, 3, 10, 30, 0, DateTimeKind.Utc);
 
     [Fact]
     public void Apply_FullFrame_UpdatesStitcher()
@@ -104,7 +104,7 @@ public class ScreenPacketApplierTests
         using var stitcher = new ImageStitcher();
         var applier = new ScreenPacketApplier(StreamId, stitcher);
         var packet = new ScreenDataPacket(
-            StreamId, 0, CaptureTime, 128, 128, DataPacketType.FullFrame,
+            StreamId, 0, s_captureTime, 128, 128, DataPacketType.FullFrame,
             fullFrameData: new byte[] { 1, 2, 3 });
 
         Assert.Equal(PacketApplyOutcome.NeedsFullFrame, applier.Apply(packet));
@@ -119,7 +119,7 @@ public class ScreenPacketApplierTests
 
         // header says 128x128, image is 64x64
         var packet = new ScreenDataPacket(
-            StreamId, 0, CaptureTime, 128, 128, DataPacketType.FullFrame,
+            StreamId, 0, s_captureTime, 128, 128, DataPacketType.FullFrame,
             fullFrameData: Png(64, 64, Color.Blue));
 
         Assert.Equal(PacketApplyOutcome.NeedsFullFrame, applier.Apply(packet));
@@ -134,7 +134,7 @@ public class ScreenPacketApplierTests
         applier.Apply(FullFramePacket(0, Color.Blue));
 
         var corrupt = new ScreenDataPacket(
-            StreamId, 1, CaptureTime, 128, 128, DataPacketType.ChangedTiles,
+            StreamId, 1, s_captureTime, 128, 128, DataPacketType.ChangedTiles,
             changedTiles: new[] { new Tile(0, 0, 64, 64, 0, new byte[] { 1, 2, 3 }) });
 
         Assert.Equal(PacketApplyOutcome.Ignored, applier.Apply(corrupt));
@@ -146,21 +146,27 @@ public class ScreenPacketApplierTests
     {
         using var stitcher = new ImageStitcher();
         var applier = new ScreenPacketApplier(StreamId, stitcher);
-        var packet = new ScreenDataPacket("bob-screen", 0, CaptureTime, 128, 128, DataPacketType.Pulse);
+        var packet = new ScreenDataPacket("bob-screen", 0, s_captureTime, 128, 128, DataPacketType.Pulse);
 
         Assert.Throws<ArgumentException>(() => applier.Apply(packet));
     }
 
-    private static ScreenDataPacket FullFramePacket(long frameNumber, Color color) =>
-        new(StreamId, frameNumber, CaptureTime, 128, 128, DataPacketType.FullFrame,
+    private static ScreenDataPacket FullFramePacket(long frameNumber, Color color)
+    {
+        return new(StreamId, frameNumber, s_captureTime, 128, 128, DataPacketType.FullFrame,
             fullFrameData: Png(128, 128, color));
+    }
 
-    private static ScreenDataPacket TilePacket(long frameNumber, Color color) =>
-        new(StreamId, frameNumber, CaptureTime, 128, 128, DataPacketType.ChangedTiles,
+    private static ScreenDataPacket TilePacket(long frameNumber, Color color)
+    {
+        return new(StreamId, frameNumber, s_captureTime, 128, 128, DataPacketType.ChangedTiles,
             changedTiles: new[] { new Tile(0, 0, 64, 64, 0, Png(64, 64, color)) });
+    }
 
-    private static ScreenDataPacket PulsePacket(long frameNumber) =>
-        new(StreamId, frameNumber, CaptureTime, 128, 128, DataPacketType.Pulse);
+    private static ScreenDataPacket PulsePacket(long frameNumber)
+    {
+        return new(StreamId, frameNumber, s_captureTime, 128, 128, DataPacketType.Pulse);
+    }
 
     private static byte[] Png(int width, int height, Color color)
     {
@@ -181,8 +187,14 @@ public class ScreenPacketApplierTests
     {
         private DateTimeOffset _now = new(2026, 11, 3, 10, 30, 0, TimeSpan.Zero);
 
-        public override DateTimeOffset GetUtcNow() => _now;
+        public override DateTimeOffset GetUtcNow()
+        {
+            return _now;
+        }
 
-        public void Advance(TimeSpan by) => _now += by;
+        public void Advance(TimeSpan by)
+        {
+            _now += by;
+        }
     }
 }
