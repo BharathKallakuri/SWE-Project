@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using System.Collections.Generic;
 using Windows.Foundation;
 
 namespace Whiteboard.ViewModels;
@@ -25,7 +26,7 @@ public class EraserState : IViewModelState
     public void PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         Point point = e.GetCurrentPoint(_canvas).Position;
-        var hitElements = VisualTreeHelper.FindElementsInHostCoordinates(point, _canvas);
+        IEnumerable<UIElement> hitElements = VisualTreeHelper.FindElementsInHostCoordinates(point, _canvas);
 
         foreach (UIElement element in hitElements)
         {
