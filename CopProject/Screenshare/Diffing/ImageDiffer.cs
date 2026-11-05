@@ -7,6 +7,7 @@ namespace ScreenShare;
 
 public class ImageDiffer : IImageDiffer
 {
+    /// <summary>width and height of a full tile in pixels, edge tiles may be smaller</summary>
     public const int TILE_SIZE = 64;
 
     /*if more than this percentage of the screen has changed, sending individual tiles becomes less useful, so we send the complete frame.*/

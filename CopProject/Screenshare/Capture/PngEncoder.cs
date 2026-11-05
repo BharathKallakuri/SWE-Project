@@ -11,7 +11,7 @@ namespace ScreenShare;
 /// get an incomplete list and Save throws "Value cannot be null".
 /// looking the encoder up once, in a static constructor that the runtime runs on one thread avoids that race.
 /// </summary>
-internal static class PngEncoder
+public static class PngEncoder
 {
     private const int _LookupAttempts = 5;
 
