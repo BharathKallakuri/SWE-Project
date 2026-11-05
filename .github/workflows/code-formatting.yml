@@ -1,0 +1,60 @@
+name: Code formatting
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      enforce:
+        description: 'Fail pipeline on formatting errors'
+        type: boolean
+        default: false
+
+concurrency:
+  group: format-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  format-check:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore CopProject
+
+      - name: Verify formatting
+        run: |
+          # Check whether enforcement is enabled via GitHub UI variable or manual input
+          ENFORCE="false"
+          if [ "${{ vars.ENFORCE_FORMAT }}" = "true" ] || [ "${{ github.event.inputs.enforce }}" = "true" ]; then
+            ENFORCE="true"
+          fi
+
+          if ! dotnet format CopProject --verify-no-changes; then
+            echo "::error::Code formatting did not match expected formatting. Run 'dotnet format CopProject' to fix."
+
+            if [ "$ENFORCE" = "true" ]; then
+              echo "Enforcement is enabled. Failing pipeline."
+              exit 1
+            else
+              echo "Enforcement is disabled. Pipeline will not fail."
+              exit 0
+            fi
+          fi
