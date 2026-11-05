@@ -1,6 +1,7 @@
 using System.Text.Json;
-using Incidents;
+using Incident_module;
 using LocationTracker.Interfaces;
+using LocationTracker.ViewModels;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -9,26 +10,73 @@ namespace LocationTracker.Views;
 
 public sealed partial class LocationMapView : UserControl
 {
+    public event Action<Guid>? IncidentSelected;
+
     private IMapService? _map;
+    private LocationMapViewModel? _viewModel;
+    private bool _filterOptionsInitialized;
+    private bool _mapInitializationStarted;
 
     public LocationMapView()
     {
         InitializeComponent();
+        Loaded += LocationMapView_Loaded;
     }
 
-    public async void Initialize(IMapService map)
+    public void Initialize(IMapService map)
     {
         _map = map;
+        _viewModel = new LocationMapViewModel(map);
+        if (IsLoaded)
+        {
+            _ = InitializeMapAsync();
+        }
+    }
+
+    private async void LocationMapView_Loaded(object sender, RoutedEventArgs e)
+    {
+        await InitializeMapAsync();
+    }
+
+    private async Task InitializeMapAsync()
+    {
+        if (_map is null || _mapInitializationStarted || MapView.CoreWebView2 is not null)
+        {
+            return;
+        }
+
+        _mapInitializationStarted = true;
         MapView.NavigationCompleted += MapView_NavigationCompleted;
         // CoreWebView2 is initialized asynchronously; wait for it before navigating,
         // otherwise NavigateToString throws "A method was called at an unexpected time."
         await MapView.EnsureCoreWebView2Async();
 
         // OpenStreetMap blocks tile requests without a descriptive User-Agent.
-        MapView.CoreWebView2.Settings.UserAgent =
+        CoreWebView2 webView = MapView.CoreWebView2
+            ?? throw new InvalidOperationException("WebView2 failed to initialize.");
+        webView.Settings.UserAgent =
             "CopProject-LocationTracker/1.0 (https://github.com/Software-Engineering-CS5617/project)";
+        webView.WebMessageReceived += WebView_WebMessageReceived;
 
         MapView.NavigateToString(MapPage);
+    }
+
+    private void WebView_WebMessageReceived(
+        CoreWebView2 sender,
+        CoreWebView2WebMessageReceivedEventArgs args)
+    {
+        string messageJson = args.TryGetWebMessageAsString()
+            ?? args.WebMessageAsJson;
+        using JsonDocument message = JsonDocument.Parse(messageJson);
+        if (!message.RootElement.TryGetProperty("type", out JsonElement type) ||
+            type.GetString() != "incident-click" ||
+            !message.RootElement.TryGetProperty("id", out JsonElement id) ||
+            !Guid.TryParse(id.GetString(), out Guid incidentId))
+        {
+            return;
+        }
+
+        IncidentSelected?.Invoke(incidentId);
     }
 
     private async void MapView_NavigationCompleted(
@@ -60,8 +108,7 @@ public sealed partial class LocationMapView : UserControl
 
     private IncidentCategory? GetCategory()
     {
-        string value = (CategoryFilterBox.SelectedItem as ComboBoxItem)?
-            .Content?.ToString() ?? "All";
+        string value = CategoryFilterBox.SelectedItem?.ToString() ?? "All";
 
         if (value != "All" && Enum.TryParse<IncidentCategory>(value, out var result))
         {
@@ -73,8 +120,7 @@ public sealed partial class LocationMapView : UserControl
 
     private IncidentSeverity? GetSeverity()
     {
-        string value = (SeverityFilterBox.SelectedItem as ComboBoxItem)?
-            .Content?.ToString() ?? "All";
+        string value = SeverityFilterBox.SelectedItem?.ToString() ?? "All";
 
         if (value != "All" && Enum.TryParse<IncidentSeverity>(value, out var result))
         {
@@ -86,8 +132,7 @@ public sealed partial class LocationMapView : UserControl
 
     private IncidentStatus? GetStatus()
     {
-        string value = (StatusFilterBox.SelectedItem as ComboBoxItem)?
-            .Content?.ToString() ?? "All";
+        string value = StatusFilterBox.SelectedItem?.ToString() ?? "All";
 
         if (value != "All" && Enum.TryParse<IncidentStatus>(value, out var result))
         {
@@ -109,27 +154,34 @@ public sealed partial class LocationMapView : UserControl
 
     private async Task RefreshIncidentsAsync()
     {
-        if (_map is null)
+        if (_viewModel is null)
         {
             return;
         }
 
-        var incidentList = _map.GetIncidentsForMap(BuildFilter());
-
-        var incidentData = incidentList.Select(incident => new
+        await _viewModel.LoadAsync(BuildFilter());
+        if (!_filterOptionsInitialized)
         {
-            incident.Title,
-            incident.Description,
-            Category = incident.Category.ToString(),
-            Severity = incident.Severity.ToString(),
-            Status = incident.Status.ToString(),
-            Latitude = incident.Location.Latitude,
-            Longitude = incident.Location.Longitude,
-            incident.Location.Address
-        }).ToList();
+            _filterOptionsInitialized = true;
+            SetFilterOptions(_viewModel.Incidents);
+        }
 
-        string incidents = JsonSerializer.Serialize(incidentData);
+        string incidents = JsonSerializer.Serialize(_viewModel.Incidents);
         await MapView.ExecuteScriptAsync($"setIncidents({incidents});");
+    }
+
+    private void SetFilterOptions(IEnumerable<MapIncident> incidents)
+    {
+        CategoryFilterBox.ItemsSource = new[] { "All" }
+            .Concat(incidents.Select(incident => incident.Category).Distinct());
+        SeverityFilterBox.ItemsSource = new[] { "All" }
+            .Concat(incidents.Select(incident => incident.Severity).Distinct());
+        StatusFilterBox.ItemsSource = new[] { "All" }
+            .Concat(incidents.Select(incident => incident.Status).Distinct());
+
+        CategoryFilterBox.SelectedIndex = 0;
+        SeverityFilterBox.SelectedIndex = 0;
+        StatusFilterBox.SelectedIndex = 0;
     }
 
     private const string MapPage = """
@@ -142,7 +194,8 @@ public sealed partial class LocationMapView : UserControl
                 href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
           <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
           <style>
-            html, body, #map { height: 100%; margin: 0; }
+            html, body, #map { height: 100%; width: 100%; margin: 0; }
+            body { background: #dce8f2; }
           </style>
         </head>
         <body>
@@ -157,13 +210,21 @@ public sealed partial class LocationMapView : UserControl
             function setIncidents(incidents) {
               incidentMarkers.clearLayers();
               incidents.forEach(incident => {
-                const popup = `<strong>${incident.Title}</strong><br>
+                const popup = `<button onclick="selectIncident('${incident.Id}')">
+                    <strong>${incident.Title}</strong></button><br>
                   ${incident.Category} · ${incident.Severity}<br>
                   ${incident.Address ?? ''}<br>${incident.Description}`;
                 L.marker([incident.Latitude, incident.Longitude])
                   .addTo(incidentMarkers)
                   .bindPopup(popup);
               });
+            }
+
+            function selectIncident(id) {
+              window.chrome.webview.postMessage(JSON.stringify({
+                type: 'incident-click',
+                id: id
+              }));
             }
           </script>
         </body>

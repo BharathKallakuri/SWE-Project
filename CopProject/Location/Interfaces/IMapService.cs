@@ -1,13 +1,13 @@
-﻿using Incidents;
+using Incident_module;
 using LocationTracker.Models;
 namespace LocationTracker.Interfaces;
 
 public interface IMapService
 {
-    List<Incident> GetIncidentsForMap(IncidentFilter? filter = null);
-    Incident GetIncidentById(Guid id);
-    List<Incident> GetRecentIncidents(TimeSpan window);
-    List<Incident> GetNearbyIncidents(double latitude, double longitude, double radius);
+    Task<List<Incident>> GetIncidentsForMapAsync(IncidentFilter? filter = null);
+    Task<Incident> GetIncidentByIdAsync(Guid id);
+    Task<List<Incident>> GetRecentIncidentsAsync(TimeSpan window);
+    Task<List<Incident>> GetNearbyIncidentsAsync(double latitude, double longitude, double radius);
     Task<IncidentLocation?> GetLocationForClickAsync(double latitude, double longitude);
     Task<LocationSearchResult?> SearchAddressAsync(string address);
 }

@@ -22,31 +22,15 @@
 
                 <TextBlock Text="Category" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="Black"/>
                 <ComboBox x:Name="CategoryFilterBox" SelectedIndex="0" Foreground="Black"
-                          SelectionChanged="FilterChanged">
-                    <ComboBoxItem Content="All" Foreground="Black"/>
-                    <ComboBoxItem Content="DrunkDriving" Foreground="Black"/>
-                    <ComboBoxItem Content="Theft" Foreground="Black"/>
-                    <ComboBoxItem Content="Accident" Foreground="Black"/>
-                </ComboBox>
+                          SelectionChanged="FilterChanged"/>
 
                 <TextBlock Text="Severity" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="Black"/>
                 <ComboBox x:Name="SeverityFilterBox" SelectedIndex="0" Foreground="Black"
-                          SelectionChanged="FilterChanged">
-                    <ComboBoxItem Content="All" Foreground="Black"/>
-                    <ComboBoxItem Content="Low" Foreground="Black"/>
-                    <ComboBoxItem Content="Medium" Foreground="Black"/>
-                    <ComboBoxItem Content="High" Foreground="Black"/>
-                    <ComboBoxItem Content="Critical" Foreground="Black"/>
-                </ComboBox>
+                          SelectionChanged="FilterChanged"/>
 
                 <TextBlock Text="Status" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="Black"/>
                 <ComboBox x:Name="StatusFilterBox" SelectedIndex="0" Foreground="Black"
-                          SelectionChanged="FilterChanged">
-                    <ComboBoxItem Content="All" Foreground="Black"/>
-                    <ComboBoxItem Content="Reported" Foreground="Black"/>
-                    <ComboBoxItem Content="InProgress" Foreground="Black"/>
-                    <ComboBoxItem Content="Resolved" Foreground="Black"/>
-                </ComboBox>
+                          SelectionChanged="FilterChanged"/>
 
                 <TextBlock Text="From date" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" Foreground="Black"/>
                 <CalendarDatePicker x:Name="FromDatePicker" Foreground="Black"
@@ -59,7 +43,7 @@
         </Border>
 
         <!-- Map area -->
-        <Grid Grid.Column="1">
+        <Grid Grid.Column="1" MinHeight="500" MinWidth="600">
             <controls:WebView2 x:Name="MapView"
                                HorizontalAlignment="Stretch"
                                VerticalAlignment="Stretch"

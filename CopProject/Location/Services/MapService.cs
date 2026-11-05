@@ -1,4 +1,4 @@
-﻿using Incidents;
+using Incident_module;
 using LocationTracker.Interfaces;
 using LocationTracker.Models;
 
@@ -15,23 +15,23 @@ public class MapService : IMapService
         _geocoding = geocoding;
     }
 
-    public List<Incident> GetIncidentsForMap(IncidentFilter? filter = null)
+    public Task<List<Incident>> GetIncidentsForMapAsync(IncidentFilter? filter = null)
     {
         return _incidents.GetAllIncidents(filter);
     }
 
-    public Incident GetIncidentById(Guid id)
+    public Task<Incident> GetIncidentByIdAsync(Guid id)
     {
         return _incidents.GetIncidentById(id);
     }
 
-    public List<Incident> GetRecentIncidents(TimeSpan window)
+    public Task<List<Incident>> GetRecentIncidentsAsync(TimeSpan window)
     {
         var filter = new IncidentFilter(null, null, null, null, DateTime.Now - window, null, null, null);
         return _incidents.GetAllIncidents(filter);
     }
 
-    public List<Incident> GetNearbyIncidents(double latitude, double longitude, double radius)
+    public Task<List<Incident>> GetNearbyIncidentsAsync(double latitude, double longitude, double radius)
     {
         if (!Coordinates.IsValid(latitude, longitude))
         {

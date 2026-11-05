@@ -1,9 +1,19 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Cloud.Persistence;
+using FileSynchroniser.Models;
+using Incident_module;
+using Incident_module.Implementations;
+using Incident_module.Views;
+using LocationTracker.Services;
+using LocationTracker.Views;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using WinRT.Interop;
 
 namespace UX;
 
@@ -26,6 +36,7 @@ public sealed partial class MainWindow : Window
     bool inMeeting = false;
     bool isHost = false;   // host starts the meeting, client joins it
     bool resizingChat = false;
+    Task<IncidentPageContext>? incidentContextTask;
 
     public MainWindow()
     {
@@ -43,6 +54,7 @@ public sealed partial class MainWindow : Window
         DashView.Visibility = Vis(screen == "dash");
         MeetingView.Visibility = Vis(screen == "meeting");
         IncidentsView.Visibility = Vis(screen == "incidents");
+        LocationView.Visibility = Vis(screen == "location");
         UserPanel.Visibility = Vis(screen != "login");
         MeetingInfoText.Visibility = Vis(inMeeting);
     }
@@ -89,6 +101,8 @@ public sealed partial class MainWindow : Window
     void SignOut_Click(object sender, RoutedEventArgs e)
     {
         inMeeting = false;
+        LocationHost.Content = null;
+        incidentContextTask = null;
         ShowScreen("login");
     }
 
@@ -208,15 +222,95 @@ public sealed partial class MainWindow : Window
         ChatResizer.ReleasePointerCapture(e.Pointer);
     }
 
-    // incidents
-    void Incidents_Click(object sender, RoutedEventArgs e)
+    private async Task<IncidentPageContext> GetIncidentContextAsync()
     {
-        ShowScreen("incidents");
+        incidentContextTask ??= InitializeIncidentContextAsync();
+        return await incidentContextTask;
+    }
+
+    private async Task<IncidentPageContext> InitializeIncidentContextAsync()
+    {
+        IStorage storage = await StorageFactory.CreateAsync(ModuleType.IncidentManagement);
+        IFileOperations fileSynchronizer = new Synchroniser();
+        IIncidentController controller = await IncidentController.CreateAsync(storage, fileSynchronizer);
+
+        Guid currentUserId = Guid.TryParse(userId, out Guid parsedUserId)
+            ? parsedUserId
+            : Guid.NewGuid();
+
+        IntPtr windowHandle = WindowNative.GetWindowHandle(this);
+        return new IncidentPageContext(controller, currentUserId, windowHandle);
+    }
+
+    private async void Incidents_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            IncidentsFrame.Navigate(typeof(AllIncidentsPage), context);
+            ShowScreen("incidents");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load incidents", ex.Message);
+        }
+    }
+
+    private async void Location_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            var geocoding = new NominatimGeocodingService(new HttpClient());
+            var map = new LocationMapView();
+            map.IncidentSelected += LocationIncidentSelected;
+            map.Initialize(new MapService(context.IncidentController, geocoding));
+            LocationHost.Content = map;
+            ShowScreen("location");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load location", ex.Message);
+        }
+    }
+
+    private async void LocationIncidentSelected(Guid incidentId)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            IncidentsFrame.Navigate(
+                typeof(IncidentDetailsPage),
+                new IncidentDetailsPageParameters(context, incidentId));
+            LocationHost.Content = null;
+            ShowScreen("incidents");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load incident", ex.Message);
+        }
+    }
+
+    private async Task ShowErrorAsync(string title, string message)
+    {
+        await new ContentDialog
+        {
+            Title = title,
+            Content = message,
+            CloseButtonText = "OK",
+            XamlRoot = Root.XamlRoot
+        }.ShowAsync();
     }
 
     // Back goes to the meeting if we are in one, otherwise to the dashboard
     void IncidentsBack_Click(object sender, RoutedEventArgs e)
     {
+        ShowScreen(inMeeting ? "meeting" : "dash");
+    }
+
+    void LocationBack_Click(object sender, RoutedEventArgs e)
+    {
+        LocationHost.Content = null;
         ShowScreen(inMeeting ? "meeting" : "dash");
     }
 }

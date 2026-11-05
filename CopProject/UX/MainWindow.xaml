@@ -22,6 +22,8 @@
 
                 <Button Content="Incidents" Click="Incidents_Click" Foreground="White"
                         Background="#1F4A78"/>
+                <Button Content="Location" Click="Location_Click" Foreground="White"
+                        Background="#1F4A78"/>
                 <PersonPicture x:Name="ProfilePic" Width="30" Height="30"/>
                 <TextBlock x:Name="ProfileName" Foreground="White" VerticalAlignment="Center"/>
                 <Button Content="Sign out" Click="SignOut_Click" Foreground="White"
@@ -104,7 +106,22 @@
                 <TextBlock Text="Incidents" FontSize="32" FontWeight="SemiBold"/>
             </StackPanel>
 
-            <Border Grid.Row="1" Background="White" CornerRadius="10"/>
+            <Frame x:Name="IncidentsFrame" Grid.Row="1"/>
+        </Grid>
+
+        <!-- Location page -->
+        <Grid x:Name="LocationView" Grid.Row="1" Padding="16" RowSpacing="12" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <Button Content="Back" Click="LocationBack_Click" Background="White"/>
+                <TextBlock Text="Location" FontSize="32" FontWeight="SemiBold"/>
+            </StackPanel>
+            <ContentControl x:Name="LocationHost" Grid.Row="1"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"/>
         </Grid>
 
         <Grid x:Name="MeetingView" Grid.Row="1" Visibility="Collapsed">
