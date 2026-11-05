@@ -149,8 +149,6 @@
                 <Button x:Name="EndBtn" Content="End Meeting" Click="End_Click" Width="120" Height="50"
                         Background="#D13438" Foreground="White"/>
             </StackPanel>
-
-
             <Border x:Name="ChatPanel" Grid.Column="1" Grid.RowSpan="2" Width="320"
                     Background="White" CornerRadius="10" Margin="0,16,16,16"
                     Visibility="Collapsed">
