@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Networking.TCPCommunication;
@@ -8,6 +8,7 @@ namespace Networking.Test;
 /// <summary>
 /// Unit tests for CommunicatorFactory.
 /// </summary>
+#pragma warning disable CS0618
 [TestClass]
 public class CommunicatorFactoryTests
 {
@@ -57,10 +58,54 @@ public class CommunicatorFactoryTests
     [TestMethod]
     public void CreateCommunicator_AmbiguousFlags_ReturnsNull()
     {
+#pragma warning disable CS0618
         ICommunicator? bothTrue = CommunicatorFactory.CreateCommunicator(null, isServer: true, isClient: true);
         ICommunicator? bothFalse = CommunicatorFactory.CreateCommunicator(null, isServer: false, isClient: false);
+#pragma warning restore CS0618
 
         Assert.IsNull(bothTrue);
         Assert.IsNull(bothFalse);
+    }
+
+    /// <summary>
+    /// Checks that CreateServerCommunicator creates a CommunicatorServer instance.
+    /// </summary>
+    [TestMethod]
+    public void CreateServerCommunicator_ReturnsServerInstance()
+    {
+        using CommunicatorServer? server = CommunicatorFactory.CreateServerCommunicator() as CommunicatorServer;
+
+        Assert.IsNotNull(server);
+        Assert.IsGreaterThan(0, server.ListenPort);
+        Assert.IsNotNull(server.ListenIpAddress);
+        Assert.AreNotEqual(IPAddress.Any, server.ListenIpAddress);
+    }
+
+    /// <summary>
+    /// Checks that CreateServerCommunicator with specific endpoint returns configured server.
+    /// </summary>
+    [TestMethod]
+    public void CreateServerCommunicator_WithEndpoint_ReturnsServerInstance()
+    {
+        IPEndPoint serverEndpoint = new(IPAddress.Loopback, 9812);
+        using CommunicatorServer? server = CommunicatorFactory.CreateServerCommunicator(serverEndpoint) as CommunicatorServer;
+
+        Assert.IsNotNull(server);
+        Assert.AreEqual(9812, server.ListenPort);
+    }
+
+    /// <summary>
+    /// Checks that CreateClientCommunicator creates a CommunicatorClient connected to the server.
+    /// </summary>
+    [TestMethod]
+    public void CreateClientCommunicator_WithServerIp_ReturnsClientInstance()
+    {
+        IPEndPoint serverEndpoint = new(IPAddress.Loopback, 9813);
+        using CommunicatorServer server = new(serverEndpoint);
+
+        using CommunicatorClient? client = CommunicatorFactory.CreateClientCommunicator(serverEndpoint) as CommunicatorClient;
+
+        Assert.IsNotNull(client);
+        Assert.IsTrue(IPAddress.IsLoopback(client.ListenIpAddress));
     }
 }

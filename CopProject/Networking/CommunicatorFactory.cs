@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Net;
 using Networking.TCPCommunication;
 
@@ -13,6 +13,7 @@ public static class CommunicatorFactory
     /// Creates a communicator.
     /// </summary>
     /// <returns>A new communicator instance</returns>
+    [Obsolete("Use CreateClientCommunicator or CreateServerCommunicator instead.")]
     public static ICommunicator? CreateCommunicator(IPEndPoint? serverIp, bool isServer = true, bool isClient = false)
     {
         if (isServer == isClient)
@@ -35,5 +36,20 @@ public static class CommunicatorFactory
             }
         }
         return null;
+    }
+
+    public static ICommunicator CreateClientCommunicator(IPEndPoint serverIp)
+    {
+        return new CommunicatorClient(serverIp);
+    }
+
+    public static ICommunicator CreateServerCommunicator()
+    {
+        return new CommunicatorServer(null);
+    }
+
+    public static ICommunicator CreateServerCommunicator(IPEndPoint? serverIp)
+    {
+        return new CommunicatorServer(serverIp);
     }
 }

@@ -65,6 +65,12 @@ public class SendingQueue : Queue
 
     public override void Enqueue(Packet packet)
     {
+        if (packet == null)
+        {
+            Trace.WriteLine($"[Networking] SendingQueue.Enqueue: Cannot enqueue null packet");
+            return;
+        }
+
         Priority priority = NormalizePriority(packet.Priority);
         Trace.WriteLine($"[Networking] Enqueuing to {GetType().Name} with priority {priority}");
 
