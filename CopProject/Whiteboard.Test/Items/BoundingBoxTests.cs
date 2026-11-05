@@ -9,11 +9,13 @@ namespace Whiteboard.Test.Items;
 
 public class BoundingBoxTests : BaseGenerator
 {
+    /// <summary>
+    /// Test bounding box for circle is calculated properly
+    /// </summary>
     [Fact]
     public void Circle()
-
     {
-        ICircle circle = new Whiteboard.Items.Shapes.Circle() {
+        var circle = new Whiteboard.Items.Shapes.Circle() {
             Center = RandomPointGenerator.Generate(),
             Radius = Rng.NextDouble() * 100
         };
@@ -24,10 +26,13 @@ public class BoundingBoxTests : BaseGenerator
         Assert.Equal(circle.Radius * 2, circle.BoundingBox.Height);
     }
 
+    /// <summary>
+    /// Test bounding box for ellipse is calculated properly
+    /// </summary>
     [Fact]
     public void Ellipse()
     {
-        IEllipse ellipse = new Whiteboard.Items.Shapes.Ellipse() {
+        var ellipse = new Whiteboard.Items.Shapes.Ellipse() {
             Center = RandomPointGenerator.Generate(),
             Width = Rng.NextDouble() * 100,
             Height = Rng.NextDouble() * 100
