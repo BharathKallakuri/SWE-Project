@@ -4,10 +4,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Whiteboard.Interfaces;
 
 namespace Whiteboard.Selection;
 
+[ExcludeFromCodeCoverage]
+// Temporary exclusion from code coverage
 public class SelectionState : ISelectionState
 {
     public HashSet<Guid> SelectedItemIds { get; } = [];

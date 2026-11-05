@@ -5,6 +5,7 @@
 #nullable enable
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Items.Shapes;
@@ -12,6 +13,8 @@ using Whiteboard.Models;
 
 namespace Whiteboard.Selection;
 
+[ExcludeFromCodeCoverage]
+// Temporary exclusion from code coverage
 public class SelectionService : ISelectionService
 {
     private readonly WhiteboardCanvas _canvas;

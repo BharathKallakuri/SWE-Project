@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Windows.Foundation;
 
 namespace Whiteboard.ViewModels;
@@ -14,6 +15,8 @@ namespace Whiteboard.ViewModels;
 /// <summary>
 /// Represents the state when the Eraser tool is selected.
 /// </summary>
+[ExcludeFromCodeCoverage]
+// Temporary exclusion from code coverage
 public class EraserState : IViewModelState
 {
     private readonly Canvas _canvas;

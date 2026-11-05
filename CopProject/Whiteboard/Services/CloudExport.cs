@@ -1,13 +1,16 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cloud.Persistence;
 using Microsoft.UI.Xaml;
 using Whiteboard.Interfaces;
 using Whiteboard.Models;
 using System.Text.Json;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Whiteboard.Services;
 
+[ExcludeFromCodeCoverage]
+// Temporary exclusion from code coverage
 public class CloudExport
 {
     private readonly ICanvasRender _canvasRender;

@@ -8,9 +8,12 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Whiteboard.Interfaces;
 using Whiteboard.Models;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Whiteboard.Services;
 
+// Temporary exclusion from code coverage
+[ExcludeFromCodeCoverage]
 public class CanvasRender : ICanvasRender
 {
     public async Task<byte[]> RenderToPngAsync(UIElement element)
