@@ -13,6 +13,7 @@
                 <ModulePath>.*\\chat\.dll$</ModulePath>
                 <ModulePath>.*\\networking\.dll$</ModulePath>
                 <ModulePath>.*\\cloud\.dll$</ModulePath>  
+                <ModulePath>.*\\whiteboard\.dll$</ModulePath>  
               </Include>
             </ModulePaths>
             <Sources>
