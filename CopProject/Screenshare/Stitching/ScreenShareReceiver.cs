@@ -84,6 +84,57 @@ internal sealed class ScreenShareReceiver : IDisposable
         _sendToHost(new Unsubscribe(_local, streamId));
     }
 
+    /// <summary>
+    /// gets a copy of a stream's latest image, or null.
+    /// </summary>
+    public Bitmap? GetFrame(string streamId)
+    {
+        return _frames.Get(streamId);
+    }
+
+    private void OnStreamStarted(StreamStarted started)
+    {
+        bool isNew = !_streamNames.ContainsKey(started.StreamId);
+        _streamNames[started.StreamId] = started.DisplayName;
+
+        // a restarted stream numbers its frames from 0 again, so start a fresh picture;
+        // the host sends this subscriber a full frame
+        if (_subscriptions.Remove(started.StreamId, out Subscription? old))
+        {
+            old.Dispose();
+            _subscriptions[started.StreamId] = CreateSubscription(started.StreamId);
+        }
+
+        if (isNew)
+        {
+            StreamAdded?.Invoke(started.StreamId, started.DisplayName);
+        }
+    }
+
+    private void OnData(ScreenDataPacket packet)
+    {
+        if (!_subscriptions.TryGetValue(packet.StreamId, out Subscription? subscription))
+        {
+            return;
+        }
+
+        // acknowledge receipt even if the packet turns out unusable, so the host keeps pacing
+        _sendToHost(new FrameAck(_local, packet.StreamId, packet.FrameNumber));
+
+        PacketApplyOutcome outcome = subscription.Applier.Apply(packet);
+        if (outcome != PacketApplyOutcome.Applied || packet.IsPulse)
+        {
+            return;
+        }
+
+        using (Bitmap frame = subscription.Stitcher.GetCurrentFrame()!)
+        {
+            _frames.Update(packet.StreamId, frame);
+        }
+
+        FrameUpdated?.Invoke(packet.StreamId);
+    }
+
     public void Dispose()
     {
 
