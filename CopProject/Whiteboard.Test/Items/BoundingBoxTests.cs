@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -61,5 +61,40 @@ public class BoundingBoxTests : BaseGenerator
         Assert.Equal(eqTriangle.Center.Y + ((2.0 / 3.0) * height), eqTriangle.BoundingBox.Top);
         Assert.Equal(eqTriangle.SideLength, eqTriangle.BoundingBox.Width);
         Assert.Equal(height, eqTriangle.BoundingBox.Height);
+    }
+
+    /// <summary>
+    /// Test bounding box for square is calculated properly
+    /// </summary>
+    [Fact]
+    public void Square()
+    {
+        var square = new Whiteboard.Items.Shapes.Square() {
+            Center = RandomPointGenerator.Generate(),
+            SideLegth = Rng.NextDouble() * 100
+        };
+
+        Assert.Equal(square.Center.X - (square.SideLegth / 2), square.BoundingBox.Left);
+        Assert.Equal(square.Center.Y + (square.SideLegth / 2), square.BoundingBox.Top);
+        Assert.Equal(square.SideLegth, square.BoundingBox.Width);
+        Assert.Equal(square.SideLegth, square.BoundingBox.Height);
+    }
+
+    /// <summary>
+    /// Test bounding box for rectangle is calculated properly
+    /// </summary>
+    [Fact]
+    public void Rectangle()
+    {
+        var rectangle = new Whiteboard.Items.Shapes.Rectangle() {
+            Center = RandomPointGenerator.Generate(),
+            Width = Rng.NextDouble() * 100,
+            Height = Rng.NextDouble() * 100
+        };
+
+        Assert.Equal(rectangle.Center.X - (rectangle.Width / 2), rectangle.BoundingBox.Left);
+        Assert.Equal(rectangle.Center.Y + (rectangle.Height / 2), rectangle.BoundingBox.Top);
+        Assert.Equal(rectangle.Width, rectangle.BoundingBox.Width);
+        Assert.Equal(rectangle.Height, rectangle.BoundingBox.Height);
     }
 }
