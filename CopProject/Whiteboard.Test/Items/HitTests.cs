@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Whiteboard.Interfaces;
+using Whiteboard.Items;
 using Whiteboard.Test.RandomGenerators;
 
 namespace Whiteboard.Test.Items;
@@ -91,5 +92,31 @@ public class HitTests : BaseGenerator
             Height = 10
         };
         Assert.False(degenerate.HitTest(ellipse.Center));
+    }
+
+    /// <summary>
+    /// Test hit testing for rectangle for inside, boundary, and outside points.
+    /// </summary>
+    [Fact]
+    public void Rectangle()
+    {
+        var rect = new Whiteboard.Items.Shapes.Rectangle() {
+            Center = RandomPointGenerator.Generate(),
+            Width = (Rng.NextDouble() * 100) + 2.0,
+            Height = (Rng.NextDouble() * 100) + 2.0
+        };
+
+        // Center should hit
+        Assert.True(rect.HitTest(rect.Center));
+
+        // Boundary points should hit
+        Assert.True(rect.HitTest(new Point2D(rect.BoundingBox.Left, rect.BoundingBox.Top)));
+        Assert.True(rect.HitTest(new Point2D(rect.BoundingBox.Left + rect.BoundingBox.Width, rect.BoundingBox.Top + rect.BoundingBox.Height)));
+        Assert.True(rect.HitTest(new Point2D(rect.BoundingBox.Left, rect.Center.Y)));
+
+        // Points outside should miss
+        Assert.False(rect.HitTest(new Point2D(rect.BoundingBox.Left - 5.0, rect.Center.Y)));
+        Assert.False(rect.HitTest(new Point2D(rect.Center.X, rect.BoundingBox.Top - 5.0)));
+        Assert.False(rect.HitTest(new Point2D(rect.BoundingBox.Left + rect.BoundingBox.Width + 5.0, rect.Center.Y)));
     }
 }
