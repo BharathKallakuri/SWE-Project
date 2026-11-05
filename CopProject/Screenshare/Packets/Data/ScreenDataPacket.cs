@@ -5,8 +5,10 @@
 /// a packet contains a complete frame, changed screen tiles, or nothing (a pulse)
 /// </summary>
 
-public class ScreenDataPacket
+public class ScreenDataPacket : IScreenShareMessage
 {
+    public ScreenShareMessageKind Kind => ScreenShareMessageKind.Data;
+
     /// <summary>
     /// gets the id of the screen-sharing stream the packet belongs to
     /// </summary>
