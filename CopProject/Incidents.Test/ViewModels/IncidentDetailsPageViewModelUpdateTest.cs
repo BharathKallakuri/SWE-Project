@@ -58,7 +58,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task SaveChangesAsync_AllFieldsChanged_UpdatesIncident()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         _viewModel.EditableStatus = IncidentStatus.InProgress;
         _viewModel.EditableCategory = IncidentCategory.Theft;
@@ -85,7 +85,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task SaveChangesAsync_NoFieldsChanged_LeavesIncidentUnchanged()
     {
-        Incident incident = await LoadCreatedIncidentAsync();
+        Incident incident = await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
         await _viewModel.SaveChangesAsync();
 
         Assert.IsNotNull(_viewModel.Incident);
@@ -103,7 +103,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task SaveChangesAsync_LatitudeChanged_UpdatesLocation()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
         _viewModel.EditableLatitude = 11.0;
         await _viewModel.SaveChangesAsync();
 
@@ -116,7 +116,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task SaveChangesAsync_LongitudeChanged_UpdatesLocation()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
         _viewModel.EditableLongitude = 77.0;
         await _viewModel.SaveChangesAsync();
 
@@ -129,7 +129,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task SaveChangesAsync_AddressChanged_UpdatesLocation()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
         _viewModel.EditableAddress = "Updated address";
         await _viewModel.SaveChangesAsync();
 
@@ -143,7 +143,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task SaveChangesAsync_Success_ResetsEditableFields()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         _viewModel.EditableStatus = IncidentStatus.InProgress;
         _viewModel.EditableCategory = IncidentCategory.Theft;
@@ -168,7 +168,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task SaveChangesAsync_Success_DisablesEditMode()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         _viewModel.IsEditMode = true;
 
@@ -184,7 +184,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task SaveChangesAsync_Success_ResetsIsBusy()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
         await _viewModel.SaveChangesAsync();
 
         Assert.IsFalse(_viewModel.IsBusy);
@@ -197,7 +197,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task SaveChangesAsync_Success_ClearsErrorMessage()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
         _viewModel.ErrorMessage = "Previous error.";
         await _viewModel.SaveChangesAsync();
 
@@ -211,7 +211,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task SaveChangesAsync_Success_RefreshesChangeTimeline()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
         _viewModel.EditableStatus = IncidentStatus.InProgress;
         await _viewModel.SaveChangesAsync();
 
@@ -241,7 +241,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task AddEvidenceItemsAsync_EmptyEvidenceList_DoesNothing()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
         await _viewModel.AddEvidenceItemsAsync([]);
 
         Assert.IsEmpty(_viewModel.Evidences);
@@ -254,7 +254,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task AddEvidenceItemsAsync_ValidEvidence_AddsEvidence()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         IncidentEvidence evidence = new(
             Guid.NewGuid(),
@@ -277,7 +277,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task AddEvidenceItemsAsync_ValidEvidence_RefreshesIncident()
     {
-        Incident originalIncident = await LoadCreatedIncidentAsync();
+        Incident originalIncident = await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         IncidentEvidence evidence = new(
             Guid.NewGuid(),
@@ -299,7 +299,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task AddEvidenceItemsAsync_ValidEvidence_ResetsIsBusy()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         IncidentEvidence evidence = new(
             Guid.NewGuid(),
@@ -320,7 +320,7 @@ public class IncidentDetailsPageViewModelUpdateTest
     [TestMethod]
     public async Task AddEvidenceItemsAsync_ValidEvidence_ClearsErrorMessage()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         _viewModel.ErrorMessage = "Previous error.";
 
@@ -337,33 +337,4 @@ public class IncidentDetailsPageViewModelUpdateTest
         Assert.AreEqual(Visibility.Collapsed, _viewModel.ErrorVisibility);
     }
 
-    // Helpers
-
-    /// <summary>
-    /// Creates an incident through the real IncidentController.
-    /// </summary>
-    private async Task<Incident> CreateIncidentAsync()
-    {
-        CreateIncidentRequest request = new(
-            "Vehicle accident",
-            "Test incident description",
-            _currentUserId,
-            IncidentCategory.Accident,
-            IncidentSeverity.High,
-            new IncidentLocation(10.0, 76.0, "Test location"),
-            []);
-
-        return await _controller.CreateIncident(request);
-    }
-
-    /// <summary>
-    /// Creates an incident through the real controller and loads it into the ViewModel.
-    /// </summary>
-    private async Task<Incident> LoadCreatedIncidentAsync()
-    {
-        Incident incident = await CreateIncidentAsync();
-        await _viewModel.LoadIncidentAsync(incident.Id);
-        Assert.IsNotNull(_viewModel.Incident);
-        return _viewModel.Incident;
-    }
 }

@@ -1,7 +1,5 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Incident_module;
@@ -17,15 +15,17 @@ public class AllIncidentsPageViewModelTests
 {
     private IIncidentController _controller = null!;
     private AllIncidentsPageViewModel _viewModel = null!;
+
     private readonly Guid _user1 =
         Guid.Parse("11111111-1111-1111-1111-111111111111");
+
     private readonly Guid _user2 =
         Guid.Parse("22222222-2222-2222-2222-222222222222");
+
     private Incident _vehicleIncident = null!;
     private Incident _theftIncident = null!;
     private Incident _drunkDrivingIncident = null!;
     private Incident _crashIncident = null!;
-
 
     [TestInitialize]
     public async Task Setup()
@@ -35,7 +35,7 @@ public class AllIncidentsPageViewModelTests
 
         _controller = await IncidentController.CreateAsync(storageService, fileSynchroniser);
 
-        // Create incidents through the controller.
+        // Create incidents through the real controller.
         _vehicleIncident = await CreateTestIncident(
             "Vehicle Accident",
             _user1,
@@ -70,7 +70,6 @@ public class AllIncidentsPageViewModelTests
 
         _viewModel = new AllIncidentsPageViewModel(_controller, _user1);
 
-        // Load incidents into the ViewModel.
         await _viewModel.LoadAsync();
     }
 
@@ -92,7 +91,7 @@ public class AllIncidentsPageViewModelTests
         return await _controller.CreateIncident(request);
     }
 
-    // Constructor Creation tests
+    // Constructor tests
 
     /// <summary>
     /// Test 1: Constructor initializes all filter selections to their defaults.
@@ -162,6 +161,8 @@ public class AllIncidentsPageViewModelTests
             () => new AllIncidentsPageViewModel(null!, _user1));
     }
 
+    // Load tests
+
     /// <summary>
     /// Test 4: LoadAsync retrieves incidents from the controller.
     /// </summary>
@@ -191,7 +192,7 @@ public class AllIncidentsPageViewModelTests
         }
     }
 
-    // Fielter tests
+    // Filter tests
 
     /// <summary>
     /// Test 6: SearchText filters incidents by their title.
@@ -276,9 +277,8 @@ public class AllIncidentsPageViewModelTests
         Assert.AreEqual(IncidentSeverity.High, _viewModel.Incidents[0].Severity);
     }
 
-
     /// <summary>
-    /// Test 13: FromDate includes incidents created after the selected date.
+    /// Test 13: FromDate includes incidents from the selected date.
     /// </summary>
     [TestMethod]
     public void FromDate_FiltersIncidentsFromSelectedDate()
@@ -289,18 +289,18 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 14: FromDate excludes incidents created before the selected date.
+    /// Test 14: FromDate excludes incidents before the selected date.
     /// </summary>
     [TestMethod]
     public void FromDate_FutureDate_ReturnsNoIncidents()
     {
         _viewModel.FromDate = new DateTimeOffset(DateTime.Now.AddDays(1));
 
-        Assert.HasCount(0, _viewModel.Incidents);
+        Assert.IsEmpty(_viewModel.Incidents);
     }
 
     /// <summary>
-    /// Test 15: ToDate includes incidents created before the selected date.
+    /// Test 15: ToDate includes incidents before the selected date.
     /// </summary>
     [TestMethod]
     public void ToDate_FutureDate_ReturnsAllIncidents()
@@ -311,14 +311,14 @@ public class AllIncidentsPageViewModelTests
     }
 
     /// <summary>
-    /// Test 16: ToDate excludes incidents created after the selected date.
+    /// Test 16: ToDate excludes incidents after the selected date.
     /// </summary>
     [TestMethod]
     public void ToDate_PastDate_ReturnsNoIncidents()
     {
         _viewModel.ToDate = new DateTimeOffset(DateTime.Now.AddDays(-1));
 
-        Assert.HasCount(0, _viewModel.Incidents);
+        Assert.IsEmpty(_viewModel.Incidents);
     }
 
     /// <summary>
@@ -367,7 +367,6 @@ public class AllIncidentsPageViewModelTests
         Assert.HasCount(4, _viewModel.Incidents);
     }
 
-
     /// <summary>
     /// Test 21: Multiple filters are applied together.
     /// </summary>
@@ -381,7 +380,10 @@ public class AllIncidentsPageViewModelTests
         _viewModel.CreatedByInput = _user1.ToString();
 
         Assert.HasCount(1, _viewModel.Incidents);
-        Assert.AreEqual("Drunk Driving Near School", _viewModel.Incidents[0].Title);
+
+        Assert.AreEqual(
+            "Drunk Driving Near School",
+            _viewModel.Incidents[0].Title);
     }
 
     // ClearFilters tests
@@ -406,8 +408,10 @@ public class AllIncidentsPageViewModelTests
         Assert.AreEqual("All", _viewModel.SelectedStatus);
         Assert.AreEqual("All", _viewModel.SelectedCategory);
         Assert.AreEqual("All", _viewModel.SelectedSeverity);
+
         Assert.IsNull(_viewModel.FromDate);
         Assert.IsNull(_viewModel.ToDate);
+
         Assert.AreEqual(string.Empty, _viewModel.CreatedByInput);
         Assert.HasCount(4, _viewModel.Incidents);
     }
@@ -419,6 +423,7 @@ public class AllIncidentsPageViewModelTests
     public void ClearFiltersCommand_Execute_ClearsFilters()
     {
         _viewModel.SearchText = "Vehicle";
+
         _viewModel.ClearFiltersCommand.Execute(null);
 
         Assert.AreEqual(string.Empty, _viewModel.SearchText);
@@ -455,14 +460,10 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void SearchText_Changed_RaisesPropertyChanged()
     {
-        List<string?> changedProperties = [];
-
-        _viewModel.PropertyChanged +=
-            (_, e) => changedProperties.Add(e.PropertyName);
-
-        _viewModel.SearchText = "Vehicle";
-
-        CollectionAssert.Contains(changedProperties,nameof(_viewModel.SearchText));
+        VMTestHelpers.AssertPropertyChanged(
+            _viewModel,
+            () => _viewModel.SearchText = "Vehicle",
+            nameof(_viewModel.SearchText));
     }
 
     /// <summary>
@@ -471,14 +472,10 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void SearchText_SameValue_DoesNotRaisePropertyChanged()
     {
-        int notificationCount = 0;
-
-        _viewModel.PropertyChanged +=
-            (_, _) => notificationCount++;
-
-        _viewModel.SearchText = string.Empty;
-
-        Assert.AreEqual(0, notificationCount);
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.SearchText = string.Empty,
+            nameof(_viewModel.SearchText));
     }
 
     /// <summary>
@@ -487,19 +484,11 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void SelectedStatus_Changed_RaisesPropertyChanged()
     {
-        bool notified = false;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.SelectedStatus))
-            {
-                notified = true;
-            }
-        };
-
-        _viewModel.SelectedStatus =
-            nameof(IncidentStatus.Resolved);
-
-        Assert.IsTrue(notified);
+        VMTestHelpers.AssertPropertyChanged(
+            _viewModel,
+            () => _viewModel.SelectedStatus =
+                nameof(IncidentStatus.Resolved),
+            nameof(_viewModel.SelectedStatus));
     }
 
     /// <summary>
@@ -508,19 +497,10 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void FromDate_Changed_RaisesPropertyChanged()
     {
-        bool notified = false;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.FromDate))
-            {
-                notified = true;
-            }
-        };
-
-        _viewModel.FromDate =
-            new DateTimeOffset(DateTime.Now);
-
-        Assert.IsTrue(notified);
+        VMTestHelpers.AssertPropertyChanged(
+            _viewModel,
+            () => _viewModel.FromDate = DateTimeOffset.Now,
+            nameof(_viewModel.FromDate));
     }
 
     /// <summary>
@@ -529,6 +509,14 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void ClearFilters_RaisesPropertyChangedForAllFilters()
     {
+        _viewModel.SearchText = "Vehicle";
+        _viewModel.SelectedStatus = nameof(IncidentStatus.Resolved);
+        _viewModel.SelectedCategory = nameof(IncidentCategory.Theft);
+        _viewModel.SelectedSeverity = nameof(IncidentSeverity.High);
+        _viewModel.FromDate = new DateTimeOffset(DateTime.Now.AddDays(-2));
+        _viewModel.ToDate = new DateTimeOffset(DateTime.Now.AddDays(2));
+        _viewModel.CreatedByInput = _user2.ToString();
+
         List<string?> changedProperties = [];
 
         _viewModel.PropertyChanged +=
@@ -550,122 +538,73 @@ public class AllIncidentsPageViewModelTests
 
         foreach (string property in expectedProperties)
         {
-            CollectionAssert.Contains(
-                changedProperties,
-                property);
+            CollectionAssert.Contains(changedProperties, property);
         }
     }
 
     /// <summary>
-    /// Test 31: Setting SelectedStatus to its existing value does not raise PropertyChanged.
+    /// Test 31: Setting SelectedStatus to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void SelectedStatus_SameValue_DoesNotRaisePropertyChanged()
     {
-        _viewModel.SelectedStatus = nameof(IncidentStatus.Resolved);
-
-        int notificationCount = 0;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.SelectedStatus))
-            {
-                notificationCount++;
-            }
-        };
-
-        _viewModel.SelectedStatus = nameof(IncidentStatus.Resolved);
-
-        Assert.AreEqual(0, notificationCount);
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.SelectedStatus = "All",
+            nameof(_viewModel.SelectedStatus));
     }
 
     /// <summary>
-    /// Test 32: Setting SelectedCategory to its existing value does not raise PropertyChanged.
+    /// Test 32: Setting SelectedCategory to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void SelectedCategory_SameValue_DoesNotRaisePropertyChanged()
     {
-        _viewModel.SelectedCategory = nameof(IncidentCategory.Accident);
-
-        int notificationCount = 0;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.SelectedCategory))
-            {
-                notificationCount++;
-            }
-        };
-
-        _viewModel.SelectedCategory = nameof(IncidentCategory.Accident);
-
-        Assert.AreEqual(0, notificationCount);
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.SelectedCategory = "All",
+            nameof(_viewModel.SelectedCategory));
     }
 
     /// <summary>
-    /// Test 33: Setting SelectedSeverity to its existing value does not raise PropertyChanged.
+    /// Test 33: Setting SelectedSeverity to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void SelectedSeverity_SameValue_DoesNotRaisePropertyChanged()
     {
-        _viewModel.SelectedSeverity = nameof(IncidentSeverity.High);
-
-        int notificationCount = 0;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.SelectedSeverity))
-            {
-                notificationCount++;
-            }
-        };
-
-        _viewModel.SelectedSeverity = nameof(IncidentSeverity.High);
-
-        Assert.AreEqual(0, notificationCount);
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.SelectedSeverity = "All",
+            nameof(_viewModel.SelectedSeverity));
     }
 
     /// <summary>
-    /// Test 34: Setting FromDate to its existing value does not raise PropertyChanged.
+    /// Test 34: Setting FromDate to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void FromDate_SameValue_DoesNotRaisePropertyChanged()
     {
         DateTimeOffset date = DateTimeOffset.Now;
-
         _viewModel.FromDate = date;
 
-        int notificationCount = 0;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.FromDate))
-            {
-                notificationCount++;
-            }
-        };
-
-        _viewModel.FromDate = date;
-
-        Assert.AreEqual(0, notificationCount);
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.FromDate = date,
+            nameof(_viewModel.FromDate));
     }
 
     /// <summary>
-    /// Test 35: Setting FromDate to null when it is already null does not raise PropertyChanged.
+    /// Test 35: Setting FromDate to null when it is already null raises no notification.
     /// </summary>
     [TestMethod]
     public void FromDate_NullValue_DoesNotRaisePropertyChanged()
     {
         Assert.IsNull(_viewModel.FromDate);
 
-        int notificationCount = 0;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.FromDate))
-            {
-                notificationCount++;
-            }
-        };
-
-        _viewModel.FromDate = null;
-
-        Assert.AreEqual(0, notificationCount);
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.FromDate = null,
+            nameof(_viewModel.FromDate));
     }
 
     /// <summary>
@@ -676,61 +615,42 @@ public class AllIncidentsPageViewModelTests
     {
         _viewModel.FromDate = DateTimeOffset.Now;
 
-        bool notified = false;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.FromDate))
-            { notified = true; }
-        };
-
-        _viewModel.FromDate = null;
+        VMTestHelpers.AssertPropertyChanged(
+            _viewModel,
+            () => _viewModel.FromDate = null,
+            nameof(_viewModel.FromDate));
 
         Assert.IsNull(_viewModel.FromDate);
-        Assert.IsTrue(notified);
     }
 
     /// <summary>
-    /// Test 37: Setting ToDate to its existing value does not raise PropertyChanged.
+    /// Test 37: Setting ToDate to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void ToDate_SameValue_DoesNotRaisePropertyChanged()
     {
         DateTimeOffset date = DateTimeOffset.Now;
-
         _viewModel.ToDate = date;
 
-        int notificationCount = 0;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.ToDate))
-            { notificationCount++; }
-        };
-
-        _viewModel.ToDate = date;
-
-        Assert.AreEqual(0, notificationCount);
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.ToDate = date,
+            nameof(_viewModel.ToDate));
     }
 
     /// <summary>
-    /// Test 38: Setting ToDate to null when it is already null does not raise PropertyChanged.
+    /// Test 38: Setting ToDate to null when it is already null raises no notification.
     /// </summary>
     [TestMethod]
     public void ToDate_NullValue_DoesNotRaisePropertyChanged()
     {
         Assert.IsNull(_viewModel.ToDate);
 
-        int notificationCount = 0;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.ToDate))
-            { notificationCount++; }
-        };
-
-        _viewModel.ToDate = null;
-
-        Assert.AreEqual(0, notificationCount);
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.ToDate = null,
+            nameof(_viewModel.ToDate));
     }
-
 
     /// <summary>
     /// Test 39: Setting ToDate to null after assigning a date raises PropertyChanged.
@@ -740,39 +660,28 @@ public class AllIncidentsPageViewModelTests
     {
         _viewModel.ToDate = DateTimeOffset.Now;
 
-        bool notified = false;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.ToDate))
-            { notified = true; }
-        };
-
-        _viewModel.ToDate = null;
+        VMTestHelpers.AssertPropertyChanged(
+            _viewModel,
+            () => _viewModel.ToDate = null,
+            nameof(_viewModel.ToDate));
 
         Assert.IsNull(_viewModel.ToDate);
-        Assert.IsTrue(notified);
     }
 
     /// <summary>
-    /// Test 40: Setting CreatedByInput to its existing value does not raise PropertyChanged.
+    /// Test 40: Setting CreatedByInput to its existing value raises no notification.
     /// </summary>
     [TestMethod]
     public void CreatedByInput_SameValue_DoesNotRaisePropertyChanged()
     {
-        _viewModel.CreatedByInput = _user1.ToString();
+        string userId = _user1.ToString();
+        _viewModel.CreatedByInput = userId;
 
-        int notificationCount = 0;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.CreatedByInput))
-            { notificationCount++; }
-        };
-
-        _viewModel.CreatedByInput = _user1.ToString();
-
-        Assert.AreEqual(0, notificationCount);
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.CreatedByInput = userId,
+            nameof(_viewModel.CreatedByInput));
     }
-
 
     /// <summary>
     /// Test 41: Changing CreatedByInput raises PropertyChanged.
@@ -780,17 +689,11 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void CreatedByInput_ChangedValue_RaisesPropertyChanged()
     {
-        bool notified = false;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == nameof(_viewModel.CreatedByInput))
-            { notified = true; }
-        };
-
-        _viewModel.CreatedByInput = _user1.ToString();
+        VMTestHelpers.AssertPropertyChanged(
+            _viewModel,
+            () => _viewModel.CreatedByInput = _user1.ToString(),
+            nameof(_viewModel.CreatedByInput));
 
         Assert.AreEqual(_user1.ToString(), _viewModel.CreatedByInput);
-        Assert.IsTrue(notified);
     }
-
 }

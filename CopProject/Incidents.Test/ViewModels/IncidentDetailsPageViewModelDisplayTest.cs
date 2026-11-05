@@ -144,7 +144,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void IsEditMode_SameValue_DoesNotRaisePropertyChanged()
     {
-        AssertNoPropertyChanged(() => _viewModel.IsEditMode = false,
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.IsEditMode = false,
             nameof(_viewModel.IsEditMode));
     }
 
@@ -238,7 +240,8 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void IsBusy_SameValue_DoesNotRaisePropertyChanged()
     {
-        AssertNoPropertyChanged(
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
             () => _viewModel.IsBusy = false,
             nameof(_viewModel.IsBusy));
 
@@ -281,7 +284,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     {
         _viewModel.ErrorMessage = "Test error.";
 
-        AssertNoPropertyChanged(() => _viewModel.ErrorMessage = "Test error.",
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.ErrorMessage = "Test error.",
             nameof(_viewModel.ErrorMessage));
     }
 
@@ -326,7 +331,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void EditableStatus_ChangedValue_RaisesPropertyChanged()
     {
-        AssertPropertyChanged(() => _viewModel.EditableStatus = IncidentStatus.InProgress,
+        VMTestHelpers.AssertPropertyChanged(
+            _viewModel,
+            () => _viewModel.EditableStatus = IncidentStatus.InProgress,
             nameof(_viewModel.EditableStatus));
     }
 
@@ -336,7 +343,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void EditableStatus_SameValue_DoesNotRaisePropertyChanged()
     {
-        AssertNoPropertyChanged(() => _viewModel.EditableStatus = default,
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.EditableStatus = default,
             nameof(_viewModel.EditableStatus));
     }
 
@@ -346,7 +355,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void EditableCategory_ChangedValue_RaisesPropertyChanged()
     {
-        AssertPropertyChanged(() => _viewModel.EditableCategory = IncidentCategory.Theft,
+        VMTestHelpers.AssertPropertyChanged(
+            _viewModel,
+            () => _viewModel.EditableCategory = IncidentCategory.Theft,
             nameof(_viewModel.EditableCategory));
     }
 
@@ -356,7 +367,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void EditableCategory_SameValue_DoesNotRaisePropertyChanged()
     {
-        AssertNoPropertyChanged(() => _viewModel.EditableCategory = default,
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.EditableCategory = default,
             nameof(_viewModel.EditableCategory));
     }
 
@@ -366,7 +379,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void EditableSeverity_ChangedValue_RaisesPropertyChanged()
     {
-        AssertPropertyChanged(() => _viewModel.EditableSeverity = IncidentSeverity.Critical,
+        VMTestHelpers.AssertPropertyChanged(
+            _viewModel,
+            () => _viewModel.EditableSeverity = IncidentSeverity.Critical,
             nameof(_viewModel.EditableSeverity));
     }
 
@@ -376,7 +391,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void EditableSeverity_SameValue_DoesNotRaisePropertyChanged()
     {
-        AssertNoPropertyChanged(() => _viewModel.EditableSeverity = default,
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.EditableSeverity = default,
             nameof(_viewModel.EditableSeverity));
     }
 
@@ -386,7 +403,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void EditableLatitude_ChangedValue_RaisesPropertyChanged()
     {
-        AssertPropertyChanged(() => _viewModel.EditableLatitude = 10.5,
+        VMTestHelpers.AssertPropertyChanged(
+            _viewModel,
+            () => _viewModel.EditableLatitude = 10.5,
             nameof(_viewModel.EditableLatitude));
     }
 
@@ -396,7 +415,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void EditableLatitude_SameValue_DoesNotRaisePropertyChanged()
     {
-        AssertNoPropertyChanged(() => _viewModel.EditableLatitude = 0.0,
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.EditableLatitude = 0.0,
             nameof(_viewModel.EditableLatitude));
     }
 
@@ -406,7 +427,8 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void EditableLongitude_ChangedValue_RaisesPropertyChanged()
     {
-        AssertPropertyChanged(() => _viewModel.EditableLongitude = 76.5,
+        VMTestHelpers.AssertPropertyChanged(_viewModel,
+            () => _viewModel.EditableLongitude = 76.5,
             nameof(_viewModel.EditableLongitude));
     }
 
@@ -416,7 +438,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void EditableLongitude_SameValue_DoesNotRaisePropertyChanged()
     {
-        AssertNoPropertyChanged(() => _viewModel.EditableLongitude = 0.0,
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.EditableLongitude = 0.0,
             nameof(_viewModel.EditableLongitude));
     }
 
@@ -426,7 +450,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public void EditableAddress_ChangedValue_RaisesPropertyChanged()
     {
-        AssertPropertyChanged(() => _viewModel.EditableAddress = "Palakkad",
+        VMTestHelpers.AssertPropertyChanged(
+            _viewModel,
+            () => _viewModel.EditableAddress = "Palakkad",
             nameof(_viewModel.EditableAddress));
     }
 
@@ -439,7 +465,9 @@ public class IncidentDetailsPageViewModelDisplayTest
     {
         Assert.IsNull(_viewModel.EditableAddress);
 
-        AssertNoPropertyChanged(() => _viewModel.EditableAddress = null,
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.EditableAddress = null,
             nameof(_viewModel.EditableAddress));
     }
 
@@ -451,7 +479,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public async Task LoadIncidentAsync_ExistingIncident_LoadsIncident()
     {
-        Incident createdIncident = await CreateIncidentAsync();
+        Incident createdIncident = await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
 
         await _viewModel.LoadIncidentAsync(createdIncident.Id);
 
@@ -468,7 +496,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public async Task LoadIncidentAsync_ExistingIncident_RaisesPropertyChanged()
     {
-        Incident createdIncident = await CreateIncidentAsync();
+        Incident createdIncident = await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
 
         bool notified = false;
 
@@ -491,7 +519,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public async Task LoadIncidentAsync_ExistingIncident_ResetsEditableFields()
     {
-        Incident createdIncident = await CreateIncidentAsync();
+        Incident createdIncident = await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
 
         _viewModel.EditableStatus = IncidentStatus.Resolved;
         _viewModel.EditableCategory = IncidentCategory.Theft;
@@ -516,7 +544,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public async Task LoadIncidentAsync_ExistingIncident_ResetsIsBusy()
     {
-        Incident createdIncident = await CreateIncidentAsync();
+        Incident createdIncident = await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
 
         await _viewModel.LoadIncidentAsync(createdIncident.Id);
 
@@ -530,7 +558,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public async Task LoadIncidentAsync_ExistingIncident_ClearsErrorMessage()
     {
-        Incident createdIncident = await CreateIncidentAsync();
+        Incident createdIncident = await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
 
         _viewModel.ErrorMessage = "Previous error.";
 
@@ -546,7 +574,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public async Task LoadIncidentAsync_ExistingIncident_RefreshesCollections()
     {
-        Incident createdIncident = await CreateIncidentAsync();
+        Incident createdIncident = await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
 
         await _viewModel.LoadIncidentAsync(createdIncident.Id);
 
@@ -574,7 +602,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public async Task ToggleEditMode_IncidentLoaded_EnablesEditMode()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         _viewModel.ToggleEditMode();
 
@@ -588,7 +616,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public async Task ToggleEditMode_AlreadyEditing_DisablesEditMode()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         _viewModel.ToggleEditMode();
         _viewModel.ToggleEditMode();
@@ -603,7 +631,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public async Task ToggleEditMode_EditableFieldsModified_ResetsEditableFields()
     {
-        Incident incident = await LoadCreatedIncidentAsync();
+        Incident incident = await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         _viewModel.EditableStatus = IncidentStatus.Resolved;
         _viewModel.EditableCategory = IncidentCategory.Theft;
@@ -643,7 +671,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public async Task CancelEdit_IncidentLoaded_DisablesEditMode()
     {
-        await LoadCreatedIncidentAsync();
+        await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         _viewModel.IsEditMode = true;
 
@@ -659,7 +687,7 @@ public class IncidentDetailsPageViewModelDisplayTest
     [TestMethod]
     public async Task CancelEdit_EditableFieldsModified_ResetsEditableFields()
     {
-        Incident incident = await LoadCreatedIncidentAsync();
+        Incident incident = await VMTestHelpers.LoadCreatedIncidentAsync(_controller, _viewModel, _currentUserId);
 
         _viewModel.IsEditMode = true;
 
@@ -680,79 +708,4 @@ public class IncidentDetailsPageViewModelDisplayTest
         Assert.AreEqual(incident.Location.Address, _viewModel.EditableAddress);
     }
 
-    // Helpers
-
-    /// <summary>
-    /// Creates an incident through the real IncidentController.
-    /// </summary>
-    private async Task<Incident> CreateIncidentAsync()
-    {
-        CreateIncidentRequest request = new(
-            "Vehicle accident",
-            "Test incident description",
-            _currentUserId,
-            IncidentCategory.Accident,
-            IncidentSeverity.High,
-            new IncidentLocation(10.0, 76.0, "Test location"),
-            []);
-
-        return await _controller.CreateIncident(request);
-    }
-
-    /// <summary>
-    /// Creates an incident through the real controller and loads it into the ViewModel.
-    /// </summary>
-    private async Task<Incident> LoadCreatedIncidentAsync()
-    {
-        Incident incident = await CreateIncidentAsync();
-
-        await _viewModel.LoadIncidentAsync(incident.Id);
-
-        Assert.IsNotNull(_viewModel.Incident);
-
-        return _viewModel.Incident;
-    }
-
-    /// <summary>
-    /// Asserts that changing a property raises PropertyChanged for that property.
-    /// </summary>
-    private void AssertPropertyChanged(
-        Action propertySetter,
-        string propertyName)
-    {
-        bool notified = false;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == propertyName)
-            {
-                notified = true;
-            }
-        };
-
-        propertySetter();
-
-        Assert.IsTrue(notified, $"{propertyName} did not raise PropertyChanged.");
-    }
-
-    /// <summary>
-    /// Asserts that assigning the same value does not raise PropertyChanged for a property.
-    /// </summary>
-    private void AssertNoPropertyChanged(
-        Action propertySetter,
-        string propertyName)
-    {
-        int notificationCount = 0;
-
-        _viewModel.PropertyChanged += (_, e) => {
-            if (e.PropertyName == propertyName)
-            {
-                notificationCount++;
-            }
-        };
-
-        propertySetter();
-
-        Assert.AreEqual(0, notificationCount,
-            $"{propertyName} unexpectedly raised PropertyChanged.");
-    }
 }

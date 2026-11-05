@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using Incident_module;
 using Incident_module.ViewModels;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -166,7 +167,6 @@ public sealed class AddEvidenceDialogViewModelTest
         Assert.AreNotEqual(first.Id, second.Id);
     }
 
-
     /// <summary>
     /// 11. Setting FilePath to the same value does not raise PropertyChanged events.
     /// </summary>
@@ -174,11 +174,11 @@ public sealed class AddEvidenceDialogViewModelTest
     public void FilePath_SetSameValue_DoesNotRaisePropertyChanged()
     {
         _viewModel.FilePath = "C:/Evidence/image.png";
-        int eventCount = 0;
-        _viewModel.PropertyChanged += (_, _) => eventCount++;
-        _viewModel.FilePath = "C:/Evidence/image.png";
 
-        Assert.AreEqual(0, eventCount);
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.FilePath = "C:/Evidence/image.png",
+            nameof(_viewModel.FilePath));
     }
 
     /// <summary>
@@ -188,11 +188,10 @@ public sealed class AddEvidenceDialogViewModelTest
     public void Description_SetSameValue_DoesNotRaisePropertyChanged()
     {
         _viewModel.Description = "Evidence description";
-        int eventCount = 0;
-        _viewModel.PropertyChanged += (_, _) => eventCount++;
-        _viewModel.Description = "Evidence description";
 
-        Assert.AreEqual(0, eventCount);
+        VMTestHelpers.AssertNoPropertyChanged(
+            _viewModel,
+            () => _viewModel.Description = "Evidence description",
+            nameof(_viewModel.Description));
     }
-
 }
