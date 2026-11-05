@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.ObjectModel;
 using Microsoft.UI.Input;
@@ -37,14 +38,19 @@ public sealed partial class MainWindow : Window
     }
 
     Visibility Vis(bool show) { return show ? Visibility.Visible : Visibility.Collapsed; }
+
     void ShowScreen(string screen)
     {
         LoginView.Visibility = Vis(screen == "login");
         DashView.Visibility = Vis(screen == "dash");
         MeetingView.Visibility = Vis(screen == "meeting");
         IncidentsView.Visibility = Vis(screen == "incidents");
+        LocationView.Visibility = Vis(screen == "location");
+        CloudView.Visibility = Vis(screen == "cloud");
+        FileSyncView.Visibility = Vis(screen == "filesync");
         UserPanel.Visibility = Vis(screen != "login");
         MeetingInfoText.Visibility = Vis(inMeeting);
+       
     }
 
     ContentDialog MakeDialog(string title, object content, string okText)
@@ -148,6 +154,7 @@ public sealed partial class MainWindow : Window
         ShowPanel("home");
         ShowScreen("meeting");
     }
+
     public void SetParticipants(int count)
     {
         MeetingInfoText.Text = "ID: " + meetingId + "   Port: " + meetingPort + "   Participants: " + count;
@@ -168,6 +175,7 @@ public sealed partial class MainWindow : Window
     void ShareBtn_Click(object sender, RoutedEventArgs e) { ShowPanel("share"); }
     void BoardBtn_Click(object sender, RoutedEventArgs e) { ShowPanel("board"); }
     void ChatBtn_Click(object sender, RoutedEventArgs e) { ShowChat(ChatBtn.IsChecked == true); }
+
     void ShowChat(bool show)
     {
         ChatPanel.Visibility = Vis(show);
@@ -214,12 +222,43 @@ public sealed partial class MainWindow : Window
         ShowScreen("incidents");
     }
 
+    void Cloud_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen("cloud");
+    }
+
+    void FileSync_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen("filesync");
+    }
+
+    void Location_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen("location");
+    }
+
     // Back goes to the meeting if we are in one, otherwise to the dashboard
     void IncidentsBack_Click(object sender, RoutedEventArgs e)
     {
         ShowScreen(inMeeting ? "meeting" : "dash");
     }
+
+    void CloudBack_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen("dash");
+    }
+
+    void FileSyncBack_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen("dash");
+    }
+
+    void LocationBack_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen(inMeeting ? "meeting" : "dash");
+    }
 }
+
 public sealed class ResizeHandle : ContentControl
 {
     public ResizeHandle()
