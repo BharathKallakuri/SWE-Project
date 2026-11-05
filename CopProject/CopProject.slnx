@@ -11,6 +11,7 @@
     <Project Path="Chat.Test/Chat.Test.csproj" />
     <Project Path="Chat/Chat.csproj" />
     <Project Path="Cloud.Console/Cloud.Console.csproj" />
+    <Project Path="Cloud.Networking.Server.Test/Cloud.Networking.Server.Test.csproj" />
     <Project Path="Cloud.Networking.Server/Cloud.Networking.Server.csproj" />
     <Project Path="Cloud.Test/Cloud.Test.csproj" />
     <Project Path="Cloud/Cloud.csproj" />
