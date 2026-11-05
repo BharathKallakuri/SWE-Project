@@ -1,45 +1,36 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
-
-using System.Collections.Generic;
-using Microsoft.UI.Xaml;
+﻿using System;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Windows.Foundation;
+using Whiteboard.Client;
+using Whiteboard.Interfaces;
 
 namespace Whiteboard.ViewModels;
 
-/// <summary>
-/// Represents the state when the Eraser tool is selected.
-/// </summary>
 public class EraserState : IViewModelState
 {
+    private readonly IWhiteboardClient _whiteboardClient;
     private readonly Canvas _canvas;
 
-    public EraserState(Canvas canvas)
+    public EraserState(IWhiteboardClient whiteboardClient, Canvas canvas)
     {
+        ArgumentNullException.ThrowIfNull(whiteboardClient);
+        ArgumentNullException.ThrowIfNull(canvas);
+
+        _whiteboardClient = whiteboardClient;
         _canvas = canvas;
     }
 
     public void PointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        Point point = e.GetCurrentPoint(_canvas).Position;
-        IReadOnlyList<UIElement> hitElements = VisualTreeHelper.FindElementsInHostCoordinates(point, _canvas);
-
-        foreach (UIElement element in hitElements)
+        Windows.Foundation.Point point = e.GetCurrentPoint(_canvas).Position;
+        IItem? item = _whiteboardClient.Canvas.HitTestTopmost(new Point2D(point.X, point.Y));
+        if (item is null)
         {
-            UIElement? canvasChild = GetCanvasChild(element);
-            if (canvasChild is null)
-            {
-                continue;
-            }
-
-            _canvas.Children.Remove(canvasChild);
-            e.Handled = true;
             return;
         }
+
+        _whiteboardClient.DeleteItem(item.Id);
+        e.Handled = true;
     }
 
     public void PointerMoved(object sender, PointerRoutedEventArgs e)
@@ -52,17 +43,5 @@ public class EraserState : IViewModelState
 
     public void PointerCaptureLost(object sender, PointerRoutedEventArgs e)
     {
-    }
-
-    private UIElement? GetCanvasChild(UIElement element)
-    {
-        DependencyObject current = element;
-
-        while (VisualTreeHelper.GetParent(current) is DependencyObject parent && parent != _canvas)
-        {
-            current = parent;
-        }
-
-        return VisualTreeHelper.GetParent(current) == _canvas ? current as UIElement : null;
     }
 }

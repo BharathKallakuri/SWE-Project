@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace Whiteboard.Interfaces;
@@ -33,6 +32,21 @@ public interface IWhiteboard
     /// <param name="item">New item for replacement</param>
     /// <returns>true if an item with same GUID was present in the whiteboard, otherwise false</returns>
     bool EditItem(IItem item);
+
+    /// <summary>
+    /// Returns the topmost item intersecting a point.
+    /// </summary>
+    IItem? HitTestTopmost(Point2D point);
+
+    /// <summary>
+    /// Returns all items intersecting a point, ordered from topmost to bottommost.
+    /// </summary>
+    List<IItem> HitTestAll(Point2D point);
+
+    /// <summary>
+    /// Returns all items whose bounds overlap a region.
+    /// </summary>
+    List<IItem> InRect(Rect2D rect);
 
     /// <summary>
     /// Event fired when an item is added to the whiteboard

@@ -24,6 +24,8 @@ public sealed partial class WhiteBoardView : UserControl
 
         ToolbarInfo toolbarInfo = new(new SolidColorBrush(Colors.Black), 3, new SolidColorBrush(Colors.Red));
         _viewModel.InitializeViewModel(WhiteboardCanvas, toolbarInfo);
+
+        ButtonEraseItems.Click += ButtonEraseItems_Click;
     }
 
     private void ButtonPen_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -35,6 +37,11 @@ public sealed partial class WhiteBoardView : UserControl
     {
         _viewModel.SelectTool(WhiteboardTool.Square);
 
+    }
+
+    private void ButtonEraseItems_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        _viewModel.SelectTool(WhiteboardTool.Eraser);
     }
 
     private void CanvasContainer_SizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e)
