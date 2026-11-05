@@ -6,55 +6,64 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      enforce:
-        description: 'Fail pipeline on formatting errors'
-        type: boolean
-        default: false
-
-concurrency:
-  group: format-${{ github.ref }}
-  cancel-in-progress: true
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
-  format-check:
+  format:
     runs-on: windows-latest
     defaults:
       run:
         shell: bash
-    timeout-minutes: 15
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
-      - name: Restore dependencies
-        run: dotnet restore CopProject
+      - run: dotnet restore CopProject
 
-      - name: Verify formatting
+      - name: Check formatting
+        id: check
         run: |
-          # Check whether enforcement is enabled via GitHub UI variable or manual input
-          ENFORCE="false"
-          if [ "${{ vars.ENFORCE_FORMAT }}" = "true" ] || [ "${{ github.event.inputs.enforce }}" = "true" ]; then
-            ENFORCE="true"
+          if ! dotnet format CopProject --verify-no-changes > format-report.log 2>&1; then
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+            cat format-report.log
           fi
 
-          if ! dotnet format CopProject --verify-no-changes; then
-            echo "::error::Code formatting did not match expected formatting. Run 'dotnet format CopProject' to fix."
+      - name: Upload report
+        if: steps.check.outputs.failed == 'true'
+        id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: format-report-${{ github.event.pull_request.number || github.run_id }}
+          path: format-report.log
 
-            if [ "$ENFORCE" = "true" ]; then
-              echo "Enforcement is enabled. Failing pipeline."
-              exit 1
-            else
-              echo "Enforcement is disabled. Pipeline will not fail."
-              exit 0
-            fi
+      - name: Comment on PR
+        if: steps.check.outputs.failed == 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          {
+            echo "## Code formatting report"
+            echo "Formatting did not match expected formatting."
+            echo "Run \`dotnet format CopProject\` to fix."
+            echo
+            echo "**Log artifact:** [download]($URL)"
+          } > comment.md
+          gh pr comment "$PR" --body-file comment.md --edit-last --create-if-none
+
+      - name: Enforce
+        if: steps.check.outputs.failed == 'true'
+        run: |
+          if [ "${{ vars.ENFORCE_FORMAT }}" = "true" ]; then
+            echo "::error::Code formatting failed."
+            exit 1
           fi
+          echo "Enforcement disabled. Skipping failure."
