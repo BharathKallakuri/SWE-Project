@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -42,5 +42,24 @@ public class BoundingBoxTests : BaseGenerator
         Assert.Equal(ellipse.Center.Y + (ellipse.Height / 2), ellipse.BoundingBox.Top);
         Assert.Equal(ellipse.Width, ellipse.BoundingBox.Width);
         Assert.Equal(ellipse.Height, ellipse.BoundingBox.Height);
+    }
+
+    /// <summary>
+    /// Test bounding box for equilateral triangle is calculated properly
+    /// </summary>
+    [Fact]
+    public void EqTriangle()
+    {
+        var eqTriangle = new Whiteboard.Items.Shapes.EqTriangle() {
+            Center = RandomPointGenerator.Generate(),
+            SideLength = Rng.NextDouble() * 100
+        };
+
+        double height = (Math.Sqrt(3.0) / 2.0) * eqTriangle.SideLength;
+
+        Assert.Equal(eqTriangle.Center.X - (eqTriangle.SideLength / 2), eqTriangle.BoundingBox.Left);
+        Assert.Equal(eqTriangle.Center.Y + ((2.0 / 3.0) * height), eqTriangle.BoundingBox.Top);
+        Assert.Equal(eqTriangle.SideLength, eqTriangle.BoundingBox.Width);
+        Assert.Equal(height, eqTriangle.BoundingBox.Height);
     }
 }
