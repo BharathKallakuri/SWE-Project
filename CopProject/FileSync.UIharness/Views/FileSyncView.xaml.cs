@@ -8,6 +8,9 @@ namespace FileSync.UIharness.Views;
 public sealed partial class FileSyncView : UserControl
 {
     private readonly FileSynchroniser.ViewModels.FileSyncViewModel _viewModel;
+    private FileSync.ConsoleApp.SimulatedCommunicator? _communicator;
+    private FileSync.ConsoleApp.NetworkSyncHandler? _syncHandler;
+    private int _currentPort = 0;
 
     /// <summary>
     /// creates a new instance of the FileSyncView
@@ -24,35 +27,102 @@ public sealed partial class FileSyncView : UserControl
     }
 
     /// <summary>
+    /// ensures communicator is initialized on the configured listening port
+    /// </summary>
+    private void EnsureCommunicator(int listenPort)
+    {
+        if (_communicator != null && _currentPort == listenPort)
+        {
+            return;
+        }
+
+        _communicator?.Dispose();
+        _communicator = new FileSync.ConsoleApp.SimulatedCommunicator(listenPort);
+        _currentPort = listenPort;
+
+        _syncHandler = new FileSync.ConsoleApp.NetworkSyncHandler(_viewModel.RootDirectory, _communicator);
+
+        _syncHandler.OnLog += msg =>
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                StatusTextBlock.Text = msg;
+            });
+        };
+
+        _syncHandler.OnSyncCompleted += () =>
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                _viewModel.RefreshCommand.Execute(null);
+                StatusTextBlock.Text = "[sync] synchronisation finished successfully!";
+            });
+        };
+    }
+
+    /// <summary>
     /// handles click event on the sync button
     /// </summary>
     private void OnSyncButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        string selectedPeer = (PeerSelector.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Default Peer";
-        StatusTextBlock.Text = $"Synchronising with {selectedPeer}...";
+        string peerIp = PeerIpTextBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(peerIp))
+        {
+            peerIp = "127.0.0.1";
+        }
 
-        // trigger synchronisation on background task
+        if (!int.TryParse(MyPortTextBox.Text.Trim(), out int listenPort))
+        {
+            listenPort = 8001;
+        }
+
+        if (!int.TryParse(PeerPortTextBox.Text.Trim(), out int peerPort))
+        {
+            peerPort = 8002;
+        }
+
+        StatusTextBlock.Text = $"Connecting on port {listenPort} to {peerIp}:{peerPort}...";
+
         System.Threading.Tasks.Task.Run(() =>
         {
             try
             {
-                var synchroniser = new FileSynchroniser.Models.Synchroniser();
-                synchroniser.Synchronise();
+                EnsureCommunicator(listenPort);
 
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    _viewModel.RefreshCommand.Execute(null);
-                    StatusTextBlock.Text = $"Synchronisation with {selectedPeer} completed successfully!";
-                });
+                var peerEndpoint = new System.Net.IPEndPoint(System.Net.IPAddress.Parse(peerIp), peerPort);
+                _communicator!.RegisterPeer(peerEndpoint);
+                _syncHandler!.DefaultPeerEndpoint = peerEndpoint;
+
+                _syncHandler.StartSync();
             }
             catch (System.Exception ex)
             {
                 DispatcherQueue.TryEnqueue(() =>
                 {
-                    StatusTextBlock.Text = $"Sync error: {ex.Message}";
+                    StatusTextBlock.Text = $"Network sync error: {ex.Message}";
                 });
             }
         });
+    }
+
+    /// <summary>
+    /// preset A button click: listen 8001, target 8002
+    /// </summary>
+    private void OnPresetAClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        MyPortTextBox.Text = "8001";
+        PeerIpTextBox.Text = "127.0.0.1";
+        PeerPortTextBox.Text = "8002";
+    }
+
+    /// <summary>
+    /// preset B button click: listen 8002, target 8001
+    /// </summary>
+    private void OnPresetBClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        MyPortTextBox.Text = "8002";
+        PeerIpTextBox.Text = "127.0.0.1";
+        PeerPortTextBox.Text = "8001";
     }
 
     /// <summary>

@@ -15,45 +15,55 @@
         </Grid.RowDefinitions>
 
         <!-- Header and Peer Connection Section -->
-        <StackPanel Grid.Row="0" Spacing="12">
+        <StackPanel Grid.Row="0" Spacing="10">
             <TextBlock
-                Text="File Synchronization"
-                FontSize="26"
+                Text="File Synchronization (P2P)"
+                FontSize="24"
                 FontWeight="Bold"
                 Foreground="White" />
 
-            <TextBlock
-                Text="Select Peer to Synchronise:"
-                FontSize="13"
-                Foreground="#AAAAAA" />
-
-            <Grid ColumnSpacing="12">
+            <!-- Connection Configuration Grid -->
+            <Grid ColumnSpacing="10" RowSpacing="8">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="110" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="130" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <ComboBox
-                    x:Name="PeerSelector"
-                    Grid.Column="0"
-                    HorizontalAlignment="Stretch"
-                    PlaceholderText="Select peer to sync...">
-                    <ComboBoxItem Content="Peer 1 (127.0.0.1:8001)" IsSelected="True" />
-                    <ComboBoxItem Content="Peer 2 (127.0.0.1:8002)" />
-                    <ComboBoxItem Content="Broadcast to All Peers" />
-                </ComboBox>
+                <!-- Row 0: Labels -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="My Port" FontSize="12" Foreground="#AAAAAA" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="Peer IP Address" FontSize="12" Foreground="#AAAAAA" />
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Peer Port" FontSize="12" Foreground="#AAAAAA" />
+
+                <!-- Row 1: Input Controls -->
+                <TextBox x:Name="MyPortTextBox" Grid.Row="1" Grid.Column="0" Text="8001" />
+                <TextBox x:Name="PeerIpTextBox" Grid.Row="1" Grid.Column="1" Text="127.0.0.1" PlaceholderText="e.g. 192.168.1.50" />
+                <TextBox x:Name="PeerPortTextBox" Grid.Row="1" Grid.Column="2" Text="8002" />
 
                 <Button
                     x:Name="SyncButton"
-                    Grid.Column="1"
+                    Grid.Row="1"
+                    Grid.Column="3"
                     Content="Sync Files"
                     HorizontalAlignment="Stretch"
                     Click="OnSyncButtonClick" />
             </Grid>
 
+            <!-- Quick Presets -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Presets:" FontSize="12" Foreground="#777777" VerticalAlignment="Center" />
+                <Button Content="Node A (8001 -> 8002)" FontSize="11" Padding="6,2" Click="OnPresetAClick" />
+                <Button Content="Node B (8002 -> 8001)" FontSize="11" Padding="6,2" Click="OnPresetBClick" />
+            </StackPanel>
+
             <TextBlock
                 x:Name="StatusTextBlock"
-                Text="Ready to synchronise"
+                Text="Ready to synchronise over network"
                 FontSize="13"
                 Foreground="LightGreen"
                 TextWrapping="Wrap" />

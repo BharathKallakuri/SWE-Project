@@ -42,6 +42,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FileSynchroniser\FileSynchroniser.csproj" />
+    <ProjectReference Include="..\FileSync.Console\FileSync.Console.csproj" />
+    <ProjectReference Include="..\Networking\Networking.csproj" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
