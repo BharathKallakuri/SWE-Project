@@ -170,4 +170,25 @@ public class HitTests : BaseGenerator
         Assert.False(triangle.HitTest(new Point2D(triangle.Center.X, triangle.BoundingBox.Top - 5.0)));
         Assert.False(triangle.HitTest(new Point2D(triangle.Center.X, triangle.BoundingBox.Top + triangle.BoundingBox.Height + 5.0)));
     }
+
+    /// <summary>
+    /// Test hit testing for line item.
+    /// </summary>
+    [Fact]
+    public void Line()
+    {
+        var line = new Line() {
+            Begin = new Point2D(10, 10),
+            End = new Point2D(110, 10)
+        };
+
+        // Midpoint on line should hit
+        Assert.True(line.HitTest(new Point2D(60, 10)));
+
+        // Within default threshold (5.0 - TestTolerance) should hit
+        Assert.True(line.HitTest(new Point2D(60, 10 + Whiteboard.Items.Line.DefaultHitThreshold - TestTolerance)));
+
+        // Beyond default threshold should miss
+        Assert.False(line.HitTest(new Point2D(60, 10 + Whiteboard.Items.Line.DefaultHitThreshold + 1.0)));
+    }
 }
