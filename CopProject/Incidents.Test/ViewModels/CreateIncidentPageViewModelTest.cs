@@ -1,0 +1,752 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
+using Incident_module.Implementations;
+using Incident_module;
+using Incident_module.ViewModels;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.UI.Xaml;
+
+namespace Incidents.Test.ViewModels;
+
+[TestClass]
+public class CreateIncidentPageViewModelTest
+{
+    private IIncidentController _controller = null!;
+    private CreateIncidentPageViewModel _viewModel = null!;
+
+    private readonly Guid _currentUserId =
+        Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+    /// <summary>
+    /// Initializes the real IncidentController and CreateIncidentPageViewModel
+    /// before each test.
+    /// </summary>
+    [TestInitialize]
+    public async Task Setup()
+    {
+        IncidentCloudStorageService storageService = new();
+        IncidentFileSynchroniser fileSynchroniser = new();
+
+        _controller = await IncidentController.CreateAsync(storageService, fileSynchroniser);
+        _viewModel = new CreateIncidentPageViewModel(_controller, _currentUserId);
+    }
+
+    // Constructor Initialization tests
+
+    /// <summary>
+    /// Test 1: Constructor initializes all properties with their default values.
+    /// </summary>
+    [TestMethod]
+    public void Constructor_InitializesDefaultValues()
+    {
+        Assert.AreEqual(string.Empty, _viewModel.Title);
+        Assert.AreEqual(string.Empty, _viewModel.Description);
+
+        Assert.AreEqual(0.0, _viewModel.Latitude);
+        Assert.AreEqual(0.0, _viewModel.Longitude);
+
+        Assert.IsNull(_viewModel.Address);
+
+        Assert.AreEqual(string.Empty, _viewModel.ErrorMessage);
+
+        Assert.IsFalse(_viewModel.IsSubmitting);
+        Assert.IsTrue(_viewModel.IsNotSubmitting);
+
+        Assert.AreEqual(Visibility.Collapsed, _viewModel.ErrorVisibility);
+
+        Assert.IsEmpty(_viewModel.Evidences);
+    }
+
+    /// <summary>
+    /// Test 2: Constructor initializes Categories using all IncidentCategory enum values.
+    /// </summary>
+    [TestMethod]
+    public void Constructor_InitializesCategories()
+    {
+        IncidentCategory[] expected =
+            Enum.GetValues<IncidentCategory>();
+
+        CollectionAssert.AreEqual(expected, _viewModel.Categories.ToArray());
+    }
+
+    /// <summary>
+    /// Test 3: Constructor initializes Severities using all IncidentSeverity enum values.
+    /// </summary>
+    [TestMethod]
+    public void Constructor_InitializesSeverities()
+    {
+        IncidentSeverity[] expected =
+            Enum.GetValues<IncidentSeverity>();
+
+        CollectionAssert.AreEqual(expected, _viewModel.Severities.ToArray());
+    }
+
+    /// <summary>
+    /// Test 4: Constructor selects the first available category and severity.
+    /// </summary>
+    [TestMethod]
+    public void Constructor_SelectsFirstCategoryAndSeverity()
+    {
+        Assert.AreEqual(_viewModel.Categories[0], _viewModel.SelectedCategory);
+        Assert.AreEqual(_viewModel.Severities[0], _viewModel.SelectedSeverity);
+    }
+
+    /// <summary>
+    /// Test 5: Constructor throws ArgumentNullException when controller is null.
+    /// </summary>
+    [TestMethod]
+    public void Constructor_NullController_ThrowsArgumentNullException()
+    {
+        try
+        {
+            new CreateIncidentPageViewModel(null!, _currentUserId);
+            Assert.Fail("Expected ArgumentNullException was not thrown.");
+        }
+        catch (ArgumentNullException)
+        {
+            // Expected exception.
+        }
+    }
+
+    // Property setter tests
+
+    /// <summary>
+    /// Test 6: Changing Title raises PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void Title_ChangedValue_RaisesPropertyChanged()
+    {
+        AssertPropertyChanged(() => _viewModel.Title = "Vehicle accident",
+            nameof(_viewModel.Title));
+    }
+
+    /// <summary>
+    /// Test 7: Setting Title to its existing value does not raise PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void Title_SameValue_DoesNotRaisePropertyChanged()
+    {
+        _viewModel.Title = "Vehicle accident";
+
+        AssertNoPropertyChanged(() => _viewModel.Title = "Vehicle accident",
+            nameof(_viewModel.Title));
+    }
+
+    /// <summary>
+    /// Test 8: Changing Description raises PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void Description_ChangedValue_RaisesPropertyChanged()
+    {
+        AssertPropertyChanged(() => _viewModel.Description = "Accident near the junction",
+            nameof(_viewModel.Description));
+    }
+
+    /// <summary>
+    /// Test 9: Setting Description to its existing value does not raise PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void Description_SameValue_DoesNotRaisePropertyChanged()
+    {
+        _viewModel.Description = "Test description";
+
+        AssertNoPropertyChanged(() => _viewModel.Description = "Test description",
+            nameof(_viewModel.Description));
+    }
+
+    /// <summary>
+    /// Test 10: Changing SelectedCategory raises PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void SelectedCategory_ChangedValue_RaisesPropertyChanged()
+    {
+        IncidentCategory newCategory = IncidentCategory.Theft;
+
+        AssertPropertyChanged(() => _viewModel.SelectedCategory = newCategory,
+            nameof(_viewModel.SelectedCategory));
+    }
+
+    /// <summary>
+    /// Test 11: Setting SelectedCategory to its existing value does not raise PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void SelectedCategory_SameValue_DoesNotRaisePropertyChanged()
+    {
+        IncidentCategory category = _viewModel.SelectedCategory;
+
+        AssertNoPropertyChanged(() => _viewModel.SelectedCategory = category,
+            nameof(_viewModel.SelectedCategory));
+    }
+
+    /// <summary>
+    /// Test 12: Changing SelectedSeverity raises PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void SelectedSeverity_ChangedValue_RaisesPropertyChanged()
+    {
+        IncidentSeverity newSeverity = IncidentSeverity.Critical;
+
+        AssertPropertyChanged(() => _viewModel.SelectedSeverity = newSeverity,
+            nameof(_viewModel.SelectedSeverity));
+    }
+
+    /// <summary>
+    /// Test 13: Setting SelectedSeverity to its existing value does not raise PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void SelectedSeverity_SameValue_DoesNotRaisePropertyChanged()
+    {
+        IncidentSeverity severity = _viewModel.SelectedSeverity;
+
+        AssertNoPropertyChanged(() => _viewModel.SelectedSeverity = severity,
+            nameof(_viewModel.SelectedSeverity));
+    }
+
+    /// <summary>
+    /// Test 14: Changing Latitude raises PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void Latitude_ChangedValue_RaisesPropertyChanged()
+    {
+        AssertPropertyChanged(() => _viewModel.Latitude = 10.5,
+            nameof(_viewModel.Latitude));
+    }
+
+    /// <summary>
+    /// Test 15: Setting Latitude to its existing value does not raise PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void Latitude_SameValue_DoesNotRaisePropertyChanged()
+    {
+        _viewModel.Latitude = 10.5;
+
+        AssertNoPropertyChanged(() => _viewModel.Latitude = 10.5,
+            nameof(_viewModel.Latitude));
+    }
+
+    /// <summary>
+    /// Test 16: Changing Longitude raises PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void Longitude_ChangedValue_RaisesPropertyChanged()
+    {
+        AssertPropertyChanged(() => _viewModel.Longitude = 76.5,
+            nameof(_viewModel.Longitude));
+    }
+
+    /// <summary>
+    /// Test 17: Setting Longitude to its existing value does not raise PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void Longitude_SameValue_DoesNotRaisePropertyChanged()
+    {
+        _viewModel.Longitude = 76.5;
+
+        AssertNoPropertyChanged(() => _viewModel.Longitude = 76.5,
+            nameof(_viewModel.Longitude));
+    }
+
+    /// <summary>
+    /// Test 18: Changing Address raises PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void Address_ChangedValue_RaisesPropertyChanged()
+    {
+        AssertPropertyChanged(() => _viewModel.Address = "Palakkad",
+            nameof(_viewModel.Address));
+    }
+
+    /// <summary>
+    /// Test 19: Setting Address to null when it is already null does not raise PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void Address_NullValue_DoesNotRaisePropertyChanged()
+    {
+        Assert.IsNull(_viewModel.Address);
+
+        AssertNoPropertyChanged(() => _viewModel.Address = null,
+            nameof(_viewModel.Address));
+    }
+
+    // ErrorMessage and ErrorVisibility tests
+
+    /// <summary>
+    /// Test 20: Setting ErrorMessage raises PropertyChanged for ErrorMessage and ErrorVisibility.
+    /// </summary>
+    [TestMethod]
+    public void ErrorMessage_ChangedValue_RaisesPropertyChanged()
+    {
+        List<string?> changedProperties = [];
+
+        _viewModel.PropertyChanged += (_, e) =>
+            changedProperties.Add(e.PropertyName);
+
+        _viewModel.ErrorMessage = "Title is required.";
+
+        Assert.AreEqual("Title is required.", _viewModel.ErrorMessage);
+
+        CollectionAssert.AreEqual(new[] { nameof(_viewModel.ErrorMessage), nameof(_viewModel.ErrorVisibility) },
+            changedProperties);
+    }
+
+    /// <summary>
+    /// Test 21: Setting ErrorMessage to its existing value does not raise PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void ErrorMessage_SameValue_DoesNotRaisePropertyChanged()
+    {
+        _viewModel.ErrorMessage = "Title is required.";
+
+        int notificationCount = 0;
+
+        _viewModel.PropertyChanged += (_, _) =>
+            notificationCount++;
+
+        _viewModel.ErrorMessage = "Title is required.";
+
+        Assert.AreEqual(0, notificationCount);
+    }
+
+    /// <summary>
+    /// Test 22: ErrorVisibility is Visible when ErrorMessage contains text.
+    /// </summary>
+    [TestMethod]
+    public void ErrorVisibility_NonEmptyErrorMessage_ReturnsVisible()
+    {
+        _viewModel.ErrorMessage = "Title is required.";
+
+        Assert.AreEqual(Visibility.Visible, _viewModel.ErrorVisibility);
+    }
+
+    /// <summary>
+    /// Test 23: ErrorVisibility is Collapsed when ErrorMessage is empty.
+    /// </summary>
+    [TestMethod]
+    public void ErrorVisibility_EmptyErrorMessage_ReturnsCollapsed()
+    {
+        _viewModel.ErrorMessage = string.Empty;
+
+        Assert.AreEqual(Visibility.Collapsed, _viewModel.ErrorVisibility);
+    }
+
+    /// <summary>
+    /// Test 24: ErrorVisibility is Collapsed when ErrorMessage contains only whitespace.
+    /// </summary>
+    [TestMethod]
+    public void ErrorVisibility_WhitespaceErrorMessage_ReturnsCollapsed()
+    {
+        _viewModel.ErrorMessage = "   ";
+
+        Assert.AreEqual(Visibility.Collapsed, _viewModel.ErrorVisibility);
+    }
+
+    // IsSubmitting tests
+
+    /// <summary>
+    /// Test 25: Changing IsSubmitting raises PropertyChanged for IsSubmitting and IsNotSubmitting.
+    /// </summary>
+    [TestMethod]
+    public void IsSubmitting_ChangedValue_RaisesPropertyChanged()
+    {
+        List<string?> changedProperties = [];
+
+        _viewModel.PropertyChanged += (_, e) =>
+            changedProperties.Add(e.PropertyName);
+
+        _viewModel.IsSubmitting = true;
+
+        Assert.IsTrue(_viewModel.IsSubmitting);
+        Assert.IsFalse(_viewModel.IsNotSubmitting);
+
+        CollectionAssert.AreEqual(new[] { nameof(_viewModel.IsSubmitting), nameof(_viewModel.IsNotSubmitting) },
+            changedProperties);
+    }
+
+    /// <summary>
+    /// Test 26: Setting IsSubmitting to its existing value does not raise PropertyChanged.
+    /// </summary>
+    [TestMethod]
+    public void IsSubmitting_SameValue_DoesNotRaisePropertyChanged()
+    {
+        AssertNoPropertyChanged(() => _viewModel.IsSubmitting = false,
+            nameof(_viewModel.IsSubmitting));
+
+        Assert.IsFalse(_viewModel.IsSubmitting);
+        Assert.IsTrue(_viewModel.IsNotSubmitting);
+    }
+
+
+    /// <summary>
+    /// Test 27: Submitting without a title sets the required-title error message.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_EmptyTitle_SetsErrorMessage()
+    {
+        _viewModel.Description = "Test description";
+
+        _viewModel.SubmitCommand.Execute(null);
+
+        Assert.AreEqual("Title is required.", _viewModel.ErrorMessage);
+
+        Assert.IsEmpty(await _controller.GetAllIncidents());
+    }
+
+    /// <summary>
+    /// Test 28: Submitting with a whitespace-only title sets the required-title error message.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_WhitespaceTitle_SetsErrorMessage()
+    {
+        _viewModel.Title = "   ";
+        _viewModel.Description = "Test description";
+
+        _viewModel.SubmitCommand.Execute(null);
+
+        Assert.AreEqual("Title is required.", _viewModel.ErrorMessage);
+
+        Assert.IsEmpty(await _controller.GetAllIncidents());
+    }
+
+    /// <summary>
+    /// Test 29: Submitting without a description sets the required-description error message.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_EmptyDescription_SetsErrorMessage()
+    {
+        _viewModel.Title = "Vehicle accident";
+
+        _viewModel.SubmitCommand.Execute(null);
+
+        Assert.AreEqual("Description is required.", _viewModel.ErrorMessage);
+
+        Assert.IsEmpty(await _controller.GetAllIncidents());
+    }
+
+    /// <summary>
+    /// Test 30: Submitting with a whitespace-only description sets the required-description error message.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_WhitespaceDescription_SetsErrorMessage()
+    {
+        _viewModel.Title = "Vehicle accident";
+        _viewModel.Description = "   ";
+
+        _viewModel.SubmitCommand.Execute(null);
+
+        Assert.AreEqual("Description is required.", _viewModel.ErrorMessage);
+
+        Assert.IsEmpty(await _controller.GetAllIncidents());
+    }
+
+    /// <summary>
+    /// Test 31: Submitting with latitude below -90 sets a validation error.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_LatitudeBelowMinimum_SetsErrorMessage()
+    {
+        SetValidIncidentDetails();
+
+        _viewModel.Latitude = -90.1;
+
+        _viewModel.SubmitCommand.Execute(null);
+
+        Assert.AreEqual("Latitude must be between -90 and 90.", _viewModel.ErrorMessage);
+
+        Assert.IsEmpty(await _controller.GetAllIncidents());
+    }
+
+    /// <summary>
+    /// Test 32: Submitting with latitude above 90 sets a validation error.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_LatitudeAboveMaximum_SetsErrorMessage()
+    {
+        SetValidIncidentDetails();
+
+        _viewModel.Latitude = 90.1;
+
+        _viewModel.SubmitCommand.Execute(null);
+
+        Assert.AreEqual("Latitude must be between -90 and 90.", _viewModel.ErrorMessage);
+
+        Assert.IsEmpty(await _controller.GetAllIncidents());
+    }
+
+    /// <summary>
+    /// Test 33: Submitting with longitude below -180 sets a validation error.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_LongitudeBelowMinimum_SetsErrorMessage()
+    {
+        SetValidIncidentDetails();
+
+        _viewModel.Longitude = -180.1;
+
+        _viewModel.SubmitCommand.Execute(null);
+
+        Assert.AreEqual("Longitude must be between -180 and 180.", _viewModel.ErrorMessage);
+        Assert.IsEmpty(await _controller.GetAllIncidents());
+    }
+
+    /// <summary>
+    /// Test 34: Submitting with longitude above 180 sets a validation error.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_LongitudeAboveMaximum_SetsErrorMessage()
+    {
+        SetValidIncidentDetails();
+
+        _viewModel.Longitude = 180.1;
+
+        _viewModel.SubmitCommand.Execute(null);
+
+        Assert.AreEqual("Longitude must be between -180 and 180.", _viewModel.ErrorMessage);
+        Assert.IsEmpty(await _controller.GetAllIncidents());
+    }
+
+    // 6. Successful submission tests
+
+    /// <summary>
+    /// Test 35: Submitting valid details creates an incident through the real controller
+    /// and raises the IncidentCreated event.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_ValidDetails_CreatesIncidentAndRaisesEvent()
+    {
+        SetValidIncidentDetails();
+
+        bool incidentCreated = false;
+
+        _viewModel.IncidentCreated += (_, _) =>
+            incidentCreated = true;
+
+        await SubmitAndWaitForIncidentCreatedAsync();
+
+        List<Incident> incidents =
+            await _controller.GetAllIncidents();
+
+        Assert.HasCount(1, incidents);
+
+        Incident createdIncident = incidents[0];
+
+        Assert.AreEqual("Vehicle accident", createdIncident.Title);
+        Assert.AreEqual("Test incident description", createdIncident.Description);
+
+        Assert.AreEqual(_currentUserId, createdIncident.CreatedBy);
+
+        Assert.AreEqual(_viewModel.SelectedCategory, createdIncident.Category);
+        Assert.AreEqual(_viewModel.SelectedSeverity, createdIncident.Severity);
+        Assert.AreEqual(IncidentStatus.Reported, createdIncident.Status);
+        Assert.IsTrue(incidentCreated);
+    }
+
+    /// <summary>
+    /// Test 36: Successful submission trims whitespace from the title and description.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_ValidDetails_TrimsTitleAndDescription()
+    {
+        _viewModel.Title = "  Vehicle accident  ";
+        _viewModel.Description = "  Test incident description  ";
+
+        _viewModel.Latitude = 10.0;
+        _viewModel.Longitude = 76.0;
+
+        await SubmitAndWaitForIncidentCreatedAsync();
+
+        List<Incident> incidents = await _controller.GetAllIncidents();
+
+        Assert.HasCount(1, incidents);
+        Assert.AreEqual("Vehicle accident", incidents[0].Title);
+
+        Assert.AreEqual("Test incident description", incidents[0].Description);
+    }
+
+    /// <summary>
+    /// Test 37: Successful submission clears an existing error message.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_ValidDetails_ClearsExistingErrorMessage()
+    {
+        _viewModel.ErrorMessage = "Previous validation error.";
+
+        SetValidIncidentDetails();
+
+        await SubmitAndWaitForIncidentCreatedAsync();
+
+        Assert.AreEqual(string.Empty, _viewModel.ErrorMessage);
+        Assert.AreEqual(Visibility.Collapsed, _viewModel.ErrorVisibility);
+    }
+
+    /// <summary>
+    /// Test 38: Successful submission resets IsSubmitting to false.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_ValidDetails_ResetsIsSubmitting()
+    {
+        SetValidIncidentDetails();
+
+        await SubmitAndWaitForIncidentCreatedAsync();
+
+        // Wait until the async command finishes its finally block.
+        await WaitUntilSubmissionCompletesAsync();
+
+        Assert.IsFalse(_viewModel.IsSubmitting);
+        Assert.IsTrue(_viewModel.IsNotSubmitting);
+    }
+
+    /// <summary>
+    /// Test 39: An exception during submission sets the failure error message
+    /// and resets IsSubmitting.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_ExceptionOccurs_SetsErrorMessageAndResetsSubmitting()
+    {
+        SetValidIncidentDetails();
+
+        _viewModel.IncidentCreated += (_, _) => {
+            throw new InvalidOperationException("Test exception.");
+        };
+
+        _viewModel.SubmitCommand.Execute(null);
+
+        await WaitUntilSubmissionCompletesAsync();
+
+        Assert.AreEqual(
+            "Failed to create incident: Test exception.",
+            _viewModel.ErrorMessage);
+
+        Assert.IsFalse(_viewModel.IsSubmitting);
+        Assert.IsTrue(_viewModel.IsNotSubmitting);
+    }
+
+    /// <summary>
+    /// Test 40: Successful submission without IncidentCreated subscribers
+    /// still creates the incident.
+    /// </summary>
+    [TestMethod]
+    public async Task SubmitAsync_NoEventSubscribers_CreatesIncidentSuccessfully()
+    {
+        SetValidIncidentDetails();
+
+        // Deliberately do not subscribe to IncidentCreated.
+        _viewModel.SubmitCommand.Execute(null);
+
+        await WaitUntilSubmissionCompletesAsync();
+
+        List<Incident> incidents =
+            await _controller.GetAllIncidents();
+
+        Assert.HasCount(1, incidents);
+
+        Assert.AreEqual(
+            "Vehicle accident",
+            incidents[0].Title);
+
+        Assert.AreEqual(
+            string.Empty,
+            _viewModel.ErrorMessage);
+
+        Assert.IsFalse(_viewModel.IsSubmitting);
+    }
+
+    // Helpers 
+
+    /// <summary>
+    /// Assigns valid values to all required incident fields.
+    /// </summary>
+    private void SetValidIncidentDetails()
+    {
+        _viewModel.Title = "Vehicle accident";
+        _viewModel.Description = "Test incident description";
+
+        _viewModel.Latitude = 10.0;
+        _viewModel.Longitude = 76.0;
+
+        _viewModel.Address = "Test location";
+
+        _viewModel.SelectedCategory = IncidentCategory.Accident;
+        _viewModel.SelectedSeverity = IncidentSeverity.High;
+    }
+
+    /// <summary>
+    /// Executes SubmitCommand and waits for the IncidentCreated event.
+    /// </summary>
+    private async Task SubmitAndWaitForIncidentCreatedAsync()
+    {
+        TaskCompletionSource<bool> completionSource = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        _viewModel.IncidentCreated += (_, _) =>
+            completionSource.TrySetResult(true);
+
+        _viewModel.SubmitCommand.Execute(null);
+
+        await completionSource.Task.WaitAsync(TimeSpan.FromSeconds(10));
+    }
+
+    /// <summary>
+    /// Waits until the asynchronous submission has completed.
+    /// </summary>
+    private async Task WaitUntilSubmissionCompletesAsync()
+    {
+        DateTime timeout = DateTime.UtcNow.AddSeconds(10);
+
+        while (_viewModel.IsSubmitting)
+        {
+            if (DateTime.UtcNow >= timeout)
+            {
+                Assert.Fail("Submission did not complete within the expected time.");
+            }
+
+            await Task.Delay(10);
+        }
+    }
+
+    /// <summary>
+    /// Asserts that changing a property raises PropertyChanged for that property.
+    /// </summary>
+    private void AssertPropertyChanged(
+        Action propertySetter,
+        string propertyName)
+    {
+        bool notified = false;
+
+        _viewModel.PropertyChanged += (_, e) => {
+            if (e.PropertyName == propertyName)
+            {
+                notified = true;
+            }
+        };
+
+        propertySetter();
+
+        Assert.IsTrue(
+            notified,
+            $"{propertyName} did not raise PropertyChanged.");
+    }
+
+    /// <summary>
+    /// Asserts that assigning the same value does not raise PropertyChanged for a property.
+    /// </summary>
+    private void AssertNoPropertyChanged(
+        Action propertySetter,
+        string propertyName)
+    {
+        int notificationCount = 0;
+
+        _viewModel.PropertyChanged += (_, e) => {
+            if (e.PropertyName == propertyName)
+            {
+                notificationCount++;
+            }
+        };
+
+        propertySetter();
+
+        Assert.AreEqual(0, notificationCount, $"{propertyName} unexpectedly raised PropertyChanged.");
+    }
+}
