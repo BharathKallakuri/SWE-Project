@@ -7,15 +7,14 @@ namespace UI.Demo;
 public sealed partial class MainWindow : Window
 {
     private readonly DemoParticipantSession _session;
-    private readonly Action _openAnotherParticipant;
+    private readonly Action? _openAnotherParticipant;
 
     public MainWindow(
         DemoParticipantSession session,
-        Action openAnotherParticipant,
+        Action? openAnotherParticipant,
         IPEndPoint serverEndpoint)
     {
         ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(openAnotherParticipant);
         ArgumentNullException.ThrowIfNull(serverEndpoint);
 
         InitializeComponent();
@@ -29,6 +28,9 @@ public sealed partial class MainWindow : Window
         // Supply the participant-specific ViewModel to the reusable UserControl.
         ChatPanelControl.ViewModel = _session.ViewModel;
         _session.ViewModel.Initialize();
+        OpenParticipantButton.Visibility = openAnotherParticipant is null
+            ? Visibility.Collapsed
+            : Visibility.Visible;
 
         // This window owns the participant session and disposes it on close.
         Closed += (_, _) => _session.Dispose();
@@ -36,6 +38,6 @@ public sealed partial class MainWindow : Window
 
     private void OpenParticipant_Click(object sender, RoutedEventArgs e)
     {
-        _openAnotherParticipant();
+        _openAnotherParticipant?.Invoke();
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System.Net;
 using UI.Demo.Services;
 
 namespace UI.Demo;
@@ -8,7 +9,12 @@ namespace UI.Demo;
 public partial class App : Application
 {
     private DemoHost? _demoHost;
+    private DemoClient? _demoClient;
+    private ConnectionWindow? _connectionWindow;
     private Window? _startupErrorWindow;
+    private Func<string, DispatcherQueue, DemoParticipantSession>? _participantFactory;
+    private IPEndPoint? _serverEndpoint;
+    private bool _canOpenAnotherParticipant;
 
     private int _nextParticipantNumber = 1;
     private int _openWindowCount;
@@ -20,16 +26,50 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        _connectionWindow = new ConnectionWindow();
+        _connectionWindow.HostRequested += StartHost;
+        _connectionWindow.JoinRequested += StartClient;
+        _connectionWindow.Activate();
+    }
+
+    private void StartHost(string username, IPAddress bindAddress, int port)
+    {
         try
         {
-            // One authoritative ChatServer is shared by every demo window.
-            _demoHost = new DemoHost("Chat UI Test Meeting");
-            OpenParticipant("Officer 1");
+            _demoHost = new DemoHost(
+                "Chat UI Test Meeting",
+                username,
+                bindAddress,
+                port);
+            _participantFactory = _demoHost.CreateParticipant;
+            _serverEndpoint = _demoHost.ServerEndpoint;
+            _canOpenAnotherParticipant = true;
+            _connectionWindow?.Close();
+            OpenParticipant(username);
         }
         catch (Exception exception)
         {
             _demoHost?.Dispose();
             _demoHost = null;
+            ShowStartupError(exception);
+        }
+    }
+
+    private void StartClient(string username, IPEndPoint serverEndpoint)
+    {
+        try
+        {
+            _demoClient = new DemoClient("Chat UI Test Meeting", serverEndpoint);
+            _participantFactory = _demoClient.CreateParticipant;
+            _serverEndpoint = serverEndpoint;
+            _canOpenAnotherParticipant = false;
+            _connectionWindow?.Close();
+            OpenParticipant(username);
+        }
+        catch (Exception exception)
+        {
+            _demoClient?.Dispose();
+            _demoClient = null;
             ShowStartupError(exception);
         }
     }
@@ -62,6 +102,9 @@ public partial class App : Application
     /// </summary>
     private void OpenAnotherParticipant()
     {
+        if (!_canOpenAnotherParticipant)
+            return;
+
         _nextParticipantNumber++;
         string username = $"Officer {_nextParticipantNumber}";
 
@@ -80,10 +123,10 @@ public partial class App : Application
     /// </summary>
     private void OpenParticipant(string username)
     {
-        if (_demoHost is null)
+        if (_participantFactory is null || _serverEndpoint is null)
         {
             throw new InvalidOperationException(
-                "The demo ChatServer has not been initialized.");
+                "The chat demo connection has not been initialized.");
         }
 
         DispatcherQueue dispatcherQueue =
@@ -92,11 +135,14 @@ public partial class App : Application
                 "The UI DispatcherQueue is unavailable.");
 
         DemoParticipantSession session =
-            _demoHost.CreateParticipant(username, dispatcherQueue);
+            _participantFactory(username, dispatcherQueue);
 
         try
         {
-            MainWindow window = new(session, OpenAnotherParticipant, _demoHost.ServerEndpoint);
+            MainWindow window = new(
+                session,
+                _canOpenAnotherParticipant ? OpenAnotherParticipant : null,
+                _serverEndpoint);
 
             window.Closed += (_, _) =>
             {
@@ -106,6 +152,8 @@ public partial class App : Application
                 {
                     _demoHost?.Dispose();
                     _demoHost = null;
+                    _demoClient?.Dispose();
+                    _demoClient = null;
                 }
             };
 
