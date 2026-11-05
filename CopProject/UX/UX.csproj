@@ -7,7 +7,7 @@
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <WindowsPackageType>None</WindowsPackageType>
-    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <WindowsAppSDKSelfContained Condition="'$(Platform)' == 'x64' Or '$(Platform)' == 'x86' Or '$(Platform)' == 'ARM64'">true</WindowsAppSDKSelfContained>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
