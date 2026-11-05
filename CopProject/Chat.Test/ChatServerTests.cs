@@ -307,12 +307,46 @@ public class ChatServerTests
             Assert.True(server.Chatroom.TryGetMessage(parentMessageId, out ChatMessage parent));
             ChatMessage reply = Assert.Single(Assert.IsType<ChatMessageWithThreads>(parent).ThreadById.Values);
             Assert.Equal("Thread reply", reply.Content);
-            Assert.Equal(parentMessageId, reply.ParentMessageId);
+            Assert.Null(reply.ParentMessageId);
             MessageAdded operation = Assert.IsType<MessageAdded>(
                 Assert.Single(Assert.IsType<ChatServerOperationBatch>(
                     ReadUpdate(communicator.Sent[1]).Update).Operations));
-            Assert.Equal(parentMessageId, operation.Message.ParentMessageId);
+            Assert.Null(operation.Message.ParentMessageId);
+            Assert.Equal(parentMessageId, operation.ThreadParentMessageId);
             Assert.Equal(reply.Content, operation.Message.Content);
+        }
+    }
+
+    [Fact]
+    public void ClientInlineReplyRequestAddsMessageToRoomAndPreservesReference()
+    {
+        (ChatServer server, RecordingCommunicator communicator, Guid referencedMessageId) =
+            NewServerWithGuestMessage();
+        using (server)
+        {
+            server.HandleRequest(new ChatClientRequestEnvelope(
+                Guid.NewGuid(),
+                new SendMessage(
+                    DateTimeOffset.UtcNow,
+                    new Mentions(),
+                    "Inline reply",
+                    null,
+                    referencedMessageId),
+                "guest"));
+
+            Assert.Equal(1, server.Version);
+            Assert.True(server.Chatroom.TryGetMessage(referencedMessageId, out ChatMessage referencedMessage));
+            ChatMessageWithThreads referencedRoomMessage = Assert.IsType<ChatMessageWithThreads>(referencedMessage);
+            Assert.Empty(referencedRoomMessage.ThreadById);
+
+            MessageAdded operation = Assert.IsType<MessageAdded>(
+                Assert.Single(Assert.IsType<ChatServerOperationBatch>(
+                    ReadUpdate(communicator.Sent[1]).Update).Operations));
+            Assert.Equal(referencedMessageId, operation.Message.ParentMessageId);
+            Assert.Null(operation.ThreadParentMessageId);
+            Assert.Equal("Inline reply", operation.Message.Content);
+            Assert.True(server.Chatroom.TryGetMessage(operation.MessageId, out ChatMessage inlineReply));
+            Assert.Equal(referencedMessageId, inlineReply.ParentMessageId);
         }
     }
 
@@ -587,6 +621,8 @@ public class ChatServerTests
     private sealed class RecordingController : IChatController
     {
         private readonly Dictionary<string, IPEndPoint> _endpoints = new(StringComparer.Ordinal);
+
+        public string HostName => "host";
 
         public event Action<string>? ParticipantAdded;
         public event Action<string>? ParticipantRemoved;

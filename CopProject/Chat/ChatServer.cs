@@ -267,9 +267,9 @@ public sealed class ChatServer : IMessageListener, IDisposable
                     Mentions = send.Mentions.Clone(),
                     Content = send.Content
                 };
-                serverMessage.ParentMessageId = send.ParentMessageId;
+                serverMessage.ParentMessageId = send.ReplyToMessageId;
                 Guid messageId;
-                if (send.ParentMessageId is Guid parentId)
+                if (send.ThreadParentMessageId is Guid parentId)
                 {
                     try
                     {
@@ -285,7 +285,10 @@ public sealed class ChatServer : IMessageListener, IDisposable
                     messageId = Chatroom.AddMessage(serverMessage);
                 }
 
-                operation = new MessageAdded(messageId, serverMessage.DeepCloneWithoutThreadMessages());
+                operation = new MessageAdded(
+                    messageId,
+                    serverMessage.DeepCloneWithoutThreadMessages(),
+                    send.ThreadParentMessageId);
                 return RoomResult.Ok;
             }
 
@@ -295,10 +298,10 @@ public sealed class ChatServer : IMessageListener, IDisposable
                     edit.MessageId,
                     edit.NewContent,
                     username,
-                    edit.ParentMessageId);
+                    edit.ThreadParentMessageId);
                 if (result == RoomResult.Ok)
                 {
-                    operation = new MessageEdited(edit.MessageId, edit.NewContent, username, edit.ParentMessageId);
+                    operation = new MessageEdited(edit.MessageId, edit.NewContent, username, edit.ThreadParentMessageId);
                 }
 
                 return result;
@@ -306,10 +309,10 @@ public sealed class ChatServer : IMessageListener, IDisposable
 
             case DeleteMessage delete:
             {
-                RoomResult result = Chatroom.DeleteMessage(delete.MessageId, username, delete.ParentMessageId);
+                RoomResult result = Chatroom.DeleteMessage(delete.MessageId, username, delete.ThreadParentMessageId);
                 if (result == RoomResult.Ok)
                 {
-                    operation = new MessageDeleted(delete.MessageId, username, delete.ParentMessageId);
+                    operation = new MessageDeleted(delete.MessageId, username, delete.ThreadParentMessageId);
                 }
 
                 return result;
@@ -321,14 +324,14 @@ public sealed class ChatServer : IMessageListener, IDisposable
                     reaction.MessageId,
                     reaction.Emoji,
                     username,
-                    reaction.ParentMessageId);
+                    reaction.ThreadParentMessageId);
                 if (result == RoomResult.Ok)
                 {
                     operation = new ReactionToggled(
                         reaction.MessageId,
                         reaction.Emoji,
                         username,
-                        reaction.ParentMessageId);
+                        reaction.ThreadParentMessageId);
                 }
 
                 return result;
