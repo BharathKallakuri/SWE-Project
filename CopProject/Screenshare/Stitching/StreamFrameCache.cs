@@ -4,11 +4,11 @@ namespace ScreenShare;
 
 public class StreamFrameCache : IDisposable
 {
-    private readonly Dictionary<string, Bitmap> frames = new();
+    private readonly Dictionary<string, Bitmap> _frames = new();
 
-    private readonly object cacheLock = new();
+    private readonly object _cacheLock = new();
 
-    private bool disposed;
+    private bool _disposed;
 
     public void Update(string streamId, Bitmap frame)
     {
@@ -18,22 +18,22 @@ public class StreamFrameCache : IDisposable
         // make a copy so that caller retains ownership of its bitmap.
         Bitmap copy = new Bitmap(frame);
 
-        lock (cacheLock)
+        lock (_cacheLock)
         {
-            if (disposed)
+            if (_disposed)
             {
                 copy.Dispose();
                 throw new ObjectDisposedException(nameof(StreamFrameCache));
             }
 
-            if (frames.TryGetValue(streamId, out Bitmap? oldFrame))
+            if (_frames.TryGetValue(streamId, out Bitmap? oldFrame))
             {
-                frames[streamId] = copy;
+                _frames[streamId] = copy;
                 oldFrame.Dispose();
             }
             else
             {
-                frames.Add(streamId, copy);
+                _frames.Add(streamId, copy);
             }
         }
     }
@@ -42,12 +42,14 @@ public class StreamFrameCache : IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
 
-        lock (cacheLock)
+        lock (_cacheLock)
         {
-            if (disposed)
+            if (_disposed)
+            {
                 throw new ObjectDisposedException(nameof(StreamFrameCache));
+            }
 
-            return frames.TryGetValue(streamId, out Bitmap? frame) ? new Bitmap(frame) : null;
+            return _frames.TryGetValue(streamId, out Bitmap? frame) ? new Bitmap(frame) : null;
         }
     }
 
@@ -55,12 +57,14 @@ public class StreamFrameCache : IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
 
-        lock (cacheLock)
+        lock (_cacheLock)
         {
-            if (disposed)
-                throw new ObjectDisposedException( nameof(StreamFrameCache));
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(StreamFrameCache));
+            }
 
-            if (frames.Remove(streamId, out Bitmap? frame))
+            if (_frames.Remove(streamId, out Bitmap? frame))
             {
                 frame.Dispose();
             }
@@ -69,19 +73,21 @@ public class StreamFrameCache : IDisposable
 
     public void Dispose()
     {
-        lock (cacheLock)
+        lock (_cacheLock)
         {
-            if (disposed)
+            if (_disposed)
+            {
                 return;
+            }
 
-            disposed = true;
+            _disposed = true;
 
-            foreach (Bitmap frame in frames.Values)
+            foreach (Bitmap frame in _frames.Values)
             {
                 frame.Dispose();
             }
 
-            frames.Clear();
+            _frames.Clear();
         }
     }
 }

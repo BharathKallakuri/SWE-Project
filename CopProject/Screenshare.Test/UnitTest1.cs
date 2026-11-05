@@ -94,9 +94,6 @@ public class ImageStitcherTests
 
         // encoded image is 32x32 , but metadata says 64x64
         using var tileBitmap = new Bitmap(32, 32);
-        using var stream = new MemoryStream();
-
-        tileBitmap.Save(stream, ImageFormat.Png);
 
         var tile = new Tile(
             x: 0,
@@ -104,7 +101,7 @@ public class ImageStitcherTests
             width: 64,
             height: 64,
             hash: 0,
-            data: stream.ToArray()
+            data: PngEncoder.Encode(tileBitmap)
             );
         Assert.Throws<ArgumentException>(() => stitcher.ApplyChangedTiles(1, new[] { tile }));
     }
@@ -271,10 +268,8 @@ public class ImageStitcherTests
     private static Tile SolidTile(int x, int y, int width, int height, Color color)
     {
         using Bitmap tileBitmap = SolidBitmap(width, height, color);
-        using var stream = new MemoryStream();
+        // PngEncoder rather than Save(stream, ImageFormat.Png), which can fail when tests run in parallel
+        return new Tile(x, y, width, height, hash: 0, data: PngEncoder.Encode(tileBitmap));
 
-        tileBitmap.Save(stream, ImageFormat.Png);
-
-        return new Tile(x, y, width, height, hash: 0, data: stream.ToArray());
     }
 }

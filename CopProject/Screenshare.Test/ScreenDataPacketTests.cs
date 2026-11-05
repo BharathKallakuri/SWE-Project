@@ -10,7 +10,7 @@ namespace Screenshare.Tests;
 public class ScreenDataPacketTests
 {
 
-    private static readonly DateTime CaptureTime = new(2026, 11, 3, 10, 30, 0, DateTimeKind.Utc);
+    private static readonly DateTime s_captureTime = new(2026, 11, 3, 10, 30, 0, DateTimeKind.Utc);
 
     /// <summary>
     /// verifies that a full frame packet stores its image data and metadata
@@ -23,7 +23,7 @@ public class ScreenDataPacketTests
         ScreenDataPacket packet = new(
             "stream-A",
             10,
-            CaptureTime,
+            s_captureTime,
             1280,
             720,
             DataPacketType.FullFrame,
@@ -32,7 +32,7 @@ public class ScreenDataPacketTests
 
         Assert.Equal("stream-A", packet.StreamId);
         Assert.Equal(10, packet.FrameNumber);
-        Assert.Equal(CaptureTime, packet.Timestamp);
+        Assert.Equal(s_captureTime, packet.Timestamp);
         Assert.Equal(1280, packet.Width);
         Assert.Equal(720, packet.Height);
         Assert.Equal(ImageDiffer.TILE_SIZE, packet.TileSize);
@@ -53,7 +53,7 @@ public class ScreenDataPacketTests
         ScreenDataPacket packet = new(
             "stream-B",
             11,
-            CaptureTime,
+            s_captureTime,
             128,
             128,
             DataPacketType.ChangedTiles,
@@ -79,7 +79,7 @@ public class ScreenDataPacketTests
         ScreenDataPacket packet = new(
             "stream-A",
             12,
-            CaptureTime,
+            s_captureTime,
             1280,
             720,
             DataPacketType.Pulse);
@@ -101,7 +101,7 @@ public class ScreenDataPacketTests
             new ScreenDataPacket(
                 "stream-A",
                 1,
-                CaptureTime,
+                s_captureTime,
                 128,
                 128,
                 DataPacketType.Pulse,
@@ -120,7 +120,7 @@ public class ScreenDataPacketTests
             new ScreenDataPacket(
                 "stream-A",
                 1,
-                CaptureTime,
+                s_captureTime,
                 128,
                 128,
                 DataPacketType.Pulse,
@@ -139,7 +139,7 @@ public class ScreenDataPacketTests
             new ScreenDataPacket(
                 "",
                 1,
-                CaptureTime,
+                s_captureTime,
                 128,
                 128,
                 DataPacketType.FullFrame,
@@ -156,7 +156,7 @@ public class ScreenDataPacketTests
             new ScreenDataPacket(
                 "stream-A",
                 -1,
-                CaptureTime,
+                s_captureTime,
                 128,
                 128,
                 DataPacketType.FullFrame,
@@ -171,7 +171,7 @@ public class ScreenDataPacketTests
     [InlineData(DateTimeKind.Unspecified)]
     public void ConstructorNonUtcTimestampThrows(DateTimeKind kind)
     {
-        DateTime timestamp = DateTime.SpecifyKind(CaptureTime, kind);
+        DateTime timestamp = DateTime.SpecifyKind(s_captureTime, kind);
 
         Assert.Throws<ArgumentException>(() =>
             new ScreenDataPacket(
@@ -196,7 +196,7 @@ public class ScreenDataPacketTests
             new ScreenDataPacket(
                 "stream-A",
                 1,
-                CaptureTime,
+                s_captureTime,
                 width,
                 height,
                 DataPacketType.Pulse));
@@ -212,7 +212,7 @@ public class ScreenDataPacketTests
             new ScreenDataPacket(
                 "stream-A",
                 1,
-                CaptureTime,
+                s_captureTime,
                 128,
                 128,
                 DataPacketType.Pulse,
@@ -231,7 +231,7 @@ public class ScreenDataPacketTests
             new ScreenDataPacket(
                 "stream-A",
                 1,
-                CaptureTime,
+                s_captureTime,
                 128,
                 128,
                 DataPacketType.FullFrame));
@@ -247,7 +247,7 @@ public class ScreenDataPacketTests
             new ScreenDataPacket(
                 "stream-A",
                 1,
-                CaptureTime,
+                s_captureTime,
                 128,
                 128,
                 DataPacketType.ChangedTiles));
@@ -265,7 +265,7 @@ public class ScreenDataPacketTests
             new ScreenDataPacket(
                 "stream-A",
                 1,
-                CaptureTime,
+                s_captureTime,
                 128,
                 128,
                 DataPacketType.FullFrame,
@@ -289,7 +289,7 @@ public class ScreenDataPacketTests
             new ScreenDataPacket(
                 "stream-A",
                 1,
-                CaptureTime,
+                s_captureTime,
                 128,
                 100,
                 DataPacketType.ChangedTiles,
@@ -307,7 +307,7 @@ public class ScreenDataPacketTests
         ScreenDataPacket packet = new(
             "stream-A",
             1,
-            CaptureTime,
+            s_captureTime,
             100,
             100,
             DataPacketType.ChangedTiles,
@@ -327,7 +327,7 @@ public class ScreenDataPacketTests
         ScreenDataPacket packet = new(
             "stream-A",
             1,
-            CaptureTime,
+            s_captureTime,
             256,
             256,
             DataPacketType.ChangedTiles,
@@ -350,7 +350,7 @@ public class ScreenDataPacketTests
         ScreenDataPacket packet = new(
             "stream-A",
             1,
-            CaptureTime,
+            s_captureTime,
             128,
             128,
             DataPacketType.FullFrame,

@@ -15,7 +15,7 @@ public class ScreenSharingServiceTests
 
         using var service = new ScreenSharingService(source, differ);
 
-        ImageDiffResult result = service.ProcessFrame();
+        using ImageDiffResult result = service.ProcessFrame();
 
         Assert.True(result.IsFullFrame);
         Assert.False(result.IsUnchanged);
@@ -24,7 +24,6 @@ public class ScreenSharingServiceTests
         Assert.Equal(128, result.FullFrame!.Width);
         Assert.Equal(128, result.FullFrame.Height);
 
-        result.FullFrame.Dispose();
     }
 
     [Fact]
@@ -38,15 +37,12 @@ public class ScreenSharingServiceTests
 
         using var service = new ScreenSharingService(source, differ);
 
-        ImageDiffResult firstResult = service.ProcessFrame();
-        ImageDiffResult secondResult = service.ProcessFrame();
+        using ImageDiffResult firstResult = service.ProcessFrame();
+        using ImageDiffResult secondResult = service.ProcessFrame();
 
         Assert.True(firstResult.IsFullFrame);
         Assert.True(secondResult.IsUnchanged);
         Assert.False(secondResult.IsFullFrame);
-
-        firstResult.FullFrame?.Dispose();
-        secondResult.FullFrame?.Dispose();
     }
 
     [Fact]
@@ -62,16 +58,15 @@ public class ScreenSharingServiceTests
 
         using var service = new ScreenSharingService(source, differ);
 
-        ImageDiffResult firstResult = service.ProcessFrame();
-        ImageDiffResult secondResult = service.ProcessFrame();
+        using ImageDiffResult firstResult = service.ProcessFrame();
+        using ImageDiffResult secondResult = service.ProcessFrame();
 
         Assert.True(firstResult.IsFullFrame);
         Assert.False(secondResult.IsUnchanged);
         Assert.False(secondResult.IsFullFrame);
         Assert.NotEmpty(secondResult.ChangedTiles);
 
-        firstResult.FullFrame?.Dispose();
-        secondResult.FullFrame?.Dispose();
+
     }
 
     [Fact]
@@ -85,18 +80,18 @@ public class ScreenSharingServiceTests
 
         using var service = new ScreenSharingService(source, differ);
 
-        ImageDiffResult firstResult = service.ProcessFrame();
-        firstResult.FullFrame?.Dispose();
+        using ImageDiffResult firstResult = service.ProcessFrame();
+        //firstResult.FullFrame?.Dispose();
 
         service.Reset();
 
-        ImageDiffResult resultAfterReset = service.ProcessFrame();
+        using ImageDiffResult resultAfterReset = service.ProcessFrame();
 
         Assert.True(resultAfterReset.IsFullFrame);
         Assert.False(resultAfterReset.IsUnchanged);
         Assert.NotNull(resultAfterReset.FullFrame);
 
-        resultAfterReset.FullFrame?.Dispose();
+        //resultAfterReset.FullFrame?.Dispose();
     }
 
     [Fact]
@@ -110,7 +105,7 @@ public class ScreenSharingServiceTests
 
         service.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => service.ProcessFrame());
+        Assert.Throws<ObjectDisposedException>(service.ProcessFrame);
     }
 
     /// <summary>

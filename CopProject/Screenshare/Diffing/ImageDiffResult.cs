@@ -7,7 +7,7 @@ namespace ScreenShare;
 /// <summary>
 /// the outcome of comparing two frames. owns FullFrame, so dispose the result when done with it
 /// </summary>
-public sealed class ImageDiffResult:IDisposable
+public sealed class ImageDiffResult : IDisposable
 {
     public bool IsUnchanged { get; }
 

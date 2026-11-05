@@ -7,6 +7,7 @@ namespace ScreenShare;
 
 public class ImageDiffer : IImageDiffer
 {
+    /// <summary>width and height of a full tile in pixels, edge tiles may be smaller</summary>
     public const int TILE_SIZE = 64;
 
     /*if more than this percentage of the screen has changed, sending individual tiles becomes less useful, so we send the complete frame.*/
@@ -155,7 +156,7 @@ public class ImageDiffer : IImageDiffer
             int rowBytes = width * bytesPerPixel;
             byte[] buffer = new byte[rowBytes];
 
-            for(int y=0; y < height; y++)
+            for (int y = 0; y < height; y++)
             {
                 IntPtr rowPointer = IntPtr.Add(
                     data.Scan0,
@@ -168,7 +169,7 @@ public class ImageDiffer : IImageDiffer
                     0,
                     rowBytes
                     );
-                for(int i = 0; i < rowBytes; i++)
+                for (int i = 0; i < rowBytes; i++)
                 {
                     hash ^= buffer[i];
                     hash *= FNV_PRIME;

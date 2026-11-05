@@ -12,7 +12,7 @@ public sealed record StreamStarted : IScreenShareMessage
     public int Width { get; }
     public int Height { get; }
 
-    public ScreenShareMessageKind Kind => ScreenShareMessageKind.StreamStarted; 
+    public ScreenShareMessageKind Kind => ScreenShareMessageKind.StreamStarted;
 
     /// <summary>
     /// <exception cref="ArgumentException">id/name is empry or dimentions are not valid</exception>
