@@ -37,7 +37,6 @@ public static class ItemSnapshot
                 Points = CopyPoints(item.Points),
                 StrokeColor = item.StrokeColor,
                 StrokeWidth = item.StrokeWidth,
-                BoundingBox = CopyRect(item.BoundingBox)
             },
 
             Line item => new Line {

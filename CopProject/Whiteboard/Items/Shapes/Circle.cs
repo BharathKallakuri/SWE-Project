@@ -22,8 +22,7 @@ public class Circle : Shape, ICircle
     );
 
     public override bool HitTest(Point2D point)
-    {   
-        
+    {
         double dx = point.X - Left;
         double dy = point.Y - Top;
         double distanceSquared = (dx * dx) + (dy * dy);

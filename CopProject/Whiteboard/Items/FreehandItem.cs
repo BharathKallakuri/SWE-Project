@@ -14,7 +14,7 @@ public class FreehandItem : Item, IFreehand
 
     public FreehandItem()
     {
-        Points = new List<Point2D>();
+        Points = [];
     }
 
     public override bool HitTest(Point2D point)
