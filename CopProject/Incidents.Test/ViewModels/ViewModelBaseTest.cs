@@ -13,7 +13,6 @@ public sealed class ViewModelBaseTest
     private sealed class TestViewModel : ViewModelBase
     {
         private string _name = string.Empty;
-
         public string Name
         {
             get => _name;
@@ -33,13 +32,10 @@ public sealed class ViewModelBaseTest
     public void OnPropertyChanged_RaisesPropertyChangedEvent()
     {
         TestViewModel viewModel = new();
-
         string? changedProperty = null;
-
         viewModel.PropertyChanged += (_, e) => {
             changedProperty = e.PropertyName;
         };
-
         viewModel.Name = "Test";
 
         Assert.AreEqual(nameof(TestViewModel.Name), changedProperty);
@@ -52,13 +48,10 @@ public sealed class ViewModelBaseTest
     public void OnPropertyChanged_ReturnsCorrectPropertyName()
     {
         TestViewModel viewModel = new();
-
         PropertyChangedEventArgs? eventArgs = null;
-
         viewModel.PropertyChanged += (_, e) => {
             eventArgs = e;
         };
-
         viewModel.Name = "Incident";
 
         Assert.IsNotNull(eventArgs);
@@ -71,14 +64,9 @@ public sealed class ViewModelBaseTest
     [TestMethod]
     public void PropertySetter_SameValue_DoesNotRaiseEvent()
     {
-        TestViewModel viewModel = new() {
-            Name = "Incident"
-        };
-
+        TestViewModel viewModel = new() { Name = "Incident" };
         int eventCount = 0;
-
         viewModel.PropertyChanged += (_, _) => eventCount++;
-
         viewModel.Name = "Incident";
 
         Assert.AreEqual(0, eventCount);

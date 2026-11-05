@@ -17,9 +17,7 @@ public sealed class RelayCommandTest
     public void Execute_RunsSuppliedAction()
     {
         bool executed = false;
-
         RelayCommand command = new(() => executed = true);
-
         command.Execute(null);
 
         Assert.IsTrue(executed);
@@ -42,9 +40,7 @@ public sealed class RelayCommandTest
     [TestMethod]
     public void Constructor_NullAction_ThrowsArgumentNullException()
     {
-        Assert.ThrowsExactly<ArgumentNullException>(
-            () => new RelayCommand(null!)
-        );
+        Assert.ThrowsExactly<ArgumentNullException>(() => new RelayCommand(null!));
     }
 
     /// <summary>
@@ -54,7 +50,6 @@ public sealed class RelayCommandTest
     public void Constructor_DoesNotExecuteActionImmediately()
     {
         int executionCount = 0;
-
         RelayCommand command = new(() => executionCount++);
 
         Assert.AreEqual(0, executionCount);
@@ -71,7 +66,6 @@ public sealed class RelayCommandTest
     public void Execute_MultipleCalls_ExecutesActionMultipleTimes()
     {
         int executionCount = 0;
-
         RelayCommand command = new(() => executionCount++);
 
         command.Execute(null);

@@ -752,7 +752,7 @@ public class IncidentDetailsPageViewModelDisplayTest
 
         propertySetter();
 
-        Assert.AreEqual(0,notificationCount,
+        Assert.AreEqual(0, notificationCount,
             $"{propertyName} unexpectedly raised PropertyChanged.");
     }
 }

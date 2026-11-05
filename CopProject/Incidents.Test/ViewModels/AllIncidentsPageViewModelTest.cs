@@ -17,13 +17,10 @@ public class AllIncidentsPageViewModelTests
 {
     private IIncidentController _controller = null!;
     private AllIncidentsPageViewModel _viewModel = null!;
-
     private readonly Guid _user1 =
         Guid.Parse("11111111-1111-1111-1111-111111111111");
-
     private readonly Guid _user2 =
         Guid.Parse("22222222-2222-2222-2222-222222222222");
-
     private Incident _vehicleIncident = null!;
     private Incident _theftIncident = null!;
     private Incident _drunkDrivingIncident = null!;
@@ -33,14 +30,10 @@ public class AllIncidentsPageViewModelTests
     [TestInitialize]
     public async Task Setup()
     {
-        // Create actual storage and file synchronisation implementations.
         IncidentCloudStorageService storageService = new();
         IncidentFileSynchroniser fileSynchroniser = new();
 
-        // Initialize the real IncidentController.
-        _controller = await IncidentController.CreateAsync(
-            storageService,
-            fileSynchroniser);
+        _controller = await IncidentController.CreateAsync(storageService, fileSynchroniser);
 
         // Create incidents through the controller.
         _vehicleIncident = await CreateTestIncident(
@@ -67,7 +60,6 @@ public class AllIncidentsPageViewModelTests
             IncidentCategory.Accident,
             IncidentSeverity.Low);
 
-        // Set different statuses using the real controller.
         await _controller.UpdateStatus(
             _theftIncident,
             IncidentStatus.InProgress);
@@ -76,10 +68,7 @@ public class AllIncidentsPageViewModelTests
             _drunkDrivingIncident,
             IncidentStatus.Resolved);
 
-        // Initialize the ViewModel with the real controller.
-        _viewModel = new AllIncidentsPageViewModel(
-            _controller,
-            _user1);
+        _viewModel = new AllIncidentsPageViewModel(_controller, _user1);
 
         // Load incidents into the ViewModel.
         await _viewModel.LoadAsync();
@@ -111,11 +100,9 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void Constructor_DefaultValues_InitializesCorrectly()
     {
-        AllIncidentsPageViewModel viewModel =
-            new(_controller, _user1);
+        AllIncidentsPageViewModel viewModel = new(_controller, _user1);
 
         Assert.AreEqual(string.Empty, viewModel.SearchText);
-
         Assert.AreEqual("All", viewModel.SelectedStatus);
         Assert.AreEqual("All", viewModel.SelectedCategory);
         Assert.AreEqual("All", viewModel.SelectedSeverity);
@@ -124,7 +111,6 @@ public class AllIncidentsPageViewModelTests
         Assert.IsNull(viewModel.ToDate);
 
         Assert.AreEqual(string.Empty, viewModel.CreatedByInput);
-
         Assert.IsEmpty(viewModel.Incidents);
     }
 
@@ -185,14 +171,8 @@ public class AllIncidentsPageViewModelTests
         await _viewModel.LoadAsync();
 
         Assert.HasCount(4, _viewModel.Incidents);
-
-        Assert.IsTrue(
-            _viewModel.Incidents.Any(
-                i => i.Title == "Vehicle Accident"));
-
-        Assert.IsTrue(
-            _viewModel.Incidents.Any(
-                i => i.Title == "Stolen Bicycle"));
+        Assert.IsTrue(_viewModel.Incidents.Any(i => i.Title == "Vehicle Accident"));
+        Assert.IsTrue(_viewModel.Incidents.Any(i => i.Title == "Stolen Bicycle"));
     }
 
     /// <summary>
@@ -211,9 +191,7 @@ public class AllIncidentsPageViewModelTests
         }
     }
 
-    // ---------------------------------------------------------
     // Fielter tests
-    // ---------------------------------------------------------
 
     /// <summary>
     /// Test 6: SearchText filters incidents by their title.
@@ -224,9 +202,7 @@ public class AllIncidentsPageViewModelTests
         _viewModel.SearchText = "Vehicle";
 
         Assert.HasCount(1, _viewModel.Incidents);
-        Assert.AreEqual(
-            "Vehicle Accident",
-            _viewModel.Incidents[0].Title);
+        Assert.AreEqual("Vehicle Accident", _viewModel.Incidents[0].Title);
     }
 
     /// <summary>
@@ -238,9 +214,7 @@ public class AllIncidentsPageViewModelTests
         _viewModel.SearchText = "  Vehicle  ";
 
         Assert.HasCount(1, _viewModel.Incidents);
-        Assert.AreEqual(
-            "Vehicle Accident",
-            _viewModel.Incidents[0].Title);
+        Assert.AreEqual("Vehicle Accident", _viewModel.Incidents[0].Title);
     }
 
     /// <summary>
@@ -252,9 +226,7 @@ public class AllIncidentsPageViewModelTests
         _viewModel.SearchText = "[";
 
         Assert.HasCount(1, _viewModel.Incidents);
-        Assert.AreEqual(
-            "Crash [North Road]",
-            _viewModel.Incidents[0].Title);
+        Assert.AreEqual("Crash [North Road]", _viewModel.Incidents[0].Title);
     }
 
     /// <summary>
@@ -274,14 +246,10 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void SelectedStatus_FiltersByStatus()
     {
-        _viewModel.SelectedStatus =
-            nameof(IncidentStatus.Reported);
+        _viewModel.SelectedStatus = nameof(IncidentStatus.Reported);
 
         Assert.HasCount(2, _viewModel.Incidents);
-
-        Assert.IsTrue(
-            _viewModel.Incidents.All(
-                i => i.Status == IncidentStatus.Reported));
+        Assert.IsTrue(_viewModel.Incidents.All(i => i.Status == IncidentStatus.Reported));
     }
 
     /// <summary>
@@ -290,14 +258,10 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void SelectedCategory_FiltersByCategory()
     {
-        _viewModel.SelectedCategory =
-            nameof(IncidentCategory.Accident);
+        _viewModel.SelectedCategory = nameof(IncidentCategory.Accident);
 
         Assert.HasCount(2, _viewModel.Incidents);
-
-        Assert.IsTrue(
-            _viewModel.Incidents.All(
-                i => i.Category == IncidentCategory.Accident));
+        Assert.IsTrue(_viewModel.Incidents.All(i => i.Category == IncidentCategory.Accident));
     }
 
     /// <summary>
@@ -306,14 +270,10 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void SelectedSeverity_FiltersBySeverity()
     {
-        _viewModel.SelectedSeverity =
-            nameof(IncidentSeverity.High);
+        _viewModel.SelectedSeverity = nameof(IncidentSeverity.High);
 
         Assert.HasCount(1, _viewModel.Incidents);
-
-        Assert.AreEqual(
-            IncidentSeverity.High,
-            _viewModel.Incidents[0].Severity);
+        Assert.AreEqual(IncidentSeverity.High, _viewModel.Incidents[0].Severity);
     }
 
 
@@ -323,8 +283,7 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void FromDate_FiltersIncidentsFromSelectedDate()
     {
-        _viewModel.FromDate =
-            new DateTimeOffset(DateTime.Now.AddDays(-1));
+        _viewModel.FromDate = new DateTimeOffset(DateTime.Now.AddDays(-1));
 
         Assert.HasCount(4, _viewModel.Incidents);
     }
@@ -335,8 +294,7 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void FromDate_FutureDate_ReturnsNoIncidents()
     {
-        _viewModel.FromDate =
-            new DateTimeOffset(DateTime.Now.AddDays(1));
+        _viewModel.FromDate = new DateTimeOffset(DateTime.Now.AddDays(1));
 
         Assert.HasCount(0, _viewModel.Incidents);
     }
@@ -347,8 +305,7 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void ToDate_FutureDate_ReturnsAllIncidents()
     {
-        _viewModel.ToDate =
-            new DateTimeOffset(DateTime.Now.AddDays(1));
+        _viewModel.ToDate = new DateTimeOffset(DateTime.Now.AddDays(1));
 
         Assert.HasCount(4, _viewModel.Incidents);
     }
@@ -359,8 +316,7 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void ToDate_PastDate_ReturnsNoIncidents()
     {
-        _viewModel.ToDate =
-            new DateTimeOffset(DateTime.Now.AddDays(-1));
+        _viewModel.ToDate = new DateTimeOffset(DateTime.Now.AddDays(-1));
 
         Assert.HasCount(0, _viewModel.Incidents);
     }
@@ -371,11 +327,8 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void FromDateAndToDate_DateRange_ReturnsMatchingIncidents()
     {
-        _viewModel.FromDate =
-            new DateTimeOffset(DateTime.Now.AddDays(-1));
-
-        _viewModel.ToDate =
-            new DateTimeOffset(DateTime.Now.AddDays(1));
+        _viewModel.FromDate = new DateTimeOffset(DateTime.Now.AddDays(-1));
+        _viewModel.ToDate = new DateTimeOffset(DateTime.Now.AddDays(1));
 
         Assert.HasCount(4, _viewModel.Incidents);
     }
@@ -389,10 +342,7 @@ public class AllIncidentsPageViewModelTests
         _viewModel.CreatedByInput = _user1.ToString();
 
         Assert.HasCount(2, _viewModel.Incidents);
-
-        Assert.IsTrue(
-            _viewModel.Incidents.All(
-                i => i.CreatedBy == _user1));
+        Assert.IsTrue(_viewModel.Incidents.All(i => i.CreatedBy == _user1));
     }
 
     /// <summary>
@@ -425,23 +375,13 @@ public class AllIncidentsPageViewModelTests
     public void MultipleFilters_AppliedTogether_ReturnsMatchingIncidents()
     {
         _viewModel.SearchText = "Driving";
-
-        _viewModel.SelectedStatus =
-            nameof(IncidentStatus.Resolved);
-
-        _viewModel.SelectedCategory =
-            nameof(IncidentCategory.DrunkDriving);
-
-        _viewModel.SelectedSeverity =
-            nameof(IncidentSeverity.Critical);
-
+        _viewModel.SelectedStatus = nameof(IncidentStatus.Resolved);
+        _viewModel.SelectedCategory = nameof(IncidentCategory.DrunkDriving);
+        _viewModel.SelectedSeverity = nameof(IncidentSeverity.Critical);
         _viewModel.CreatedByInput = _user1.ToString();
 
         Assert.HasCount(1, _viewModel.Incidents);
-
-        Assert.AreEqual(
-            "Drunk Driving Near School",
-            _viewModel.Incidents[0].Title);
+        Assert.AreEqual("Drunk Driving Near School", _viewModel.Incidents[0].Title);
     }
 
     // ClearFilters tests
@@ -453,37 +393,22 @@ public class AllIncidentsPageViewModelTests
     public void ClearFilters_ResetsAllFilters()
     {
         _viewModel.SearchText = "Vehicle";
-
-        _viewModel.SelectedStatus =
-            nameof(IncidentStatus.Resolved);
-
-        _viewModel.SelectedCategory =
-            nameof(IncidentCategory.Theft);
-
-        _viewModel.SelectedSeverity =
-            nameof(IncidentSeverity.High);
-
-        _viewModel.FromDate =
-            new DateTimeOffset(DateTime.Now.AddDays(-2));
-
-        _viewModel.ToDate =
-            new DateTimeOffset(DateTime.Now.AddDays(2));
-
+        _viewModel.SelectedStatus = nameof(IncidentStatus.Resolved);
+        _viewModel.SelectedCategory = nameof(IncidentCategory.Theft);
+        _viewModel.SelectedSeverity = nameof(IncidentSeverity.High);
+        _viewModel.FromDate = new DateTimeOffset(DateTime.Now.AddDays(-2));
+        _viewModel.ToDate = new DateTimeOffset(DateTime.Now.AddDays(2));
         _viewModel.CreatedByInput = _user2.ToString();
 
         _viewModel.ClearFilters();
 
         Assert.AreEqual(string.Empty, _viewModel.SearchText);
-
         Assert.AreEqual("All", _viewModel.SelectedStatus);
         Assert.AreEqual("All", _viewModel.SelectedCategory);
         Assert.AreEqual("All", _viewModel.SelectedSeverity);
-
         Assert.IsNull(_viewModel.FromDate);
         Assert.IsNull(_viewModel.ToDate);
-
         Assert.AreEqual(string.Empty, _viewModel.CreatedByInput);
-
         Assert.HasCount(4, _viewModel.Incidents);
     }
 
@@ -494,7 +419,6 @@ public class AllIncidentsPageViewModelTests
     public void ClearFiltersCommand_Execute_ClearsFilters()
     {
         _viewModel.SearchText = "Vehicle";
-
         _viewModel.ClearFiltersCommand.Execute(null);
 
         Assert.AreEqual(string.Empty, _viewModel.SearchText);
@@ -511,9 +435,7 @@ public class AllIncidentsPageViewModelTests
     {
         _viewModel.SearchText = "Nonexistent";
 
-        Assert.AreEqual(
-            Visibility.Visible,
-            _viewModel.EmptyMessageVisibility);
+        Assert.AreEqual(Visibility.Visible, _viewModel.EmptyMessageVisibility);
     }
 
     /// <summary>
@@ -522,9 +444,7 @@ public class AllIncidentsPageViewModelTests
     [TestMethod]
     public void EmptyMessageVisibility_IncidentsExist_ReturnsCollapsed()
     {
-        Assert.AreEqual(
-            Visibility.Collapsed,
-            _viewModel.EmptyMessageVisibility);
+        Assert.AreEqual(Visibility.Collapsed, _viewModel.EmptyMessageVisibility);
     }
 
     // Property notification tests
@@ -542,9 +462,7 @@ public class AllIncidentsPageViewModelTests
 
         _viewModel.SearchText = "Vehicle";
 
-        CollectionAssert.Contains(
-            changedProperties,
-            nameof(_viewModel.SearchText));
+        CollectionAssert.Contains(changedProperties,nameof(_viewModel.SearchText));
     }
 
     /// <summary>
@@ -874,6 +792,5 @@ public class AllIncidentsPageViewModelTests
         Assert.AreEqual(_user1.ToString(), _viewModel.CreatedByInput);
         Assert.IsTrue(notified);
     }
-
 
 }
