@@ -1,8 +1,8 @@
 ﻿namespace Incident_module;
 
 using System.Security.Policy;
-using Filesync;
-using Persistence;
+using FileSynchroniser.Models;
+using Cloud.Persistence;
 
 public class IncidentController : IIncidentController
 {
@@ -439,7 +439,13 @@ public class IncidentController : IIncidentController
                 { incident2Clone.Id.ToString(), Incident_module.IncidentSerializer.Serialize(incident2Clone) }
             };
 
-            success = await _cloudStorageService.UpdateAll(itemsToUpdate);
+            Dictionary<string, string> etags = new Dictionary<string, string>
+            {
+                { incident1Clone.Id.ToString(), etag1 },
+                { incident2Clone.Id.ToString(), etag2 }
+            };
+
+            success = await _cloudStorageService.UpdateAll(itemsToUpdate, etags);
 
             if (!success)
             {

@@ -2,10 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System.Security.Policy;
-using Filesync;
+using FileSynchroniser.Models;
 using Incident_module;
 using Incident_module.Implementations;
-using Persistence;
+using Cloud.Persistence;
 using Windows.ApplicationModel.Store.Preview.InstallControl;
 using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 

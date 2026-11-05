@@ -5,11 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Filesync;
+using FileSynchroniser.Models;
 using Incident_module;
 using Incident_module.Implementations;
 using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.EventHandlers;
-using Persistence;
+using Cloud.Persistence;
 
 namespace Incidents.Test;
 

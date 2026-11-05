@@ -1,6 +1,6 @@
 ﻿namespace Incident_module.Implementations;
 
-using Persistence;
+using Cloud.Persistence;
 
 public class IncidentCloudStorageService : IStorage
 {
@@ -30,6 +30,18 @@ public class IncidentCloudStorageService : IStorage
         }
 
         return Task.FromResult((false, string.Empty));
+    }
+
+    public Task<(bool Success, Dictionary<string, string>)> ReadAllEtags()
+    {
+        Dictionary<string, string> etags = new();
+
+        foreach (KeyValuePair<string, byte[]> kvp in _memory)
+        {
+            etags[kvp.Key] = Guid.NewGuid().ToString();
+        }
+
+        return Task.FromResult((true, etags));
     }
 
     public Task<bool> Update(string key, byte[] data, string etag)
@@ -88,7 +100,7 @@ public class IncidentCloudStorageService : IStorage
         return Task.FromResult((true, _memory.Keys.ToList()));
     }
 
-    public async Task<bool> UpdateAll(Dictionary<string, byte[]> items)
+    public async Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags)
     {
         foreach ((string key, byte[] value) in items)
         {
