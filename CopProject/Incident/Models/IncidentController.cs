@@ -49,9 +49,10 @@ public class IncidentController : IIncidentController
                     Incident incident = Incident_module.IncidentSerializer.Deserialize(incidentBytes);
                     incidentMap[incident.Id] = incident;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    throw new InvalidOperationException($"Failed to deserialize incident with ID {id}: ", ex);
+                    // todo(@shreesh): Improve error handling here. For now, we just skip the incident if deserialization fails.
+                    // throw new InvalidOperationException($"Failed to deserialize incident with ID {id}: ", ex);
                 }
             }
 

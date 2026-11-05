@@ -2,6 +2,8 @@
 using Incident_module;
 using Incident_module.Implementations;
 using Incident_module.Views;
+using Cloud.Persistence;
+using FileSynchroniser.Models;
 using Microsoft.UI.Xaml;
 
 namespace Incidents.UIharness;
@@ -17,8 +19,8 @@ public sealed partial class MainWindow : Window
     private async void InitializeAndStartAsync()
     {
         // Instantiate services/controllers
-        IncidentCloudStorageService storageService = new();
-        IncidentFileSynchroniser fileSynchroniser = new();
+        IStorage storageService = await StorageFactory.CreateAsync(ModuleType.IncidentManagement);
+        IFileOperations fileSynchroniser = new Synchroniser();
 
         IIncidentController controller = await IncidentController.CreateAsync(storageService, fileSynchroniser);
         Guid currentUserId = Guid.NewGuid();
