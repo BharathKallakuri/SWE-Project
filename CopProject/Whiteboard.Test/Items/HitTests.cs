@@ -119,4 +119,27 @@ public class HitTests : BaseGenerator
         Assert.False(rect.HitTest(new Point2D(rect.Center.X, rect.BoundingBox.Top - 5.0)));
         Assert.False(rect.HitTest(new Point2D(rect.BoundingBox.Left + rect.BoundingBox.Width + 5.0, rect.Center.Y)));
     }
+
+    /// <summary>
+    /// Test hit testing for square for inside, boundary, and outside points.
+    /// </summary>
+    [Fact]
+    public void Square()
+    {
+        var square = new Whiteboard.Items.Shapes.Square() {
+            Center = RandomPointGenerator.Generate(),
+            SideLegth = (Rng.NextDouble() * 100) + 2.0
+        };
+
+        // Center should hit
+        Assert.True(square.HitTest(square.Center));
+
+        // Boundary points should hit
+        Assert.True(square.HitTest(new Point2D(square.BoundingBox.Left, square.BoundingBox.Top)));
+        Assert.True(square.HitTest(new Point2D(square.BoundingBox.Left + square.BoundingBox.Width, square.BoundingBox.Top + square.BoundingBox.Height)));
+
+        // Points outside should miss
+        Assert.False(square.HitTest(new Point2D(square.BoundingBox.Left - 5.0, square.Center.Y)));
+        Assert.False(square.HitTest(new Point2D(square.Center.X, square.BoundingBox.Top + square.BoundingBox.Height + 5.0)));
+    }
 }
