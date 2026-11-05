@@ -2,15 +2,11 @@ using System.Text.Json;
 using Cloud.Persistence;
 using Microsoft.UI.Xaml;
 using Whiteboard.Interfaces;
-using Whiteboard.Models;
 using Whiteboard.Services;
 
 namespace Whiteboard.Test.Services;
 
-/// <summary>
-/// Test to verify that whiteboard export data is persisted into the Cloud storage
-/// </summary>
-public class CloudExportTest
+public class CloudExportIntegrationTests
 {
     [Fact]
     public async Task ExportToCloudAsync_StoreExportData()
@@ -34,15 +30,15 @@ public class CloudExportTest
 
         IStorage storage = await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
 
-        bool saved = await cloudExport.ExportToCloudAsync(new UIElement(), whiteboardId, userId);
+        bool saved = await cloudExport.SaveExportDataToCloudAsync(exportData, whiteboardId, userId);
 
         Assert.True(saved);
 
         (bool Success, byte[] Data) result = await storage.Read(key);
         Assert.True(result.Success);
 
-        using JsonDocument doc = JsonDocument.Parse(result.Data);
-        JsonElement root = doc.RootElement;
+        using JsonDocument document = JsonDocument.Parse(result.Data);
+        JsonElement root = document.RootElement;
 
         Assert.Equal(whiteboardId, root.GetProperty("BoardId").GetString());
         Assert.Equal(userId, root.GetProperty("OwnerId").GetString());
@@ -54,12 +50,12 @@ public class CloudExportTest
 
     private sealed class TempCanvasRender(CanvasExportData exportData) : ICanvasRender
     {
-        public Task<byte[]> RenderToPngAsync(UIElement element) => 
+        public Task<byte[]> RenderToPngAsync(UIElement element) =>
             Task.FromResult(exportData.ImageData);
-        
+
         public Task<byte[]> RenderToJpegAsync(UIElement element) =>
             Task.FromResult(exportData.ImageData);
-        
+
         public Task<CanvasExportData> CreateExportDataAsync(UIElement element, string whiteboardId, bool isJpeg = false) =>
             Task.FromResult(exportData);
     }
