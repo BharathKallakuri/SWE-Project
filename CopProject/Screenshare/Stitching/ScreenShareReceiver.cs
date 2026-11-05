@@ -135,9 +135,40 @@ internal sealed class ScreenShareReceiver : IDisposable
         FrameUpdated?.Invoke(packet.StreamId);
     }
 
+    /// <summary>
+    /// handles a message the host sent to this participant
+    /// </summary>
+    public void Handle(IScreenShareMessage message)
+    {
+        switch (message)
+        {
+            case StreamStarted started:
+                OnStreamStarted(started);
+                break;
+
+            case StreamStopped stopped:
+                RemoveSubscription(stopped.StreamId);
+                if (_streamNames.Remove(stopped.StreamId))
+                {
+                    StreamRemoved?.Invoke(stopped.StreamId);
+                }
+                break;
+
+            case ScreenDataPacket packet:
+                OnData(packet);
+                break;
+        }
+    }
+
     public void Dispose()
     {
+        foreach (Subscription subscription in _subscriptions.Values)
+        {
+            subscription.Dispose();
+        }
 
+        _subscriptions.Clear();
+        _frames.Dispose();
     }
 
     /// <summary>
