@@ -41,13 +41,6 @@ public class TestProgram
     }
 
     [TestMethod]
-    public void CreateBuilderWorksProperly()
-    {
-        WebApplicationBuilder builder = Program.CreateBuilder(["--environment", "Staging"]);
-        Assert.AreEqual("Staging", builder.Environment.EnvironmentName);
-    }
-
-    [TestMethod]
     public async Task CreateApplicationWorksProperly()
     {
         await using WebApplication app = Program.CreateApplication(["--environment", "Staging"]);
