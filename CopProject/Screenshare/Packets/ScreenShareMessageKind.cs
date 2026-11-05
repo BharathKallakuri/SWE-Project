@@ -2,7 +2,7 @@
 
 public enum ScreenShareMessageKind : byte
 {
-    Date = 1,
+    Data = 1,
     StreamStarted = 2,
     StreamStopped = 3,
     Subscribe = 4,
