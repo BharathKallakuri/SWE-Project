@@ -14,7 +14,7 @@ public class MessageHub : Hub
     /// <summary>
     /// Doing RPC i.e server calling RecieveMessage on the clients.
     /// </summary>
-    public async Task SendMessage(string content)
+    public async Task<Message> SendMessage(string content)
     {
         if (string.IsNullOrWhiteSpace(content))
         {
@@ -27,5 +27,6 @@ public class MessageHub : Hub
         };
 
         await Clients.All.SendAsync(Contract.ReceiveMessage, message);
+        return message;
     }
 }
