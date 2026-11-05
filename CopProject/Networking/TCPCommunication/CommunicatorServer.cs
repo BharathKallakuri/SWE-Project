@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,6 +16,9 @@ namespace Networking.TCPCommunication;
 
 public class CommunicatorServer : ICommunicator, IDisposable
 {
+    public const int NetworkingModuleId = 13;
+    public const int NetworkModuleId = 13;
+
     private SendingQueue _sendingQueue = new SendingQueue();
     private ReceivingQueue _receivingQueue = new ReceivingQueue();
     private SendingQueueListenerServer? _sendingQueueListenerServer;
@@ -24,8 +27,9 @@ public class CommunicatorServer : ICommunicator, IDisposable
     private ConcurrentDictionary<IPEndPoint, TcpClient> _clientToTcpListenerMap = new ConcurrentDictionary<IPEndPoint, TcpClient>();
     private ConcurrentDictionary<int, IMessageListener> _moduleToMessageListenerMap = new ConcurrentDictionary<int, IMessageListener>();
     private ConcurrentDictionary<IPEndPoint, SocketListener> _clientToSocketListenerMap = new ConcurrentDictionary<IPEndPoint, SocketListener>();
-    private ConcurrentDictionary<int, ConcurrentBag<IPEndPoint>> _multicastGroupMap = new ConcurrentDictionary<int, ConcurrentBag<IPEndPoint>>();
+    private ConcurrentDictionary<int, ConcurrentDictionary<IPEndPoint, byte>> _multicastGroupMap = new ConcurrentDictionary<int, ConcurrentDictionary<IPEndPoint, byte>>();
     private bool _isRunning;
+    private bool _disposed;
     private object _isRunningLock;
     private IPEndPoint? _thisIpEndPoint;
 
@@ -56,6 +60,8 @@ public class CommunicatorServer : ICommunicator, IDisposable
             _sendingQueueListenerServer = new SendingQueueListenerServer(_sendingQueue, _clientToTcpListenerMap);
             _receivingQueueListener = new ReceivingQueueListener(_receivingQueue, _moduleToMessageListenerMap);
 
+            AddSubscriber(NetworkingModuleId, new NetworkMessageListener(this));
+
             _isRunning = true;
             _clientConnectionListenerThread = new Thread(AcceptClientConnections) { IsBackground = true };
             _clientConnectionListenerThread.Start();
@@ -69,6 +75,8 @@ public class CommunicatorServer : ICommunicator, IDisposable
         }
         catch (Exception e)
         {
+            _thisIpEndPoint = null;
+            _tcpClientRequestListener = null;
             Trace.WriteLine($"[Networking] CommunicatorServer.CommunicatorServer: Unable to start the TCP server. Exception: {e.Message}");
         }
     }
@@ -88,18 +96,24 @@ public class CommunicatorServer : ICommunicator, IDisposable
                 TcpClient clientTcpClient = listener.AcceptTcpClient();
                 if (clientTcpClient.Client.RemoteEndPoint is IPEndPoint clientEp)
                 {
+                    if (clientEp.Address.IsIPv4MappedToIPv6)
+                    {
+                        clientEp = new IPEndPoint(clientEp.Address.MapToIPv4(), clientEp.Port);
+                    }
                     AddClient(clientEp, clientTcpClient);
                 }
             }
-            catch (SocketException e)
+            catch (Exception e) when (e is SocketException or ObjectDisposedException or InvalidOperationException)
             {
-                if (e.SocketErrorCode == SocketError.Interrupted)
+                Trace.WriteLine($"[Networking] CommunicatorServer: TCP Listener Socket stopped or closed: {e.Message}");
+                break;
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine($"[Networking] CommunicatorServer.AcceptClientConnections unexpected exception: {e.Message}");
+                if (!IsRunning)
                 {
-                    Trace.WriteLine("[Networking] Error in CommunicatorServer in connecting to TCP Listener Socket. Socket has been closed");
-                }
-                else
-                {
-                    Trace.WriteLine($"[Networking] Error in CommunicatorServer.AcceptClientConnections. Exception: {e.Message}");
+                    break;
                 }
             }
         }
@@ -144,6 +158,11 @@ public class CommunicatorServer : ICommunicator, IDisposable
         {
             SocketListener socketListener = _clientToSocketListenerMap[clientIp];
             _clientToSocketListenerMap.TryRemove(clientIp, out _);
+            _clientToTcpListenerMap.TryRemove(clientIp, out _);
+            foreach (ConcurrentDictionary<IPEndPoint, byte> group in _multicastGroupMap.Values)
+            {
+                group.TryRemove(clientIp, out _);
+            }
             socketListener.Dispose();
         }
         catch (Exception e)
@@ -189,23 +208,122 @@ public class CommunicatorServer : ICommunicator, IDisposable
     }
 
 
-    public void JoinMulticastGroup(int multicastGroup)
+    public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
-        throw new NotImplementedException();
+        if (clientIp.Address.IsIPv4MappedToIPv6)
+        {
+            clientIp = new IPEndPoint(clientIp.Address.MapToIPv4(), clientIp.Port);
+        }
+
+        ConcurrentDictionary<IPEndPoint, byte> group = _multicastGroupMap.GetOrAdd(
+            multicastGroup,
+            _ => new ConcurrentDictionary<IPEndPoint, byte>()
+        );
+        group.TryAdd(clientIp, 0);
     }
-    public void LeaveMulticastGroup(int multicastGroup)
+
+    public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
-        throw new NotImplementedException();
+        if (clientIp.Address.IsIPv4MappedToIPv6)
+        {
+            clientIp = new IPEndPoint(clientIp.Address.MapToIPv4(), clientIp.Port);
+        }
+
+        if (_multicastGroupMap.TryGetValue(multicastGroup, out ConcurrentDictionary<IPEndPoint, byte>? group))
+        {
+            group.TryRemove(clientIp, out _);
+            if (group.IsEmpty)
+            {
+                _multicastGroupMap.TryRemove(multicastGroup, out _);
+            }
+        }
     }
+
+
+
     public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority)
     {
-        throw new NotImplementedException();
+        MulticastMessage(multicastGroup, message, module, priority, null);
     }
+
+    public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority, IPEndPoint? excludeClient)
+    {
+        if (_multicastGroupMap.TryGetValue(multicastGroup, out ConcurrentDictionary<IPEndPoint, byte>? group))
+        {
+            foreach (IPEndPoint clientEp in group.Keys)
+            {
+                if (excludeClient != null && EndPointsEqual(clientEp, excludeClient))
+                {
+                    continue;
+                }
+                SendMessage(clientEp, message, module, priority);
+            }
+        }
+    }
+
     public void BroadcastMessage(byte[] message, int module, int priority)
+    {
+        BroadcastMessage(message, module, priority, null);
+    }
+
+    public void BroadcastMessage(byte[] message, int module, int priority, IPEndPoint? excludeClient)
     {
         foreach (IPEndPoint clientEp in _clientToTcpListenerMap.Keys)
         {
+            if (excludeClient != null && EndPointsEqual(clientEp, excludeClient))
+            {
+                continue;
+            }
             SendMessage(clientEp, message, module, priority);
+        }
+    }
+
+    private static bool EndPointsEqual(IPEndPoint a, IPEndPoint b)
+    {
+        if (a.Port != b.Port)
+        {
+            return false;
+        }
+
+        IPAddress addrA = a.Address.IsIPv4MappedToIPv6 ? a.Address.MapToIPv4() : a.Address;
+        IPAddress addrB = b.Address.IsIPv4MappedToIPv6 ? b.Address.MapToIPv4() : b.Address;
+
+        return addrA.Equals(addrB);
+    }
+
+    public class NetworkMessageListener : IMessageListener
+    {
+        private readonly CommunicatorServer _server;
+        private readonly Serializer<NetworkMessage> _serializer;
+
+        public NetworkMessageListener(CommunicatorServer server)
+        {
+            _server = server;
+            _serializer = new Serializer<NetworkMessage>();
+        }
+
+        public void OnMessageReceived(byte[] message)
+        {
+            try
+            {
+                NetworkMessage? packet = _serializer.Deserialize(message);
+                switch (packet)
+                {
+                    case BroadcastPacket broadcast:
+                        _server.BroadcastMessage(broadcast.Message, broadcast.Module, broadcast.Priority, broadcast.ClientIp);
+                        break;
+                    case MulticastPacket multicast:
+                        _server.MulticastMessage(multicast.MulticastGroup, multicast.Message, multicast.Module, multicast.Priority);
+                        break;
+                    default:
+                        Trace.WriteLine("[Networking] CommunicatorServer.NetworkMessageListener: Unknown or null message type.");
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine($"[Networking] CommunicatorServer.NetworkMessageListener: Failed to process message. Exception: {e.Message}");
+            }
         }
     }
 
@@ -217,8 +335,14 @@ public class CommunicatorServer : ICommunicator, IDisposable
     {
         lock (_isRunningLock)
         {
+            if (_disposed)
+            {
+                return;
+            }
+            _disposed = true;
             _isRunning = false;
         }
+
         _tcpClientRequestListener?.Stop();
         _sendingQueueListenerServer?.Dispose();
         _receivingQueueListener?.Dispose();

@@ -5,8 +5,10 @@
 /// a packet contains a complete frame, changed screen tiles, or nothing (a pulse)
 /// </summary>
 
-public class ScreenDataPacket
+public class ScreenDataPacket : IScreenShareMessage
 {
+    public ScreenShareMessageKind Kind => ScreenShareMessageKind.Data;
+
     /// <summary>
     /// gets the id of the screen-sharing stream the packet belongs to
     /// </summary>
@@ -90,7 +92,7 @@ public class ScreenDataPacket
         DataPacketType type,
         byte[]? fullFrameData = null,
         IReadOnlyList<Tile>? changedTiles = null,
-        int tileSize = 64)
+        int tileSize = ImageDiffer.TILE_SIZE)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
 

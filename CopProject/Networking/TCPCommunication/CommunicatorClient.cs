@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -24,6 +24,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
     private readonly TcpClient _tcpClient;
     private readonly IPEndPoint _serverIp;
     private readonly ConcurrentDictionary<int, IMessageListener> _moduleToMessageListenerMap = new ConcurrentDictionary<int, IMessageListener>();
+    private readonly Serializer<NetworkMessage> _networkMessageSerializer = new Serializer<NetworkMessage>();
 
     public CommunicatorClient(IPEndPoint serverIp)
     {
@@ -67,28 +68,46 @@ public class CommunicatorClient : ICommunicator, IDisposable
         _moduleToMessageListenerMap.TryRemove(module, out _);
     }
 
-    [ExcludeFromCodeCoverage]
     public void BroadcastMessage(byte[] message, int module, int priority)
     {
-        throw new NotImplementedException();
+        try
+        {
+            IPEndPoint clientEndpoint = new IPEndPoint(ListenIpAddress, ListenPort);
+            BroadcastPacket packet = new BroadcastPacket(message, module, priority, clientEndpoint);
+            byte[] serialized = _networkMessageSerializer.Serialize(packet);
+            SendMessage(_serverIp, serialized, CommunicatorServer.NetworkingModuleId, priority);
+        }
+        catch (Exception e)
+        {
+            Trace.WriteLine($"[Networking] CommunicatorClient.BroadcastMessage: Failed to broadcast message. Exception: {e.Message}");
+        }
     }
 
     [ExcludeFromCodeCoverage]
-    public void JoinMulticastGroup(int multicastGroup)
+    public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
         throw new NotImplementedException();
     }
 
     [ExcludeFromCodeCoverage]
-    public void LeaveMulticastGroup(int multicastGroup)
+    public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
         throw new NotImplementedException();
     }
 
-    [ExcludeFromCodeCoverage]
     public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority)
     {
-        throw new NotImplementedException();
+        try
+        {
+            IPEndPoint clientEndpoint = new IPEndPoint(ListenIpAddress, ListenPort);
+            MulticastPacket packet = new MulticastPacket(multicastGroup, message, module, priority, clientEndpoint);
+            byte[] serialized = _networkMessageSerializer.Serialize(packet);
+            SendMessage(_serverIp, serialized, CommunicatorServer.NetworkingModuleId, priority);
+        }
+        catch (Exception e)
+        {
+            Trace.WriteLine($"[Networking] CommunicatorClient.MulticastMessage: Failed to multicast message. Exception: {e.Message}");
+        }
     }
 
     public int ListenPort
@@ -108,6 +127,10 @@ public class CommunicatorClient : ICommunicator, IDisposable
         get {
             if (_tcpClient?.Client?.LocalEndPoint is IPEndPoint ep)
             {
+                if (ep.Address.IsIPv4MappedToIPv6)
+                {
+                    return ep.Address.MapToIPv4();
+                }
                 return ep.Address;
             }
 

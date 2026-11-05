@@ -185,16 +185,16 @@ interface IChatroom
     bool RemoveParticipant(string name);
 
     // Messages.
-    Guid AddMessage(ChatMessage message);
+    Guid AddMessage(ChatMessageWithThreads message);
+    Guid AddThreadMessage(Guid parentMessageId, ChatMessage reply);
     bool TryGetMessage(Guid id, out ChatMessage message);
 
     // Editing and deleting messages.
-    RoomResult EditMessage(Guid id, string newContent, string editor);
-    RoomResult DeleteMessage(Guid id, string deleter);
+    RoomResult EditMessage(Guid id, string newContent, string editor, Guid? parentMessageId = null);
+    RoomResult DeleteMessage(Guid id, string deleter, Guid? parentMessageId = null);
 
     // Reactions.
-    RoomResult AddReaction(Guid id, string emoji, string user);
-    RoomResult RemoveReaction(Guid id, string emoji, string user);
+    RoomResult ToggleReaction(Guid id, string emoji, string user, Guid? parentMessageId = null);
 }
 ```
 
@@ -275,14 +275,12 @@ them. These have been divided into thread and non-thread operations.
         - Send new message: `ChatMessageWithThreads` object
         - Edit message: message ID, new content, the user attempting the edit
         - Delete message: message ID, the user attempting the deletion
-        - Add reaction to message: message ID, reaction emoji, user attempting to add reaction
-        - Remove reaction from message: message ID, reaction emoji, user attempting to remove reaction
+        - Toggle reaction on message: message ID, reaction emoji, user
     - Threaded versions (in a particular thread):
         - Send new message: parent message ID, `ChatMessageWithThreads` object
         - Edit message: parent message ID, message ID, new content, the user attempting the edit
         - Delete message: parent message ID, message ID, the user attempting the deletion
-        - Add reaction to message: parent message ID, message ID, reaction emoji, user attempting to add reaction
-        - Remove reaction from message: parent message ID, message ID, reaction emoji, user attempting to remove reaction
+        - Toggle reaction on message: parent message ID, message ID, reaction emoji, user
 
 > [!NOTE]
 > The threaded version of operations have exactly one additional argument
@@ -301,15 +299,13 @@ public sealed record Reset() : ChatRequest;
 
 // General operations.
 
-public sealed record SendMainMessage(ChatMessageWithThreads Message, Guid? ParentMessageId) : ChatRequest;
+public sealed record SendMessage(ChatMessageWithThreads Message, Guid? ParentMessageId) : ChatRequest;
 
 public sealed record EditMessage(Guid MessageId, string NewContent, string EditorName, Guid? ParentMessageId) : ChatRequest;
 
 public sealed record DeleteMessage(Guid MessageId, string DeleterName, Guid? ParentMessageId) : ChatRequest;
 
-public sealed record AddReaction(Guid MessageId, string Emoji, string ReactorName, Guid? ParentMessageId) : ChatRequest;
-
-public sealed record RemoveReaction(Guid MessageId, string Emoji, string ReactorName, Guid? ParentMessageId) : ChatRequest;
+public sealed record ToggleReaction(Guid MessageId, string Emoji, string ReactorName, Guid? ParentMessageId) : ChatRequest;
 ```
 
 > [!NOTE]
@@ -404,4 +400,3 @@ Also consider a scenario where a participant joins the meeting when 10 messages
 have already been sent. With the network-based broadcast approach, they cannot
 conveniently catch-up with the state of the chatroom, but with our approach,
 they will be sent all current messages upon arrival.
-
