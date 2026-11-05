@@ -17,6 +17,10 @@ internal sealed class ScreenShareReceiver : IDisposable
         Action<IScreenShareMessage> sendToHost,
         TimeProvider timeProvider)
     {
+        ArgumentNullException.ThrowIfNull(local);
+        ArgumentNullException.ThrowIfNull(sendToHost);
+        ArgumentNullException.ThrowIfNull(timeProvider);
+
         _local = local;
         _sendToHost = sendToHost;
         _timeProvider = timeProvider;
