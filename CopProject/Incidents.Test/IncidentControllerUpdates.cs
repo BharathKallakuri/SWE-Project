@@ -177,7 +177,7 @@ public sealed class IncidentControllerUpdatesTest
     public async Task UpdateLocation_NullIncident_ThrowsArgumentNullException()
     {
         await Assert.ThrowsExactlyAsync<ArgumentNullException>(async () => {
-            await _incidentController.UpdateLocation(null!, 
+            await _incidentController.UpdateLocation(null!,
                 new IncidentLocation(
                     Latitude: RandomDouble(-90, 90),
                     Longitude: RandomDouble(-180, 180))

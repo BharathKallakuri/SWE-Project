@@ -105,6 +105,10 @@ public sealed class IncidentControllerCorrelationTest
         await SetupIncidentController();
     }
 
+    /// <summary>
+    /// Initialiazes IncidentController with CloudService and FileSyncronizer
+    /// </summary>
+    /// <returns></returns>
     private async Task SetupIncidentController()
     {
         // Mimicking persistent cloud storage by adding Incidents before IncidentController is created
@@ -115,6 +119,11 @@ public sealed class IncidentControllerCorrelationTest
         _incidentController = await IncidentController.CreateAsync(cloudStorageService, fileOperationsService);
     }
 
+    /// <summary>
+    /// Initializes CloudStorageService with its persisted Incidents to mimick a cloud database
+    /// </summary>
+    /// <param name="cloudStorageService"></param>
+    /// <returns></returns>
     private async Task SetupIncidentCloudStorageService(IncidentCloudStorageService cloudStorageService)
     {
         Dictionary<string, byte[]> payload = new();
@@ -124,6 +133,11 @@ public sealed class IncidentControllerCorrelationTest
         await cloudStorageService.CreateAll(payload);
     }
 
+
+    /// <summary>
+    /// IncidentController throws when null incident is passed as argument
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task CorrelateIncident_NullIncident_ThrowArgumentNullException()
     {
@@ -136,6 +150,10 @@ public sealed class IncidentControllerCorrelationTest
         });
     }
 
+    /// <summary>
+    /// Checks whether correlating same Incident returns false
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task CorrelateIncident_SameIncidents_ReturnsFalse()
     {
@@ -144,6 +162,10 @@ public sealed class IncidentControllerCorrelationTest
         Assert.IsFalse(result);
     }
 
+    /// <summary>
+    /// Checking whether correlating valid Incident returns true
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
     public async Task CorrelateIncident_ValidIncidents_ReturnsTrue()
     {
