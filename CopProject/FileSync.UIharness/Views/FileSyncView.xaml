@@ -7,48 +7,113 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Background="#202020" Padding="30">
-        <StackPanel
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Spacing="16"
-            Width="420">
+    <Grid Background="#202020" Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
+        <!-- Header and Peer Connection Section -->
+        <StackPanel Grid.Row="0" Spacing="12">
             <TextBlock
                 Text="File Synchronization"
-                FontSize="28"
+                FontSize="26"
                 FontWeight="Bold"
-                Foreground="White"
-                HorizontalAlignment="Center" />
+                Foreground="White" />
 
             <TextBlock
                 Text="Select Peer to Synchronise:"
-                FontSize="14"
-                Foreground="#CCCCCC" />
+                FontSize="13"
+                Foreground="#AAAAAA" />
 
-            <ComboBox
-                x:Name="PeerSelector"
-                HorizontalAlignment="Stretch"
-                PlaceholderText="Select peer or enter address...">
-                <ComboBoxItem Content="Peer 1 (127.0.0.1:8001)" IsSelected="True" />
-                <ComboBoxItem Content="Peer 2 (127.0.0.1:8002)" />
-                <ComboBoxItem Content="Broadcast to All Peers" />
-            </ComboBox>
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="140" />
+                </Grid.ColumnDefinitions>
 
-            <Button
-                x:Name="SyncButton"
-                Content="Sync Files"
-                HorizontalAlignment="Stretch"
-                Click="OnSyncButtonClick" />
+                <ComboBox
+                    x:Name="PeerSelector"
+                    Grid.Column="0"
+                    HorizontalAlignment="Stretch"
+                    PlaceholderText="Select peer to sync...">
+                    <ComboBoxItem Content="Peer 1 (127.0.0.1:8001)" IsSelected="True" />
+                    <ComboBoxItem Content="Peer 2 (127.0.0.1:8002)" />
+                    <ComboBoxItem Content="Broadcast to All Peers" />
+                </ComboBox>
+
+                <Button
+                    x:Name="SyncButton"
+                    Grid.Column="1"
+                    Content="Sync Files"
+                    HorizontalAlignment="Stretch"
+                    Click="OnSyncButtonClick" />
+            </Grid>
 
             <TextBlock
                 x:Name="StatusTextBlock"
                 Text="Ready to synchronise"
-                FontSize="14"
+                FontSize="13"
                 Foreground="LightGreen"
-                HorizontalAlignment="Center"
                 TextWrapping="Wrap" />
-
         </StackPanel>
+
+        <!-- Action Buttons and Folder info -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+            <Button Content="Refresh Files" Click="OnRefreshClick" />
+            <TextBlock
+                x:Name="RootFolderTextBlock"
+                VerticalAlignment="Center"
+                FontSize="12"
+                Foreground="#888888" />
+        </StackPanel>
+
+        <!-- File List Table -->
+        <Grid Grid.Row="2" RowSpacing="6">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Column Headers -->
+            <Grid Grid.Row="0" Padding="8,4" ColumnSpacing="12" Background="#2D2D2D">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="160" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Name" FontWeight="SemiBold" Foreground="#DDDDDD" />
+                <TextBlock Grid.Column="1" Text="Size" FontWeight="SemiBold" Foreground="#DDDDDD" />
+                <TextBlock Grid.Column="2" Text="Last Modified" FontWeight="SemiBold" Foreground="#DDDDDD" />
+            </Grid>
+
+            <!-- Files ListView -->
+            <ListView
+                x:Name="FilesListView"
+                Grid.Row="1"
+                BorderThickness="1"
+                BorderBrush="#3D3D3D">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnSpacing="12" Padding="4,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="160" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding RelativePath}" Foreground="White" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="1" Text="{Binding SizeText}" Foreground="#AAAAAA" />
+                            <TextBlock Grid.Column="2" Text="{Binding LastModifiedText}" Foreground="#888888" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
     </Grid>
 </UserControl>

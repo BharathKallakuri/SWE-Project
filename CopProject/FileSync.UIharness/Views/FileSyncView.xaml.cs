@@ -7,12 +7,20 @@ namespace FileSync.UIharness.Views;
 /// </summary>
 public sealed partial class FileSyncView : UserControl
 {
+    private readonly FileSynchroniser.ViewModels.FileSyncViewModel _viewModel;
+
     /// <summary>
     /// creates a new instance of the FileSyncView
     /// </summary>
     public FileSyncView()
     {
         InitializeComponent();
+
+        var synchroniser = new FileSynchroniser.Models.Synchroniser();
+        _viewModel = new FileSynchroniser.ViewModels.FileSyncViewModel(synchroniser);
+
+        RootFolderTextBlock.Text = $"Folder: {_viewModel.RootDirectory}";
+        FilesListView.ItemsSource = _viewModel.Files;
     }
 
     /// <summary>
@@ -33,6 +41,7 @@ public sealed partial class FileSyncView : UserControl
 
                 DispatcherQueue.TryEnqueue(() =>
                 {
+                    _viewModel.RefreshCommand.Execute(null);
                     StatusTextBlock.Text = $"Synchronisation with {selectedPeer} completed successfully!";
                 });
             }
@@ -44,5 +53,14 @@ public sealed partial class FileSyncView : UserControl
                 });
             }
         });
+    }
+
+    /// <summary>
+    /// handles click event on the refresh button to reload file list
+    /// </summary>
+    private void OnRefreshClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        _viewModel.RefreshCommand.Execute(null);
+        StatusTextBlock.Text = $"File list refreshed at {System.DateTime.Now:T}";
     }
 }
