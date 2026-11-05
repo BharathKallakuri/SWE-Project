@@ -7,203 +7,72 @@ namespace Incident_module.Implementations;
 using FileSynchroniser.Models;
 
 /// <summary>
-/// Provides local file operations for the synchronised root directory.
-/// Networking and remote synchronisation will be implemented separately.
+/// Provides mock implementation of file synchronisation service for incident management module.
 /// </summary>
 public class IncidentFileSynchroniser : IFileOperations
 {
-    private readonly string _rootDir;
-
-    public event Action OnSyncComplete = delegate { };
-    public event Action<string> OnSyncError = delegate { };
-
-    public IncidentFileSynchroniser()
-    {
-        _rootDir = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "FileSync", "Root"));
-
-        Directory.CreateDirectory(_rootDir);
-    }
+    private readonly Dictionary<string, byte[]> _memory = new();
 
     /// <summary>
-    /// Returns the path to the synchronised root directory.
+    /// Returns the mock path to the synchronised root directory.
     /// </summary>
     public string GetDirectory()
     {
-        return _rootDir;
+        return Path.GetFullPath(
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData))
+        );
     }
 
     /// <summary>
-    /// Saves a new file in the synchronised root directory.
+    /// Saves a new file in the mocksynchronised root directory.
     /// </summary>
     public bool SaveFile(string relativePath, byte[] content)
     {
-        try
-        {
-            ArgumentNullException.ThrowIfNull(content);
-
-            string fullPath = GetSafePath(relativePath);
-
-            string? parentDirectory = Path.GetDirectoryName(fullPath);
-
-            if (parentDirectory != null)
-            {
-                Directory.CreateDirectory(parentDirectory);
-            }
-
-            // Create New prevents overwriting an existing file.
-            using var stream = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
-
-            stream.Write(content, 0, content.Length);
-
-            return true;
-        }
-        catch (Exception ex) when (IsExpectedFileError(ex))
-        {
-            ReportError(ex);
-            return false;
-        }
+        _memory[relativePath] = content;
+        return true;
     }
 
     /// <summary>
-    /// Reads a file from the synchronised root directory
+    /// Reads a file from the mock synchronised root directory
     /// </summary>
-    /// <exception cref="IOException"> Thrown when the file cannot be read</exception>
     public byte[] ReadFile(string relativePath)
     {
-        try
-        {
-            string fullPath = GetSafePath(relativePath);
-            return File.ReadAllBytes(fullPath);
-        }
-        catch (Exception ex) when (IsExpectedFileError(ex))
-        {
-            ReportError(ex);
-            throw;
-        }
+        return _memory.TryGetValue(relativePath, out byte[]? content) ? content : [];
     }
 
     /// <summary>
-    /// Updates an existing file in the synchronised root directory.
+    /// Updates an existing file in the mock synchronised root directory.
     /// </summary>
     public bool UpdateFile(string relativePath, byte[] content)
     {
-        try
+        if (!_memory.ContainsKey(relativePath))
         {
-            ArgumentNullException.ThrowIfNull(content);
-
-            string fullPath = GetSafePath(relativePath);
-
-            if (!File.Exists(fullPath))
-            {
-                throw new FileNotFoundException("The file does not exist.", fullPath);
-            }
-
-            File.WriteAllBytes(fullPath, content);
-
-            return true;
+            throw new FileNotFoundException("The file does not exist: ", relativePath);
         }
-        catch (Exception ex) when (IsExpectedFileError(ex))
-        {
-            ReportError(ex);
-            return false;
-        }
+
+        _memory[relativePath] = content;
+        return true;
     }
 
     /// <summary>
-    /// Deletes a file from the synchronised root directory.
+    /// Deletes a file from the mock synchronised root directory.
     /// </summary>
     public bool DeleteFile(string relativePath)
     {
-        try
+        if (!_memory.ContainsKey(relativePath))
         {
-            string fullPath = GetSafePath(relativePath);
-
-            if (!File.Exists(fullPath))
-            {
-                throw new FileNotFoundException("The file does not exist.", fullPath);
-            }
-
-            File.Delete(fullPath);
-
-            return true;
+            throw new FileNotFoundException("The file does not exist: ", relativePath);
         }
-        catch (Exception ex) when (IsExpectedFileError(ex))
-        {
-            ReportError(ex);
-            return false;
-        }
+
+        _memory.Remove(relativePath);
+        return true;
     }
 
     /// <summary>
-    /// Checks whether a file exists in the synchronised root directory.
+    /// Checks whether a file exists in the mock synchronised root directory.
     /// </summary>
     public bool FileExists(string relativePath)
     {
-        try
-        {
-            string fullPath = GetSafePath(relativePath);
-            return File.Exists(fullPath);
-        }
-        catch (Exception ex) when (IsExpectedFileError(ex))
-        {
-            ReportError(ex);
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Resolves a relative path and prevents access outside Root.
-    /// </summary>
-    private string GetSafePath(string relativePath)
-    {
-        if (string.IsNullOrWhiteSpace(relativePath))
-        {
-            throw new ArgumentException("The relative path cannot be empty.", nameof(relativePath));
-        }
-
-        if (Path.IsPathRooted(relativePath))
-        {
-            throw new ArgumentException("Absolute paths are not allowed.", nameof(relativePath));
-        }
-
-        string fullPath = Path.GetFullPath(Path.Combine(_rootDir, relativePath));
-
-        string rootPrefix = _rootDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
-
-        if (!fullPath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new ArgumentException("The path must remain inside the synchronised root directory.", nameof(relativePath));
-        }
-
-        return fullPath;
-    }
-
-    /// <summary>
-    /// All File related Errors
-    /// </summary>
-    private static bool IsExpectedFileError(Exception ex)
-    {
-        return ex is IOException
-            or UnauthorizedAccessException
-            or ArgumentException
-            or NotSupportedException
-            or SecurityException;
-    }
-
-    /// <summary>
-    /// Reports the error catched
-    /// </summary>
-    private void ReportError(Exception ex)
-    {
-        OnSyncError(ex.Message);
-    }
-
-    /// <summary>
-    /// Synchronises
-    /// </summary>
-    public void Synchronise()
-    {
-        throw new NotImplementedException();
+        return _memory.ContainsKey(relativePath);
     }
 }
