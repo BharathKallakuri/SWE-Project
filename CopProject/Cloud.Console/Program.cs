@@ -4,7 +4,7 @@
 
 using Cloud.Networking;
 
-public partial class Program
+public class Program
 {
     private static async Task Main(string[] args)
     {
@@ -13,7 +13,8 @@ public partial class Program
 
         await using SignalRMessenger messenger = new(url);
 
-        messenger.MessageReceived += m =>Console.WriteLine($"[{m.Timestamp.ToLocalTime():HH:mm:ss}] {m.SenderId}: {m.Content}");
+        // register all the subscribers
+        messenger.MessageReceived += m => Console.WriteLine($"[{m.Timestamp.ToLocalTime():HH:mm:ss}] {m.SenderId}: {m.Content}");
         messenger.Reconnecting += _ => Console.WriteLine("-- connection lost, reconnecting...");
         messenger.Reconnected += _ => Console.WriteLine("-- reconnected");
         messenger.Closed += e => Console.WriteLine(e is null ? "-- disconnected" : $"-- connection closed: {e.Message}");
@@ -27,8 +28,8 @@ public partial class Program
             Console.WriteLine($"Could not connect to {url}: {ex.Message}");
             return;
         }
+        Console.WriteLine($"Connected to {url}. Type a non-blank message and press Enter. Type /quit or ^C to exit.");
 
-        Console.WriteLine($"Connected to {url}. Type a message and press Enter. Type /quit to exit.");
 
         while (Console.ReadLine() is { } line)
         {
@@ -52,6 +53,7 @@ public partial class Program
             }
         }
 
+        // just disconnect not dispose
         await messenger.DisconnectAsync();
     }
 }
