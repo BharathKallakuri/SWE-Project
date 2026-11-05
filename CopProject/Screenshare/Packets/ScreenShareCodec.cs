@@ -190,69 +190,248 @@ public static class ScreenShareCodec
 
     private static void WriteDataPacket(BinaryWriter writer, ScreenDataPacket packet)
     {
-        // pass
+        WriteString(writer, packet.StreamId, MaxIdBytes);
+        writer.Write(packet.FrameNumber);
+        writer.Write(packet.Timestamp.Ticks);
+        WriteDimension(writer, packet.Width);
+        WriteDimension(writer, packet.Height);
+        WriteDimension(writer, packet.TileSize);
+        writer.Write((byte)packet.Type);
+
+        switch (packet.Type)
+        {
+            case DataPacketType.FullFrame:
+                WriteBytes(writer, packet.FullFrameData!, MaxImageBytes);
+                break;
+
+            case DataPacketType.ChangedTiles:
+                writer.Write(packet.ChangedTiles.Count);
+
+                long totalBytes = 0;
+                foreach (Tile tile in packet.ChangedTiles)
+                {
+                    byte[] data = tile.Data;
+                    totalBytes += data.Length;
+                    if (totalBytes > MaxImageBytes)
+                    {
+                        throw new ArgumentException(
+                            $"tile data cannot exceed {MaxImageBytes} bytes in total", nameof(packet));
+                    }
+
+                    writer.Write(tile.X);
+                    writer.Write(tile.Y);
+                    writer.Write(tile.Width);
+                    writer.Write(tile.Height);
+                    writer.Write(tile.Hash);
+                    writer.Write(data.Length);
+                    writer.Write(data);
+                }
+                break;
+        }
     }
 
 
-    private static void WriteDataPacket(BinaryWriter writer, ScreenDataPacket packet)
+    private static ScreenDataPacket ReadDataPacket(Reader reader)
     {
-        // pass
+        string streamId = reader.ReadString(MaxIdBytes);
+        long frameNumber = reader.ReadInt64();
+        var timestamp = new DateTime(reader.ReadInt64(), DateTimeKind.Utc);
+        int width = ReadDimension(reader);
+        int height = ReadDimension(reader);
+        int tileSize = ReadDimension(reader);
+        var type = (DataPacketType)reader.ReadByte();
+
+        switch (type)
+        {
+            case DataPacketType.FullFrame:
+                return new ScreenDataPacket(
+                    streamId, frameNumber, timestamp, width, height, type,
+                    fullFrameData: reader.ReadBytes(MaxImageBytes),
+                    tileSize: tileSize);
+
+            case DataPacketType.ChangedTiles:
+                int count = reader.ReadInt32();
+                long maxTiles = (long)((width + tileSize - 1) / tileSize) * ((height + tileSize - 1) / tileSize);
+                if (count <= 0 || count > maxTiles)
+                {
+                    throw new FormatException("tile count does not fit the frame");
+                }
+
+                var tiles = new List<Tile>(count);
+                int remainingBytes = MaxImageBytes;
+                for (int i = 0; i < count; i++)
+                {
+                    int x = reader.ReadInt32();
+                    int y = reader.ReadInt32();
+                    int tileWidth = reader.ReadInt32();
+                    int tileHeight = reader.ReadInt32();
+                    ulong hash = reader.ReadUInt64();
+                    byte[] data = reader.ReadBytes(remainingBytes);
+                    remainingBytes -= data.Length;
+
+                    tiles.Add(new Tile(x, y, tileWidth, tileHeight, hash, data));
+                }
+
+                return new ScreenDataPacket(
+                    streamId, frameNumber, timestamp, width, height, type,
+                    changedTiles: tiles,
+                    tileSize: tileSize);
+
+            case DataPacketType.Pulse:
+                return new ScreenDataPacket(
+                    streamId, frameNumber, timestamp, width, height, type,
+                    tileSize: tileSize);
+
+            default:
+                throw new FormatException("unknown data packet type");
+        }
     }
 
 
     private static UpdateSendToList ReadUpdateSendToList(Reader reader)
     {
-        // pass
+        string streamId = reader.ReadString(MaxIdBytes);
+        int count = reader.ReadInt32();
+        if (count < 0 || count > MaxSendToEntries)
+        {
+            throw new FormatException("send-to list length is out of range");
+        }
+
+        var sendTo = new List<IPEndPoint>(count);
+        for (int i = 0; i < count; i++)
+        {
+            sendTo.Add(ReadEndpoint(reader));
+        }
+
+        return new UpdateSendToList(streamId, sendTo);
     }
 
 
     private static void WriteParticipant(BinaryWriter writer, Participant participant)
     {
-        // pass
+        WriteString(writer, participant.Id, MaxIdBytes);
+        WriteString(writer, participant.Endpoint.ToString(), MaxEndpointBytes);
     }
 
 
     private static Participant ReadParticipant(Reader reader)
     {
-        // pass
+        return new Participant(reader.ReadString(MaxIdBytes), ReadEndpoint(reader));
     }
 
 
     private static IPEndPoint ReadEndpoint(Reader reader)
     {
-        // pass
+        return IPEndPoint.Parse(reader.ReadString(MaxEndpointBytes));
     }
 
 
     private static void WriteDimension(BinaryWriter writer, int value)
     {
-        // pass
+        if (value <= 0 || value > MaxFrameDimension)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(value), $"dimensions cannot exceed {MaxFrameDimension} or be less than zero");
+        }
+
+        writer.Write(value);
     }
 
 
     private static int ReadDimension(Reader reader)
     {
-        // pass
+        int value = reader.ReadInt32();
+        if (value <= 0 || value > MaxFrameDimension)
+        {
+            throw new FormatException("dimension is out of range");
+        }
+
+        return value;
     }
 
 
     private static void WriteString(BinaryWriter writer, string value, int maxBytes)
     {
-        // pass
+        byte[] bytes = StrictUtf8.GetBytes(value);
+        if (bytes.Length > maxBytes)
+        {
+            throw new ArgumentException($"text cannot exceed {maxBytes} UTF-8 bytes", nameof(value));
+        }
+
+        writer.Write((ushort)bytes.Length);
+        writer.Write(bytes);
     }
 
 
     private static void WriteBytes(BinaryWriter writer, byte[] value, int maxBytes)
     {
-        // pass
+        if (value.Length > maxBytes)
+        {
+            throw new ArgumentException($"data cannot exceed {maxBytes} bytes", nameof(value));
+        }
+
+        writer.Write(value.Length);
+        writer.Write(value);
     }
 
 
     /// <summary>
-    /// 
+    /// reads fields from received bytes
+    /// throws FormatException if there are extraneous bytes
     /// </summary>
     private sealed class Reader
     {
-        // pass
+        private readonly byte[] _data;
+        private int _position;
+
+        public Reader(byte[] data)
+        {
+            _data = data;
+        }
+
+        public bool IsAtEnd => _position == _data.Length;
+
+        public byte ReadByte() => Take(1)[0];
+
+        public int ReadInt32() => BinaryPrimitives.ReadInt32LittleEndian(Take(4));
+
+        public long ReadInt64() => BinaryPrimitives.ReadInt64LittleEndian(Take(8));
+
+        public ulong ReadUInt64() => BinaryPrimitives.ReadUInt64LittleEndian(Take(8));
+
+        public string ReadString(int maxBytes)
+        {
+            int length = BinaryPrimitives.ReadUInt16LittleEndian(Take(2));
+            if (length > maxBytes)
+            {
+                throw new FormatException("text is longer than allowed");
+            }
+
+            return StrictUtf8.GetString(Take(length));
+        }
+
+        public byte[] ReadBytes(int maxBytes)
+        {
+            int length = ReadInt32();
+            if (length < 0 || length > maxBytes)
+            {
+                throw new FormatException("data length is out of range");
+            }
+
+            return Take(length).ToArray();
+        }
+
+        private ReadOnlySpan<byte> Take(int count)
+        {
+            // compare against what is left, so a huge length cannot cause a huge allocation
+            if (count > _data.Length - _position)
+            {
+                throw new FormatException("message is truncated");
+            }
+
+            ReadOnlySpan<byte> span = _data.AsSpan(_position, count);
+            _position += count;
+            return span;
+        }
     }
 }
