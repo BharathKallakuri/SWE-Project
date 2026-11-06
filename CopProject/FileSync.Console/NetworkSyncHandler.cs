@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -57,7 +57,6 @@ public class NetworkSyncHandler : IMessageListener
 
         if (DefaultPeerEndpoint != null)
         {
-
             _communicator.SendMessage(DefaultPeerEndpoint, req, ModuleId, priority: 1);
         }
         else

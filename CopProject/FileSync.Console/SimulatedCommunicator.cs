@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
@@ -83,7 +83,6 @@ public class SimulatedCommunicator : ICommunicator, IDisposable
             writer.Write(message.Length);
             writer.Write(message);
             writer.Flush();
-
         }
         catch (Exception ex)
         {

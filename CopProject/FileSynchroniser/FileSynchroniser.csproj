@@ -19,6 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Networking\Networking.csproj" />
+    <ProjectReference Include="..\FileSync.Console\FileSync.Console.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Filesync.Test" />

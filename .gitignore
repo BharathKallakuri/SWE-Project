@@ -390,3 +390,9 @@ build/
 *.xcuserstate
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
+
+# Local FileSync Test Folders
+FolderA/
+FolderB/
+**/FolderA/
+**/FolderB/
