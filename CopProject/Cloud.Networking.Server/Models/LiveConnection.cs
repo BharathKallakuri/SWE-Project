@@ -4,6 +4,11 @@
 
 namespace Cloud.Networking.Server.Models;
 
+/// <summary>
+/// Refers to a Connection in Model
+/// </summary>
+/// <param name="ConnectionId">connection id</param>
+/// <param name="ConnectedAt">connection creation time</param>
 public sealed record LiveConnection(
     string ConnectionId,
     DateTimeOffset ConnectedAt
