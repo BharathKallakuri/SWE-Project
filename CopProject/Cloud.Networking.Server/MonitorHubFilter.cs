@@ -30,6 +30,12 @@ public sealed class MonitorHubFilter(IServerMonitor monitor) : IHubFilter
         return result;
     }
 
+    /// <summary>
+    /// Adds a connection only after the connection pipeline succeeds (prevents "false active connections")
+    /// </summary>
+    /// <param name="context">Context about the connecting client.</param>
+    /// <param name="next">Delegate that invokes the next operation in the connection pipeline.</param>
+    /// <returns>A task representing the asynchronous connection operation</returns>
     public async Task OnConnectedAsync(HubLifetimeContext context, Func<HubLifetimeContext, Task> next)
     {
         await next(context);
@@ -37,6 +43,13 @@ public sealed class MonitorHubFilter(IServerMonitor monitor) : IHubFilter
         monitor.Connected(context.Context.ConnectionId);
     }
 
+    /// <summary>
+    /// Removes a connection even if the disconnection pipeline fails (prevents "stale entries")
+    /// </summary>
+    /// <param name="context">Context about the disconnecting client.</param>
+    /// <param name="exception">Exception associated with the disconnection</param>
+    /// <param name="next">Delegate that invokes the next operation in the disconnection pipeline.</param>
+    /// <returns>A task representing the asynchronous disconnection operation.</returns>
     public async Task OnDisconnectedAsync(HubLifetimeContext context, Exception? exception, Func<HubLifetimeContext, Exception?, Task> next)
     {
         try
