@@ -13,5 +13,6 @@ public sealed record MessageItem(
     string Id,
     string Time,
     string From,
-    string Content
+    string Content,
+    bool IsFromServer
 );

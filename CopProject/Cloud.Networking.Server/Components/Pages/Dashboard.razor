@@ -17,7 +17,7 @@
 <main class="page">
     <header class="page-header">
         <div>
-    <h1>Message server</h1>
+            <h1>Message server</h1>
             <p class="subtitle">Live view of connections and broadcast messages.</p>
         </div>
         <span class="pill" title="This page updates in real time"><span class="dot"></span>Live</span>
@@ -56,7 +56,8 @@
 
         @if (Vm.Status is not null)
         {
-            <p class="status">@Vm.Status</p>
+            @* green on success, red on failure *@
+            <p class="@(Vm.StatusIsError ? "status failed" : "status ok")">@Vm.Status</p>
         }
     </section>
 
@@ -117,9 +118,10 @@
                     @foreach (MessageItem message in messages)
                     {
                         <tr>
-                            <td>@message.Time</td>
+                             <td>@message.Time</td>
                             <td><code>@message.Id</code></td>
-                            <td>@message.From</td>
+                            @* messages sent by the server itself are highlighted *@
+                            <td class="@(message.IsFromServer ? "from-server" : null)">@message.From</td>
                             <td>@message.Content</td>
                         </tr>
                     }

@@ -9,6 +9,7 @@ namespace Cloud.Networking.Server.Models;
 /// </summary>
 public sealed class ServerMonitor
 {
+    public const string ServerSenderId = "server";
     private const int MaxMessages = 200;
 
     private readonly object _gate = new();

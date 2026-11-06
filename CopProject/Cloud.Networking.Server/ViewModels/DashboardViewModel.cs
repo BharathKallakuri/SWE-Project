@@ -11,6 +11,7 @@ public sealed class DashboardViewModel : IDisposable
 {
     private readonly ServerMonitor _monitor;
     private readonly IHubContext<MessageHub> _hub; /* to call hub methods outside of hub we use IHubContext*/
+    private bool _sending;
 
     public DashboardViewModel(ServerMonitor monitor, IHubContext<MessageHub> hub)
     {
@@ -21,7 +22,8 @@ public sealed class DashboardViewModel : IDisposable
 
     public event Action? Changed;
     public string Text { get; set; } = "";
-    public string? Status { get; set; }
+    public string? Status { get; private set; }
+    public bool StatusIsError { get; private set; }
 
 
     /* changes the format of monitors Connections to be suitable for display*/
@@ -35,10 +37,11 @@ public sealed class DashboardViewModel : IDisposable
             m.Id.ToString("N")[..8],
             m.Timestamp.ToLocalTime().ToString("HH:mm:ss"),
             m.SenderId,
-            m.Content))
+            m.Content,
+            m.SenderId == ServerMonitor.ServerSenderId))
         .ToList();
 
-    public bool CanSend => !string.IsNullOrWhiteSpace(Text) && _monitor.Connections.Count > 0;
+    public bool CanSend => !_sending && !string.IsNullOrWhiteSpace(Text) && _monitor.Connections.Count > 0;
 
     public async Task SendAsync()
     {
@@ -47,17 +50,33 @@ public sealed class DashboardViewModel : IDisposable
             return;
         }
 
-        Message message = new() {
-            SenderId = "server",
-            Content = Text.Trim()
-        };
+        _sending = true;
+        Changed?.Invoke(); // to tell view to disable the button
 
-        await _hub.Clients.All.SendAsync(Contract.ReceiveMessage, message);
-        _monitor.RecordMessage(message);
+        try
+        {
+            Message message = new() {
+                SenderId = ServerMonitor.ServerSenderId,
+                Content = Text.Trim()
+            };
 
-        Status = $"Sent to {_monitor.Connections.Count} connected client(s).";
-        Text = "";
-        Changed?.Invoke();
+            await _hub.Clients.All.SendAsync(Contract.ReceiveMessage, message);
+            _monitor.RecordMessage(message);
+
+            Status = $"Sent to {_monitor.Connections.Count} connected client(s).";
+            StatusIsError = false;
+            Text = "";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Failed to send: {ex.Message}";
+            StatusIsError = true;
+        }
+        finally
+        {
+            _sending = false;
+            Changed?.Invoke(); // re-enable the button / show the status
+        }
     }
 
     /* to refer to the same handler */
