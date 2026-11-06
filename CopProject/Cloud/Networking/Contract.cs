@@ -5,10 +5,17 @@
 namespace Cloud.Networking;
 
 /// <summary>
-/// Hub method names shared by the client and the server.
+/// Method names strings shared by the client and the server.
 /// </summary>
 public static class Contract
 {
+    /// <summary>
+    /// Method name string for the server-side method invked by clients (to broadcast to all connected clients).
+    /// </summary>
     public const string SendMessage = "SendMessage";
+
+    /// <summary>
+    /// Method name string for the client-side method invoked by the server (to recieve it)
+    /// </summary>
     public const string ReceiveMessage = "ReceiveMessage";
 }

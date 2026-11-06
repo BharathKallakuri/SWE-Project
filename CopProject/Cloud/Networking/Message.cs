@@ -10,7 +10,7 @@ namespace Cloud.Networking;
 public sealed record Message
 {
     /// <summary>
-    /// Gets the "unique" id for the message.
+    /// Gets the "unique" id for the message. Defaults to <see cref="Guid.NewGuid"/>.
     /// </summary>
     public Guid Id { get; init; } = Guid.NewGuid();
 
@@ -25,7 +25,7 @@ public sealed record Message
     public required string Content { get; init; }
 
     /// <summary>
-    /// Gets the creation timestamp (in UTC).
+    /// Gets the creation timestamp (in UTC). Defaults to <see cref="DateTimeOffset.UtcNow"/>
     /// </summary>
     public DateTimeOffset Timestamp { get; init; } = DateTimeOffset.UtcNow;
 }
