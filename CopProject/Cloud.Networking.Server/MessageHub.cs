@@ -12,8 +12,11 @@ namespace Cloud.Networking.Server;
 public class MessageHub : Hub
 {
     /// <summary>
-    /// Doing RPC i.e server calling RecieveMessage on the clients.
+    /// Server sends messages by calling "RecieveMessage" on the clients.
     /// </summary>
+    /// <param name="content">The content of the message.</param>
+    /// <returns>The message created by the server</returns>
+    /// <exception cref="HubException">Thrown when the message content is null or whitespace.</exception>
     public async Task<Message> SendMessage(string content)
     {
         if (string.IsNullOrWhiteSpace(content))
