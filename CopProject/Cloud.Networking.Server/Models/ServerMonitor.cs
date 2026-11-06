@@ -43,6 +43,8 @@ public sealed class ServerMonitor
 
     public void Connected(string connectionId)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
+
         lock (_gate)
         {
             _connections[connectionId] = DateTimeOffset.UtcNow;
@@ -53,6 +55,8 @@ public sealed class ServerMonitor
 
     public void Disconnected(string connectionId)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
+
         lock (_gate)
         {
             _connections.Remove(connectionId);
@@ -63,6 +67,8 @@ public sealed class ServerMonitor
 
     public void RecordMessage(Message message)
     {
+        ArgumentNullException.ThrowIfNull(message);
+
         lock (_gate)
         {
             _messages.Enqueue(message);
