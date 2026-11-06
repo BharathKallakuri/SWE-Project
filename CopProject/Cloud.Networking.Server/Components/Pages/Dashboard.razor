@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 @implements IDisposable
 
-@* this allows you to use the DashboardViewModel, the view only talks to it *@
+@* The view only talks to the ViewModel *@
 @inject DashboardViewModel Vm
 
 <PageTitle>Message server</PageTitle>
@@ -18,7 +18,7 @@
     <h1>Message server</h1>
 
     <section>
-        <h2>Send a notification</h2>
+        <h2>Broadcast a notification</h2>
 
         <div class="send">
             <input @bind="Vm.Text"
