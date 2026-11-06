@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -9,7 +9,7 @@ using FileSynchroniser.Network;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Networking;
 
-namespace Filesync.Test;
+namespace Filesync.Test.Network;
 
 [TestClass]
 public class NetworkSyncHandlerTest

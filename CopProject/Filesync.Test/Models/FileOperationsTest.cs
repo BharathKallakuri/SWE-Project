@@ -4,7 +4,7 @@ using System.Text;
 using FileSynchroniser.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Filesync.Test;
+namespace Filesync.Test.Models;
 
 [TestClass]
 public class FileOperationsTest

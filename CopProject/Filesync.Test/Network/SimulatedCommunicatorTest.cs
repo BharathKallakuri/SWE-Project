@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -7,7 +7,7 @@ using FileSynchroniser.Network;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Networking;
 
-namespace Filesync.Test;
+namespace Filesync.Test.Network;
 
 [TestClass]
 public class SimulatedCommunicatorTest

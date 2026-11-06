@@ -7,7 +7,7 @@ using FileSynchroniser.Models;
 using FileSynchroniser.ViewModels;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Filesync.Test;
+namespace Filesync.Test.ViewModels;
 
 [TestClass]
 public sealed class FileSyncViewModelTest

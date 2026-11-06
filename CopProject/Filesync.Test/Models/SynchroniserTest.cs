@@ -9,7 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [assembly: DoNotParallelize]
 
-namespace Filesync.Test;
+namespace Filesync.Test.Models;
 
 [TestClass]
 public sealed class SynchroniserTest
