@@ -9,6 +9,7 @@ namespace Cloud.Networking.Server.Models;
 /// </summary>
 public sealed class ServerMonitor : IServerMonitor
 {
+    /// <summary>Identifier used for messages originating from the server.</summary>
     public const string ServerSenderId = "server";
     private const int MaxMessages = 200;
 
@@ -16,8 +17,10 @@ public sealed class ServerMonitor : IServerMonitor
     private readonly Dictionary<string, DateTimeOffset> _connections = [];
     private readonly Queue<Message> _messages = new();
 
+    /// <inheritdoc />
     public event Action? Changed;
 
+    /// <inheritdoc />
     public IReadOnlyList<LiveConnection> Connections
     {
         get {
@@ -31,6 +34,7 @@ public sealed class ServerMonitor : IServerMonitor
         }
     }
 
+    /// <inheritdoc />
     public IReadOnlyList<Message> Messages
     {
         get {
@@ -42,6 +46,7 @@ public sealed class ServerMonitor : IServerMonitor
         }
     }
 
+    /// <inheritdoc />
     public void Connected(string connectionId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
@@ -54,6 +59,7 @@ public sealed class ServerMonitor : IServerMonitor
         Changed?.Invoke();
     }
 
+    /// <inheritdoc />
     public void Disconnected(string connectionId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
@@ -66,6 +72,7 @@ public sealed class ServerMonitor : IServerMonitor
         Changed?.Invoke();
     }
 
+    /// <inheritdoc />
     public void RecordMessage(Message message)
     {
         ArgumentNullException.ThrowIfNull(message);
