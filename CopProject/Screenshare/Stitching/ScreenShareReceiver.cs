@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using ScreenShare;
 
-namespace Screenshare;
+namespace ScreenShare;
 
 internal sealed class ScreenShareReceiver : IDisposable
 {
