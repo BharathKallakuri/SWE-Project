@@ -21,10 +21,6 @@ public sealed partial class FileSyncPage : Page
     /// </summary>
     public FileSyncViewModel ViewModel { get; }
 
-    private FileSync.ConsoleApp.SimulatedCommunicator? _communicator;
-    private FileSync.ConsoleApp.NetworkSyncHandler? _syncHandler;
-    private int _currentPort = 0;
-
     /// <summary>
     /// Creates the page and its ViewModel.
     /// </summary>
@@ -37,79 +33,11 @@ public sealed partial class FileSyncPage : Page
     }
 
     /// <summary>
-    /// ensures communicator is initialized on the configured listening port
-    /// </summary>
-    private void EnsureCommunicator(int listenPort)
-    {
-        if (_communicator != null && _currentPort == listenPort)
-        {
-            return;
-        }
-
-        _communicator?.Dispose();
-        _communicator = new FileSync.ConsoleApp.SimulatedCommunicator(listenPort);
-        _currentPort = listenPort;
-
-        _syncHandler = new FileSync.ConsoleApp.NetworkSyncHandler(ViewModel.RootDirectory, _communicator);
-
-        _syncHandler.OnLog += msg =>
-        {
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                // updates status via viewmodel
-            });
-        };
-
-        _syncHandler.OnSyncCompleted += () =>
-        {
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                ViewModel.RefreshCommand.Execute(null);
-            });
-        };
-    }
-
-    /// <summary>
     /// handles click event on the sync button
     /// </summary>
     private void OnSyncButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        string peerIp = PeerIpTextBox.Text.Trim();
-        if (string.IsNullOrWhiteSpace(peerIp))
-        {
-            peerIp = "127.0.0.1";
-        }
-
-        if (!int.TryParse(MyPortTextBox.Text.Trim(), out int listenPort))
-        {
-            listenPort = 8001;
-        }
-
-        if (!int.TryParse(PeerPortTextBox.Text.Trim(), out int peerPort))
-        {
-            peerPort = 8002;
-        }
-
-        System.Threading.Tasks.Task.Run(() =>
-        {
-            try
-            {
-                EnsureCommunicator(listenPort);
-
-                var peerEndpoint = new System.Net.IPEndPoint(System.Net.IPAddress.Parse(peerIp), peerPort);
-                _communicator!.RegisterPeer(peerEndpoint);
-                _syncHandler!.DefaultPeerEndpoint = peerEndpoint;
-
-                _syncHandler.StartSync();
-            }
-            catch (Exception ex)
-            {
-                DispatcherQueue.TryEnqueue(async () =>
-                {
-                    await ShowMessageAsync("Sync Error", ex.Message);
-                });
-            }
-        });
+        ViewModel.RefreshCommand.Execute(null);
     }
 
     /// <summary>
@@ -137,7 +65,6 @@ public sealed partial class FileSyncPage : Page
     /// </summary>
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
-        _communicator?.Dispose();
         ViewModel.Dispose();
         base.OnNavigatedFrom(e);
     }
