@@ -12,6 +12,11 @@ namespace Cloud.Networking.Server;
 /// Client -> MessageHub -> MonitorHubFilter -> Monitor (as it raises changed event)
 /// Monitor -> ViewModel -> View
 /// </summary>
+/// 
+/// <remarks>
+/// Reference: https://learn.microsoft.com/en-us/aspnet/core/signalr/hub-filters?view=aspnetcore-10.0
+/// 
+/// </remarks>
 public sealed class MonitorHubFilter(ServerMonitor monitor) : IHubFilter
 {
     public async ValueTask<object?> InvokeMethodAsync(HubInvocationContext invocationContext, Func<HubInvocationContext, ValueTask<object?>> next)
