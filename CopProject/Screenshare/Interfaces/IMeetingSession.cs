@@ -20,7 +20,7 @@ public interface IMeetingSession
     /// <summary>
     /// gets the host's listing endinpoint; client will send everything here
     /// </summary>
-    IPEndPoint HostEndpoing { get; }
+    IPEndPoint HostEndpoint { get; }
 
     /// <summary>
     /// gets the meetings shared connection, ScreenShare subscribes to it under it's own module it 
