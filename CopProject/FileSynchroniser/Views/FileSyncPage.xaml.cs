@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using FileSynchroniser.Models;
 using FileSynchroniser.ViewModels;
 using Microsoft.UI;
@@ -33,11 +33,38 @@ public sealed partial class FileSyncPage : Page
     }
 
     /// <summary>
+    /// handles click event on the sync button
+    /// </summary>
+    private void OnSyncButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        ViewModel.RefreshCommand.Execute(null);
+    }
+
+    /// <summary>
+    /// preset A button click: listen 8001, target 8002
+    /// </summary>
+    private void OnPresetAClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        MyPortTextBox.Text = "8001";
+        PeerIpTextBox.Text = "127.0.0.1";
+        PeerPortTextBox.Text = "8002";
+    }
+
+    /// <summary>
+    /// preset B button click: listen 8002, target 8001
+    /// </summary>
+    private void OnPresetBClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        MyPortTextBox.Text = "8002";
+        PeerIpTextBox.Text = "127.0.0.1";
+        PeerPortTextBox.Text = "8001";
+    }
+
+    /// <summary>
     /// Disposes the ViewModel when the user navigates away from the page.
     /// </summary>
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
-        // Unsubscribe from the synchroniser events.
         ViewModel.Dispose();
         base.OnNavigatedFrom(e);
     }
