@@ -1,4 +1,4 @@
-namespace WhiteboardSuggestion.Core;
+﻿namespace WhiteboardSuggestion.Core;
 
 /// <summary>
 /// A canonical suggestion for one rough whiteboard drawing.

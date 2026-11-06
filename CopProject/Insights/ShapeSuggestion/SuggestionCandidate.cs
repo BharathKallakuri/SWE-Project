@@ -1,4 +1,4 @@
-namespace WhiteboardSuggestion.Core;
+﻿namespace WhiteboardSuggestion.Core;
 
 /// <summary>
 /// A clickable candidate shown by the whiteboard suggestion overlay.

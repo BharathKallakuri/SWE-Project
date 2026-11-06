@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using Google.GenAI;
 using Google.GenAI.Types;
 
@@ -82,7 +82,7 @@ public sealed class GeminiShapeSuggestionService : IShapeSuggestionService
                 nameof(mimeType));
         }
 
-        var response = await _client.Models.GenerateContentAsync(
+        GenerateContentResponse response = await _client.Models.GenerateContentAsync(
             model: _modelName,
             contents: new List<Content>
             {
@@ -102,8 +102,7 @@ public sealed class GeminiShapeSuggestionService : IShapeSuggestionService
                     }
                 }
             },
-            config: new GenerateContentConfig
-            {
+            config: new GenerateContentConfig {
                 ResponseJsonSchema = JsonNode.Parse(ResponseSchemaJson),
                 ResponseMimeType = "application/json",
                 Temperature = 0.1

@@ -1,4 +1,4 @@
-namespace WhiteboardSuggestion.Core;
+﻿namespace WhiteboardSuggestion.Core;
 
 /// <summary>
 /// Resolves common image extensions to MIME types accepted by the demo.
@@ -14,8 +14,7 @@ public static class ImageMimeTypeResolver
 
         string extension = Path.GetExtension(filePath).ToLowerInvariant();
 
-        return extension switch
-        {
+        return extension switch {
             ".png" => "image/png",
             ".jpg" or ".jpeg" => "image/jpeg",
             ".webp" => "image/webp",

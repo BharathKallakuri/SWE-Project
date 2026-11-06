@@ -1,4 +1,4 @@
-namespace WhiteboardSuggestion.Core;
+﻿namespace WhiteboardSuggestion.Core;
 
 /// <summary>
 /// Reusable interface for a UI or another module to request a drawing suggestion.

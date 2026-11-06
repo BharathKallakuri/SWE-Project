@@ -1,4 +1,4 @@
-using WhiteboardSuggestion.Core;
+﻿using WhiteboardSuggestion.Core;
 using Xunit;
 
 namespace WhiteboardSuggestion.Tests;
@@ -8,7 +8,7 @@ public sealed class ShapeSuggestionParserTests
     [Fact]
     public void Parse_ValidJson_ReturnsShapeAndAlternatives()
     {
-        const string json = """
+        const string Json = """
         {
           "category": "Shape",
           "bestMatch": "Circle",
@@ -18,7 +18,7 @@ public sealed class ShapeSuggestionParserTests
         }
         """;
 
-        ShapeSuggestion result = ShapeSuggestionParser.Parse(json);
+        ShapeSuggestion result = ShapeSuggestionParser.Parse(Json);
 
         Assert.Equal(DrawingCategory.Shape, result.Category);
         Assert.Equal("Circle", result.BestMatch);
@@ -29,13 +29,13 @@ public sealed class ShapeSuggestionParserTests
     [Fact]
     public void Parse_JsonInsideMarkdownFence_StillParses()
     {
-        const string response = """
+        const string Response = """
         ```json
         {"category":"Letter","bestMatch":"Letter M","alternatives":["Letter N"],"confidence":0.74,"explanation":"Two peaks are visible."}
         ```
         """;
 
-        ShapeSuggestion result = ShapeSuggestionParser.Parse(response);
+        ShapeSuggestion result = ShapeSuggestionParser.Parse(Response);
 
         Assert.Equal(DrawingCategory.Letter, result.Category);
         Assert.Equal("Letter M", result.BestMatch);
@@ -44,11 +44,11 @@ public sealed class ShapeSuggestionParserTests
     [Fact]
     public void Parse_UnknownCategory_UsesUnknown()
     {
-        const string json = """
+        const string Json = """
         {"category":"Animal","bestMatch":"Cat","alternatives":[],"confidence":0.5,"explanation":"Unexpected category."}
         """;
 
-        ShapeSuggestion result = ShapeSuggestionParser.Parse(json);
+        ShapeSuggestion result = ShapeSuggestionParser.Parse(Json);
 
         Assert.Equal(DrawingCategory.Unknown, result.Category);
     }
@@ -56,11 +56,11 @@ public sealed class ShapeSuggestionParserTests
     [Fact]
     public void Parse_ClampsConfidenceAboveOne()
     {
-        const string json = """
+        const string Json = """
         {"category":"Digit","bestMatch":"Digit 8","alternatives":[],"confidence":1.7,"explanation":""}
         """;
 
-        ShapeSuggestion result = ShapeSuggestionParser.Parse(json);
+        ShapeSuggestion result = ShapeSuggestionParser.Parse(Json);
 
         Assert.Equal(1.0, result.Confidence);
     }
@@ -68,11 +68,11 @@ public sealed class ShapeSuggestionParserTests
     [Fact]
     public void Parse_ClampsConfidenceBelowZero()
     {
-        const string json = """
+        const string Json = """
         {"category":"Digit","bestMatch":"Digit 3","alternatives":[],"confidence":-0.4,"explanation":""}
         """;
 
-        ShapeSuggestion result = ShapeSuggestionParser.Parse(json);
+        ShapeSuggestion result = ShapeSuggestionParser.Parse(Json);
 
         Assert.Equal(0.0, result.Confidence);
     }
@@ -80,11 +80,11 @@ public sealed class ShapeSuggestionParserTests
     [Fact]
     public void Parse_RemovesDuplicateAndBestMatchAlternatives()
     {
-        const string json = """
+        const string Json = """
         {"category":"Shape","bestMatch":"Circle","alternatives":["Circle","Oval","oval","Ellipse"],"confidence":0.8,"explanation":""}
         """;
 
-        ShapeSuggestion result = ShapeSuggestionParser.Parse(json);
+        ShapeSuggestion result = ShapeSuggestionParser.Parse(Json);
 
         Assert.Equal(new[] { "Oval", "Ellipse" }, result.Alternatives);
     }
@@ -92,11 +92,11 @@ public sealed class ShapeSuggestionParserTests
     [Fact]
     public void Parse_EmptyBestMatch_FallsBackToUnclearAndUnknown()
     {
-        const string json = """
+        const string Json = """
         {"category":"Shape","bestMatch":"  ","alternatives":[],"confidence":0.1,"explanation":"Not enough information."}
         """;
 
-        ShapeSuggestion result = ShapeSuggestionParser.Parse(json);
+        ShapeSuggestion result = ShapeSuggestionParser.Parse(Json);
 
         Assert.Equal(DrawingCategory.Unknown, result.Category);
         Assert.Equal("Unclear", result.BestMatch);

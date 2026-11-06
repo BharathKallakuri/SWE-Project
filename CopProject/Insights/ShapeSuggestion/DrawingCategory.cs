@@ -1,4 +1,4 @@
-namespace WhiteboardSuggestion.Core;
+﻿namespace WhiteboardSuggestion.Core;
 
 /// <summary>
 /// Broad category of an object drawn on the whiteboard.

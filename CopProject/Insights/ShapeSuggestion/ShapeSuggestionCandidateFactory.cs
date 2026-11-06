@@ -1,4 +1,4 @@
-namespace WhiteboardSuggestion.Core;
+﻿namespace WhiteboardSuggestion.Core;
 
 /// <summary>
 /// Converts the AI result into simple clickable options for any UI framework.
@@ -82,8 +82,7 @@ public static class ShapeSuggestionCandidateFactory
 
     private static string GetCanonicalValue(string label, DrawingCategory category)
     {
-        return category switch
-        {
+        return category switch {
             DrawingCategory.Letter => RemovePrefix(label, "Letter ").Trim().ToUpperInvariant(),
             DrawingCategory.Digit => RemovePrefix(label, "Digit ").Trim(),
             _ => label
@@ -92,8 +91,7 @@ public static class ShapeSuggestionCandidateFactory
 
     private static string GetDisplayLabel(string raw, DrawingCategory category, string value)
     {
-        return category switch
-        {
+        return category switch {
             DrawingCategory.Letter => $"Letter {value}",
             DrawingCategory.Digit => $"Digit {value}",
             _ => raw

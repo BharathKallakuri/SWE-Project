@@ -1,6 +1,6 @@
-﻿using Google.GenAI;
+﻿using System.Collections.Generic;
+using Google.GenAI;
 using Google.GenAI.Types;
-using System.Collections.Generic;
 
 namespace Insights.AI;
 
@@ -29,7 +29,7 @@ public class GeminiProvider : IInsightsProvider
     {
         try
         {
-            var response = await _geminiClient.Models.GenerateContentAsync(
+            GenerateContentResponse response = await _geminiClient.Models.GenerateContentAsync(
                 model: ModelName,
                 contents: textDescription
             );
@@ -48,7 +48,7 @@ public class GeminiProvider : IInsightsProvider
     {
         try
         {
-            var response = await _geminiClient.Models.GenerateContentAsync(
+            GenerateContentResponse response = await _geminiClient.Models.GenerateContentAsync(
                 model: ModelName,
                 contents: new List<Content>
                 {

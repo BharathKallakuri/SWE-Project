@@ -1,4 +1,4 @@
-using WhiteboardSuggestion.Core;
+﻿using WhiteboardSuggestion.Core;
 using Xunit;
 
 namespace WhiteboardSuggestion.Tests;
