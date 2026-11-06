@@ -6,13 +6,17 @@ using Cloud.Networking;
 
 namespace Cloud.Test;
 
+/// <summary>
+/// Tests the Contract class
+/// </summary>
 [TestClass]
 public class TestContract
 {
+    /// <summary>Tests that method names match their expected hardcoded values.</summary>
     [TestMethod]
     public void CheckIfContractMethodNamesAreCorrect()
     {
-        // it will be caught if someone tries to change the hardcoded values
+        // Ensures the contract method names remain unchanged.
         Assert.AreEqual("SendMessage", Contract.SendMessage);
         Assert.AreEqual("ReceiveMessage", Contract.ReceiveMessage);
     }
