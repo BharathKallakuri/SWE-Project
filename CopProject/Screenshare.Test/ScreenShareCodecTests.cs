@@ -1,7 +1,6 @@
-using System.Buffers.Binary;
+﻿using System.Buffers.Binary;
 using System.Net;
 using System.Text;
-using ScreenShare.Packets.Control;
 using Xunit;
 
 namespace ScreenShare.Tests;
@@ -11,8 +10,8 @@ namespace ScreenShare.Tests;
 /// </summary>
 public class ScreenShareCodecTests
 {
-    private static readonly DateTime CaptureTime = new(2026, 11, 3, 10, 30, 0, DateTimeKind.Utc);
-    private static readonly Participant Alice = new("alice", IPEndPoint.Parse("192.168.1.10:50123"));
+    private static readonly DateTime s_captureTime = new(2026, 11, 3, 10, 30, 0, DateTimeKind.Utc);
+    private static readonly Participant s_alice = new("alice", IPEndPoint.Parse("192.168.1.10:50123"));
 
     // byte offsets in a data packet whose stream id is the single character "s"
     private const int WidthOffset = 21;
@@ -23,12 +22,12 @@ public class ScreenShareCodecTests
 
     public static TheoryData<IScreenShareMessage> ControlMessages => new()
     {
-        new StreamStarted("alice-screen", Alice, "Alice", 1920, 1080),
+        new StreamStarted("alice-screen", s_alice, "Alice", 1920, 1080),
         new StreamStopped("alice-screen"),
-        new Subscribe(Alice, "bob-screen", 720),
-        new Unsubscribe(Alice, "bob-screen"),
-        new RequestFullFrame(Alice, "bob-screen"),
-        new FrameAck(Alice, "bob-screen", 42),
+        new Subscribe(s_alice, "bob-screen", 720),
+        new Unsubscribe(s_alice, "bob-screen"),
+        new RequestFullFrame(s_alice, "bob-screen"),
+        new FrameAck(s_alice, "bob-screen", 42),
         new StreamStarted("ipv6-screen", new Participant("v6", IPEndPoint.Parse("[::1]:5000")), "IPv6 user", 1280, 720),
     };
 
@@ -51,7 +50,7 @@ public class ScreenShareCodecTests
 
         Assert.True(ScreenShareCodec.Decode(ScreenShareCodec.Encode(message), out IScreenShareMessage? decoded));
 
-        var update = Assert.IsType<UpdateSendToList>(decoded);
+        UpdateSendToList update = Assert.IsType<UpdateSendToList>(decoded);
         Assert.Equal("alice-screen", update.StreamId);
         Assert.Equal(message.SendTo, update.SendTo);
     }
@@ -69,7 +68,7 @@ public class ScreenShareCodecTests
     public void FullFramePacket_RoundTrips()
     {
         var packet = new ScreenDataPacket(
-            "alice-screen", 7, CaptureTime, 1280, 720, DataPacketType.FullFrame,
+            "alice-screen", 7, s_captureTime, 1280, 720, DataPacketType.FullFrame,
             fullFrameData: new byte[] { 1, 2, 3, 4, 5 });
 
         ScreenDataPacket decoded = RoundTrip(packet);
@@ -82,13 +81,13 @@ public class ScreenShareCodecTests
     [Fact]
     public void ChangedTilesPacket_RoundTrips()
     {
-        var tiles = new[]
+        Tile[] tiles = new[]
         {
             new Tile(0, 0, 64, 64, 0xDEADBEEFCAFEF00D, new byte[] { 9, 8, 7 }),
             new Tile(64, 64, 36, 36, 1, new byte[] { 6 }),
         };
         var packet = new ScreenDataPacket(
-            "alice-screen", 8, CaptureTime, 100, 100, DataPacketType.ChangedTiles,
+            "alice-screen", 8, s_captureTime, 100, 100, DataPacketType.ChangedTiles,
             changedTiles: tiles);
 
         ScreenDataPacket decoded = RoundTrip(packet);
@@ -111,7 +110,7 @@ public class ScreenShareCodecTests
     public void PulsePacket_RoundTrips()
     {
         var packet = new ScreenDataPacket(
-            "alice-screen", 9, CaptureTime, 1280, 720, DataPacketType.Pulse, tileSize: 32);
+            "alice-screen", 9, s_captureTime, 1280, 720, DataPacketType.Pulse, tileSize: 32);
 
         ScreenDataPacket decoded = RoundTrip(packet);
 
@@ -172,7 +171,7 @@ public class ScreenShareCodecTests
         IScreenShareMessage[] messages =
         {
             TilesPacket(),
-            new FrameAck(Alice, "bob-screen", 42),
+            new FrameAck(s_alice, "bob-screen", 42),
             new UpdateSendToList("s", new[] { IPEndPoint.Parse("10.0.0.2:4000") }),
         };
 
@@ -225,7 +224,7 @@ public class ScreenShareCodecTests
     public void Decode_RejectsBadFullFrameLength(int length)
     {
         byte[] bytes = ScreenShareCodec.Encode(new ScreenDataPacket(
-            "s", 1, CaptureTime, 128, 128, DataPacketType.FullFrame, fullFrameData: new byte[] { 1, 2 }));
+            "s", 1, s_captureTime, 128, 128, DataPacketType.FullFrame, fullFrameData: new byte[] { 1, 2 }));
         BinaryPrimitives.WriteInt32LittleEndian(bytes.AsSpan(CountOrLengthOffset), length);
 
         Assert.False(ScreenShareCodec.Decode(bytes, out _));
@@ -327,7 +326,7 @@ public class ScreenShareCodecTests
     {
         Assert.ThrowsAny<ArgumentException>(() =>
             ScreenShareCodec.Encode(new ScreenDataPacket(
-                "s", 1, CaptureTime, ScreenShareCodec.MaxFrameDimension + 1, 128, DataPacketType.Pulse)));
+                "s", 1, s_captureTime, ScreenShareCodec.MaxFrameDimension + 1, 128, DataPacketType.Pulse)));
     }
 
     [Fact]
@@ -336,16 +335,20 @@ public class ScreenShareCodecTests
         Assert.Throws<ArgumentException>(() => ScreenShareCodec.Encode(new UnknownMessage()));
     }
 
-    private static ScreenDataPacket PulsePacket() =>
-        new("s", 1, CaptureTime, 128, 128, DataPacketType.Pulse);
+    private static ScreenDataPacket PulsePacket()
+    {
+        return new("s", 1, s_captureTime, 128, 128, DataPacketType.Pulse);
+    }
 
-    private static ScreenDataPacket TilesPacket() =>
-        new("s", 1, CaptureTime, 128, 128, DataPacketType.ChangedTiles,
+    private static ScreenDataPacket TilesPacket()
+    {
+        return new("s", 1, s_captureTime, 128, 128, DataPacketType.ChangedTiles,
             changedTiles: new[]
             {
                 new Tile(0, 0, 64, 64, 5, new byte[] { 1, 2, 3 }),
                 new Tile(64, 64, 64, 64, 6, new byte[] { 4 }),
             });
+    }
 
     private static ScreenDataPacket RoundTrip(ScreenDataPacket packet)
     {
