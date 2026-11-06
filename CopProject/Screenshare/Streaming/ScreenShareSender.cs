@@ -149,8 +149,49 @@ internal sealed class ScreenShareSender : IDisposable
         _loopThread.Start();
     }
 
+    public void OnFrameAck(long frameNumber)
+    {
+        lock (_flowLock)
+        {
+            if (frameNumber > _lastAcked && frameNumber <= _lastSent)
+            {
+                _lastAcked = frameNumber;
+                _lastProgress = _timeProvider.GetUtcNow();
+            }
+        }
+    }
+
+    public void OnFullFrameRequested()
+    {
+        _fullFrameRequested = true;
+    }
+
+    public void Stop()
+    {
+        if (_stopped)
+        {
+            return;
+        }
+
+        _stopped = true;
+        _loopCancellation?.Cancel();
+
+        if (_loopThread != null && Thread.CurrentThread != _loopThread)
+        {
+            _loopThread.Join();
+        }
+
+        if (_announced)
+        {
+            _send(new StreamStopped(StreamId));
+        }
+    }
+
     public void Dispose()
     {
-
+        Stop();
+        _loopCancellation?.Dispose();
+        _service.Dispose();
+        (_source as IDisposable)?.Dispose();
     }
 }
