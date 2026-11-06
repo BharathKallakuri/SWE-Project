@@ -2,7 +2,6 @@
 using System.Drawing;
 using System.Net;
 using Networking;
-using Networking.Packets;
 
 namespace ScreenShare;
 
@@ -59,54 +58,54 @@ public sealed partial class ScreenShareNode : IDisposable
     /// <param name="timeProvider">clock for timeouts; defaults to the system clock</param>
     /// <exception cref="ArgumentNullException">the session is null</exception>
     /// <exception cref="ArgumentOutOfRangeException">an option is invalid</exception>
-    //public ScreenShareNode(
-    //    IMeetingSession session,
-    //    Func<IImageSource>? imageSourceFactory = null,
-    //    ScreenShareOptions? options = null,
-    //    TimeProvider? timeProvider = null)
-    //{
-    //    ArgumentNullException.ThrowIfNull(session);
+    public ScreenShareNode(
+        IMeetingSession session,
+        Func<IImageSource>? imageSourceFactory = null,
+        ScreenShareOptions? options = null,
+        TimeProvider? timeProvider = null)
+    {
+        ArgumentNullException.ThrowIfNull(session);
 
-    //    _session = session;
-    //    _communicator = session.Communicator;
-    //    _options = options ?? new ScreenShareOptions();
-    //    _options.Validate();
-    //    _timeProvider = timeProvider ?? TimeProvider.System;
-    //    _imageSourceFactory = imageSourceFactory
-    //        ?? (() => new ScalingImageSource(new ScreenCapturer(), _options.MaxHeight));
+        _session = session;
+        _communicator = session.Communicator;
+        _options = options ?? new ScreenShareOptions();
+        _options.Validate();
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _imageSourceFactory = imageSourceFactory
+            ?? (() => new ScalingImageSource(new ScreenCapturer(), _options.MaxHeight));
 
-    //    // the endpoint of our own connection, which is what the host's Networking knows us by.
-    //    // for the host it is the listening endpoint.
-    //    LocalParticipant = new Participant(
-    //        session.LocalUser.Id,
-    //        new IPEndPoint(ToPlainAddress(_communicator.ListenIpAddress), _communicator.ListenPort));
+        // the endpoint of our own connection, which is what the host's Networking knows us by.
+        // for the host it is the listening endpoint.
+        LocalParticipant = new Participant(
+            session.LocalUser.Id,
+            new IPEndPoint(ToPlainAddress(_communicator.ListenIpAddress), _communicator.ListenPort));
 
-    //    _dispatcher = new SerialDispatcher($"ScreenShare {session.LocalUser.Id}");
-    //    _receiver = new ScreenShareReceiver(LocalParticipant, SendToHost, _timeProvider);
-    //    _receiver.StreamAdded += (id, name) => StreamAdded?.Invoke(id, name);
-    //    _receiver.StreamRemoved += id => StreamRemoved?.Invoke(id);
-    //    _receiver.FrameUpdated += id => FrameUpdated?.Invoke(id);
+        _dispatcher = new SerialDispatcher($"ScreenShare {session.LocalUser.Id}");
+        _receiver = new ScreenShareReceiver(LocalParticipant, SendToHost, _timeProvider);
+        _receiver.StreamAdded += (id, name) => StreamAdded?.Invoke(id, name);
+        _receiver.StreamRemoved += id => StreamRemoved?.Invoke(id);
+        _receiver.FrameUpdated += id => FrameUpdated?.Invoke(id);
 
-    //    if (session.LocalUser.IsHost)
-    //    {
-    //        _host = new ScreenShareHost(LocalParticipant, new HostOutput(this), _options, _timeProvider);
-    //        _maintenanceTimer = _timeProvider.CreateTimer(
-    //            _ => _dispatcher.Post(() => _host.RemoveTimedOutViewers()),
-    //            null,
-    //            _options.MaintenanceInterval,
-    //            _options.MaintenanceInterval);
-    //    }
+        if (session.LocalUser.IsHost)
+        {
+            _host = new ScreenShareHost(LocalParticipant, new HostOutput(this), _options, _timeProvider);
+            _maintenanceTimer = _timeProvider.CreateTimer(
+                _ => _dispatcher.Post(() => _host.RemoveTimedOutViewers()),
+                null,
+                _options.MaintenanceInterval,
+                _options.MaintenanceInterval);
+        }
 
-    //    _session.ParticipantLeft += OnParticipantLeft;
-    //    _session.MeetingEnded += OnMeetingEnded;
-    //    _communicator.AddSubscriber(ScreenShareModule.ModuleId, new ScreenShareMessageListener(OnNetworkMessage));
+        _session.ParticipantLeft += OnParticipantLeft;
+        _session.MeetingEnded += OnMeetingEnded;
+        _communicator.AddSubscriber(ScreenShareModule.ModuleId, new ScreenShareMessageListener(OnNetworkMessage));
 
-    //    if (_host == null)
-    //    {
-    //        // ask the host for the streams that are already running
-    //        //SendToHost(new Hello(LocalParticipant)); Waiting for to be impelemented
-    //    }
-    //}
+        if (_host == null)
+        {
+            // ask the host for the streams that are already running
+            SendToHost(new Hello(LocalParticipant));
+        }
+    }
 
     /// <summary>
     /// starts receiving a stream, e.g. when its tile scrolls into view
@@ -154,7 +153,7 @@ public sealed partial class ScreenShareNode : IDisposable
 
         try
         {
-            //StopSharing(); // Waiting for StopShareing to be implemented
+            StopSharing();
             _communicator.RemoveSubscriber(ScreenShareModule.ModuleId);
         }
         catch (Exception e)
