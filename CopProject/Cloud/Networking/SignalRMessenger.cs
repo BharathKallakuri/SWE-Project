@@ -95,22 +95,6 @@ public sealed class SignalRMessenger : IMessenger
     }
 
     /// <summary>
-    /// Private method that creates a <see cref="HubConnectionProxy"/> over a <see cref="HubConnection" /> object
-    /// </summary>
-    /// <param name="serverUrl">The url to the server</param>
-    private static HubConnectionProxy CreateConnection(string serverUrl)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(serverUrl);
-
-        HubConnection connection = new HubConnectionBuilder()
-            .WithUrl(serverUrl)
-            .WithAutomaticReconnect()
-            .Build();
-
-        return new HubConnectionProxy(connection);
-    }
-
-    /// <summary>
     /// Starts the connection to the SignalR server. <br />
     /// Makes up to three attempts, waiting 1 and then 2 seconds.
     /// </summary>
