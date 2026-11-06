@@ -7,14 +7,19 @@ using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Cloud.Test;
 
+/// <summary>
+/// Tests the HubConnectionProxy class
+/// </summary>
 [TestClass]
 public class TestHubConnectionProxy
 {
+    // Creates a HubConnectionProxy with a test URL.
     private static HubConnectionProxy CreateProxy()
     {
         return new(new HubConnectionBuilder().WithUrl("http://localhost/hub").Build());
     }
 
+    /// <summary>Tests that the initial connection state is disconnected.</summary>
     [TestMethod]
     public async Task StateIsDisconnectedInitially()
     {
@@ -22,6 +27,7 @@ public class TestHubConnectionProxy
         Assert.AreEqual(HubConnectionState.Disconnected, proxy.State);
     }
 
+    /// <summary>Tests that connection events support subscription and unsubscription.</summary>
     [TestMethod]
     public async Task EventsCanBeSubscribedAndUnsubscribed()
     {
@@ -37,6 +43,7 @@ public class TestHubConnectionProxy
         proxy.Closed -= exceptionHandler;
     }
 
+    /// <summary>Tests that registering a message handler returns a disposable subscription.</summary>
     [TestMethod]
     public async Task OnReturnsADisposable()
     {
@@ -46,6 +53,7 @@ public class TestHubConnectionProxy
         dis.Dispose();
     }
 
+    /// <summary>Tests that starting the connection with a cancelled token throws an exception.</summary>
     [TestMethod]
     public async Task StartAsyncOnCancellingTheTokenThrows()
     {
@@ -55,6 +63,7 @@ public class TestHubConnectionProxy
         await Assert.ThrowsAsync<OperationCanceledException>(() => proxy.StartAsync(cts.Token));
     }
 
+    /// <summary>Tests that stopping an already disconnected connection completes successfully.</summary>
     [TestMethod]
     public async Task StopAsyncOnDisconnectedStateCompletes()
     {
@@ -63,6 +72,7 @@ public class TestHubConnectionProxy
         Assert.AreEqual(HubConnectionState.Disconnected, proxy.State);
     }
 
+    /// <summary>Tests that disposing an already disconnected connection completes successfully.</summary>
     [TestMethod]
     public async Task DisposeAsyncOnDisconnectedStateCompletes()
     {
@@ -71,6 +81,7 @@ public class TestHubConnectionProxy
         Assert.AreEqual(HubConnectionState.Disconnected, proxy.State);
     }
 
+    /// <summary>Tests that invoking a server method while disconnected throws an exception.</summary>
     [TestMethod]
     public async Task InvokeAsyncOnDisconnectedStateThrows()
     {
