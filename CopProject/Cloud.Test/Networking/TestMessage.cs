@@ -7,9 +7,13 @@ using Cloud.Networking;
 
 namespace Cloud.Test;
 
+/// <summary>
+/// Tests the message record
+/// </summary>
 [TestClass]
 public class TestMessage
 {
+    /// <summary>Tests that sender ID and content are stored without modification.</summary>
     [TestMethod]
     public void SenderIdAndContentAreStoredAsGiven()
     {
@@ -26,6 +30,7 @@ public class TestMessage
         Assert.AreEqual(Content, message.Content);
     }
 
+    /// <summary>Tests that new messages receive unique, non-empty IDs.</summary>
     [TestMethod]
     public void NewMessagesGetUniqueNonEmptyIds()
     {
@@ -36,6 +41,7 @@ public class TestMessage
         Assert.AreNotEqual(first.Id, second.Id);
     }
 
+    /// <summary>Tests that the default timestamp is set to the current UTC time.</summary>
     [TestMethod]
     public void DefaultTimestampIsCurrentUtcTime()
     {
@@ -53,6 +59,7 @@ public class TestMessage
         Assert.AreEqual(TimeSpan.Zero, message.Timestamp.Offset);
     }
 
+    /// <summary>Tests that the message ID is considered during equality comparison.</summary>
     [TestMethod]
     public void IdIsPartOfEquality()
     {
@@ -74,6 +81,7 @@ public class TestMessage
         Assert.AreNotEqual(first, second);
     }
 
+    /// <summary>Tests that messages can be serialized and deserialized without data loss.</summary>
     [TestMethod]
     public void JsonSerializationTest()
     {
@@ -88,6 +96,7 @@ public class TestMessage
         Assert.AreEqual(original, deserialized);
     }
 
+    /// <summary>Tests that deserialization fails when required message properties are missing.</summary>
     [TestMethod]
     public void DeserializationFailingTest()
     {
