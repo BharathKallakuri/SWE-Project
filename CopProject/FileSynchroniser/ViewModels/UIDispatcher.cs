@@ -9,7 +9,6 @@ namespace FileSynchroniser.ViewModels;
 /// <summary>
 /// Builds a dispatcher that marshals work onto the current UI thread.
 /// </summary>
-
 internal static class UiDispatcher
 {
     /// <summary>

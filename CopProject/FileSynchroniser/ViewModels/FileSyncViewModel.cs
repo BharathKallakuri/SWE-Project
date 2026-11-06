@@ -2,7 +2,6 @@
 
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using FileSynchroniser.Models;
 
@@ -13,6 +12,7 @@ namespace FileSynchroniser.ViewModels;
 /// </summary>
 public class SyncFileItem
 {
+
     public string RelativePath { get; init; } = string.Empty;
     public string SizeText { get; init; } = string.Empty;
     public string LastModifiedText { get; init; } = string.Empty;
@@ -34,8 +34,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     private bool _hasError;
 
     /// <summary>
-    /// Production constructor. Captures the current UI thread's dispatcher when one is available,
-    /// otherwise falls back to running callbacks inline (e.g. in unit tests).
+    /// Production constructor that uses the UI dispatcher when one is available.
     /// </summary>
     // Synchroniser is public; ISync is internal, so the constructor takes the concrete type.
     public FileSyncViewModel(Synchroniser synchroniser) : this(synchroniser, UiDispatcher.Create())
@@ -43,10 +42,8 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     }
 
     /// <summary>
-    /// Testable constructor. <paramref name="runOnUi"/> is used to marshal events back to the UI thread;
-    /// when null, actions are run inline on the calling thread.
-    /// <paramref name="enumerateFiles"/> lists every file under the given root directory;
-    /// when null, the real file system is used.
+    /// Testable constructor; a null <paramref name="runOnUi"/> runs actions inline and a null
+    /// <paramref name="enumerateFiles"/> uses the real file system.
     /// </summary>
     public FileSyncViewModel(Synchroniser synchroniser, Action<Action>? runOnUi,
         Func<string, IEnumerable<FileInfo>>? enumerateFiles = null)
@@ -68,37 +65,74 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
         LoadFiles();
     }
 
+    /// <summary>
+    /// Raised when a property value changes.
+    /// </summary>
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    /// <summary>
+    /// Root directory being synchronised.
+    /// </summary>
     public string RootDirectory { get; }
 
+    /// <summary>
+    /// Files currently listed in the root directory.
+    /// </summary>
     public ObservableCollection<SyncFileItem> Files { get; } = new();
 
+    /// <summary>
+    /// Runs a synchronisation and reloads the file list.
+    /// </summary>
     public ICommand RefreshCommand { get; }
 
+    /// <summary>
+    /// Deletes the currently selected file.
+    /// </summary>
     public ICommand DeleteSelectedCommand => _deleteSelectedCommand;
 
+    /// <summary>
+    /// File currently selected in the list.
+    /// </summary>
     public SyncFileItem? SelectedFile
     {
         get => _selectedFile;
         set {
-            if (SetProperty(ref _selectedFile, value))
-            {
-                _deleteSelectedCommand.RaiseCanExecuteChanged();
-            }
+            if (_selectedFile == value) { return; }
+            _selectedFile = value;
+            OnPropertyChanged(nameof(SelectedFile));
+            _deleteSelectedCommand.RaiseCanExecuteChanged();
         }
     }
 
+    /// <summary>
+    /// Message shown to the user about the latest operation.
+    /// </summary>
     public string StatusMessage
     {
-        get => _statusMessage; private set => SetProperty(ref _statusMessage, value);
+        get => _statusMessage;
+        private set {
+            if (_statusMessage == value) { return; }
+            _statusMessage = value;
+            OnPropertyChanged(nameof(StatusMessage));
+        }
     }
 
+    /// <summary>
+    /// True when the status message describes an error.
+    /// </summary>
     public bool HasError
     {
-        get => _hasError; private set => SetProperty(ref _hasError, value);
+        get => _hasError;
+        private set {
+            if (_hasError == value) { return; }
+            _hasError = value;
+            OnPropertyChanged(nameof(HasError));
+        }
     }
 
+    /// <summary>
+    /// Synchronises with the peer, then reloads the file list.
+    /// </summary>
     private void Refresh()
     {
         HasError = false;
@@ -106,6 +140,9 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
         LoadFiles();
     }
 
+    /// <summary>
+    /// Deletes the selected file and reloads the list on success.
+    /// </summary>
     private void DeleteSelected()
     {
         if (SelectedFile is null)
@@ -124,13 +161,16 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
         // On failure, Synchroniser raises OnSyncError, which updates the status.
     }
 
+    /// <summary>
+    /// Delete is allowed only when a file is selected.
+    /// </summary>
     private bool CanDeleteSelected()
     {
         return SelectedFile is not null;
     }
 
     /// <summary>
-    /// Called by the view after the user picks a file.
+    /// Saves a file picked by the user and reloads the list on success.
     /// </summary>
     public void AddFile(string relativePath, byte[] content)
     {
@@ -154,7 +194,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
         try
         {
             IEnumerable<FileInfo> infos = _enumerateFiles(RootDirectory)
-                .OrderBy(f => f.FullName, StringComparer.OrdinalIgnoreCase);
+               .OrderBy(f => f.FullName, StringComparer.OrdinalIgnoreCase);
 
             foreach (FileInfo info in infos)
             {
@@ -171,33 +211,50 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    /// <summary>
+    /// Updates the status message when a sync finishes.
+    /// </summary>
     private void HandleSyncComplete()
     {
         RunOnUi(() => StatusMessage = $"Synchronised at {DateTime.Now:T}.");
     }
 
+    /// <summary>
+    /// Shows the error raised by a failed sync.
+    /// </summary>
     private void HandleSyncError(string message)
     {
         RunOnUi(() => ShowError(message));
     }
 
+    /// <summary>
+    /// Sets the error flag and status message.
+    /// </summary>
     private void ShowError(string message)
     {
         HasError = true;
         StatusMessage = message;
     }
 
-    // Events may be raised from any thread, so marshal back to the UI thread.
+    /// <summary>
+    /// Runs the action on the UI thread, since events may be raised from any thread.
+    /// </summary>
     private void RunOnUi(Action action)
     {
         _runOnUi(action);
     }
 
+    /// <summary>
+    /// Lists every file under the root directory using the real file system.
+    /// </summary>
     private static IEnumerable<FileInfo> EnumerateAllFiles(string root)
     {
         return new DirectoryInfo(root).EnumerateFiles("*", SearchOption.AllDirectories);
     }
 
+    /// <summary>
+    /// Converts a byte count to a readable size such as "1.5 MB".
+    /// </summary>
     private static string FormatSize(long bytes)
     {
         string[] units = { "B", "KB", "MB", "GB", "TB" };
@@ -213,18 +270,17 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
         return unit == 0 ? $"{bytes} B" : $"{size:0.##} {units[unit]}";
     }
 
-    private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    /// <summary>
+    /// Notifies the view that a property changed.
+    /// </summary>
+    private void OnPropertyChanged(string propertyName)
     {
-        if (EqualityComparer<T>.Default.Equals(field, value))
-        {
-            return false;
-        }
-
-        field = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        return true;
     }
 
+    /// <summary>
+    /// Unsubscribes from sync events.
+    /// </summary>
     public void Dispose()
     {
         _sync.OnSyncComplete -= HandleSyncComplete;
