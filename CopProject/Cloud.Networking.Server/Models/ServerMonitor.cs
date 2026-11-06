@@ -7,7 +7,7 @@ namespace Cloud.Networking.Server.Models;
 /// <summary>
 /// Maintains an in-memory snapshot of server connections and messages.
 /// </summary>
-public sealed class ServerMonitor
+public sealed class ServerMonitor : IServerMonitor
 {
     public const string ServerSenderId = "server";
     private const int MaxMessages = 200;

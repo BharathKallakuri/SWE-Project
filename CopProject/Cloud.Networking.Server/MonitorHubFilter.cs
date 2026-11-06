@@ -17,7 +17,7 @@ namespace Cloud.Networking.Server;
 /// Reference: https://learn.microsoft.com/en-us/aspnet/core/signalr/hub-filters?view=aspnetcore-10.0
 /// 
 /// </remarks>
-public sealed class MonitorHubFilter(ServerMonitor monitor) : IHubFilter
+public sealed class MonitorHubFilter(IServerMonitor monitor) : IHubFilter
 {
     public async ValueTask<object?> InvokeMethodAsync(HubInvocationContext invocationContext, Func<HubInvocationContext, ValueTask<object?>> next)
     {

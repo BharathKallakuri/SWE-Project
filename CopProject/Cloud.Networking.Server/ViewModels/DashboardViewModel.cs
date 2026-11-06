@@ -9,11 +9,11 @@ namespace Cloud.Networking.Server.ViewModels;
 
 public sealed class DashboardViewModel : IDisposable
 {
-    private readonly ServerMonitor _monitor;
+    private readonly IServerMonitor _monitor;
     private readonly IHubContext<MessageHub> _hub; /* to call hub methods outside of hub we use IHubContext*/
     private bool _sending;
 
-    public DashboardViewModel(ServerMonitor monitor, IHubContext<MessageHub> hub)
+    public DashboardViewModel(IServerMonitor monitor, IHubContext<MessageHub> hub)
     {
         _monitor = monitor;
         _hub = hub;
