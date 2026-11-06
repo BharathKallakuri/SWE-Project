@@ -10,6 +10,7 @@ public enum ScreenShareMessageKind : byte
     RequestFullFrame = 6,
     FrameAck = 7,
     UpdateSendToList = 8,
+    Hello = 9,
 
 
 
