@@ -6,10 +6,8 @@ namespace FileSynchroniser.ViewModels;
 
 /// <summary>
 /// Builds a dispatcher that marshals work onto the current UI thread.
-/// Excluded from code coverage because it depends on the WinUI runtime,
-/// which is not available in a plain unit test host.
 /// </summary>
-[ExcludeFromCodeCoverage]
+
 internal static class UiDispatcher
 {
     /// <summary>
