@@ -25,4 +25,13 @@ public class InsightsManager
     {
         return await _activeProvider.AnalyzeImageAsync(image, prompt);
     }
+
+    public Task<string> GenerateChatResponseAsync(
+        string userMessage,
+        string? chatContext = null)
+    {
+        return _activeProvider.GenerateChatResponseAsync(
+            userMessage,
+            chatContext);
+    }
 }
