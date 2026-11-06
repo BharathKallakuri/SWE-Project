@@ -22,6 +22,9 @@ public sealed class SignalRMessenger : IMessenger
 {
     private readonly IHubConnection _connection;
 
+    /// <inheritdoc />
+    public HubConnectionState State => _connection.State;
+
     /// <inheritdoc/>
     public event Action<Exception?>? Reconnecting;
 
@@ -34,8 +37,21 @@ public sealed class SignalRMessenger : IMessenger
     /// <inheritdoc/>
     public event Action<Message>? MessageReceived;
 
-    /// <inheritdoc />
-    public HubConnectionState State => _connection.State;
+    /// <summary>
+    /// Private method that creates a <see cref="HubConnectionProxy"/> over a <see cref="HubConnection" /> object
+    /// </summary>
+    /// <param name="serverUrl">The url to the server</param>
+    private static HubConnectionProxy CreateConnection(string serverUrl)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(serverUrl);
+
+        HubConnection connection = new HubConnectionBuilder()
+            .WithUrl(serverUrl)
+            .WithAutomaticReconnect()
+            .Build();
+
+        return new HubConnectionProxy(connection);
+    }
 
 
 
@@ -122,7 +138,10 @@ public sealed class SignalRMessenger : IMessenger
                 await _connection.StartAsync();
                 return;
             }
-            catch (Exception ex) when (attempt < MaxAttempts && ex is not ObjectDisposedException)
+            catch (Exception ex) when (
+                attempt < MaxAttempts &&
+                ex is not (ObjectDisposedException or InvalidOperationException
+                    or ArgumentException or NotSupportedException or OperationCanceledException))
             {
                 await Task.Delay(TimeSpan.FromSeconds(attempt));
             }
