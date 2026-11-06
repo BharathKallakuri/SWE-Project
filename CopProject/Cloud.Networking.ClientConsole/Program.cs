@@ -28,14 +28,29 @@ public class Program
             Console.WriteLine($"Could not connect to {url}: {ex.Message}");
             return;
         }
-        Console.WriteLine($"Connected to {url}. Type a non-blank message and press Enter. Type /quit or ^C to exit.");
 
+        Console.WriteLine($"Connected to {url}. Type a non-blank message and press Enter. Type /c to connect again, /quit or ^C to exit.");
 
         while (Console.ReadLine() is { } line)
         {
             if (line == "/quit")
             {
                 break;
+            }
+
+            if (line == "/c")
+            {
+                try
+                {
+                    await messenger.ConnectAsync();
+                    Console.WriteLine("-- connected");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"-- connection failed: {ex.Message}");
+                }
+
+                continue;
             }
 
             if (string.IsNullOrWhiteSpace(line))
