@@ -127,6 +127,6 @@
         </Grid>
 
         <!-- Status bar -->
-        <TextBlock Grid.Row="5" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
+        <TextBlock x:Name="StatusTextBlock" Grid.Row="5" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
     </Grid>
 </Page>
