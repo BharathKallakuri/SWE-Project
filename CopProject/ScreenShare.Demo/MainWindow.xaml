@@ -1,0 +1,51 @@
+<Window
+    x:Class="ScreenShare.Demo.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ss="using:ScreenShare.Views"
+    Title="ScreenShare demo">
+
+    <Grid>
+        <!-- START: host or join -->
+        <StackPanel x:Name="StartPanel" Width="380" Spacing="12"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="ScreenShare demo" Style="{StaticResource TitleTextBlockStyle}"/>
+            <TextBlock TextWrapping="Wrap" Opacity="0.7"
+                       Text="Temporary app for testing the ScreenShare module before the Controller and UX modules are ready."/>
+
+            <TextBox x:Name="NameBox" Header="Your name"/>
+            <CheckBox x:Name="TestPatternCheck"
+                      Content="Share a moving test pattern instead of my screen"/>
+
+            <Button Content="Host a meeting" Click="Host_Click" HorizontalAlignment="Stretch"/>
+
+            <TextBox x:Name="HostAddressBox" Header="Or join a host (IP:port)"
+                     PlaceholderText="192.168.1.10:50123"/>
+            <Button Content="Join" Click="Join_Click" HorizontalAlignment="Stretch"/>
+
+            <TextBlock x:Name="StartError" Foreground="Red" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- MEETING: ScreenShare's own view, plus a status bar -->
+        <Grid x:Name="MeetingPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid Background="#202020" Padding="12,8" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock x:Name="MeetingInfo" Foreground="White" IsTextSelectionEnabled="True"/>
+                    <TextBlock x:Name="StatsText" Foreground="#BBBBBB" FontSize="12"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="Leave" Click="Leave_Click" VerticalAlignment="Center"/>
+            </Grid>
+
+            <ss:ScreenShareGridView x:Name="ScreenShareView" Grid.Row="1"/>
+        </Grid>
+    </Grid>
+</Window>
