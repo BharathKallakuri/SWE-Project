@@ -25,6 +25,7 @@ public class Program
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         ConfigureServices(builder.Services);
         WebApplication app = builder.Build();
+        ConfigureMiddlewares(app);
         ConfigureEndpoints(app);
         return app;
     }
@@ -37,14 +38,18 @@ public class Program
         services.AddRazorComponents().AddInteractiveServerComponents(); /* needed for interactivity in server components */
     }
 
+    public static void ConfigureMiddlewares(WebApplication app)
+    {
+        app.UseHttpsRedirection(); /* http to https */
+        app.UseStaticFiles(); /* serves from wwwroot */
+        app.UseRouting(); /* matches request to an endpoint (point of knowledge) */
+        app.UseAntiforgery(); /* protection from cross-site request forgery */
+    }
+
     public static void ConfigureEndpoints(WebApplication app)
     {
-        // middlewares
-        app.UseStaticFiles(); /* serves from wwwroot */
-        app.UseAntiforgery(); /* protection from cross-site request forgery */
-
-        // mappings
-        app.MapHub<MessageHub>("/hub");
+        app.MapGet("/health", () => "ok");
         app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+        app.MapHub<MessageHub>("/hub"); /* maps MessageHub to /hub */
     }
 }
