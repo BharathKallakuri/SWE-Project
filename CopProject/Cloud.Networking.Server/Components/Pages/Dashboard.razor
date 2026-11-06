@@ -23,6 +23,22 @@
         <span class="pill" title="This page updates in real time"><span class="dot"></span>Live</span>
     </header>
 
+    @* Basic stats *@
+    <section class="stats">
+        <div class="stat">
+            <span class="stat-label">Connected clients</span>
+            <span class="stat-value">@connections.Count</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Messages kept</span>
+            <span class="stat-value">@messages.Count</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Latest message</span>
+            <span class="stat-value">@(messages.Count > 0 ? messages[0].Time : "-")</span>
+        </div>
+    </section>
+
     <section class="card">
         <h2>Broadcast a notification</h2>
 
@@ -67,7 +83,7 @@
                     @foreach (ConnectionItem connection in connections)
                     {
                         <tr>
-                            <td>@connection.ConnectionId</td>
+                            <td><code>@connection.ConnectionId</code></td>
                             <td>@connection.ConnectedAt</td>
                         </tr>
                     }
@@ -102,7 +118,7 @@
                     {
                         <tr>
                             <td>@message.Time</td>
-                            <td>@message.Id</td>
+                            <td><code>@message.Id</code></td>
                             <td>@message.From</td>
                             <td>@message.Content</td>
                         </tr>
