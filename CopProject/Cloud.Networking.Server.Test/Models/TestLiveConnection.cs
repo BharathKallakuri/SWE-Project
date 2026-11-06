@@ -9,6 +9,10 @@ namespace Cloud.Networking.Server.Test.Models;
 /// <summary>
 /// Tests the live connection record
 /// </summary>
+/// <remarks>
+/// These two tests: stored as given, compared by value [can be used many places]
+/// <see cref="ViewModels.TestDashboardItems"/>
+/// </remarks>
 [TestClass]
 public class TestLiveConnection
 {

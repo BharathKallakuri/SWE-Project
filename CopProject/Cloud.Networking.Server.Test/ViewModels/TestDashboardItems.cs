@@ -9,6 +9,10 @@ namespace Cloud.Networking.Server.Test.ViewModels;
 /// <summary>
 /// Tests the DashboardItems
 /// </summary>
+/// <remarks>
+/// These two tests: stored as given, compared by value [can be used many places]
+/// <see cref="Models.TestLiveConnection" />
+/// </remarks>
 [TestClass]
 public class TestDashboardItems
 {
