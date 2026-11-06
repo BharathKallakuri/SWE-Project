@@ -133,7 +133,18 @@
     /* to refer to the same handler for "OnInitaiaized" and "Dispose" */
     private void OnViewModelChanged()
     {
-        _ = InvokeAsync(StateHasChanged);
+        // the circuit can already be gone on a "late" change
+        // there is nothing left to refresh then
+        _ = InvokeAsync(() =>
+        {
+            try
+            {
+                StateHasChanged();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        });
     }
 
     protected override void OnInitialized()
