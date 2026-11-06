@@ -35,7 +35,7 @@
                             <Image Source="{x:Bind Frame, Mode=OneWay}" Stretch="Uniform"/>
                             <Border VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="8"
                                     Padding="8,4" CornerRadius="4" Background="#99000000">
-                                <TextBlock Text="{x:Bind Name, Mode=OneWay}" Foreground="White"/>
+                                <TextBlock Text="{x:Bind Name}" Foreground="White"/>
                             </Border>
                         </Grid>
                     </DataTemplate>

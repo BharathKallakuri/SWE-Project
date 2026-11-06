@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using Microsoft.UI.Dispatching;
 using ScreenShare.Interfaces;
 using ScreenShare.Models;
@@ -8,8 +9,8 @@ namespace ScreenShare.ViewModels;
 
 public sealed class ScreenShareViewModel : INotifyPropertyChanged
 {
-    private const int GridQuality = 480;
-    private const int ZoomQuality = 1080;
+    // every stream is sent at 720p (spec), so grid and zoom ask for the same quality
+    private const int StreamQuality = 720;
 
     private readonly IScreenShareFeed _feed;
     private readonly DispatcherQueue _ui;
@@ -18,6 +19,10 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
     private readonly HashSet<string> _onScreen = new();   // tiles currently in the viewport
     private string? _zoomedId;
     private bool _isSharingScreen;
+
+    // latest frame per stream not yet shown; only the newest is drawn if the UI falls behind
+    private readonly Dictionary<string, ScreenFrame> _pendingFrames = new();
+    private readonly object _pendingLock = new();
 
     public ObservableCollection<ParticipantTile> Tiles { get; } = new();
 
@@ -45,7 +50,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
         // Feed events can arrive on any thread, so hop to the UI thread first.
         _feed.ParticipantJoined += (id, name) => _ui.TryEnqueue(() => AddParticipant(id, name));
         _feed.ParticipantLeft += id => _ui.TryEnqueue(() => RemoveParticipant(id));
-        _feed.FrameReady += (id, bytes) => _ui.TryEnqueue(() => OnFrame(id, bytes));
+        _feed.FrameReady += QueueFrame;
     }
 
     // ----- Called by the View -----
@@ -118,12 +123,35 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
         SendFeedRequests();
     }
 
-    private void OnFrame(string id, byte[] bytes)
+    // Runs on the feed's thread. Keeps only the newest frame per stream and schedules one
+    // UI update for it, so a slow UI skips frames instead of queueing them up.
+    private void QueueFrame(string id, ScreenFrame frame)
     {
-        bool shown = IsZoomedMode ? id == _zoomedId : _onScreen.Contains(id);
-        if (shown && _byId.TryGetValue(id, out ParticipantTile? tile))
+        bool alreadyScheduled;
+        lock (_pendingLock)
         {
-            tile.UpdateFrame(bytes);
+            alreadyScheduled = _pendingFrames.ContainsKey(id);
+            _pendingFrames[id] = frame;
+        }
+
+        if (!alreadyScheduled)
+        {
+            _ui.TryEnqueue(() => OnFrame(id));
+        }
+    }
+
+    private void OnFrame(string id)
+    {
+        ScreenFrame? frame;
+        lock (_pendingLock)
+        {
+            _pendingFrames.Remove(id, out frame);
+        }
+
+        bool shown = IsZoomedMode ? id == _zoomedId : _onScreen.Contains(id);
+        if (frame != null && shown && _byId.TryGetValue(id, out ParticipantTile? tile))
+        {
+            tile.UpdateFrame(frame);
         }
     }
 
@@ -138,7 +166,24 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
                 return;
             }
 
-            _isSharingScreen = value;
+            try
+            {
+                if (value)
+                {
+                    _feed.StartSharing();
+                }
+                else
+                {
+                    _feed.StopSharing();
+                }
+            }
+            catch (Exception e)
+            {
+                // e.g. the meeting already ended; leave the toggle showing what is really happening
+                Trace.WriteLine($"[ScreenShare] could not {(value ? "start" : "stop")} sharing: {e.Message}");
+            }
+
+            _isSharingScreen = _feed.IsSharing;
             Raise(nameof(IsSharingScreen));
         }
     }
@@ -155,8 +200,8 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
     {
         _feedTimer.Stop();
         Dictionary<string, int> wanted = IsZoomedMode && _zoomedId != null
-            ? new() { [_zoomedId] = ZoomQuality }
-            : _onScreen.ToDictionary(id => id, _ => GridQuality);
+            ? new() { [_zoomedId] = StreamQuality }
+            : _onScreen.ToDictionary(id => id, _ => StreamQuality);
         _feed.RequestFeeds(wanted);
     }
 
