@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 namespace Cloud.Networking;
 
 /// <summary>
-/// Clients use this interface to communicate with server.
+/// Clients use this interface which helps them communicate with the server.
 /// </summary>
 public interface IMessenger : IAsyncDisposable
 {
@@ -17,18 +17,21 @@ public interface IMessenger : IAsyncDisposable
     HubConnectionState State { get; }
 
     /// <summary>
-    /// Connects to the server.
+    /// Asynchronously connects to the server.
     /// </summary>
+    /// <returns>A Task representing the asynchronous operation</returns>
     Task ConnectAsync();
 
     /// <summary>
-    /// Sends content of message to the server.
+    /// Asynchronously sends content of message to the server.
     /// </summary>
+    /// <returns>A Task representing the asynchronous operation</returns>
     Task SendMessageAsync(string content);
 
     /// <summary>
-    /// Disconnects from the server, but does not dispose the connection.
+    /// Asynchronously disconnects from the server (but does not dispose the connection)
     /// </summary>
+    /// <returns>A Task representing the asynchronous operation</returns>
     Task DisconnectAsync();
 
     /// <summary>
@@ -37,17 +40,17 @@ public interface IMessenger : IAsyncDisposable
     event Action<Message>? MessageReceived;
 
     /// <summary>
-    /// Gets called when the connection is lost and the client is trying to reconnect.
+    /// Notify the subscribers when the connection is lost and the client is trying to reconnect.
     /// </summary>
     event Action<Exception?>? Reconnecting;
 
     /// <summary>
-    /// Gets called when the client reconnects to the server (with a new connection ID).
+    /// Notify the subscribers when the client reconnects to the server (with a new connection ID).
     /// </summary>
     event Action<string?>? Reconnected;
 
     /// <summary>
-    /// Gets called when the connection is closed, either normally or due to an error.
+    /// Notify the subscribers when the connection is closed (either normally or due to an error)
     /// </summary>
     event Action<Exception?>? Closed;
 }
