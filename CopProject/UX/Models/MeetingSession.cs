@@ -30,6 +30,18 @@ public sealed class MeetingSession : IMeetingSession
         }
     }
 
+    private IReadOnlyList<ParticipantInfo> _activeParticipants = Array.Empty<ParticipantInfo>();
+    public IReadOnlyList<ParticipantInfo> ActiveParticipants
+    {
+        get => _activeParticipants;
+        set
+        {
+            _activeParticipants = value ?? Array.Empty<ParticipantInfo>();
+            if (uiThread != null) uiThread.Post(_ => ParticipantsChanged?.Invoke(_activeParticipants), null);
+            else ParticipantsChanged?.Invoke(_activeParticipants);
+        }
+    }
+
     public event Action<UserProfile>? UserSignedIn;
     public event Action? UserSignedOut;
     public event Action<UserProfile>? ProfileChanged;
@@ -37,6 +49,7 @@ public sealed class MeetingSession : IMeetingSession
     public event Action? MeetingEnded;
     public event Action<PanelKind, bool>? PanelVisibilityChanged;
     public event Action<int>? ParticipantCountChanged;
+    public event Action<IReadOnlyList<ParticipantInfo>>? ParticipantsChanged;
 
     bool incidentsOpen;
 
@@ -84,6 +97,8 @@ public sealed class MeetingSession : IMeetingSession
         if (Meeting == null) return;
         Meeting = null;
         incidentsOpen = false;
+        _activeParticipants = Array.Empty<ParticipantInfo>();
+        ParticipantsChanged?.Invoke(_activeParticipants);
         MeetingEnded?.Invoke();
         Changed?.Invoke();
     }

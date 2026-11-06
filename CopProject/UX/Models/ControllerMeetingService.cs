@@ -58,6 +58,39 @@ public sealed class ControllerMeetingService : IMeetingService
         return (id, port);
     }
 
+    public bool JoinMeeting(string hostIp, int hostPort)
+    {
+        CleanupController();
+        _isHost = false;
+
+        var currentUser = _session?.CurrentUser;
+        string username = !string.IsNullOrWhiteSpace(currentUser?.UserId) ? currentUser.UserId : "Participant";
+        string email = !string.IsNullOrWhiteSpace(currentUser?.Email) ? currentUser.Email : $"{username}@example.com";
+
+        var clientUser = new ControllerUser(username, email, null, NetworkUtils.GetLocalIpAddress(), 0, isHost: false);
+        var client = ControllerFactory.CreateClient(clientUser);
+
+        // Resolve localhost / hostnames if needed
+        string targetHost = hostIp.Trim();
+        if (targetHost.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            targetHost = "127.0.0.1";
+        }
+
+        bool joined = client.JoinMeeting(targetHost, hostPort, clientUser);
+        if (!joined)
+        {
+            client.Dispose();
+            return false;
+        }
+
+        _activeController = client;
+        HookControllerEvents(client);
+        UpdateParticipantCount(client.GetActiveUserCount());
+        UpdateActiveParticipants();
+        return true;
+    }
+
     private void OnMeetingStarted(MeetingInfo info)
     {
         if (_session == null) return;
@@ -68,6 +101,7 @@ public sealed class ControllerMeetingService : IMeetingService
             {
                 HookControllerEvents(_activeController);
                 UpdateParticipantCount(_activeController.GetActiveUserCount());
+                UpdateActiveParticipants();
             }
         }
         else
@@ -75,6 +109,7 @@ public sealed class ControllerMeetingService : IMeetingService
             if (_activeController != null)
             {
                 UpdateParticipantCount(_activeController.GetActiveUserCount());
+                UpdateActiveParticipants();
             }
         }
     }
@@ -96,16 +131,17 @@ public sealed class ControllerMeetingService : IMeetingService
     private void OnUserJoined(object? sender, UserJoinedEventArgs e)
     {
         UpdateParticipantCount(e.NewCount);
+        UpdateActiveParticipants();
     }
 
     private void OnUserLeft(object? sender, UserLeftEventArgs e)
     {
         UpdateParticipantCount(e.NewCount);
+        UpdateActiveParticipants();
     }
 
     private void OnRemoteMeetingEnded(object? sender, MeetingEndedEventArgs e)
     {
-        // Meeting ended remotely by the host
         if (_session != null && _session.InMeeting)
         {
             PostToUI(() =>
@@ -120,7 +156,6 @@ public sealed class ControllerMeetingService : IMeetingService
 
     private void OnMeetingEnded()
     {
-        // Fired when the UI triggers EndMeeting()
         if (_activeController != null)
         {
             if (_isHost)
@@ -148,6 +183,28 @@ public sealed class ControllerMeetingService : IMeetingService
         }
     }
 
+    private void UpdateActiveParticipants()
+    {
+        if (_activeController == null || _session == null) return;
+
+        var users = _activeController.GetActiveUsers();
+        var list = users.Select(u => new ParticipantInfo
+        {
+            Username = u.Username,
+            Email = u.Gmail,
+            IsHost = u.IsHost,
+            ProfilePicture = u.ProfilePicture
+        }).ToList();
+
+        PostToUI(() =>
+        {
+            if (_session is MeetingSession ms)
+            {
+                ms.ActiveParticipants = list;
+            }
+        });
+    }
+
     private void PostToUI(Action action)
     {
         if (_uiThread != null)
@@ -168,38 +225,5 @@ public sealed class ControllerMeetingService : IMeetingService
             _activeController.Dispose();
             _activeController = null;
         }
-    }
-
-    public bool JoinMeeting(string hostIp, int hostPort)
-    {
-        CleanupController();
-        _isHost = false;
-
-        var currentUser = _session?.CurrentUser;
-        string username = !string.IsNullOrWhiteSpace(currentUser?.UserId) ? currentUser.UserId : "Participant";
-        string email = !string.IsNullOrWhiteSpace(currentUser?.Email) ? currentUser.Email : $"{username}@example.com";
-
-        var clientUser = new ControllerUser(username, email, null, NetworkUtils.GetLocalIpAddress(), 0, isHost: false);
-        var client = ControllerFactory.CreateClient(clientUser);
-
-        // Resolve localhost / hostnames if needed
-        string targetHost = hostIp.Trim();
-        if (targetHost.Equals("localhost", StringComparison.OrdinalIgnoreCase))
-        {
-            targetHost = "127.0.0.1";
-        }
-
-        // Call your updated bool JoinMeeting!
-        bool joined = client.JoinMeeting(targetHost, hostPort, clientUser);
-        if (!joined)
-        {
-            client.Dispose();
-            return false;
-        }
-
-        _activeController = client;
-        HookControllerEvents(client);
-        UpdateParticipantCount(client.GetActiveUserCount());
-        return true;
     }
 }

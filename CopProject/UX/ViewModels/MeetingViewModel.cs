@@ -1,6 +1,8 @@
 using SecureMeet.Shared.Modules;
 using SecureMeet.Shared.Mvvm;
 using UX.Models;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace UX.ViewModels;
 
@@ -21,12 +23,26 @@ public sealed class MeetingViewModel : ObservableObject
 
         session.MeetingStarted += _ => OnMeetingStarted();
         session.ParticipantCountChanged += _ => Refresh();
+                session.ParticipantsChanged += list =>
+        {
+            ParticipantList.Clear();
+            foreach (var p in list)
+            {
+                ParticipantList.Add(p);
+            }
+
+            if (SelectedParticipant != null)
+            {
+                SelectedParticipant = ParticipantList.FirstOrDefault(p => p.Username == SelectedParticipant.Username);
+            }
+            Refresh();
+        };
     }
 
     public string MeetingId => session.Meeting?.Id ?? "";
     public string Port => session.Meeting?.Port ?? "";
     public int Participants => session.ParticipantCount;
-    public string Role => session.Meeting?.IsHost == true ? "Host" : "Participant";
+    public string Role => session.Meeting?.IsHost == true ? "Host" : "Client";
     public string EndButtonText => session.Meeting?.IsHost == true ? "End Meeting" : "Leave Meeting";
 
     public bool IsHomeSelected => tab == PanelKind.Home;
@@ -54,6 +70,8 @@ public sealed class MeetingViewModel : ObservableObject
         chatOpen = false;
         session.NotifyPanelVisibility(PanelKind.Chat, false);
         ShowTab(PanelKind.Home);
+        ParticipantList.Clear();
+        SelectedParticipant = null;
     }
 
     void ShowTab(PanelKind newTab)
@@ -66,4 +84,20 @@ public sealed class MeetingViewModel : ObservableObject
     }
 
     public void EndMeeting() => session.EndMeeting();
+        public ObservableCollection<ParticipantInfo> ParticipantList { get; } = new();
+
+    private ParticipantInfo? _selectedParticipant;
+    public ParticipantInfo? SelectedParticipant
+    {
+        get => _selectedParticipant;
+        set
+        {
+            if (_selectedParticipant == value) return;
+            _selectedParticipant = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasSelectedParticipant));
+        }
+    }
+
+    public bool HasSelectedParticipant => SelectedParticipant != null;
 }
