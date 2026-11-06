@@ -58,6 +58,22 @@ h2 {
     overflow-x: auto;
 }
 
+.primary {
+    padding: 0.5rem 1rem;
+    font: inherit;
+    font-weight: 600;
+    color: var(--accent-fg);
+    background: var(--accent);
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+    .primary:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
 table {
     width: 100%;
     border-collapse: collapse;

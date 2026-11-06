@@ -33,7 +33,7 @@
                    placeholder="Message to all connected clients" />
 
             @* Disables button on based on CanSend property *@
-            <button @onclick="Vm.SendAsync" disabled="@(!Vm.CanSend)">
+            <button class="primary" @onclick="Vm.SendAsync" disabled="@(!Vm.CanSend)">
                 Send to all clients
             </button>
         </div>
