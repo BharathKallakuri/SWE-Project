@@ -14,10 +14,10 @@
     IReadOnlyList<MessageItem> messages = Vm.Messages;
 }
 
-<main>
+<main class="page">
     <h1>Message server</h1>
 
-    <section>
+    <section class="card">
         <h2>Broadcast a notification</h2>
 
         <div class="send">
@@ -38,7 +38,7 @@
         }
     </section>
 
-    <section>
+    <section class="card">
         <h2>Connected clients (count: @connections.Count)</h2>
 
         @if (connections.Count == 0)
@@ -70,7 +70,7 @@
         }
     </section>
 
-    <section>
+    <section class="card">
         <h2>Newest messages</h2>
 
         @if (messages.Count == 0)

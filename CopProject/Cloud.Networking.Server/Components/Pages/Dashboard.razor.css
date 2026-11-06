@@ -1,4 +1,4 @@
-﻿main {
+﻿.page {
     max-width: 64rem;
     margin: 0 auto;
     padding: 2rem 1rem 4rem;
@@ -12,6 +12,16 @@ h1 {
 h2 {
     font-size: 1.05rem;
     margin: 2rem 0 0.5rem;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1rem 1.1rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
 }
 
 table {
