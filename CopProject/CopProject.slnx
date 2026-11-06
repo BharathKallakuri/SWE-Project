@@ -13,7 +13,6 @@
     <Project Path="Cloud.Test/Cloud.Test.csproj" />
     <Project Path="Cloud/Cloud.csproj" />
     <Project Path="Controller/Controller.csproj" />
-    <Project Path="FileSync.Console/FileSync.Console.csproj" />
     <Project Path="Filesync.Test/Filesync.Test.csproj" />
     <Project Path="FileSynchroniser.UIharness/FileSynchroniser.UIharness.csproj" Id="2420b872-bb5a-44b9-a6d0-65bebf0c022e">
         <Platform Project="x64" />
@@ -35,18 +34,12 @@
     <Project Path="Networking/Networking.csproj" />
     <Project Path="Screenshare/Screenshare.csproj" />
     <Project Path="UX/UX.csproj">
-        <Platform Solution="*|Any CPU" Project="x64" />
-        <Platform Solution="*|ARM64" Project="ARM64" />
-        <Platform Solution="*|x64" Project="x64" />
-        <Platform Solution="*|x86" Project="x86" />
+        <Platform Project="x64" />
         <Deploy />
     </Project>
     <Project Path="Whiteboard.Test/Whiteboard.Test.csproj" Id="4985b7d2-c02f-4b5d-9b55-8029388e0c16" />
     <Project Path="Whiteboard.WinUI3Harness/Whiteboard.WinUI3Harness.csproj" Id="4f407a72-c86c-4ce7-81a7-045192fe0e38">
-        <Platform Solution="*|Any CPU" Project="x64" />
-        <Platform Solution="*|ARM64" Project="ARM64" />
-        <Platform Solution="*|x64" Project="x64" />
-        <Platform Solution="*|x86" Project="x86" />
+        <Platform Project="x64" />
         <Deploy />
     </Project>
     <Project Path="Whiteboard/Whiteboard.csproj" />
