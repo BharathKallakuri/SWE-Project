@@ -1,4 +1,6 @@
-﻿using System.Windows.Input;
+﻿// Author : Murali
+
+using System.Windows.Input;
 
 namespace FileSynchroniser.ViewModels;
 

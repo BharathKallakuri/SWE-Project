@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Author : Murali
+
+using System;
 using FileSynchroniser.ViewModels;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
