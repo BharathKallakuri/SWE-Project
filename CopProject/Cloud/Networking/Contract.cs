@@ -10,12 +10,12 @@ namespace Cloud.Networking;
 public static class Contract
 {
     /// <summary>
-    /// Method name string for the server-side method invked by clients (to broadcast to all connected clients).
+    /// Method name string for the server-side method invoked by clients (to broadcast to all connected clients).
     /// </summary>
     public const string SendMessage = "SendMessage";
 
     /// <summary>
-    /// Method name string for the client-side method invoked by the server (to recieve it)
+    /// Method name string for the client-side method invoked by the server (to receive it)
     /// </summary>
     public const string ReceiveMessage = "ReceiveMessage";
 }

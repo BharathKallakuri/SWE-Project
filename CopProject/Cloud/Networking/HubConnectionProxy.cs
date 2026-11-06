@@ -25,8 +25,11 @@ internal sealed class HubConnectionProxy : IHubConnection
     /// <summary>
     /// Initializes a new instance of the <see cref="HubConnectionProxy"/> class (Pass-Through Proxy)
     /// </summary>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="connection"/> is null</exception>
     public HubConnectionProxy(HubConnection connection)
     {
+        ArgumentNullException.ThrowIfNull(connection);
+
         _connection = connection;
     }
 
