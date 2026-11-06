@@ -1,13 +1,27 @@
-﻿using System.Buffers.Binary;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
-//using ScreenShare.Packets.Control;
 
 namespace ScreenShare;
 
 /// <summary>
 /// converts ScreenShare messages to and from bytes for Networking.
+///
+/// every message starts with a 2-byte header: protocol version, then message kind.
+/// all integers are little-endian; strings are a u16 byte length followed by UTF-8.
+///
+/// data packet:
+///   streamId(str) frameNumber(i64) timestamp(i64 UTC ticks) width(i32) height(i32) tileSize(i32) type(u8)
+///   FullFrame:    dataLength(i32) data
+///   ChangedTiles: count(i32), per tile: x(i32) y(i32) width(i32) height(i32) hash(u64) dataLength(i32) data
+///   Pulse:        nothing more
+///
+/// control messages write their fields in constructor order; a participant is id(str) endpoint(str).
 /// </summary>
 
 public static class ScreenShareCodec
@@ -43,7 +57,12 @@ public static class ScreenShareCodec
     private static readonly UTF8Encoding s_strictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
 
-    // summary here
+    /// converts a message to bytes
+    /// </summary>
+    /// <exception cref="ArgumentNullException">the message is null</exception>
+    /// <exception cref="ArgumentException">
+    /// the message type is unknown, or a field exceeds a limit the receiver would reject
+    /// </exception>
     public static byte[] Encode(IScreenShareMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -109,6 +128,10 @@ public static class ScreenShareCodec
                 }
                 break;
 
+            case Hello hello:
+                WriteParticipant(writer, hello.Viewer);
+                break;
+
             default:
                 throw new ArgumentException(
                     $"unsupported message type {message.GetType().Name}", nameof(message));
@@ -164,6 +187,7 @@ public static class ScreenShareCodec
                     reader.ReadString(MaxIdBytes),
                     reader.ReadInt64()),
                 ScreenShareMessageKind.UpdateSendToList => ReadUpdateSendToList(reader),
+                ScreenShareMessageKind.Hello => new Hello(ReadParticipant(reader)),
                 _ => null
             };
 
