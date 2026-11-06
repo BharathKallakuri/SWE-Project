@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using Networking;
 
 namespace ScreenShare.Demo;
@@ -25,15 +25,20 @@ internal sealed class CountingCommunicator : ICommunicator
     public IPAddress ListenIpAddress => _inner.ListenIpAddress;
 
     /// <summary>returns the bytes sent and received since the last call</summary>
-    public (long Sent, long Received) TakeCounts() =>
-        (Interlocked.Exchange(ref _sent, 0), Interlocked.Exchange(ref _received, 0));
+    public (long Sent, long Received) TakeCounts()
+    {
+        return (Interlocked.Exchange(ref _sent, 0), Interlocked.Exchange(ref _received, 0));
+    }
 
     public void AddSubscriber(int module, IMessageListener subscriber)
     {
         _inner.AddSubscriber(module, module == _module ? new CountingListener(subscriber, this) : subscriber);
     }
 
-    public void RemoveSubscriber(int module) => _inner.RemoveSubscriber(module);
+    public void RemoveSubscriber(int module)
+    {
+        _inner.RemoveSubscriber(module);
+    }
 
     public void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
     {
@@ -48,12 +53,20 @@ internal sealed class CountingCommunicator : ICommunicator
         _inner.BroadcastMessage(message, module, priority);
     }
 
-    public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp) => _inner.JoinMulticastGroup(multicastGroup, clientIp);
+    public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
+    {
+        _inner.JoinMulticastGroup(multicastGroup, clientIp);
+    }
 
-    public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp) => _inner.LeaveMulticastGroup(multicastGroup, clientIp);
+    public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
+    {
+        _inner.LeaveMulticastGroup(multicastGroup, clientIp);
+    }
 
-    public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority) =>
+    public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority)
+    {
         _inner.MulticastMessage(multicastGroup, message, module, priority);
+    }
 
     private void Count(int module, ref long counter, int bytes)
     {
