@@ -126,7 +126,16 @@ public class NetworkSyncHandler : IMessageListener
     /// <param name="json">the serialized remote file manifest</param>
     private void HandleManifest(string json)
     {
-        Dictionary<string, DateTime>? remoteManifest = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
+        Dictionary<string, DateTime>? remoteManifest;
+        try
+        {
+            remoteManifest = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
+        }
+        catch (JsonException)
+        {
+            return;
+        }
+
         if (remoteManifest == null)
         {
             return;
@@ -224,7 +233,16 @@ public class NetworkSyncHandler : IMessageListener
     /// <param name="json">the serialized file chunk data</param>
     private void HandleChunk(string json)
     {
-        ChunkDto? dto = JsonSerializer.Deserialize<ChunkDto>(json);
+        ChunkDto? dto;
+        try
+        {
+            dto = JsonSerializer.Deserialize<ChunkDto>(json);
+        }
+        catch (JsonException)
+        {
+            return;
+        }
+
         if (dto == null)
         {
             return;
