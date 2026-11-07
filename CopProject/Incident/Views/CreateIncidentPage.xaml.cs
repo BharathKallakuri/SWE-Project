@@ -23,12 +23,15 @@ public sealed partial class CreateIncidentPage : Page
     {
         base.OnNavigatedTo(e);
 
-        if (e.Parameter is IncidentPageContext context)
-        {
-            _context = context;
-        }
+        IncidentCreatePageWithLocation? locationContext =
+            e.Parameter as IncidentCreatePageWithLocation;
 
-        if (_context != null && DataContext is not CreateIncidentPageViewModel)
+        _context = locationContext?.Context
+            ?? e.Parameter as IncidentPageContext;
+
+        if (_context == null) { return; }
+
+        if (DataContext is not CreateIncidentPageViewModel)
         {
             var vm = new CreateIncidentPageViewModel(
                 _context.IncidentController,
@@ -36,13 +39,20 @@ public sealed partial class CreateIncidentPage : Page
             );
 
             vm.IncidentCreated += (s, args) => {
-                if (this.Frame.CanGoBack)
+                if (Frame.CanGoBack)
                 {
-                    this.Frame.GoBack();
+                    Frame.GoBack();
                 }
             };
 
             DataContext = vm;
+        }
+
+        if (locationContext != null && ViewModel != null)
+        {
+            ViewModel.Latitude = locationContext.Latitude;
+            ViewModel.Longitude = locationContext.Longitude;
+            ViewModel.Address = locationContext.Address;
         }
     }
 

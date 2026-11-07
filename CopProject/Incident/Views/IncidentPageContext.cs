@@ -16,3 +16,11 @@ public sealed record IncidentDetailsPageParameters(
     IncidentPageContext Context,
     Guid IncidentId
 );
+
+[ExcludeFromCodeCoverage]
+public sealed record IncidentCreatePageWithLocation(
+    IncidentPageContext Context,
+    double Latitude,
+    double Longitude,
+    string? Address
+);
