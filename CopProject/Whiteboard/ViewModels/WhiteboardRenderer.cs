@@ -7,7 +7,9 @@ using System.Collections.Generic;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
+using XamlPolyline = Microsoft.UI.Xaml.Shapes.Polyline;
 using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
+using Windows.Foundation;
 
 namespace Whiteboard.ViewModels;
 
@@ -62,9 +64,31 @@ internal sealed class WhiteboardRenderer : IDisposable
     private static Microsoft.UI.Xaml.UIElement CreateVisual(IItem item)
     {
         return item switch {
+            IFreehand freehand => CreateFreehand(freehand),
             Whiteboard.Items.Shapes.Square square => CreateSquare(square),
             _ => new Border()
         };
+    }
+
+    private static XamlPolyline CreateFreehand(IFreehand item)
+    {
+        XamlPolyline visual = new() {
+            Stroke = new SolidColorBrush(item.StrokeColor),
+            StrokeThickness = item.StrokeWidth,
+            StrokeLineJoin = Microsoft.UI.Xaml.Media.PenLineJoin.Round,
+            StrokeStartLineCap = Microsoft.UI.Xaml.Media.PenLineCap.Round,
+            StrokeEndLineCap = Microsoft.UI.Xaml.Media.PenLineCap.Round,
+            IsHitTestVisible = false,
+            Tag = item.Id
+        };
+
+        foreach (Point2D point in item.Points)
+        {
+            visual.Points.Add(new Point(point.X, point.Y));
+        }
+
+        ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
+        return visual;
     }
 
     private static XamlRectangle CreateSquare(Whiteboard.Items.Shapes.Square item)
@@ -75,10 +99,21 @@ internal sealed class WhiteboardRenderer : IDisposable
             Fill = new SolidColorBrush(ToColor(item.FillColor)),
             Stroke = new SolidColorBrush(ToColor(item.BorderColor)),
             StrokeThickness = item.BorderWidth,
-            IsHitTestVisible = false
+            IsHitTestVisible = false,
+            Tag = item.Id
         };
-        Canvas.SetLeft(visual, item.Left);
-        Canvas.SetTop(visual, item.Top);
+
+        double left = item.Left;
+        double top = item.Top;
+        if (left == 0 && top == 0 && (item.Center.X != 0 || item.Center.Y != 0))
+        {
+            left = item.Center.X - (item.SideLegth / 2);
+            top = item.Center.Y - (item.SideLegth / 2);
+        }
+
+        Canvas.SetLeft(visual, left);
+        Canvas.SetTop(visual, top);
+        ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
         return visual;
     }
 
