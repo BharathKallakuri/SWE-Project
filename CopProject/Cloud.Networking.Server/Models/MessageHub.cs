@@ -11,6 +11,12 @@ namespace Cloud.Networking.Server.Models;
 /// </summary>
 public class MessageHub : Hub
 {
+    /// <summary>Identifier used for messages originating from the server.</summary>
+    public const string ServerSenderId = "server";
+
+    /// <summary>The longest message content (after trimming) that is accepted.</summary>
+    public const int MaxContentLength = 2_000;
+
     private readonly IMessageStore _store;
 
     /// <summary>
@@ -30,7 +36,7 @@ public class MessageHub : Hub
     /// </summary>
     /// <param name="content">the content of the message to be sent.</param>
     /// <returns>the <see cref="Message"/> that was sent</returns>
-    /// <exception cref="HubException">Thrown when the <paramref name="content"/> is null or whitespace.</exception>
+    /// <exception cref="HubException">Thrown when the <paramref name="content"/> is empty, whitespace or longer than <see cref="MaxContentLength"/>.</exception>
     public async Task<Message> SendMessage(string content)
     {
         if (string.IsNullOrWhiteSpace(content))
@@ -38,9 +44,15 @@ public class MessageHub : Hub
             throw new HubException("Message cannot be empty.");
         }
 
+        string trimmed = content.Trim();
+        if (trimmed.Length > MaxContentLength)
+        {
+            throw new HubException($"Message cannot be longer than {MaxContentLength} characters.");
+        }
+
         Message message = new() {
             SenderId = Context.ConnectionId, // TODO: some other id for auth and better identity
-            Content = content.Trim()
+            Content = trimmed
         };
 
         await _store.AddAsync(message);

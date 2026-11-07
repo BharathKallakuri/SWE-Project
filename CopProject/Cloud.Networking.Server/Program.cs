@@ -11,7 +11,7 @@ namespace Cloud.Networking.Server;
 
 public class Program
 {
-    /* Testing a Main function is quite difficult unless you seperate
+    /* Testing a Main function is quite difficult unless you separate
     * business logic into something that can be tested (like a function or a class)*/
 
     /// <summary>
@@ -55,9 +55,19 @@ public class Program
     /// <summary>
     /// Takes an app and applies middlewares on it
     /// </summary>
-    /// <param name="app">a web appplication</param>
+    /// <param name="app">a web application</param>
     public static void ConfigureMiddlewares(WebApplication app)
     {
+        if (!app.Environment.IsDevelopment())
+        {
+            /* a plain 500 response */
+            app.UseExceptionHandler(errorApp => errorApp.Run(async context => {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                await context.Response.WriteAsync("An unexpected error occurred.");
+            }));
+            app.UseHsts(); /* tells browsers to keep using https */
+        }
+
         app.UseHttpsRedirection(); /* http to https */
         app.UseStaticFiles(); /* serves from wwwroot */
         app.UseRouting(); /* matches request to an endpoint (point of knowledge) */
