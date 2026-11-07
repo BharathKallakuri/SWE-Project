@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using Incident_module;
+using Incidents;
 using LocationTracker.Interfaces;
 
 namespace LocationTracker.ViewModels;
