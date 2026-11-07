@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using Cloud.Networking.Server.Models;
-using Microsoft.AspNetCore.SignalR;
 
 namespace Cloud.Networking.Server.ViewModels;
 
@@ -12,51 +11,74 @@ namespace Cloud.Networking.Server.ViewModels;
 /// </summary>
 public sealed class DashboardViewModel : IDisposable
 {
-    private readonly IServerMonitor _monitor;
-    private readonly IHubContext<MessageHub> _hub; /* to call hub methods outside of hub we use IHubContext*/
-    private bool _sending;
+    /// <summary>How many of the newest messages the dashboard shows.</summary>
+    public const int RecentMessageCount = 50;
 
-    /// <summary>Initializes the dashboard view model with the server monitor and hub context.</summary>
+    /// <summary>The longest message the dashboard (and the hub) accepts.</summary>
+    public const int MaxLength = MessageBroadcaster.MaxContentLength;
+
+    private readonly IServerMonitor _monitor;
+    private readonly IMessageBroadcaster _broadcaster;
+
+    /// <summary>Initializes the dashboard view model.</summary>
     /// <param name="monitor">The monitor providing connection and message info</param>
-    /// <param name="hub">The hub context used to send messages to connected clients (outside of hub)</param>
-    public DashboardViewModel(IServerMonitor monitor, IHubContext<MessageHub> hub)
+    /// <param name="broadcaster">Stores a message and sends it to all connected clients</param>
+    public DashboardViewModel(IServerMonitor monitor, IMessageBroadcaster broadcaster)
     {
         _monitor = monitor;
-        _hub = hub;
-        _monitor.Changed += OnMonitorChanged; /* to propagate changes from monitor to VM.Changed*/
+        _broadcaster = broadcaster;
+        _monitor.Changed += OnMonitorChanged;
     }
 
-    /// <summary>Raised whenever the dashboard view model state changes.</summary>
     public event Action? Changed;
 
-    /// <summary>Gets or sets the message text to be sent to connected clients.</summary>
     public string Text { get; set; } = "";
 
-    /// <summary>Gets the current message sending status.</summary>
     public string? Status { get; private set; }
 
-    /// <summary>Gets whether the current status represents an error.</summary>
     public bool StatusIsError { get; private set; }
 
-    /// <summary>Gets the server connections formatted for dashboard display.</summary>
-    public IReadOnlyList<ConnectionItem> Connections => _monitor.Connections
-        .Select(c => new ConnectionItem(c.ConnectionId, c.ConnectedAt.ToLocalTime().ToString("HH:mm:ss")))
-        .ToList();
+    public bool IsSending { get; private set; }
 
-    /// <summary>Gets the recorded messages formatted for dashboard display.</summary>
-    public IReadOnlyList<MessageItem> Messages => _monitor.Messages
-        .Select(m => new MessageItem(
-            m.Id.ToString("N")[..8],
-            m.Timestamp.ToLocalTime().ToString("HH:mm:ss"),
-            m.SenderId,
-            m.Content,
-            m.SenderId == ServerMonitor.ServerSenderId))
-        .ToList();
+    /// <summary>Connections formatted for display (rebuilt by <see cref="RefreshAsync"/>).</summary>
+    public IReadOnlyList<ConnectionItem> Connections { get; private set; } = [];
 
-    /// <summary>Gets whether a message can currently be sent.</summary>
-    public bool CanSend => !_sending && !string.IsNullOrWhiteSpace(Text) && _monitor.Connections.Count > 0;
+    /// <summary>Newest messages formatted for display (rebuilt by <see cref="RefreshAsync"/>).</summary>
+    public IReadOnlyList<MessageItem> Messages { get; private set; } = [];
 
-    /// <summary>Sends the current message to all connected clients and updates the sneding status, error, text ...</summary>
+    /// <summary>
+    /// Whether a message can be sent. Connected clients are not required:
+    /// the message is stored, so offline clients get it when they sync.
+    /// </summary>
+    public bool CanSend => !IsSending && !string.IsNullOrWhiteSpace(Text) && Text.Trim().Length <= MaxLength;
+
+    /// <summary>Rebuilds the display data, then tells the view. Called on page start and on every monitor change.</summary>
+    /// <returns>A task representing the asynchronous refresh.</returns>
+    public async Task RefreshAsync()
+    {
+        Connections = [.. _monitor.Connections.Select(c => new ConnectionItem(c.ConnectionId, FormatTime(c.ConnectedAt)))];
+
+        try
+        {
+            IReadOnlyList<Message> recent = await _monitor.GetRecentMessagesAsync(RecentMessageCount);
+
+            Messages = [.. recent.Select(m => new MessageItem(
+                m.Id.ToString("N")[..8],
+                FormatTime(m.Timestamp),
+                m.SenderId,
+                m.Content,
+                m.SenderId == MessageBroadcaster.ServerSenderId))];
+        }
+        catch (Exception ex)
+        {
+            Status = $"Could not load messages: {ex.Message}";
+            StatusIsError = true;
+        }
+
+        Changed?.Invoke();
+    }
+
+    /// <summary>Sends the current text to all clients and updates the status.</summary>
     /// <returns>A task representing the asynchronous send operation.</returns>
     public async Task SendAsync()
     {
@@ -65,20 +87,17 @@ public sealed class DashboardViewModel : IDisposable
             return;
         }
 
-        _sending = true;
-        Changed?.Invoke(); // to tell view to disable the button
+        IsSending = true;
+        Changed?.Invoke();
 
         try
         {
-            Message message = new() {
-                SenderId = ServerMonitor.ServerSenderId,
-                Content = Text.Trim()
-            };
+            await _broadcaster.BroadcastAsync(MessageBroadcaster.ServerSenderId, Text);
 
-            await _hub.Clients.All.SendAsync(Contract.ReceiveMessage, message);
-            _monitor.RecordMessage(message);
-
-            Status = $"Sent to {_monitor.Connections.Count} connected client(s).";
+            int online = _monitor.ConnectionCount;
+            Status = online == 0
+                ? "Saved. No clients are online; they will get it when they sync."
+                : $"Sent to {online} connected client(s). Offline clients get it when they sync.";
             StatusIsError = false;
             Text = "";
         }
@@ -89,20 +108,23 @@ public sealed class DashboardViewModel : IDisposable
         }
         finally
         {
-            _sending = false;
-            Changed?.Invoke(); // re-enable the button
+            IsSending = false;
+            Changed?.Invoke();
         }
     }
 
-    /// <summary>On server monitor changes, it will propagate here</summary>
-    private void OnMonitorChanged()
-    {
-        Changed?.Invoke();
-    }
-
-    /// <summary>Unsubscribes from server monitor</summary>
     public void Dispose()
     {
         _monitor.Changed -= OnMonitorChanged;
+    }
+
+    private static string FormatTime(DateTimeOffset time)
+    {
+        return time.ToLocalTime().ToString("HH:mm:ss");
+    }
+
+    private void OnMonitorChanged()
+    {
+        _ = RefreshAsync();
     }
 }
