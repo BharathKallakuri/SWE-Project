@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using FileSynchroniser.Models;
-using Incident_module;
+using Incidents;
 using Incidents.Test.Implementations;
 using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.EventHandlers;
 using Cloud.Persistence;

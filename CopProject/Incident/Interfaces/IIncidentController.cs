@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Incident_module;
+namespace Incidents;
 
 public interface IIncidentController
 {

@@ -1,12 +1,12 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Incident_module.ViewModels;
-using Incident_module.ViewModels.Utils;
+using Incidents.ViewModels;
+using Incidents.ViewModels.Utils;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using Windows.UI;
 
-namespace Incident_module.Views;
+namespace Incidents.Views;
 
 [ExcludeFromCodeCoverage]
 public sealed partial class AllIncidentsPage : Page

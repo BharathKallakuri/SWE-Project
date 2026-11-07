@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using Incident_module;
+using Incidents;
 
-namespace Incident_module.Views;
+namespace Incidents.Views;
 
 [ExcludeFromCodeCoverage]
 public sealed record IncidentPageContext(

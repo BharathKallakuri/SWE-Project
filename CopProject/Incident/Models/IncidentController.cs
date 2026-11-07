@@ -1,4 +1,4 @@
-﻿namespace Incident_module;
+﻿namespace Incidents;
 
 using Cloud.Persistence;
 using FileSynchroniser.Models;
@@ -47,7 +47,7 @@ public class IncidentController : IIncidentController
             {
                 try
                 {
-                    Incident incident = Incident_module.IncidentSerializer.Deserialize(incidentBytes);
+                    Incident incident = Incidents.IncidentSerializer.Deserialize(incidentBytes);
                     incidentMap[incident.Id] = incident;
                 }
                 catch (Exception)
@@ -95,7 +95,7 @@ public class IncidentController : IIncidentController
         {
             success = await _cloudStorageService.Create(
                 incident.Id.ToString(),
-                Incident_module.IncidentSerializer.Serialize(incident)
+                Incidents.IncidentSerializer.Serialize(incident)
             );
 
             if (!success)
@@ -184,7 +184,7 @@ public class IncidentController : IIncidentController
 
             bool success = await _cloudStorageService.Create(
                 incident.Id.ToString(),
-                Incident_module.IncidentSerializer.Serialize(incident)
+                Incidents.IncidentSerializer.Serialize(incident)
             );
 
             if (!success)
@@ -291,7 +291,7 @@ public class IncidentController : IIncidentController
 
             success = await _cloudStorageService.Update(
                 clone.Id.ToString(),
-                Incident_module.IncidentSerializer.Serialize(clone),
+                Incidents.IncidentSerializer.Serialize(clone),
                 etag
            );
 
@@ -334,7 +334,7 @@ public class IncidentController : IIncidentController
 
             success = await _cloudStorageService.Update(
                 clone.Id.ToString(),
-                Incident_module.IncidentSerializer.Serialize(clone),
+                Incidents.IncidentSerializer.Serialize(clone),
                 etag
            );
 
@@ -382,7 +382,7 @@ public class IncidentController : IIncidentController
 
             success = await _cloudStorageService.Update(
                 clone.Id.ToString(),
-                   Incident_module.IncidentSerializer.Serialize(clone),
+                   Incidents.IncidentSerializer.Serialize(clone),
                 etag
            );
 
@@ -430,7 +430,7 @@ public class IncidentController : IIncidentController
 
             success = await _cloudStorageService.Update(
                 clone.Id.ToString(),
-                Incident_module.IncidentSerializer.Serialize(clone),
+                Incidents.IncidentSerializer.Serialize(clone),
                 etag
            );
 
@@ -474,7 +474,7 @@ public class IncidentController : IIncidentController
 
             success = await _cloudStorageService.Update(
                 clone.Id.ToString(),
-                Incident_module.IncidentSerializer.Serialize(clone),
+                Incidents.IncidentSerializer.Serialize(clone),
                 etag
            );
 
@@ -541,8 +541,8 @@ public class IncidentController : IIncidentController
 
             Dictionary<string, byte[]> itemsToUpdate = new Dictionary<string, byte[]>
             {
-                { incident1Clone.Id.ToString(), Incident_module.IncidentSerializer.Serialize(incident1Clone) },
-                { incident2Clone.Id.ToString(), Incident_module.IncidentSerializer.Serialize(incident2Clone) }
+                { incident1Clone.Id.ToString(), Incidents.IncidentSerializer.Serialize(incident1Clone) },
+                { incident2Clone.Id.ToString(), Incidents.IncidentSerializer.Serialize(incident2Clone) }
             };
 
             Dictionary<string, string> etags = new Dictionary<string, string>

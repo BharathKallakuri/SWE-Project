@@ -2,7 +2,7 @@
 using System;
 using System.Windows.Input;
 
-namespace Incident_module.ViewModels.Utils;
+namespace Incidents.ViewModels.Utils;
 
 public sealed class RelayCommand : ICommand
 {

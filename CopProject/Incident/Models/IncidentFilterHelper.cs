@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 
-namespace Incident_module;
+namespace Incidents;
 
 internal static class IncidentFilterHelper
 {

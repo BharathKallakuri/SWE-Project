@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Incident_module.ViewModels.Utils;
+using Incidents.ViewModels.Utils;
 using Microsoft.UI.Xaml;
 
-namespace Incident_module.ViewModels;
+namespace Incidents.ViewModels;
 
 public sealed class IncidentDetailsPageViewModel : ViewModelBase
 {

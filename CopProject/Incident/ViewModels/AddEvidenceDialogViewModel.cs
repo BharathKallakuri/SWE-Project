@@ -2,12 +2,12 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Incident_module.ViewModels.Utils;
+using Incidents.ViewModels.Utils;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
-namespace Incident_module.ViewModels;
+namespace Incidents.ViewModels;
 
 public sealed class AddEvidenceDialogViewModel : ViewModelBase
 {

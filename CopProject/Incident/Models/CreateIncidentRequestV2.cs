@@ -5,7 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Incident_module;
+using Incidents;
 using Windows.Devices.Bluetooth.Advertisement;
 
 namespace Incidents.Models;

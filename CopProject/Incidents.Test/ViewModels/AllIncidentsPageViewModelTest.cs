@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Incident_module;
+using Incidents;
 using Incidents.Test.Implementations;
-using Incident_module.ViewModels;
+using Incidents.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

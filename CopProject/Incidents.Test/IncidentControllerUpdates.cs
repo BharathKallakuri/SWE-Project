@@ -1,5 +1,5 @@
 ﻿using FileSynchroniser.Models;
-using Incident_module;
+using Incidents;
 using Incidents.Test.Implementations;
 using Cloud.Persistence;
 
