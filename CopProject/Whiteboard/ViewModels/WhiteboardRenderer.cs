@@ -43,10 +43,12 @@ internal sealed class WhiteboardRenderer : IDisposable
 
     private void RenderAdded(IItem item)
     {
-        RemoveDeleted(item.Id);
-        Microsoft.UI.Xaml.UIElement visual = CreateVisual(item);
-        _visuals[item.Id] = visual;
-        _canvas.Children.Add(visual);
+        RunOnUIThread(() => {
+            RemoveDeletedInternal(item.Id);
+            Microsoft.UI.Xaml.UIElement visual = CreateVisual(item);
+            _visuals[item.Id] = visual;
+            _canvas.Children.Add(visual);
+        });
     }
 
     private void RenderUpdated(IItem item)
@@ -55,6 +57,11 @@ internal sealed class WhiteboardRenderer : IDisposable
     }
 
     private void RemoveDeleted(Guid id)
+    {
+        RunOnUIThread(() => RemoveDeletedInternal(id));
+    }
+
+    private void RemoveDeletedInternal(Guid id)
     {
         if (_visuals.Remove(id, out Microsoft.UI.Xaml.UIElement? visual))
         {
@@ -68,6 +75,15 @@ internal sealed class WhiteboardRenderer : IDisposable
                 _canvas.Children.RemoveAt(index);
             }
         }
+    }
+
+    /// <summary>
+    /// Dispatch the given action on the UI thread
+    /// </summary>
+    /// <param name="action">Action to dispatch</param>
+    private void RunOnUIThread(Action action)
+    {
+        _canvas.DispatcherQueue.TryEnqueue(() => action());
     }
 
     private static Microsoft.UI.Xaml.UIElement CreateVisual(IItem item)
