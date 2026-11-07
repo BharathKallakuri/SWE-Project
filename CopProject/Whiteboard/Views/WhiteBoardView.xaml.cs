@@ -39,6 +39,11 @@ public sealed partial class WhiteBoardView : UserControl
 
     }
 
+    private void ButtonEraseItems_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        _viewModel.SelectTool(WhiteboardTool.Eraser);
+    }
+
     private void CanvasContainer_SizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e)
     {
         WhiteboardCanvas.Width = e.NewSize.Width;

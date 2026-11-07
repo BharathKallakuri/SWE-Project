@@ -1,6 +1,5 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+/// Owner   : Raagam Hitesh Parmar
+/// LICENSE : MIT
 
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -25,6 +24,7 @@ public class WhiteBoardViewModel
     private IViewModelState _squareState;
     private IViewModelState _eraserState;
     private readonly IWhiteboardClient _whiteboardClient;
+    private WhiteboardRenderer _renderer;
 
     private IViewModelState _currentState;
     private bool _isInitialized;
@@ -47,7 +47,8 @@ public class WhiteBoardViewModel
 
         _penState = new PenState(_whiteboardClient, canvas, toolbarInfo);
         _squareState = new ShapeSquareState(_whiteboardClient, canvas, toolbarInfo);
-        _eraserState = new EraserState(canvas);
+        _eraserState = new EraserState(_whiteboardClient, canvas);
+        _renderer = new WhiteboardRenderer(_whiteboardClient.Canvas, canvas);
 
         _currentState = _penState;
         _isInitialized = true;

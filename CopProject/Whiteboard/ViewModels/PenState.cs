@@ -1,15 +1,17 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+/// Owner   : Raagam Hitesh Parmar
+/// LICENSE : MIT
 
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Whiteboard.Client;
+using Whiteboard.Interfaces;
+using Whiteboard.Items;
 using Windows.Foundation;
+using Windows.UI;
 
 namespace Whiteboard.ViewModels;
 
@@ -133,12 +135,32 @@ public class PenState : IViewModelState
 
         if (_polyline is not null)
         {
+            // Get the brush color
+            // TODO too complicated, simplify
+            Color strokeColor = _toolbarInfo.BorderBrush is SolidColorBrush sb ? sb.Color : Color.FromArgb(255, 0, 0, 0);
+
+            // Create a freehand item to sync with client
+            var freehand = new FreehandItem {
+                Points = [.. _polyline.Points.Select(p => new Point2D(p.X, p.Y))],
+                StrokeColor = strokeColor,
+                StrokeWidth = _toolbarInfo.StrokeThickness,
+                CreatedBy = _whiteboardClient.UserId
+            };
+
+            // Tag the polyline with the ID of the item
+            _polyline.Tag = freehand.Id;
+
             // Add tooltip
             ToolTip toolTip = new(_whiteboardClient.UserId, DateTime.Now);
             ToolTipService.SetToolTip(_polyline, toolTip);
 
             // Enable hit testing on the polyline
             _polyline.IsHitTestVisible = true;
+
+            _canvas.Children.Remove(_polyline);
+
+            // Send to whiteboard client state manager
+            _whiteboardClient.AddItem(freehand);
         }
 
         // Reset polyline state back to null

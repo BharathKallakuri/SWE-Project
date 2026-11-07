@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -160,6 +160,8 @@ public class ItemMapper
                 Center = rectangle.Center,
                 Width = rectangle.Width,
                 Height = rectangle.Height,
+                Left = rectangle.Center.X - (rectangle.Width / 2),
+                Top = rectangle.Center.Y - (rectangle.Height / 2),
                 FillColor = HexToColor(rectangle.Style.FillColor),
                 BorderColor = HexToColor(rectangle.Style.BorderColor),
                 BorderWidth = rectangle.Style.BorderWidth
@@ -168,6 +170,8 @@ public class ItemMapper
             ItemPayload.Square square => new Square {
                 Center = square.Center,
                 SideLegth = square.SideLength,
+                Left = square.Center.X - (square.SideLength / 2),
+                Top = square.Center.Y - (square.SideLength / 2),
                 FillColor = HexToColor(square.Style.FillColor),
                 BorderColor = HexToColor(square.Style.BorderColor),
                 BorderWidth = square.Style.BorderWidth

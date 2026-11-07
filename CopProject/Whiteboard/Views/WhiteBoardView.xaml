@@ -59,7 +59,8 @@
 
                     <Button
                         x:Name="ButtonEraseItems"
-                        ToolTipService.ToolTip="Erase items">
+                        ToolTipService.ToolTip="Erase items"
+                        Click="ButtonEraseItems_Click">
                         <FontIcon Glyph="&#xE75C;"/>
                     </Button>
 

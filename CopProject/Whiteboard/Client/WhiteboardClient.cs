@@ -62,16 +62,23 @@ public class WhiteboardClient : IWhiteboardClient
 
     public void AddItem(IItem item)
     {
+        ArgumentNullException.ThrowIfNull(item);
+
+        Canvas.AddItem(item);
         SendToServer(new ClientMessage.ReqAddItem(item.Id, ItemMapper.ToDto(item)));
     }
 
     public void DeleteItem(Guid id)
-    {
+    {   
+        Canvas.DeleteItem(id);
         SendToServer(new ClientMessage.ReqDeleteItem(id));
     }
 
     public void EditItem(IItem item)
     {
+        ArgumentNullException.ThrowIfNull(item);
+
+        Canvas.EditItem(item);
         SendToServer(new ClientMessage.ReqUpdateItem(item.Id, ItemMapper.ToDto(item)));
     }
 
