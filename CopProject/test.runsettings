@@ -15,7 +15,8 @@
                 <ModulePath>.*\\cloud\.dll$</ModulePath>
                 <ModulePath>.*\\incident\.dll$</ModulePath>
                 <ModulePath>.*\\location\.dll$</ModulePath>
-                <ModulePath>.*\\whiteboard\.dll$</ModulePath>  
+                <ModulePath>.*\\whiteboard\.dll$</ModulePath>
+                <ModulePath>.*\\cloud.networking.server\.dll$</ModulePath>
               </Include>
             </ModulePaths>
             <Sources>
