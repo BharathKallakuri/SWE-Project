@@ -8,8 +8,8 @@ public class Program
 {
     private static async Task Main(string[] args)
     {
-        // Do: dotnet run -- http://localhost:5000/hub
-        string url = args.Length > 0 ? args[0] : "http://localhost:5000/hub";
+        // Do: dotnet run -- http://localhost:5038/hub [or https://localhost:7279/hub]
+        string url = args.Length > 0 ? args[0] : "http://localhost:5038/hub";
 
         await using SignalRMessenger messenger = new(url);
 
