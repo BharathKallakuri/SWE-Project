@@ -1,8 +1,9 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -169,20 +170,10 @@ public class ShapeSquareState : IViewModelState
                 CreatedBy = _whiteboardClient.UserId
             };
 
-            // Tag the polyline with the ID of the item
-            _square.Tag = square.Id;
-
-            // Add tooltip
-            ToolTip toolTip = new(_whiteboardClient.UserId, DateTime.Now);
-            ToolTipService.SetToolTip(_square, toolTip);
-
-            // Enable hit testing on the square
-            _square.IsHitTestVisible = true;
-
             _canvas.Children.Remove(_square);
 
-            // Send to whiteboard client state manager
-            _whiteboardClient.AddItem(square);
+            // Send to whiteboard client state manager off the UI thread
+            Task.Run(() => _whiteboardClient.AddItem(square));
         }
 
         // Reset square state back to null

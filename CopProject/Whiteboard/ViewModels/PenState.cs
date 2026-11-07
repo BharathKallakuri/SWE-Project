@@ -1,9 +1,10 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -148,20 +149,10 @@ public class PenState : IViewModelState
                 CreatedBy = _whiteboardClient.UserId
             };
 
-            // Tag the polyline with the ID of the item
-            _polyline.Tag = freehand.Id;
-
-            // Add tooltip
-            ToolTip toolTip = new(_whiteboardClient.UserId, DateTime.Now);
-            ToolTipService.SetToolTip(_polyline, toolTip);
-
-            // Enable hit testing on the polyline
-            _polyline.IsHitTestVisible = true;
-
             _canvas.Children.Remove(_polyline);
 
-            // Send to whiteboard client state manager
-            _whiteboardClient.AddItem(freehand);
+            // Send to whiteboard client state manager off the UI thread
+            Task.Run(() => _whiteboardClient.AddItem(freehand));
         }
 
         // Reset polyline state back to null
