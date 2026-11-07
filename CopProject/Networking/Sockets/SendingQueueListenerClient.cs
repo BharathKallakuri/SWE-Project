@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -48,7 +48,7 @@ public class SendingQueueListenerClient : IDisposable
         {
             if (_sendingQueue.IsEmpty())
             {
-                Thread.Sleep(100);
+                _sendingQueue.WaitForItem(100);
                 continue;
             }
 
