@@ -46,6 +46,7 @@ public class Program
     public static void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<IServerMonitor, ServerMonitor>(); /*only one instance of ServerMonitor will exist*/
+        services.AddSingleton<IMessageStore, InMemoryMessageStore>(); /* message history for client sync (TODO: use a persistent store later) */
         services.AddScoped<DashboardViewModel>(); /*one instance per user circuit (per browser tab)*/
         services.AddSignalR().AddHubOptions<MessageHub>(options => options.AddFilter<MonitorHubFilter>()); /* this filter connects ServerMonitor and MessageHub */
         services.AddRazorComponents().AddInteractiveServerComponents(); /* needed for interactivity in server components */
