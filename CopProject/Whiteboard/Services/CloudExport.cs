@@ -10,7 +10,6 @@ using Whiteboard.Models;
 namespace Whiteboard.Services;
 
 [ExcludeFromCodeCoverage]
-// Temporary exclusion from code coverage
 public class CloudExport
 {
     private readonly ICanvasRender _canvasRender;
@@ -26,14 +25,18 @@ public class CloudExport
     public async Task<bool> ExportToCloudAsync(UIElement element, string whiteboardId, string userId, bool isJpeg = false)
     {
         ArgumentNullException.ThrowIfNull(element);
-        _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard)
+
+        _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
+
         CanvasExportData exportData = await _canvasRender.CreateExportDataAsync(element, whiteboardId, isJpeg);
+
         return await SaveExportDataToCloudAsync(exportData, whiteboardId, userId);
     }
 
     public async Task<bool> SaveExportDataToCloudAsync(CanvasExportData exportData, string whiteboardId, string userId)
     {
         ArgumentNullException.ThrowIfNull(exportData);
+
         _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
 
         var record = new
