@@ -17,6 +17,16 @@ public interface ITextbox : IItem
     public Point2D Center { get; init; }
 
     /// <summary>
+    /// Width of the textbox
+    /// </summary>
+    public double Width { get; set; }
+
+    /// <summary>
+    /// Height of the textbox
+    /// </summary>
+    public double Height { get; set; }
+
+    /// <summary>
     /// Content of the textbox
     /// </summary>
     public string Content { get; set; }
