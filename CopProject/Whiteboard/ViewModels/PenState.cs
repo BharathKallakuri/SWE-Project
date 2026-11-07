@@ -1,7 +1,8 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -51,7 +52,7 @@ public class PenState : IViewModelState
     /// <summary>
     /// Active polyline
     /// </summary>
-    private Polyline _polyline;
+    private Polyline? _polyline;
 
     public PenState(IWhiteboardClient whiteboardClient, Canvas canvas, ToolbarInfo toolbarInfo)
     {
