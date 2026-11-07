@@ -9,7 +9,7 @@ namespace Cloud.Networking;
 /// <summary>
 /// Interface reflecting a subset of features in <see cref="HubConnection"/> class (for mocking it).
 /// </summary>
-/// 
+///
 /// <remarks>
 /// <list type="bullet">
 /// <item>
@@ -66,4 +66,9 @@ internal interface IHubConnection : IAsyncDisposable
     /// Uses the same signature as <see cref="HubConnectionExtensions.InvokeAsync"/>.
     /// </summary>
     Task InvokeAsync(string methodName, object? arg, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Same as <see cref="InvokeAsync(string, object?, CancellationToken)"/> but returns the server's result.
+    /// </summary>
+    Task<T> InvokeAsync<T>(string methodName, object? arg, CancellationToken cancellationToken = default);
 }
