@@ -35,12 +35,18 @@
     <Project Path="Networking/Networking.csproj" />
     <Project Path="Screenshare/Screenshare.csproj" />
     <Project Path="UX/UX.csproj">
-        <Platform Project="x64" />
+        <Platform Solution="*|Any CPU" Project="x64" />
+        <Platform Solution="*|ARM64" Project="ARM64" />
+        <Platform Solution="*|x64" Project="x64" />
+        <Platform Solution="*|x86" Project="x86" />
         <Deploy />
     </Project>
     <Project Path="Whiteboard.Test/Whiteboard.Test.csproj" Id="4985b7d2-c02f-4b5d-9b55-8029388e0c16" />
     <Project Path="Whiteboard.WinUI3Harness/Whiteboard.WinUI3Harness.csproj" Id="4f407a72-c86c-4ce7-81a7-045192fe0e38">
-        <Platform Project="x64" />
+        <Platform Solution="*|Any CPU" Project="x64" />
+        <Platform Solution="*|ARM64" Project="ARM64" />
+        <Platform Solution="*|x64" Project="x64" />
+        <Platform Solution="*|x86" Project="x86" />
         <Deploy />
     </Project>
     <Project Path="Whiteboard/Whiteboard.csproj" />
