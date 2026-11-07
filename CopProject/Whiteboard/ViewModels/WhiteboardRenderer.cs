@@ -103,7 +103,7 @@ internal sealed class WhiteboardRenderer : IDisposable
             StrokeLineJoin = Microsoft.UI.Xaml.Media.PenLineJoin.Round,
             StrokeStartLineCap = Microsoft.UI.Xaml.Media.PenLineCap.Round,
             StrokeEndLineCap = Microsoft.UI.Xaml.Media.PenLineCap.Round,
-            IsHitTestVisible = false,
+            IsHitTestVisible = true,
             Tag = item.Id
         };
 
@@ -124,7 +124,7 @@ internal sealed class WhiteboardRenderer : IDisposable
             Fill = new SolidColorBrush(ToColor(item.FillColor)),
             Stroke = new SolidColorBrush(ToColor(item.BorderColor)),
             StrokeThickness = item.BorderWidth,
-            IsHitTestVisible = false,
+            IsHitTestVisible = true,
             Tag = item.Id
         };
 
