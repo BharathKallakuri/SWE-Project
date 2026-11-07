@@ -18,6 +18,9 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="*" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Networking\Networking.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="Filesync.Test" />
   </ItemGroup>
   <ItemGroup>
