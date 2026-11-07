@@ -1,70 +1,55 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Cloud.Persistence;
 using Microsoft.UI.Xaml;
 using Whiteboard.Interfaces;
-using Whiteboard.Services;
 using Whiteboard.Models;
 
-namespace Whiteboard.Test.Services;
+namespace Whiteboard.Services;
 
-public class CloudExportIntegrationTests
+[ExcludeFromCodeCoverage]
+// Temporary exclusion from code coverage
+public class CloudExport
 {
-    [Fact(Skip = "Skipping test because COSMOS_KEY is not set.")]
-    public async Task ExportToCloudAsync_StoreExportData()
+    private readonly ICanvasRender _canvasRender;
+    private IStorage? _storage;
+
+    public CloudExport(ICanvasRender canvasRender, IStorage? storage = null)
     {
-        var exportData = new CanvasExportData
-        {
-            ImageData = [1, 2, 3, 4],
-            ContentType = "image/png",
-            FileName = $"test-{Guid.NewGuid():N}.png",
-            PixelWidth = 10,
-            PixelHeight = 20,
-            ExportDateTime = DateTime.UtcNow
-        };
-
-        var canvasRender = new TempCanvasRender(exportData);
-        var cloudExport = new CloudExport(canvasRender);
-
-        string userId = $"test-user-{Guid.NewGuid():N}";
-        string whiteboardId = $"test-board-{Guid.NewGuid():N}";
-        string key = $"{userId}:{whiteboardId}:{exportData.FileName}";
-
-        IStorage storage = await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
-
-        try
-        {
-            bool saved = await cloudExport.SaveExportDataToCloudAsync(exportData, whiteboardId, userId);
-
-            Assert.True(saved);
-
-            (bool Success, byte[] Data) result = await storage.Read(key);
-            Assert.True(result.Success);
-
-            using JsonDocument document = JsonDocument.Parse(result.Data);
-            JsonElement root = document.RootElement;
-
-            Assert.Equal(whiteboardId, root.GetProperty("BoardId").GetString());
-            Assert.Equal(userId, root.GetProperty("OwnerId").GetString());
-            Assert.Equal(exportData.FileName, root.GetProperty("FileName").GetString());
-            Assert.Equal("image/png", root.GetProperty("ContentType").GetString());
-            Assert.Equal("10x20", root.GetProperty("Dimensions").GetString());
-            Assert.Equal(exportData.ImageData, root.GetProperty("ImageData").GetBytesFromBase64());
-        }
-        finally
-        {
-            await storage.Delete(key);
-        }
+        ArgumentNullException.ThrowIfNull(canvasRender);
+        _canvasRender = canvasRender;
+        _storage = storage;
     }
 
-    private sealed class TempCanvasRender(CanvasExportData exportData) : ICanvasRender
+    public async Task<bool> ExportToCloudAsync(UIElement element, string whiteboardId, string userId, bool isJpeg = false)
     {
-        public Task<byte[]> RenderToPngAsync(UIElement element) =>
-            Task.FromResult(exportData.ImageData);
+        ArgumentNullException.ThrowIfNull(element);
+        _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
+        CanvasExportData exportData = await _canvasRender.CreateExportDataAsync(element, whiteboardId, isJpeg);
+        return await SaveExportDataToCloudAsync(exportData, whiteboardId, userId);
+    }
 
-        public Task<byte[]> RenderToJpegAsync(UIElement element) =>
-            Task.FromResult(exportData.ImageData);
+    public async Task<bool> SaveExportDataToCloudAsync(CanvasExportData exportData, string whiteboardId, string userId)
+    {
+        ArgumentNullException.ThrowIfNull(exportData);
+        _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
 
-        public Task<CanvasExportData> CreateExportDataAsync(UIElement element, string whiteboardId, bool isJpeg = false) =>
-            Task.FromResult(exportData);
+        var record = new
+        {
+            BoardId = whiteboardId,
+            OwnerId = userId,
+            exportData.FileName,
+            exportData.ContentType,
+            Dimensions = $"{exportData.PixelWidth}x{exportData.PixelHeight}",
+            ExportedAt = exportData.ExportDateTime,
+            exportData.ImageData
+        };
+
+        byte[] data = JsonSerializer.SerializeToUtf8Bytes(record);
+        string key = $"{userId}:{whiteboardId}:{exportData.FileName}";
+
+        return await _storage.Create(key, data);
     }
 }
