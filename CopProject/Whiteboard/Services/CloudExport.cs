@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Cloud.Persistence;
 using Microsoft.UI.Xaml;
 using Whiteboard.Interfaces;
 using Whiteboard.Models;
-using System.Text.Json;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Whiteboard.Services;
 
@@ -18,42 +18,33 @@ public class CloudExport
 
     public CloudExport(ICanvasRender canvasRender, IStorage? storage = null)
     {
-        _canvasRender = canvasRender ?? throw new ArgumentNullException(nameof(canvasRender));
+        ArgumentNullException.ThrowIfNull(canvasRender);
+        _canvasRender = canvasRender;
         _storage = storage;
     }
 
     public async Task<bool> ExportToCloudAsync(UIElement element, string whiteboardId, string userId, bool isJpeg = false)
     {
-        if (element == null)
-        {
-            throw new ArgumentNullException(nameof(element));
-        }
-
-        _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
-
+        ArgumentNullException.ThrowIfNull(element);
+        _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard)
         CanvasExportData exportData = await _canvasRender.CreateExportDataAsync(element, whiteboardId, isJpeg);
-
         return await SaveExportDataToCloudAsync(exportData, whiteboardId, userId);
     }
 
     public async Task<bool> SaveExportDataToCloudAsync(CanvasExportData exportData, string whiteboardId, string userId)
     {
-        if (exportData == null)
-        {
-            throw new ArgumentNullException(nameof(exportData));
-        }
-        
+        ArgumentNullException.ThrowIfNull(exportData);
         _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
 
         var record = new
         {
             BoardId = whiteboardId,
             OwnerId = userId,
-            FileName = exportData.FileName,
-            ContentType = exportData.ContentType,
+            exportData.FileName,
+            exportData.ContentType,
             Dimensions = $"{exportData.PixelWidth}x{exportData.PixelHeight}",
             ExportedAt = exportData.ExportDateTime,
-            ImageData = exportData.ImageData
+            exportData.ImageData
         };
 
         byte[] data = JsonSerializer.SerializeToUtf8Bytes(record);
