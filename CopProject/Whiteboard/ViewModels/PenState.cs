@@ -155,6 +155,8 @@ public class PenState : IViewModelState
             // Enable hit testing on the polyline
             _polyline.IsHitTestVisible = true;
 
+            _canvas.Children.Remove(_polyline);
+
             // Send to whiteboard client state manager
             _whiteboardClient.AddItem(freehand);
         }

@@ -176,6 +176,8 @@ public class ShapeSquareState : IViewModelState
             // Enable hit testing on the square
             _square.IsHitTestVisible = true;
 
+            _canvas.Children.Remove(_square);
+
             // Send to whiteboard client state manager
             _whiteboardClient.AddItem(square);
         }
