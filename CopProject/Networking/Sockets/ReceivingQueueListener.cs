@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -45,7 +45,7 @@ public class ReceivingQueueListener : IDisposable
         {
             if (_receivingQueue.IsEmpty())
             {
-                Thread.Sleep(100);
+                _receivingQueue.WaitForItem(100);
                 continue;
             }
             Packet? packet = _receivingQueue.Dequeue();
