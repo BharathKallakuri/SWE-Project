@@ -13,7 +13,7 @@ namespace Cloud.Networking.Server.ViewModels;
 public sealed class DashboardViewModel : IDisposable
 {
     /// <summary>How many of the newest messages the dashboard shows.</summary>
-    public const int RecentMessageCount = 1000;
+    public const int RecentMessageCount = 10_000;
 
     /// <summary>The longest message the dashboard (and the hub) accepts.</summary>
     public const int MaxLength = MessageHub.MaxContentLength;
