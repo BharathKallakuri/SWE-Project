@@ -25,7 +25,7 @@ namespace Cloud.Networking;
 /// Mocking a wrapped Microsoft ASP.NET Core SignalR HubConnection
 /// </see>
 /// </remarks>
-public interface IHubConnection : IAsyncDisposable
+internal interface IHubConnection : IAsyncDisposable
 {
     /// <summary>
     /// Uses the same connection state as in <see cref="HubConnectionState"/>.
