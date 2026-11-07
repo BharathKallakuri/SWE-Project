@@ -1,12 +1,13 @@
 ﻿namespace Incident_module;
 
-using System.Security.Policy;
-using FileSynchroniser.Models;
 using Cloud.Persistence;
+using FileSynchroniser.Models;
+using Incidents.Models;
 
 public class IncidentController : IIncidentController
 {
     // TODO(@shreesh): IControllerService is to be used for getting Guid of the user using the Controller.
+    private readonly string _relativePath = "Incidents";
     private readonly IStorage _cloudStorageService;
     private readonly IFileOperations _fileSynchronizerService;
     private readonly Dictionary<Guid, Incident> _incidentMap;
@@ -68,6 +69,13 @@ public class IncidentController : IIncidentController
         }
     }
 
+    /// <summary>
+    /// Creates a new Incident.
+    /// </summary>
+    /// <param name="request"> Information to create the Incident.</param>
+    /// <returns>The created Incident.</returns>
+    /// <exception cref="InvalidOperationException">Throws InvalidOperationException if Incident can't be created.</exception>
+    [Obsolete("Use CreateIncidentV2() instead.")]
     public async Task<Incident> CreateIncident(CreateIncidentRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -103,6 +111,103 @@ public class IncidentController : IIncidentController
         _incidentMap.Add(incident.Id, incident);
 
         return incident;
+    }
+
+    /// <summary>
+    /// Redacts/Delete files that were saved by FileSynchronizer.
+    /// </summary>
+    /// <param name="request">Evidences to delete</param>
+    /// <returns>true if all files were delete successfully else false.</returns>
+    private bool RedactFilesSave(List<IncidentEvidence> request)
+    {
+        bool result = true;
+
+        // todo(@shreesh): Convert to bulk delete later
+        foreach (IncidentEvidence evidenceMetaData in request)
+        {
+            try
+            {
+                bool success = _fileSynchronizerService.DeleteFile($"{_relativePath}/{evidenceMetaData.Id}");
+
+                result &= success;
+            }
+            catch (Exception)
+            {
+                // Will not need to handle this exception
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Creates a new Incident.
+    /// </summary>
+    /// <param name="request"> Information to create the Incident.</param>
+    /// <returns>The created Incident.</returns>
+    /// <exception cref="InvalidOperationException">Throws InvalidOperationException if Incident can't be created.</exception>
+    public async Task<Incident> CreateIncidentV2(CreateIncidentRequestV2 request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        try
+        {
+            //todo(@shreesh): Convert to Bulk File Syncronizer methods later
+            foreach ((IncidentEvidence metaData, byte[] file) in request.Evidences)
+            {
+                try
+                {
+                    bool result = _fileSynchronizerService.SaveFile($"{_relativePath}/{metaData.Id}", file);
+
+                    if (!result)
+                    {
+                        throw new InvalidOperationException($"Failed to save evidence files to file synchronizer service.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Failed to save evidence files to file synchronizer service: ", ex);
+                }
+            }
+
+            List<IncidentEvidence> evidenceMeta = request.Evidences.Select(e => e.Item1).ToList();
+
+            Incident incident = new Incident(
+                request.Title,
+                request.Description,
+                request.CreatedBy,
+                request.Category,
+                request.Severity,
+                request.Location,
+                evidenceMeta
+            );
+
+            bool success = await _cloudStorageService.Create(
+                incident.Id.ToString(),
+                Incident_module.IncidentSerializer.Serialize(incident)
+            );
+
+            if (!success)
+            {
+                bool result = RedactFilesSave(evidenceMeta);
+
+                if (result)
+                {
+                    throw new InvalidOperationException("Failed to persist incident to cloud storage.");
+                }
+
+                throw new InvalidOperationException("Failed to persist incident to cloud storage." +
+                    " File syncronizer directory is in inconsistent state");
+            }
+
+            _incidentMap.Add(incident.Id, incident);
+
+            return incident;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to persist incident to cloud storage.", ex);
+        }
     }
 
     public async Task<Incident> GetIncidentById(Guid id)
