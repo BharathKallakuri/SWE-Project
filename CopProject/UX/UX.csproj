@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿ <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
@@ -14,12 +14,6 @@
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <SelfContained>true</SelfContained>
-
-    <!-- Prevent XAML compiler looking for C++ MSVC tools -->
-    <!-- I need to look into this extra part  -->
-    <VCInstallPath32>none</VCInstallPath32>
-    <VCInstallPath64>none</VCInstallPath64>
-    <VCToolsInstallDir>none</VCToolsInstallDir>
   </PropertyGroup>
 
   <ItemGroup>

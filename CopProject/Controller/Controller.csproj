@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
@@ -8,9 +8,6 @@
     <UseWinUI>true</UseWinUI>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <VCInstallPath32>none</VCInstallPath32>
-    <VCInstallPath64>none</VCInstallPath64>
-    <VCToolsInstallDir>none</VCToolsInstallDir>
   </PropertyGroup>
 
   <ItemGroup> 
