@@ -1,6 +1,7 @@
 ﻿// Author : Murali
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -27,6 +28,14 @@ public sealed class FileSyncViewModelTest
     private static string Normalize(string path)
     {
         return path.Replace('\\', '/');
+    }
+
+    /// <summary>
+    /// Builds the one-entry dictionary that AddFile / SaveFile expect for a single file.
+    /// </summary>
+    private static Dictionary<string, byte[]> OneFile(string path, byte[] content)
+    {
+        return new Dictionary<string, byte[]> { [path] = content };
     }
 
     /// <summary>
@@ -112,7 +121,7 @@ public sealed class FileSyncViewModelTest
         string path = $"{_testDir}/test.txt";
         byte[] content = Encoding.UTF8.GetBytes("hello world");
 
-        _viewModel.AddFile(path, content);
+        _viewModel.AddFile(OneFile(path, content));
 
         Assert.HasCount(1, _viewModel.Files);
         Assert.AreEqual(path, Normalize(_viewModel.Files[0].RelativePath));
@@ -126,7 +135,7 @@ public sealed class FileSyncViewModelTest
     {
         string path = $"{_testDir}/test.txt";
 
-        _viewModel.AddFile(path, Encoding.UTF8.GetBytes("content"));
+        _viewModel.AddFile(OneFile(path, Encoding.UTF8.GetBytes("content")));
 
         Assert.AreEqual($"Saved '{path}'.", _viewModel.StatusMessage);
     }
@@ -137,7 +146,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void AddFile_ValidFile_ClearsHasError()
     {
-        _viewModel.AddFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content"));
+        _viewModel.AddFile(OneFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content")));
 
         Assert.IsFalse(_viewModel.HasError);
     }
@@ -148,9 +157,10 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void AddFile_InvalidPath_DoesNotThrow()
     {
-        _viewModel.AddFile("../invalid.txt", Encoding.UTF8.GetBytes("content"));
+        _viewModel.AddFile(OneFile("../invalid.txt", Encoding.UTF8.GetBytes("content")));
 
         Assert.IsTrue(_viewModel.HasError);
+        StringAssert.Contains(_viewModel.StatusMessage, "invalid.txt");
     }
 
     /// <summary>
@@ -159,7 +169,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void RefreshCommand_WithFiles_LoadsFiles()
     {
-        _sync.SaveFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content"));
+        _sync.SaveFile(OneFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content")));
 
         _viewModel.RefreshCommand.Execute(null);
 
@@ -207,7 +217,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void DeleteSelectedCommand_WithSelection_ReturnsTrue()
     {
-        _viewModel.AddFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content"));
+        _viewModel.AddFile(OneFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content")));
 
         _viewModel.SelectedFile = _viewModel.Files[0];
 
@@ -222,7 +232,7 @@ public sealed class FileSyncViewModelTest
     {
         string path = $"{_testDir}/test.txt";
 
-        _viewModel.AddFile(path, Encoding.UTF8.GetBytes("content"));
+        _viewModel.AddFile(OneFile(path, Encoding.UTF8.GetBytes("content")));
 
         _viewModel.SelectedFile = _viewModel.Files[0];
 
@@ -240,7 +250,7 @@ public sealed class FileSyncViewModelTest
     {
         string path = $"{_testDir}/test.txt";
 
-        _viewModel.AddFile(path, Encoding.UTF8.GetBytes("content"));
+        _viewModel.AddFile(OneFile(path, Encoding.UTF8.GetBytes("content")));
 
         _viewModel.SelectedFile = _viewModel.Files[0];
 
@@ -270,7 +280,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void SelectedFile_Changed_RaisesPropertyChanged()
     {
-        _viewModel.AddFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content"));
+        _viewModel.AddFile(OneFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content")));
 
         string? propertyName = null;
 
@@ -291,7 +301,7 @@ public sealed class FileSyncViewModelTest
 
         _viewModel.DeleteSelectedCommand.CanExecuteChanged += (sender, args) => eventRaised = true;
 
-        _viewModel.AddFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content"));
+        _viewModel.AddFile(OneFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content")));
 
         _viewModel.SelectedFile = _viewModel.Files[0];
 
@@ -304,7 +314,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void SelectedFile_SameValue_DoesNotRaisePropertyChanged()
     {
-        _viewModel.AddFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content"));
+        _viewModel.AddFile(OneFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content")));
 
         SyncFileItem file = _viewModel.Files[0];
 
@@ -346,7 +356,7 @@ public sealed class FileSyncViewModelTest
     {
         byte[] content = Encoding.UTF8.GetBytes("hello");
 
-        _viewModel.AddFile($"{_testDir}/test.txt", content);
+        _viewModel.AddFile(OneFile($"{_testDir}/test.txt", content));
 
         Assert.AreEqual("5 B", _viewModel.Files[0].SizeText);
     }
@@ -357,7 +367,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void AddFile_ValidFile_SetsLastModifiedText()
     {
-        _viewModel.AddFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content"));
+        _viewModel.AddFile(OneFile($"{_testDir}/test.txt", Encoding.UTF8.GetBytes("content")));
 
         Assert.IsFalse(string.IsNullOrWhiteSpace(_viewModel.Files[0].LastModifiedText));
     }
@@ -403,7 +413,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void AddFile_OneKilobyte_SetsSizeTextInKb()
     {
-        _viewModel.AddFile($"{_testDir}/kb.bin", new byte[1024]);
+        _viewModel.AddFile(OneFile($"{_testDir}/kb.bin", new byte[1024]));
 
         Assert.AreEqual("1 KB", _viewModel.Files[0].SizeText);
     }
@@ -414,7 +424,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void AddFile_FractionalKilobytes_SetsRoundedSizeText()
     {
-        _viewModel.AddFile($"{_testDir}/frac.bin", new byte[1536]);
+        _viewModel.AddFile(OneFile($"{_testDir}/frac.bin", new byte[1536]));
 
         Assert.AreEqual("1.5 KB", _viewModel.Files[0].SizeText);
     }
@@ -425,7 +435,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void AddFile_OneMegabyte_SetsSizeTextInMb()
     {
-        _viewModel.AddFile($"{_testDir}/mb.bin", new byte[1024 * 1024]);
+        _viewModel.AddFile(OneFile($"{_testDir}/mb.bin", new byte[1024 * 1024]));
 
         Assert.AreEqual("1 MB", _viewModel.Files[0].SizeText);
     }
@@ -444,5 +454,120 @@ public sealed class FileSyncViewModelTest
         viewModel.RefreshCommand.Execute(null);
 
         dispatcher.Verify(d => d.Run(It.IsAny<Action>()), Times.AtLeastOnce);
+    }
+
+    /// <summary>
+    /// 31. AddFile with several files adds every file to the collection
+    /// </summary>
+    [TestMethod]
+    public void AddFile_MultipleFiles_AddsAllToCollection()
+    {
+        var files = new Dictionary<string, byte[]> {
+            [$"{_testDir}/a.txt"] = Encoding.UTF8.GetBytes("A"),
+            [$"{_testDir}/b.txt"] = Encoding.UTF8.GetBytes("B"),
+            [$"{_testDir}/c.txt"] = Encoding.UTF8.GetBytes("C")
+        };
+
+        _viewModel.AddFile(files);
+
+        Assert.HasCount(3, _viewModel.Files);
+        Assert.IsFalse(_viewModel.HasError);
+    }
+
+    /// <summary>
+    /// 32. AddFile with several files reports how many were saved
+    /// </summary>
+    [TestMethod]
+    public void AddFile_MultipleFiles_UpdatesStatusMessageWithCount()
+    {
+        var files = new Dictionary<string, byte[]> {
+            [$"{_testDir}/a.txt"] = Encoding.UTF8.GetBytes("A"),
+            [$"{_testDir}/b.txt"] = Encoding.UTF8.GetBytes("B")
+        };
+
+        _viewModel.AddFile(files);
+
+        Assert.AreEqual("Saved 2 files.", _viewModel.StatusMessage);
+    }
+
+    /// <summary>
+    /// 33. AddFile with a mix of valid and invalid files saves the valid ones,
+    /// reloads the list and shows the error
+    /// </summary>
+    [TestMethod]
+    public void AddFile_PartialFailure_ReloadsListAndShowsError()
+    {
+        var files = new Dictionary<string, byte[]> {
+            [$"{_testDir}/good.txt"] = Encoding.UTF8.GetBytes("good"),
+            ["../bad.txt"] = Encoding.UTF8.GetBytes("bad")
+        };
+
+        _viewModel.AddFile(files);
+
+        Assert.HasCount(1, _viewModel.Files);
+        Assert.AreEqual($"{_testDir}/good.txt", Normalize(_viewModel.Files[0].RelativePath));
+        Assert.IsTrue(_viewModel.HasError);
+        StringAssert.Contains(_viewModel.StatusMessage, "bad.txt");
+    }
+
+    /// <summary>
+    /// 34. AddFile for a file that already exists shows an error and keeps the list unchanged
+    /// </summary>
+    [TestMethod]
+    public void AddFile_ExistingFile_SetsErrorAndDoesNotReload()
+    {
+        string path = $"{_testDir}/dup.txt";
+
+        _viewModel.AddFile(OneFile(path, Encoding.UTF8.GetBytes("first")));
+        _viewModel.SelectedFile = _viewModel.Files[0];
+
+        _viewModel.AddFile(OneFile(path, Encoding.UTF8.GetBytes("second")));
+
+        Assert.IsTrue(_viewModel.HasError);
+        Assert.HasCount(1, _viewModel.Files);
+        // The list was not reloaded, so the selection is kept.
+        Assert.IsNotNull(_viewModel.SelectedFile);
+    }
+
+    /// <summary>
+    /// 35. AddFile throws ArgumentNullException when the collection is null
+    /// </summary>
+    [TestMethod]
+    public void AddFile_NullCollection_ThrowsArgumentNullException()
+    {
+        Assert.ThrowsExactly<ArgumentNullException>(() => _viewModel.AddFile(null!));
+    }
+
+    /// <summary>
+    /// 36. AddFile with an empty collection does nothing
+    /// </summary>
+    [TestMethod]
+    public void AddFile_EmptyCollection_DoesNothing()
+    {
+        _viewModel.AddFile(new Dictionary<string, byte[]>());
+
+        Assert.AreEqual("Ready", _viewModel.StatusMessage);
+        Assert.IsFalse(_viewModel.HasError);
+        Assert.IsEmpty(_viewModel.Files);
+    }
+
+    /// <summary>
+    /// 37. DeleteSelectedCommand shows an error when the file can no longer be deleted
+    /// </summary>
+    [TestMethod]
+    public void DeleteSelectedCommand_FileAlreadyGone_SetsError()
+    {
+        string path = $"{_testDir}/vanishing.txt";
+
+        _viewModel.AddFile(OneFile(path, Encoding.UTF8.GetBytes("content")));
+        _viewModel.SelectedFile = _viewModel.Files[0];
+
+        // Remove the file behind the view model's back.
+        _sync.DeleteFile(new[] { path });
+
+        _viewModel.DeleteSelectedCommand.Execute(null);
+
+        Assert.IsTrue(_viewModel.HasError);
+        StringAssert.Contains(_viewModel.StatusMessage, "vanishing.txt");
     }
 }
