@@ -1,11 +1,13 @@
-﻿using System;
+﻿// Author : Eswar
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using FileSynchroniser.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Filesync.Test;
+namespace Filesync.Test.Models;
 
 [TestClass]
 public class FileChunkerTest

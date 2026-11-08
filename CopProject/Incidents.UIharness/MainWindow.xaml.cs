@@ -7,6 +7,9 @@ using Microsoft.UI.Xaml;
 
 namespace Incidents.UIharness;
 
+/// <summary>
+/// A TEST Harness for the indenpendent development of Incidents WinUI Pages.
+/// </summary>
 public sealed partial class MainWindow : Window
 {
     public MainWindow()
@@ -15,6 +18,9 @@ public sealed partial class MainWindow : Window
         InitializeAndStartAsync();
     }
 
+    /// <summary>
+    /// Methods for Initializing all the setup for the function start up.
+    /// </summary>
     private async void InitializeAndStartAsync()
     {
         // Instantiate services/controllers

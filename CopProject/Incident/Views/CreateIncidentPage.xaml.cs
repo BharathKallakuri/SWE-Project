@@ -8,17 +8,26 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace Incidents.Views;
 
+/// <summary>
+/// Page where the user fills in the details of a new incident and submits it.
+/// </summary>
 [ExcludeFromCodeCoverage]
 public sealed partial class CreateIncidentPage : Page
 {
     public CreateIncidentPageViewModel? ViewModel => DataContext as CreateIncidentPageViewModel;
     private IncidentPageContext? _context;
 
+    /// <summary>
+    /// Creates the page and loads its XAML layout.
+    /// </summary>
     public CreateIncidentPage()
     {
         InitializeComponent();
     }
 
+    /// <summary>
+    /// Creates the ViewModel from the navigation context and fills in the location if one was passed.
+    /// </summary>
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
@@ -56,6 +65,9 @@ public sealed partial class CreateIncidentPage : Page
         }
     }
 
+    /// <summary>
+    /// Goes back to the previous page without creating an incident.
+    /// </summary>
     private void CancelButton_Click(object _, RoutedEventArgs __)
     {
         if (this.Frame.CanGoBack)
@@ -64,6 +76,9 @@ public sealed partial class CreateIncidentPage : Page
         }
     }
 
+    /// <summary>
+    /// Shows the Add Evidence dialog and adds the evidence to the incident if the user confirms.
+    /// </summary>
     private async void AddEvidence_Click(object _, RoutedEventArgs __)
     {
         if (_context == null)

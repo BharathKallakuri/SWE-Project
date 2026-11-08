@@ -120,24 +120,18 @@ public class IncidentController : IIncidentController
     /// <returns>true if all files were delete successfully else false.</returns>
     private bool RedactFilesSave(List<IncidentEvidence> request)
     {
-        bool result = true;
-
-        // todo(@shreesh): Convert to bulk delete later
-        foreach (IncidentEvidence evidenceMetaData in request)
+        try
         {
-            try
-            {
-                bool success = _fileSynchronizerService.DeleteFile($"{_relativePath}/{evidenceMetaData.Id}");
+            IReadOnlyDictionary<string, bool> results = _fileSynchronizerService.DeleteFile(
+                request.Select(e => $"{_relativePath}/{e.Id}"));
 
-                result &= success;
-            }
-            catch (Exception)
-            {
-                // Will not need to handle this exception
-            }
+            return results.Values.All(deleted => deleted);
         }
-
-        return result;
+        catch (Exception)
+        {
+            // Redaction is best-effort; report the directory as inconsistent.
+            return false;
+        }
     }
 
     /// <summary>
@@ -152,22 +146,15 @@ public class IncidentController : IIncidentController
 
         try
         {
-            //todo(@shreesh): Convert to Bulk File Syncronizer methods later
-            foreach ((IncidentEvidence metaData, byte[] file) in request.Evidences)
-            {
-                try
-                {
-                    bool result = _fileSynchronizerService.SaveFile($"{_relativePath}/{metaData.Id}", file);
+            Dictionary<string, byte[]> files = request.Evidences.ToDictionary(
+                e => $"{_relativePath}/{e.Item1.Id}",
+                e => e.Item2);
 
-                    if (!result)
-                    {
-                        throw new InvalidOperationException($"Failed to save evidence files to file synchronizer service.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException($"Failed to save evidence files to file synchronizer service: ", ex);
-                }
+            IReadOnlyDictionary<string, bool> saveResults = _fileSynchronizerService.SaveFile(files);
+
+            if (saveResults.Count != files.Count || saveResults.Values.Any(saved => !saved))
+            {
+                throw new InvalidOperationException("Failed to save evidence files to file synchronizer service.");
             }
 
             List<IncidentEvidence> evidenceMeta = request.Evidences.Select(e => e.Item1).ToList();
