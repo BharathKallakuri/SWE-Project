@@ -1,8 +1,10 @@
-﻿using System;
+﻿// Author : Murali
+
+using System;
 using FileSynchroniser.ViewModels;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Filesync.Test;
+namespace Filesync.Test.ViewModels;
 
 [TestClass]
 public class RelayCommandTest
