@@ -8,6 +8,8 @@ using System.Text;
 using FileSynchroniser.Models;
 using FileSynchroniser.ViewModels;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using static FileSynchroniser.ViewModels.UiDispatcher;
 
 namespace Filesync.Test.ViewModels;
 
@@ -36,7 +38,7 @@ public sealed class FileSyncViewModelTest
         _sync = new Synchroniser();
         _testDir = $"Tests/{Guid.NewGuid():N}";
 
-        _viewModel = new FileSyncViewModel(_sync);
+        _viewModel = new FileSyncViewModel(_sync, new InlineUiDispatcher());
     }
 
     /// <summary>
@@ -366,7 +368,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void Constructor_EnumerationThrowsIOException_SetsError()
     {
-        using FileSyncViewModel viewModel = new(_sync, action => action(), _ => throw new IOException("disk failure"));
+        using FileSyncViewModel viewModel = new(_sync, new InlineUiDispatcher(), _ => throw new IOException("disk failure"));
 
         Assert.IsTrue(viewModel.HasError);
         Assert.AreEqual("disk failure", viewModel.StatusMessage);
@@ -379,7 +381,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void Constructor_EnumerationThrowsUnauthorizedAccess_SetsError()
     {
-        using FileSyncViewModel viewModel = new(_sync, action => action(), _ => throw new UnauthorizedAccessException("access denied"));
+        using FileSyncViewModel viewModel = new(_sync, new InlineUiDispatcher(), _ => throw new UnauthorizedAccessException("access denied"));
 
         Assert.IsTrue(viewModel.HasError);
         Assert.AreEqual("access denied", viewModel.StatusMessage);
@@ -392,7 +394,7 @@ public sealed class FileSyncViewModelTest
     [TestMethod]
     public void Constructor_EnumerationThrowsUnexpectedException_Propagates()
     {
-        Assert.ThrowsExactly<InvalidOperationException>(() => new FileSyncViewModel(_sync, action => action(), _ => throw new InvalidOperationException("unexpected")));
+        Assert.ThrowsExactly<InvalidOperationException>(() => new FileSyncViewModel(_sync, new InlineUiDispatcher(), _ => throw new InvalidOperationException("unexpected")));
     }
 
     /// <summary>
@@ -426,5 +428,21 @@ public sealed class FileSyncViewModelTest
         _viewModel.AddFile($"{_testDir}/mb.bin", new byte[1024 * 1024]);
 
         Assert.AreEqual("1 MB", _viewModel.Files[0].SizeText);
+    }
+
+    /// <summary>
+    /// 30. Sync events are marshalled through the UI dispatcher
+    /// </summary>
+    [TestMethod]
+    public void RefreshCommand_RoutesSyncEventsThroughDispatcher()
+    {
+        Mock<IUiDispatcher> dispatcher = new();
+        dispatcher.Setup(d => d.Run(It.IsAny<Action>())).Callback<Action>(a => a());
+
+        using FileSyncViewModel viewModel = new(_sync, dispatcher.Object);
+
+        viewModel.RefreshCommand.Execute(null);
+
+        dispatcher.Verify(d => d.Run(It.IsAny<Action>()), Times.AtLeastOnce);
     }
 }

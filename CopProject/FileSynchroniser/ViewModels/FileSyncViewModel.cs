@@ -25,7 +25,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly ISync _sync;
     private readonly IFileOperations _files;
-    private readonly Action<Action> _runOnUi;
+    private readonly IUiDispatcher _dispatcher;
     private readonly Func<string, IEnumerable<FileInfo>> _enumerateFiles;
     private readonly RelayCommand _deleteSelectedCommand;
 
@@ -34,25 +34,18 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     private bool _hasError;
 
     /// <summary>
-    /// Production constructor that uses the UI dispatcher when one is available.
+    /// Creates the view model. A null <paramref name="dispatcher"/> uses the real UI dispatcher
+    /// (or runs inline when no UI exists); a null <paramref name="enumerateFiles"/> uses the real file system.
     /// </summary>
     // Synchroniser is public; ISync is internal, so the constructor takes the concrete type.
-    public FileSyncViewModel(Synchroniser synchroniser) : this(synchroniser, UiDispatcher.Create())
-    {
-    }
-
-    /// <summary>
-    /// Testable constructor; a null <paramref name="runOnUi"/> runs actions inline and a null
-    /// <paramref name="enumerateFiles"/> uses the real file system.
-    /// </summary>
-    public FileSyncViewModel(Synchroniser synchroniser, Action<Action>? runOnUi,
+    public FileSyncViewModel(Synchroniser synchroniser, IUiDispatcher? dispatcher = null,
         Func<string, IEnumerable<FileInfo>>? enumerateFiles = null)
     {
         ArgumentNullException.ThrowIfNull(synchroniser);
 
         _sync = synchroniser;
         _files = synchroniser;
-        _runOnUi = runOnUi ?? (action => action());
+        _dispatcher = dispatcher ?? UiDispatcher.Create();
         _enumerateFiles = enumerateFiles ?? EnumerateAllFiles;
 
         RefreshCommand = new RelayCommand(Refresh);
@@ -241,7 +234,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     /// </summary>
     private void RunOnUi(Action action)
     {
-        _runOnUi(action);
+        _dispatcher.Run(action);
     }
 
     /// <summary>
