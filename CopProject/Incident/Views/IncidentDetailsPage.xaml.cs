@@ -1,24 +1,33 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using Incident_module.ViewModels;
-using Incident_module.ViewModels.Utils;
+using Incidents.ViewModels;
+using Incidents.ViewModels.Utils;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 
-namespace Incident_module.Views;
+namespace Incidents.Views;
 
+/// <summary>
+/// Page that shows the details of one incident and lets the user edit it or add evidence.
+/// </summary>
 [ExcludeFromCodeCoverage]
 public sealed partial class IncidentDetailsPage : Page
 {
     private IncidentDetailsPageViewModel? ViewModel => DataContext as IncidentDetailsPageViewModel;
     private IncidentPageContext? _context;
 
+    /// <summary>
+    /// Creates the page and loads its XAML layout.
+    /// </summary>
     public IncidentDetailsPage()
     {
         InitializeComponent();
     }
 
+    /// <summary>
+    /// Creates the ViewModel from the navigation parameters and loads the selected incident.
+    /// </summary>
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
@@ -42,6 +51,9 @@ public sealed partial class IncidentDetailsPage : Page
         }
     }
 
+    /// <summary>
+    /// Goes back to the previous page.
+    /// </summary>
     private void BackButton_Click(object _, RoutedEventArgs __)
     {
         if (this.Frame.CanGoBack)
@@ -50,6 +62,9 @@ public sealed partial class IncidentDetailsPage : Page
         }
     }
 
+    /// <summary>
+    /// Shows the Add Evidence dialog and adds the evidence to the incident if the user confirms.
+    /// </summary>
     private async void AddEvidence_Click(object _, RoutedEventArgs __)
     {
         if (_context == null)

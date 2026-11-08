@@ -1,5 +1,5 @@
 using System.Runtime.CompilerServices;
-using Incident_module;
+using Incidents;
 
 namespace Location.Test.Fakes;
 

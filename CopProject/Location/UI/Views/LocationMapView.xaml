@@ -9,7 +9,6 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Filter panel -->
         <Border Grid.Column="0" Background="#EDEDED" Padding="16"
                 BorderBrush="#BDBDBD" BorderThickness="0,0,1,0">
             <StackPanel Spacing="14">
@@ -42,7 +41,6 @@
             </StackPanel>
         </Border>
 
-        <!-- Map area -->
         <Grid Grid.Column="1" MinHeight="500" MinWidth="600">
             <controls:WebView2 x:Name="MapView"
                                HorizontalAlignment="Stretch"

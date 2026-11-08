@@ -1,7 +1,7 @@
 ﻿
 using System;
-using Incident_module;
-using Incident_module.ViewModels;
+using Incidents;
+using Incidents.ViewModels;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Incidents.Test.ViewModels;

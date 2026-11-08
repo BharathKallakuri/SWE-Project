@@ -2,27 +2,40 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Incident_module.ViewModels.Utils;
+using Incidents.ViewModels.Utils;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
-namespace Incident_module.ViewModels;
+namespace Incidents.ViewModels;
 
+/// <summary>
+/// ViewModel for the dialog where the user adds a file and description as incident evidence.
+/// </summary>
 public sealed class AddEvidenceDialogViewModel : ViewModelBase
 {
     private string _filePath = string.Empty;
     private string _description = string.Empty;
     private readonly IntPtr _windowHandle;
 
+    /// <summary>
+    /// Creates the ViewModel with the window handle the file picker needs.
+    /// </summary>
+    /// <param name="windowHandle">Handle of the window that owns the file picker.</param>
     public AddEvidenceDialogViewModel(IntPtr windowHandle)
     {
         _windowHandle = windowHandle;
         BrowseFileCommand = new RelayCommand(async () => await BrowseFileAsync());
     }
 
+    /// <summary>
+    /// Opens the file picker when the Browse button is clicked.
+    /// </summary>
     public RelayCommand BrowseFileCommand { get; }
 
+    /// <summary>
+    /// Path of the file chosen as evidence.
+    /// </summary>
     public string FilePath
     {
         get => _filePath;
@@ -34,6 +47,9 @@ public sealed class AddEvidenceDialogViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Text describing the evidence.
+    /// </summary>
     public string Description
     {
         get => _description;
@@ -45,6 +61,9 @@ public sealed class AddEvidenceDialogViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// True when both a file path and a description have been entered.
+    /// </summary>
     public bool IsValid => !string.IsNullOrWhiteSpace(FilePath) && !string.IsNullOrWhiteSpace(Description);
 
     /// <summary>
@@ -85,6 +104,10 @@ public sealed class AddEvidenceDialogViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Creates an evidence record from the entered values with a new Id and the current time.
+    /// </summary>
+    /// <param name="uploadedBy">Id of the user adding the evidence (current user).</param>
     public IncidentEvidence BuildEvidence(Guid uploadedBy)
     {
         return new IncidentEvidence(

@@ -1,34 +1,46 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using Incident_module.ViewModels;
-using Incident_module.ViewModels.Utils;
+using Incidents.ViewModels;
+using Incidents.ViewModels.Utils;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 
-namespace Incident_module.Views;
+namespace Incidents.Views;
 
+/// <summary>
+/// Page where the user fills in the details of a new incident and submits it.
+/// </summary>
 [ExcludeFromCodeCoverage]
 public sealed partial class CreateIncidentPage : Page
 {
     public CreateIncidentPageViewModel? ViewModel => DataContext as CreateIncidentPageViewModel;
     private IncidentPageContext? _context;
 
+    /// <summary>
+    /// Creates the page and loads its XAML layout.
+    /// </summary>
     public CreateIncidentPage()
     {
         InitializeComponent();
     }
 
+    /// <summary>
+    /// Creates the ViewModel from the navigation context and fills in the location if one was passed.
+    /// </summary>
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
 
-        if (e.Parameter is IncidentPageContext context)
-        {
-            _context = context;
-        }
+        IncidentCreatePageWithLocation? locationContext =
+            e.Parameter as IncidentCreatePageWithLocation;
 
-        if (_context != null && DataContext is not CreateIncidentPageViewModel)
+        _context = locationContext?.Context
+            ?? e.Parameter as IncidentPageContext;
+
+        if (_context == null) { return; }
+
+        if (DataContext is not CreateIncidentPageViewModel)
         {
             var vm = new CreateIncidentPageViewModel(
                 _context.IncidentController,
@@ -36,16 +48,26 @@ public sealed partial class CreateIncidentPage : Page
             );
 
             vm.IncidentCreated += (s, args) => {
-                if (this.Frame.CanGoBack)
+                if (Frame.CanGoBack)
                 {
-                    this.Frame.GoBack();
+                    Frame.GoBack();
                 }
             };
 
             DataContext = vm;
         }
+
+        if (locationContext != null && ViewModel != null)
+        {
+            ViewModel.Latitude = locationContext.Latitude;
+            ViewModel.Longitude = locationContext.Longitude;
+            ViewModel.Address = locationContext.Address;
+        }
     }
 
+    /// <summary>
+    /// Goes back to the previous page without creating an incident.
+    /// </summary>
     private void CancelButton_Click(object _, RoutedEventArgs __)
     {
         if (this.Frame.CanGoBack)
@@ -54,6 +76,9 @@ public sealed partial class CreateIncidentPage : Page
         }
     }
 
+    /// <summary>
+    /// Shows the Add Evidence dialog and adds the evidence to the incident if the user confirms.
+    /// </summary>
     private async void AddEvidence_Click(object _, RoutedEventArgs __)
     {
         if (_context == null)

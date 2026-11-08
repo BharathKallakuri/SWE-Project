@@ -3,8 +3,8 @@
 // See the LICENSE file in the project root for more information.
 using System.Security.Policy;
 using FileSynchroniser.Models;
-using Incident_module;
-using Incident_module.Implementations;
+using Incidents;
+using Incidents.Test.Implementations;
 using Cloud.Persistence;
 using Windows.ApplicationModel.Store.Preview.InstallControl;
 using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;

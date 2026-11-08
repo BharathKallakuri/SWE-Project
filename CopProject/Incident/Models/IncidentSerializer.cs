@@ -1,7 +1,7 @@
 ﻿
 using System.Xml.Serialization;
 
-namespace Incident_module;
+namespace Incidents;
 
 internal static class IncidentSerializer
 {
