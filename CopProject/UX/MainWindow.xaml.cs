@@ -1,12 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Cloud.Persistence;
 using FileSynchroniser.Models;
-using Incident_module;
-using Incident_module.Implementations;
-using Incident_module.Views;
+using Incidents;
+using Incidents.Views;
 using LocationTracker.Services;
 using LocationTracker.Views;
 using Microsoft.UI;

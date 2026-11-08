@@ -1,6 +1,6 @@
 ﻿using FileSynchroniser.Models;
-using Incident_module;
-using Incident_module.Implementations;
+using Incidents;
+using Incidents.Test.Implementations;
 using Cloud.Persistence;
 
 namespace Incidents.Test;

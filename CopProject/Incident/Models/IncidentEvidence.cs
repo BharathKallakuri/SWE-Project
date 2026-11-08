@@ -1,4 +1,4 @@
-﻿namespace Incident_module;
+﻿namespace Incidents;
 
 // <summary>
 // Evidence related to an Incident such as photos, videos or documents.

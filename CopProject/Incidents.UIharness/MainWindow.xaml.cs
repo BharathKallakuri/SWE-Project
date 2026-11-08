@@ -1,7 +1,6 @@
 ﻿using System;
-using Incident_module;
-using Incident_module.Implementations;
-using Incident_module.Views;
+using Incidents;
+using Incidents.Views;
 using Cloud.Persistence;
 using FileSynchroniser.Models;
 using Microsoft.UI.Xaml;

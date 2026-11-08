@@ -1,4 +1,4 @@
-﻿namespace Incident_module.Implementations;
+﻿namespace Incidents.Test.Implementations;
 
 using Cloud.Persistence;
 

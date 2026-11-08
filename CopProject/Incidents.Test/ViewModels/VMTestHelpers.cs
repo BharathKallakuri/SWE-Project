@@ -6,8 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
-using Incident_module;
-using Incident_module.ViewModels;
+using Incidents;
+using Incidents.ViewModels;
 
 namespace Incidents.Test.ViewModels;
 

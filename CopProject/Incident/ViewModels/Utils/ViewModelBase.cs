@@ -1,6 +1,6 @@
 ﻿
 using System.ComponentModel;
-namespace Incident_module.ViewModels.Utils;
+namespace Incidents.ViewModels.Utils;
 
 public abstract class ViewModelBase : INotifyPropertyChanged
 {
