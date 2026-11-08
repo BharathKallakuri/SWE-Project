@@ -3,7 +3,8 @@
     x:Class="UX.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:UX">
+    xmlns:local="using:UX"
+    xmlns:controller="using:Controller.Views">
 
     <Grid x:Name="Root" RequestedTheme="Light" Background="#EEF3F9">
         <Grid.RowDefinitions>
@@ -185,7 +186,10 @@
             </Grid.RowDefinitions>
 
             <Grid Margin="16">
-                <Border x:Name="HomePanel" Background="White" CornerRadius="10"/>
+                <!-- CONTROLLER TEAM: Host our MeetingView here -->
+                <Border x:Name="HomePanel" Background="White" CornerRadius="10">
+                    <controller:MeetingView x:Name="ControllerMeetingView"/>
+                </Border>
 
                 <Border x:Name="SharePanel" Background="White" CornerRadius="10" Visibility="Collapsed">
                     <StackPanel Padding="20">

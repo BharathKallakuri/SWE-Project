@@ -1,13 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Cloud.Persistence;
 using FileSynchroniser.Models;
 using Incidents;
-using Incidents.Views;
+using Incidents.Views ;
 using LocationTracker.Services;
 using LocationTracker.Views;
+using Controller.Models;
+using Controller.ViewModels;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -31,18 +33,44 @@ public sealed partial class MainWindow : Window
     private bool _inMeeting;
     private bool _isHost;
     private bool _resizingChat;
+    private readonly MeetingSession _session = new();      
+    private readonly ControllerMeetingService _meetingService = new();
     public MainWindow()
     {
         InitializeComponent();
         Title = "SecureMeet";
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1280, 800));
         RecordsList.ItemsSource = _records;
+
+        // CONTROLLER TEAM: initialize controller service and bind MeetingView
+        _meetingService.Initialize(_session);
+        ControllerMeetingView.ViewModel = new MeetingViewModel(_session);
+
+        _session.ParticipantCountChanged += count =>
+        {
+            DispatcherQueue.TryEnqueue(() => SetParticipants(count));
+        };
+        _session.MeetingEnded += () =>
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                if (_inMeeting)
+                {
+                    _inMeeting = false;
+                    ProfileName.Text = _userId;
+                    ShowScreen("dash");
+                }
+            });
+        };
+
         ShowScreen("login");
     }
+
     private static Visibility Vis(bool show)
     {
         return show ? Visibility.Visible : Visibility.Collapsed;
     }
+
     private void ShowScreen(string screen)
     {
         LoginView.Visibility = Vis(screen == "login");
@@ -60,6 +88,7 @@ public sealed partial class MainWindow : Window
     {
         return new ContentDialog { Title = title, Content = content, PrimaryButtonText = okText, CloseButtonText = "Cancel", XamlRoot = Root.XamlRoot };
     }
+
     private void Continue_Click(object sender, RoutedEventArgs e)
     {
         string id = UserIdBox.Text.Trim();
@@ -84,6 +113,10 @@ public sealed partial class MainWindow : Window
         ProfileName.Text = _userId;
         ProfilePic.DisplayName = _userId;
 
+        // CONTROLLER TEAM: store current user identity into session
+        _session.CurrentUserId = _userId;
+        _session.CurrentUserEmail = mail;
+
         int hour = DateTime.Now.Hour;
         string greeting = "Good Evening";
         if (hour < 12)
@@ -102,22 +135,28 @@ public sealed partial class MainWindow : Window
 
     private void SignOut_Click(object sender, RoutedEventArgs e)
     {
+        if (_inMeeting)
+        {
+            _session.EndMeeting();
+        }
         _inMeeting = false;
         LocationHost.Content = null;
         incidentContextTask = null;
         ShowScreen("login");
     }
+
     private void Start_Click(object sender, RoutedEventArgs e)
     {
         // CONTROLLER TEAM: the real meeting ID and port come from the controller.
-        string id = "123-456-789";
-        string port = "5000";
+        var (id, port) = _meetingService.CreateMeeting();
+        _session.StartMeeting(new MeetingInfo(id, port, IsHost: true));
 
         StartMeeting(id, port, true);
     }
+
     private async void Join_Click(object sender, RoutedEventArgs e)
     {
-        var idBox = new TextBox { Header = "Meeting ID", PlaceholderText = "e.g. 123-456-789" };
+        var idBox = new TextBox { Header = "Meeting ID", PlaceholderText = "e.g. 192.168.1.5" };
         var portBox = new TextBox { Header = "Port", PlaceholderText = "e.g. 5000" };
         var error = new TextBlock { Foreground = new SolidColorBrush(Colors.Red) };
         ContentDialog dialog = MakeDialog("Join meeting", new StackPanel { Spacing = 10, Children = { idBox, portBox, error } }, "Join");
@@ -139,10 +178,19 @@ public sealed partial class MainWindow : Window
             }
 
             // CONTROLLER TEAM: connect to the meeting using this id and port.
+            bool joined = _meetingService.JoinMeeting(id, number);
+            if (!joined)
+            {
+                error.Text = "Could not connect to meeting at " + id + ":" + port;
+                continue;
+            }
+
+            _session.StartMeeting(new MeetingInfo(id, port, IsHost: false));
             StartMeeting(id, port, false);
             return;
         }
     }
+
     private void StartMeeting(string id, string port, bool host)
     {
         _inMeeting = true;
@@ -155,17 +203,19 @@ public sealed partial class MainWindow : Window
         ProfileName.Text = _userId + " (" + _role + ")";
 
         // CONTROLLER TEAM: call SetParticipants() with the real number
-        SetParticipants(1);
+        SetParticipants(_session.ParticipantCount);
 
         ChatBtn.IsChecked = false;
         ShowChat(false);
         ShowPanel("home");
         ShowScreen("meeting");
     }
+
     public void SetParticipants(int count)
     {
         MeetingInfoText.Text = "Role: " + _role + "   ID: " + _meetingId + "   Port: " + _meetingPort + "   Participants: " + count;
     }
+
     private void ShowPanel(string which)
     {
         HomePanel.Visibility = Vis(which == "home");
@@ -195,6 +245,7 @@ public sealed partial class MainWindow : Window
     {
         ShowChat(ChatBtn.IsChecked == true);
     }
+
     private void ShowChat(bool show)
     {
         ChatPanel.Visibility = Vis(show);
@@ -215,11 +266,14 @@ public sealed partial class MainWindow : Window
         }
 
         // CONTROLLER TEAM: end the meeting (Host) or disconnect (Participant) here.
+        _session.EndMeeting();
+
         _records.Insert(0, "Meeting " + _meetingId + " - " + DateTime.Now.ToString("ddd, dd MMM") + " - Just now");
         _inMeeting = false;
         ProfileName.Text = _userId;
         ShowScreen("dash");
     }
+
     private void ChatResizer_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         _resizingChat = true;
@@ -242,6 +296,7 @@ public sealed partial class MainWindow : Window
         _resizingChat = false;
         ChatResizer.ReleasePointerCapture(e.Pointer);
     }
+
     private async Task<IncidentPageContext> GetIncidentContextAsync()
     {
         incidentContextTask ??= InitializeIncidentContextAsync();
@@ -331,6 +386,7 @@ public sealed partial class MainWindow : Window
     {
         ShowScreen("filesync");
     }
+
     private void IncidentsBack_Click(object sender, RoutedEventArgs e)
     {
         ShowScreen(_inMeeting ? "meeting" : "dash");
@@ -350,8 +406,8 @@ public sealed partial class MainWindow : Window
     {
         ShowScreen("dash");
     }
-
 }
+
 public sealed class ResizeHandle : ContentControl
 {
     public ResizeHandle()

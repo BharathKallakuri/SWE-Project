@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿ <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
@@ -9,7 +9,7 @@
     <UseWinUI>true</UseWinUI>
     <Nullable>enable</Nullable>
 
-    <!-- Unpackaged app: no Package.appxmanifest, no Assets folder, no app.manifest needed -->
+    <!-- Unpackaged app -->
     <EnableMsixTooling>false</EnableMsixTooling>
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
@@ -23,5 +23,7 @@
     <ProjectReference Include="..\FileSynchroniser\FileSynchroniser.csproj" />
     <ProjectReference Include="..\Incident\Incident.csproj" />
     <ProjectReference Include="..\Location\Location.csproj" />
+    <ProjectReference Include="..\Controller\Controller.csproj" />
+    <ProjectReference Include="..\Utils\Utils.csproj" />
   </ItemGroup>
 </Project>
