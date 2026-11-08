@@ -146,7 +146,9 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
         string path = SelectedFile.RelativePath;
         HasError = false;
 
-        if (_files.DeleteFile(path))
+        IReadOnlyDictionary<string, bool> results = _files.DeleteFile(new[] { path });
+
+        if (results.TryGetValue(path, out bool deleted) && deleted)
         {
             StatusMessage = $"Deleted '{path}'.";
             LoadFiles();
@@ -163,15 +165,37 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     }
 
     /// <summary>
-    /// Saves a file picked by the user and reloads the list on success.
+    /// Saves one or more files picked by the user (map of relative path to content)
+    /// and reloads the list if at least one was saved. To add a single file, pass
+    /// a dictionary with one entry.
     /// </summary>
-    public void AddFile(string relativePath, byte[] content)
+    public void AddFile(IReadOnlyDictionary<string, byte[]> files)
     {
+        ArgumentNullException.ThrowIfNull(files);
+
+        if (files.Count == 0)
+        {
+            return;
+        }
+
         HasError = false;
 
-        if (_files.SaveFile(relativePath, content))
+        IReadOnlyDictionary<string, bool> results = _files.SaveFile(files);
+
+        int savedCount = results.Count(r => r.Value);
+        bool anyFailed = savedCount < files.Count;
+
+        if (!anyFailed)
         {
-            StatusMessage = $"Saved '{relativePath}'.";
+            StatusMessage = savedCount == 1
+                ? $"Saved '{results.First(r => r.Value).Key}'."
+                : $"Saved {savedCount} files.";
+        }
+        // On failure, Synchroniser raises one OnSyncError summary listing every
+        // failed file, which updates the status. It is not overwritten here.
+
+        if (savedCount > 0)
+        {
             LoadFiles();
         }
     }
