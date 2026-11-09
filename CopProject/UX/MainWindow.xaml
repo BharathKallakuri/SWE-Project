@@ -71,7 +71,6 @@
                     <ColumnDefinition/>
                     <ColumnDefinition/>
                     <ColumnDefinition/>
-                    <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
 
                 <Button Content="Start Meeting" Click="Start_Click" Height="100"
@@ -87,9 +86,6 @@
                         Height="100" FontSize="20" Background="White"
                         HorizontalAlignment="Stretch"/>
                 <Button Grid.Column="4" Content="Cloud" Click="Cloud_Click"
-                        Height="100" FontSize="20" Background="White"
-                        HorizontalAlignment="Stretch"/>
-                <Button Grid.Column="5" Content="FileSync" Click="FileSync_Click"
                         Height="100" FontSize="20" Background="White"
                         HorizontalAlignment="Stretch"/>
             </Grid>
@@ -155,23 +151,6 @@
             </Border>
         </Grid>
 
-        <!-- FileSync page -->
-        <Grid x:Name="FileSyncView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <Button Content="Back" Click="FileSyncBack_Click" Background="White"/>
-                <TextBlock Text="FileSync" FontSize="32" FontWeight="SemiBold"/>
-            </StackPanel>
-
-            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
-                <Frame x:Name="FileSyncFrame"/>
-            </Border>
-        </Grid>
-
         <!-- Meeting screen -->
         <Grid x:Name="MeetingView" Grid.Row="1" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
@@ -202,21 +181,36 @@
                         <TextBlock Text="Whiteboard module goes here"/>
                     </StackPanel>
                 </Border>
+
+                <!-- FILE SYNC TEAM: Hosting FileSync inside meeting workspace -->
+                <Border x:Name="FileSyncView" Background="White" CornerRadius="10" Visibility="Collapsed" Padding="20">
+                    <Grid RowSpacing="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="File Synchroniser" FontSize="24" FontWeight="SemiBold"/>
+                        <Frame x:Name="FileSyncFrame" Grid.Row="1"/>
+                    </Grid>
+                </Border>
             </Grid>
 
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center"
                         Spacing="8" Margin="0,0,0,16">
                 <ToggleButton x:Name="HomeBtn" Content="Home" Click="HomeBtn_Click"
-                              Width="100" Height="50" IsChecked="True"/>
+                              Width="90" Height="50" IsChecked="True"/>
                 <ToggleButton x:Name="ShareBtn" Content="Share" Click="ShareBtn_Click"
-                              Width="100" Height="50"/>
+                              Width="90" Height="50"/>
                 <ToggleButton x:Name="BoardBtn" Content="Whiteboard" Click="BoardBtn_Click"
                               Width="100" Height="50"/>
                 <ToggleButton x:Name="ChatBtn" Content="Chat" Click="ChatBtn_Click"
-                              Width="100" Height="50"/>
-                <Button Content="Incidents" Click="Incidents_Click" Width="100" Height="50"/>
-                <Button Content="Location" Click="Location_Click" Width="100" Height="50"/>
-                <Button x:Name="EndBtn" Content="End Meeting" Click="End_Click" Width="120" Height="50"
+                              Width="90" Height="50"/>
+                <!-- FILE SYNC TEAM: Toggle button inside meeting controls -->
+                <ToggleButton x:Name="FileSyncBtn" Content="FileSync" Click="FileSyncBtn_Click"
+                              Width="90" Height="50"/>
+                <Button Content="Incidents" Click="Incidents_Click" Width="90" Height="50"/>
+                <Button Content="Location" Click="Location_Click" Width="90" Height="50"/>
+                <Button x:Name="EndBtn" Content="End Meeting" Click="End_Click" Width="110" Height="50"
                         Background="#D13438" Foreground="White"/>
             </StackPanel>
 

@@ -79,7 +79,6 @@ public sealed partial class MainWindow : Window
         IncidentsView.Visibility = Vis(screen == "incidents");
         LocationView.Visibility = Vis(screen == "location");
         CloudView.Visibility = Vis(screen == "cloud");
-        FileSyncView.Visibility = Vis(screen == "filesync");
         UserPanel.Visibility = Vis(screen != "login");
         MeetingInfoText.Visibility = Vis(_inMeeting);
     }
@@ -221,9 +220,12 @@ public sealed partial class MainWindow : Window
         HomePanel.Visibility = Vis(which == "home");
         SharePanel.Visibility = Vis(which == "share");
         BoardPanel.Visibility = Vis(which == "board");
+        FileSyncView.Visibility = Vis(which == "filesync");
+
         HomeBtn.IsChecked = which == "home";
         ShareBtn.IsChecked = which == "share";
         BoardBtn.IsChecked = which == "board";
+        FileSyncBtn.IsChecked = which == "filesync";
     }
 
     private void HomeBtn_Click(object sender, RoutedEventArgs e)
@@ -239,6 +241,12 @@ public sealed partial class MainWindow : Window
     private void BoardBtn_Click(object sender, RoutedEventArgs e)
     {
         ShowPanel("board");
+    }
+
+    private void FileSyncBtn_Click(object sender, RoutedEventArgs e)
+    {
+        FileSyncFrame.Navigate(typeof(FileSyncPage));
+        ShowPanel("filesync");
     }
 
     private void ChatBtn_Click(object sender, RoutedEventArgs e)
@@ -381,12 +389,6 @@ public sealed partial class MainWindow : Window
         ShowScreen("cloud");
     }
 
-    private void FileSync_Click(object sender, RoutedEventArgs e)
-    {
-        FileSyncFrame.Navigate(typeof(FileSyncPage));
-        ShowScreen("filesync");
-    }
-
     private void IncidentsBack_Click(object sender, RoutedEventArgs e)
     {
         ShowScreen(_inMeeting ? "meeting" : "dash");
@@ -398,11 +400,6 @@ public sealed partial class MainWindow : Window
     }
 
     private void CloudBack_Click(object sender, RoutedEventArgs e)
-    {
-        ShowScreen("dash");
-    }
-
-    private void FileSyncBack_Click(object sender, RoutedEventArgs e)
     {
         ShowScreen("dash");
     }
