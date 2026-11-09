@@ -13,6 +13,9 @@
     <Project Path="Cloud.Networking.ClientConsole/Cloud.Networking.ClientConsole.csproj" />
     <Project Path="Cloud.Networking.Server.Test/Cloud.Networking.Server.Test.csproj" />
     <Project Path="Cloud.Networking.Server/Cloud.Networking.Server.csproj" />
+    <Project Path="Cloud.Networking.UIharness/Cloud.Networking.UIharness.csproj">
+        <Platform Project="x64" />
+    </Project>
     <Project Path="Cloud.Test/Cloud.Test.csproj" />
     <Project Path="Cloud.UI/Cloud.UI.csproj" />
     <Project Path="Cloud/Cloud.csproj" />
