@@ -168,9 +168,7 @@
             </StackPanel>
 
             <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
-                <Grid>
-                    <!-- FILESYNC TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
-                </Grid>
+                <Frame x:Name="FileSyncFrame"/>
             </Border>
         </Grid>
 

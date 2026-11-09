@@ -1,11 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Cloud.Persistence;
 using FileSynchroniser.Models;
+using FileSynchroniser.Views;
 using Incidents;
-using Incidents.Views ;
+using Incidents.Views;
 using LocationTracker.Services;
 using LocationTracker.Views;
 using Controller.Models;
@@ -19,13 +20,14 @@ using WinRT.Interop;
 using Microsoft.UI.Xaml.Media;
 
 namespace UX;
+
 public sealed partial class MainWindow : Window
 {
     private const string HostRole = "Host";
     private const string ParticipantRole = "Participant";
     private const string AllowedDomain = "@smail.iitpkd.ac.in";
     private readonly ObservableCollection<string> _records = new() { "Weekly Review - Mon, 28 Sep - 45 min", "Patrol Planning - Fri, 25 Sep - 30 min", "Case Briefing - Wed, 23 Sep - 1 hr 10 min" };
-    private Task<IncidentPageContext>? incidentContextTask;
+    private Task<IncidentPageContext>? _incidentContextTask;
     private string _userId = string.Empty;
     private string _meetingId = string.Empty;
     private string _meetingPort = string.Empty;
@@ -33,8 +35,9 @@ public sealed partial class MainWindow : Window
     private bool _inMeeting;
     private bool _isHost;
     private bool _resizingChat;
-    private readonly MeetingSession _session = new();      
+    private readonly MeetingSession _session = new();
     private readonly ControllerMeetingService _meetingService = new();
+
     public MainWindow()
     {
         InitializeComponent();
@@ -46,14 +49,11 @@ public sealed partial class MainWindow : Window
         _meetingService.Initialize(_session);
         ControllerMeetingView.ViewModel = new MeetingViewModel(_session);
 
-        _session.ParticipantCountChanged += count =>
-        {
+        _session.ParticipantCountChanged += count => {
             DispatcherQueue.TryEnqueue(() => SetParticipants(count));
         };
-        _session.MeetingEnded += () =>
-        {
-            DispatcherQueue.TryEnqueue(() =>
-            {
+        _session.MeetingEnded += () => {
+            DispatcherQueue.TryEnqueue(() => {
                 if (_inMeeting)
                 {
                     _inMeeting = false;
@@ -141,14 +141,14 @@ public sealed partial class MainWindow : Window
         }
         _inMeeting = false;
         LocationHost.Content = null;
-        incidentContextTask = null;
+        _incidentContextTask = null;
         ShowScreen("login");
     }
 
     private void Start_Click(object sender, RoutedEventArgs e)
     {
         // CONTROLLER TEAM: the real meeting ID and port come from the controller.
-        var (id, port) = _meetingService.CreateMeeting();
+        (string? id, string? port) = _meetingService.CreateMeeting();
         _session.StartMeeting(new MeetingInfo(id, port, IsHost: true));
 
         StartMeeting(id, port, true);
@@ -299,8 +299,8 @@ public sealed partial class MainWindow : Window
 
     private async Task<IncidentPageContext> GetIncidentContextAsync()
     {
-        incidentContextTask ??= InitializeIncidentContextAsync();
-        return await incidentContextTask;
+        _incidentContextTask ??= InitializeIncidentContextAsync();
+        return await _incidentContextTask;
     }
 
     private async Task<IncidentPageContext> InitializeIncidentContextAsync()
@@ -368,8 +368,7 @@ public sealed partial class MainWindow : Window
 
     private async Task ShowErrorAsync(string title, string message)
     {
-        await new ContentDialog
-        {
+        await new ContentDialog {
             Title = title,
             Content = message,
             CloseButtonText = "OK",
@@ -384,6 +383,8 @@ public sealed partial class MainWindow : Window
 
     private void FileSync_Click(object sender, RoutedEventArgs e)
     {
+        // INTEGRATION: Navigate to FileSyncPage inside the frame when FileSync menu item is clicked
+        FileSyncFrame.Navigate(typeof(FileSyncPage));
         ShowScreen("filesync");
     }
 
