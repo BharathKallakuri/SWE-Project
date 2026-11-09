@@ -1,39 +1,48 @@
 ﻿using System.Drawing;
 using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
 
 namespace ScreenShare;
 
 /// <summary>
-/// captures the primary display on windows
+/// Captures the primary display on Windows.
 /// </summary>
 public class ScreenCapturer : IImageSource
 {
-    [DllImport("user32.dll")]
-    private static extern int GetSystemMetrics(int nIndex);
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr SetThreadDpiAwarenessContext(IntPtr dpiContext);
-
-    private const int SM_CXSCREEN = 0;
-    private const int SM_CYSCREEN = 1;
-
     private static readonly IntPtr s_dpiAwarenessContextPerMonitorAwareV2 = new(-4);
 
+    private readonly IScreenCapturePlatform _platform;
+
     /// <summary>
-    /// captures the current contents of the primary display 
+    /// Initializes the screen capturer using the Windows capture platform.
     /// </summary>
-    /// <returns>a bitmap containing the captured screen</returns>
+    public ScreenCapturer()
+        : this(new WindowsScreenCapturePlatform())
+    {
+    }
+
+    /// <summary>
+    /// Initializes the screen capturer with a specified capture platform.
+    /// </summary>
+    /// <param name="platform">The platform used to capture the screen.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the platform is null.
+    /// </exception>
+    internal ScreenCapturer(IScreenCapturePlatform platform)
+    {
+        ArgumentNullException.ThrowIfNull(platform);
+        _platform = platform;
+    }
+
+    /// <summary>
+    /// Captures the current contents of the primary display.
+    /// </summary>
+    /// <returns>A bitmap containing the captured screen.</returns>
     /// <exception cref="InvalidOperationException">
-    /// the display dimensions are invalid
+    /// Thrown when the display dimensions are invalid.
     /// </exception>
     public Bitmap Capture()
     {
-
-        // a dpi-unaware thread sees scaled-down metrics (e.g. 1536 wide on a 1920 display at 125%)
-        // and captures only part of the screen. switch only this thread, so the host's
-        // process-wide dpi setting is left alone, and restore it afterwards.
-        IntPtr previousContext = SetThreadDpiAwarenessContext(s_dpiAwarenessContextPerMonitorAwareV2);
+        IntPtr previousContext = _platform.SetThreadDpiAwarenessContext(s_dpiAwarenessContextPerMonitorAwareV2);
 
         try
         {
@@ -43,36 +52,28 @@ public class ScreenCapturer : IImageSource
         {
             if (previousContext != IntPtr.Zero)
             {
-                SetThreadDpiAwarenessContext(previousContext);
+                _platform.SetThreadDpiAwarenessContext(previousContext);
             }
         }
-
     }
 
-    private static Bitmap CaptureScreen()
+    private Bitmap CaptureScreen()
     {
-        int width = GetSystemMetrics(SM_CXSCREEN);
-        int height = GetSystemMetrics(SM_CYSCREEN);
+        int width = _platform.GetScreenWidth();
+        int height = _platform.GetScreenHeight();
+
         if (width <= 0 || height <= 0)
         {
-            throw new InvalidOperationException($"invalid screen dimensions: {width}x{height}");
+            throw new InvalidOperationException(
+                $"Invalid screen dimensions: {width}x{height}");
         }
 
-        var bounds = new Rectangle(
-            0,
-            0,
-            width,
-            height);
-
-        var screenshot = new Bitmap(
-            width,
-            height,
-            PixelFormat.Format32bppArgb);
+        var bounds = new Rectangle(0, 0, width, height);
+        var screenshot = new Bitmap(width, height, PixelFormat.Format32bppArgb);
 
         try
         {
-            using Graphics graphics = Graphics.FromImage(screenshot);
-            graphics.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
+            _platform.CopyFromScreen(screenshot, bounds);
             return screenshot;
         }
         catch
