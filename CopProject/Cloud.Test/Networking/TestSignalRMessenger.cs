@@ -295,6 +295,51 @@ public class TestSignalRMessenger
         Assert.AreSame(error, thrown);
     }
 
+    /*SyncAsync*/
+    /// <summary>Tests that SyncAsync asks the server for the messages since the given time and returns them.</summary>
+    [TestMethod]
+    public async Task SyncAsyncReturnsTheMissedMessages()
+    {
+        DateTimeOffset since = DateTimeOffset.UtcNow.AddMinutes(-5);
+        Message[] missed = [NewMessage("a"), NewMessage("b")];
+        _hub.Setup(h => h.InvokeAsync<Message[]>(
+                Contract.GetMessagesSince,
+                since,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(missed);
+
+        IReadOnlyList<Message> result = await CreateMessenger().SyncAsync(since);
+
+        Assert.AreEqual(2, result.Count);
+        Assert.AreSame(missed[0], result[0]);
+        Assert.AreSame(missed[1], result[1]);
+    }
+
+    /// <summary>Tests that SyncAsync returns an empty list when the server returns null.</summary>
+    [TestMethod]
+    public async Task SyncAsyncReturnsEmptyWhenServerReturnsNull()
+    {
+        _hub.Setup(h => h.InvokeAsync<Message[]>(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Message[])null!);
+
+        IReadOnlyList<Message> result = await CreateMessenger().SyncAsync(DateTimeOffset.MinValue);
+
+        Assert.AreEqual(0, result.Count);
+    }
+
+    /// <summary>Tests that SyncAsync propagates failures from the underlying hub connection.</summary>
+    [TestMethod]
+    public async Task SyncAsyncPropagatesHubFailure()
+    {
+        InvalidOperationException error = new("not connected");
+        _hub.Setup(h => h.InvokeAsync<Message[]>(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(error);
+
+        InvalidOperationException thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => CreateMessenger().SyncAsync(DateTimeOffset.MinValue));
+
+        Assert.AreSame(error, thrown);
+    }
+
     /*DisconnectAsync*/
     /// <summary>Tests that DisconnectAsync stops the underlying connection.</summary>
     [TestMethod]
