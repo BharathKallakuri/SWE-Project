@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using ScreenShare;
 
-namespace Screenshare.Test;
+namespace Screenshare.Tests;
 
 public class PngEncoderTests
 {
