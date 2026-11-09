@@ -74,7 +74,7 @@ public class TestSignalRMessenger
     public async Task PublicConstructorWithValidUrlIsInDisconnectedState()
     {
         await using SignalRMessenger messenger = new("http://localhost/hub");
-        Assert.AreEqual(HubConnectionState.Disconnected, messenger.State);
+        Assert.AreEqual(ConnectionState.Disconnected, messenger.State);
     }
 
     /// <summary>Tests that the constructor registers the message handler exactly once.</summary>
@@ -86,16 +86,16 @@ public class TestSignalRMessenger
     }
 
     /* state */
-    /// <summary>Tests that the messenger state reflects the underlying connection state.</summary>
+    /// <summary>Tests that the messenger state is the mapped underlying connection state.</summary>
     [TestMethod]
-    [DataRow(HubConnectionState.Disconnected)]
-    [DataRow(HubConnectionState.Connecting)]
-    [DataRow(HubConnectionState.Connected)]
-    [DataRow(HubConnectionState.Reconnecting)]
-    public void StateReflectsTheConnectionState(HubConnectionState state)
+    [DataRow(HubConnectionState.Disconnected, ConnectionState.Disconnected)]
+    [DataRow(HubConnectionState.Connecting, ConnectionState.Connecting)]
+    [DataRow(HubConnectionState.Connected, ConnectionState.Connected)]
+    [DataRow(HubConnectionState.Reconnecting, ConnectionState.Reconnecting)]
+    public void StateReflectsTheConnectionState(HubConnectionState hubState, ConnectionState expected)
     {
-        _hub.SetupGet(h => h.State).Returns(state);
-        Assert.AreEqual(state, CreateMessenger().State);
+        _hub.SetupGet(h => h.State).Returns(hubState);
+        Assert.AreEqual(expected, CreateMessenger().State);
     }
 
     /* message recieved */
