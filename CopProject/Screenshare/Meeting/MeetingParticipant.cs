@@ -19,8 +19,8 @@ public sealed record MeetingParticipant
     /// <param name="isHost"></param>
     public MeetingParticipant(string id, string displayName, bool isHost)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(id, nameof(id));
-        ArgumentException.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(id, nameof(id));
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
 
         Id = id;
         DisplayName = displayName;
