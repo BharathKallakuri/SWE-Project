@@ -383,7 +383,6 @@ public sealed partial class MainWindow : Window
 
     private void FileSync_Click(object sender, RoutedEventArgs e)
     {
-        // INTEGRATION: Navigate to FileSyncPage inside the frame when FileSync menu item is clicked
         FileSyncFrame.Navigate(typeof(FileSyncPage));
         ShowScreen("filesync");
     }
