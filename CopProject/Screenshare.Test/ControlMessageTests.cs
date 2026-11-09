@@ -290,6 +290,14 @@ public class ControlMessageTests
         Assert.Throws<ArgumentException>(() => new UpdateSendToList("aryan", new IPEndPoint[] { s_endpoint, null! }));
     }
 
+    [Fact]
+    public void UpdateSendToListRejectNullEntryInList()
+    {
+        IReadOnlyList<IPEndPoint> listOfIP = new List<IPEndPoint>();
+        listOfIP.Append(s_endpoint);
+        listOfIP.Append(null);
+        Assert.Throws<ArgumentException>(() => new UpdateSendToList("myStream", listOfIP));
+    }
     // ---------- all messages ----------
 
     [Fact]
