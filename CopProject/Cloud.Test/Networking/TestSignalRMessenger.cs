@@ -175,6 +175,18 @@ public class TestSignalRMessenger
         Assert.AreSame(error, received);
     }
 
+    /// <summary>Tests that events coming from the connection while nobody is subscribed do not throw.</summary>
+    [TestMethod]
+    public void EventsWithoutSubscribersDoNotThrow()
+    {
+        _ = CreateMessenger();
+
+        _onMessage!(NewMessage());
+        _hub.Raise(h => h.Reconnecting += null, new InvalidOperationException("boom"));
+        _hub.Raise(h => h.Reconnected += null, "new-id");
+        _hub.Raise(h => h.Closed += null, new InvalidOperationException("boom"));
+    }
+
     /* ConnectAsync*/
     /// <summary>Tests that ConnectAsync starts the underlying connection.</summary>
     [TestMethod]
