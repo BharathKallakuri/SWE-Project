@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Cloud.Networking;
+using Cloud.Networking.Mocking;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Cloud.Test;
