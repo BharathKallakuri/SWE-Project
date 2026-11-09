@@ -20,6 +20,11 @@ internal class PersistenceItem
     [JsonProperty("data")]
     public byte[] Data { get; set; } = [];
 
+    /// <summary>
+    /// _etag is the version stamp for a cosmos db item. 
+    /// Used to handle concurrent updates
+    /// Gets or sets the system generated ETag of the item
+    /// </summary>
     [JsonProperty("_etag")]
     public string Etag { get; set; } = string.Empty;
 }
