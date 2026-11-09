@@ -89,4 +89,12 @@ public class TestHubConnectionProxy
         await using HubConnectionProxy proxy = CreateProxy();
         await Assert.ThrowsAsync<InvalidOperationException>(() => proxy.InvokeAsync(Contract.SendMessage, "Hello"));
     }
+
+    /// <summary>Tests that invoking a server method that returns a result while disconnected throws an exception.</summary>
+    [TestMethod]
+    public async Task InvokeAsyncWithResultOnDisconnectedStateThrows()
+    {
+        await using HubConnectionProxy proxy = CreateProxy();
+        await Assert.ThrowsAsync<InvalidOperationException>(() => proxy.InvokeAsync<string>(Contract.GetMessagesSince, "Hello"));
+    }
 }
