@@ -99,5 +99,14 @@ public interface IStorage
     Task<bool> DeleteAll(string[] keys);
 
 
+    /// <summary>
+    /// Reads the latest <paramref name="count"/> items from the Cosmos DB container
+    /// </summary>
+    /// <param name="n"></param>
+    /// <param name="keys"></param>
+    /// <returns></returns>
+    Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int n);
+
+
 }
 

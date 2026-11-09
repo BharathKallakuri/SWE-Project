@@ -339,7 +339,47 @@ internal class CosmosStorage : IStorage
         return true;
     }
 
+    /// <inheritdoc/>
+    /*  Read the latest n items from the container. Useful for retrieving recent records
+        eg: read the latest 10 incidents
+    */
+    public async Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int count)
+    {
+        Dictionary<string, byte[]> items = [];
 
+        /* return false and empty dictionary if count is invalid */
+        if (count <= 0)
+        {
+            return (false, items);
+        }
 
+        try
+        {
+            /* retrieve the latest 'count' items ordered by their last modification time (_ts) */
+            IQueryable<PersistenceItem> query = _container
+                .GetItemLinqQueryable<PersistenceItem>()
+                .OrderByDescending(item => item.TimeStamp)
+                .Take(count);
+
+            using FeedIterator<PersistenceItem> iterator = query.ToFeedIterator();
+
+            while (iterator.HasMoreResults)
+            {
+                FeedResponse<PersistenceItem> page = await iterator.ReadNextAsync();
+
+                foreach (PersistenceItem item in page)
+                {
+                    items[item.Id] = item.Data;
+                }
+            }
+
+            return (true, items);
+        }
+        catch (CosmosException)
+        {
+            return (false, []); /* return false and empty dict in case of exceptions */
+        }
+    }
 
 }
+
