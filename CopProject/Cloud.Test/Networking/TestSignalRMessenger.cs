@@ -243,6 +243,19 @@ public class TestSignalRMessenger
         _hub.Verify(h => h.StartAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
     }
 
+    /// <summary>Tests that ConnectAsync does not retry when the failure is not a transient one.</summary>
+    [TestMethod]
+    public async Task ConnectAsyncDoesNotRetryOnNonRetryableFailure()
+    {
+        InvalidOperationException error = new("bad configuration");
+        _hub.Setup(h => h.StartAsync(It.IsAny<CancellationToken>())).ThrowsAsync(error);
+
+        InvalidOperationException thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => CreateMessenger().ConnectAsync());
+
+        Assert.AreSame(error, thrown);
+        _hub.Verify(h => h.StartAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     /*SendMessageAsync*/
     /// <summary>Tests that SendMessageAsync invokes the correct server method with the supplied content.</summary>
     [TestMethod]
