@@ -77,6 +77,13 @@ public interface IStorage
     /// </summary>
     /// <returns>A dictionary of Id and Etag</returns>
     Task<(bool Success, Dictionary<string, string>)> ReadAllEtags();
+
+    /// <summary>
+    /// Reads ETags of all the items specified by the keys in the array
+    /// </summary>
+    /// <param name="keys"></param>
+    /// <returns></returns>
+    Task<(bool Success, Dictionary<string, string> Etags)> ReadEtags(string[] keys);
     /// <summary>
     /// Updates all the key-value pairs given in the dictionary
     /// </summary>
