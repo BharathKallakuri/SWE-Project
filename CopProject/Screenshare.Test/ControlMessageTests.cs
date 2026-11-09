@@ -291,11 +291,10 @@ public class ControlMessageTests
     }
 
     [Fact]
-    public void UpdateSendToListRejectNullEntryInList()
+    public void UpdateSendToListRejectsNullEntryInList()
     {
-        IReadOnlyList<IPEndPoint> listOfIP = new List<IPEndPoint>();
-        listOfIP.Append(s_endpoint);
-        listOfIP.Append(null);
+        List<IPEndPoint> listOfIP = new() { s_endpoint, null! };
+
         Assert.Throws<ArgumentException>(() => new UpdateSendToList("myStream", listOfIP));
     }
     // ---------- all messages ----------
