@@ -191,10 +191,10 @@ public class TestDiagnosticMessenger
         Message sent = NewMessage();
         InvalidOperationException error = new("boom");
 
-        _inner.Raise(m => m.MessageReceived += null, sent);
-        _inner.Raise(m => m.Reconnecting += null, error);
-        _inner.Raise(m => m.Reconnected += null, "new-id");
-        _inner.Raise(m => m.Closed += null, error);
+        _inner.Raise(m => m.MessageReceived += null!, sent);
+        _inner.Raise(m => m.Reconnecting += null!, error);
+        _inner.Raise(m => m.Reconnected += null!, "new-id");
+        _inner.Raise(m => m.Closed += null!, error);
 
         Assert.AreSame(sent, receivedMessage);
         Assert.AreSame(error, reconnecting);
@@ -216,10 +216,10 @@ public class TestDiagnosticMessenger
     {
         _ = CreateMessenger();
 
-        _inner.Raise(m => m.MessageReceived += null, NewMessage());
-        _inner.Raise(m => m.Reconnecting += null, (Exception?)null);
-        _inner.Raise(m => m.Reconnected += null, "new-id");
-        _inner.Raise(m => m.Closed += null, (Exception?)null);
+        _inner.Raise(m => m.MessageReceived += null!, NewMessage());
+        _inner.Raise(m => m.Reconnecting += null!, (Exception?)null);
+        _inner.Raise(m => m.Reconnected += null!, "new-id");
+        _inner.Raise(m => m.Closed += null!, (Exception?)null);
 
         CollectionAssert.AreEqual(
             new[] {
@@ -245,10 +245,10 @@ public class TestDiagnosticMessenger
 
         await messenger.DisposeAsync();
 
-        _inner.Raise(m => m.MessageReceived += null, NewMessage());
-        _inner.Raise(m => m.Reconnecting += null, (Exception?)null);
-        _inner.Raise(m => m.Reconnected += null, "id");
-        _inner.Raise(m => m.Closed += null, (Exception?)null);
+        _inner.Raise(m => m.MessageReceived += null!, NewMessage());
+        _inner.Raise(m => m.Reconnecting += null!, (Exception?)null);
+        _inner.Raise(m => m.Reconnected += null!, "id");
+        _inner.Raise(m => m.Closed += null!, (Exception?)null);
 
         _inner.Verify(m => m.DisposeAsync(), Times.Once);
         Assert.AreEqual(0, calls);

@@ -159,10 +159,10 @@ public class TestSilentMessenger
         Message sent = NewMessage();
         InvalidOperationException error = new("boom");
 
-        _inner.Raise(m => m.MessageReceived += null, sent);
-        _inner.Raise(m => m.Reconnecting += null, error);
-        _inner.Raise(m => m.Reconnected += null, "new-id");
-        _inner.Raise(m => m.Closed += null, error);
+        _inner.Raise(m => m.MessageReceived += null!, sent);
+        _inner.Raise(m => m.Reconnecting += null!, error);
+        _inner.Raise(m => m.Reconnected += null!, "new-id");
+        _inner.Raise(m => m.Closed += null!, error);
 
         Assert.AreSame(sent, receivedMessage);
         Assert.AreSame(error, reconnecting);
@@ -177,10 +177,10 @@ public class TestSilentMessenger
         _ = CreateMessenger();
 
         // nothing is subscribed to the decorator: raising must simply do nothing
-        _inner.Raise(m => m.MessageReceived += null, NewMessage());
-        _inner.Raise(m => m.Reconnecting += null, new InvalidOperationException("boom"));
-        _inner.Raise(m => m.Reconnected += null, "new-id");
-        _inner.Raise(m => m.Closed += null, new InvalidOperationException("boom"));
+        _inner.Raise(m => m.MessageReceived += null!, NewMessage());
+        _inner.Raise(m => m.Reconnecting += null!, new InvalidOperationException("boom"));
+        _inner.Raise(m => m.Reconnected += null!, "new-id");
+        _inner.Raise(m => m.Closed += null!, new InvalidOperationException("boom"));
     }
 
     /* DisposeAsync */
@@ -197,10 +197,10 @@ public class TestSilentMessenger
 
         await messenger.DisposeAsync();
 
-        _inner.Raise(m => m.MessageReceived += null, NewMessage());
-        _inner.Raise(m => m.Reconnecting += null, (Exception?)null);
-        _inner.Raise(m => m.Reconnected += null, "id");
-        _inner.Raise(m => m.Closed += null, (Exception?)null);
+        _inner.Raise(m => m.MessageReceived += null!, NewMessage());
+        _inner.Raise(m => m.Reconnecting += null!, (Exception?)null);
+        _inner.Raise(m => m.Reconnected += null!, "id");
+        _inner.Raise(m => m.Closed += null!, (Exception?)null);
 
         _inner.Verify(m => m.DisposeAsync(), Times.Once);
         Assert.AreEqual(0, calls);
