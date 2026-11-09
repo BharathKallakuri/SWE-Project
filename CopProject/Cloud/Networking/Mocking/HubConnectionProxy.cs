@@ -4,7 +4,7 @@
 
 using Microsoft.AspNetCore.SignalR.Client;
 
-namespace Cloud.Networking;
+namespace Cloud.Networking.Mocking;
 
 /// <summary>
 /// Pass-Through Proxy wraps around <see cref ="HubConnection" /> object and

@@ -4,7 +4,7 @@
 
 using Microsoft.AspNetCore.SignalR.Client;
 
-namespace Cloud.Networking;
+namespace Cloud.Networking.Mocking;
 
 /// <summary>
 /// Interface reflecting a subset of features in <see cref="HubConnection"/> class (for mocking it).
