@@ -157,7 +157,11 @@ public class IncidentController : IIncidentController
                 throw new InvalidOperationException("Failed to save evidence files to file synchronizer service.");
             }
 
-            List<IncidentEvidence> evidenceMeta = request.Evidences.Select(e => e.Item1).ToList();
+            // set storage path in which files will be stored by file synchronizer service.
+            List<IncidentEvidence> evidenceMeta = request.Evidences.Select(e =>
+                e.Item1.FilePath is not null
+                ? e.Item1 with { StoragePath = $"{_relativePath}/{e.Item1.Id}" }
+                : e.Item1).ToList();
 
             Incident incident = new Incident(
                 request.Title,
