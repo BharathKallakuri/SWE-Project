@@ -1,0 +1,77 @@
+name: Code formatting
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  format:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - run: dotnet restore CopProject
+
+      - name: Check formatting
+        id: check
+        run: |
+          if ! dotnet format CopProject --verify-no-changes > format-report.log 2>&1; then
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+            cat format-report.log
+          fi
+
+      - name: Upload report
+        if: steps.check.outputs.failed == 'true'
+        id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: format-report-${{ github.event.pull_request.number || github.run_id }}
+          path: format-report.log
+
+      - name: Comment on PR
+        if: steps.check.outputs.failed == 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          {
+            echo "<!-- format-report -->"
+            echo "## Code formatting report"
+            echo "Formatting did not match expected formatting."
+            echo "Run \`dotnet format CopProject\` to fix."
+            echo
+            echo "**Log artifact:** [download]($URL)"
+          } > comment.md
+
+          # Target only this workflow comment so other comments (like coverage) are preserved
+          COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --jq '.[] | select(.body | contains("<!-- format-report -->")) | .id' | tail -n 1)
+          if [ -n "$COMMENT_ID" ]; then
+            gh api "repos/${{ github.repository }}/issues/comments/$COMMENT_ID" -X PATCH -F body=@comment.md
+          else
+            gh pr comment "$PR" --body-file comment.md
+          fi
+
+      - name: Enforce
+        if: steps.check.outputs.failed == 'true'
+        run: |
+          if [ "${{ vars.ENFORCE_FORMAT }}" = "true" ]; then
+            echo "::error::Code formatting failed."
+            exit 1
+          fi
+          echo "Enforcement disabled. Skipping failure."

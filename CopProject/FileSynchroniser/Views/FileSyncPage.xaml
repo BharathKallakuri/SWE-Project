@@ -30,11 +30,45 @@
                        TextWrapping="Wrap" />
         </StackPanel>
 
-        <!-- Buttons -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
-            <Button Content="Add File" Click="AddFile_Click" />
-            <Button Content="Refresh" Command="{x:Bind ViewModel.RefreshCommand}" />
-            <Button Content="Delete Selected" Command="{x:Bind ViewModel.DeleteSelectedCommand}" />
+        <!-- Peer Connection Controls -->
+        <StackPanel Grid.Row="2" Spacing="8">
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="130" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="My Port" FontSize="11" Foreground="Gray" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="Peer IP Address" FontSize="11" Foreground="Gray" />
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Peer Port" FontSize="11" Foreground="Gray" />
+
+                <TextBox x:Name="MyPortTextBox" Grid.Row="1" Grid.Column="0" Text="8001" />
+                <TextBox x:Name="PeerIpTextBox" Grid.Row="1" Grid.Column="1" Text="127.0.0.1" PlaceholderText="e.g. 192.168.1.50" />
+                <TextBox x:Name="PeerPortTextBox" Grid.Row="1" Grid.Column="2" Text="8002" />
+
+                <Button
+                    x:Name="SyncButton"
+                    Grid.Row="1"
+                    Grid.Column="3"
+                    Content="Sync Files"
+                    HorizontalAlignment="Stretch"
+                    Click="OnSyncButtonClick" />
+            </Grid>
+
+            <!-- Buttons: Add File, Refresh, Delete, and Presets -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Add File" Click="AddFile_Click" />
+                <Button Content="Refresh" Command="{x:Bind ViewModel.RefreshCommand}" />
+                <Button Content="Delete Selected" Command="{x:Bind ViewModel.DeleteSelectedCommand}" />
+                <Button Content="Node A (8001 -> 8002)" FontSize="11" Click="OnPresetAClick" />
+                <Button Content="Node B (8002 -> 8001)" FontSize="11" Click="OnPresetBClick" />
+            </StackPanel>
         </StackPanel>
 
         <!-- Error banner (only open when the ViewModel reports an error) -->
@@ -93,6 +127,6 @@
         </Grid>
 
         <!-- Status bar -->
-        <TextBlock Grid.Row="5" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
+        <TextBlock x:Name="StatusTextBlock" Grid.Row="5" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
     </Grid>
 </Page>
