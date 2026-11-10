@@ -27,6 +27,8 @@ public sealed class ClientController : IControllerService
     public event EventHandler<UserLeftEventArgs>? UserLeft;
 
     public int ListenPort => _communicator?.ListenPort ?? 0;
+    public ICommunicator? Communicator => _communicator;
+    public ControllerUser? CurrentUser => _currentUser;
 
     public ClientController(ControllerUser user, ICommunicator? communicator = null)
     {

@@ -15,6 +15,7 @@ public sealed class ControllerMeetingService
     private IControllerService? _activeController;
     private bool _isHost;
     private readonly SynchronizationContext? _uiThread = SynchronizationContext.Current;
+    public IControllerService? ActiveController => _activeController;
 
     public void Initialize(MeetingSession session)
     {

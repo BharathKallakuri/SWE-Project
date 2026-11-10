@@ -41,6 +41,7 @@ public sealed class MeetingSession
     }
 
     public event Action<MeetingInfo>? MeetingStarted;
+    public event Action? MeetingEnding;
     public event Action? MeetingEnded;
     public event Action<int>? ParticipantCountChanged;
     public event Action<IReadOnlyList<ParticipantInfo>>? ParticipantsChanged;
@@ -57,6 +58,7 @@ public sealed class MeetingSession
     public void EndMeeting()
     {
         if (Meeting == null) return;
+        MeetingEnding?.Invoke();
         Meeting = null;
         _activeParticipants = Array.Empty<ParticipantInfo>();
         ParticipantsChanged?.Invoke(_activeParticipants);
