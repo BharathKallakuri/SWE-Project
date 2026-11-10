@@ -94,6 +94,49 @@ public class ShapeCircleState : IViewModelState
         e.Handled = true;
     }
 
+    public void PointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isDrawing)
+        {
+            return;
+        }
+
+        _isDrawing = false;
+        _canvas.ReleasePointerCapture(e.Pointer);
+
+        if (_circle is not null)
+        {
+            double left = Canvas.GetLeft(_circle);
+            double top = Canvas.GetTop(_circle);
+            double diameter = _circle.Width;
+            Color borderColor = _toolbarInfo.BorderBrush is SolidColorBrush borderBrush
+                ? borderBrush.Color
+                : Color.FromArgb(255, 0, 0, 0);
+            Color fillColor = _toolbarInfo.FillBrush is SolidColorBrush fillBrush
+                ? fillBrush.Color
+                : Color.FromArgb(0, 0, 0, 0);
+            Circle circle = new() {
+                Center = new Point2D(left + diameter / 2, top + diameter / 2),
+                Radius = diameter / 2,
+                BorderColor = borderColor,
+                BorderWidth = _toolbarInfo.StrokeThickness,
+                FillColor = fillColor,
+                CreatedBy = _whiteboardClient.UserId,
+            };
+
+            _circle.Tag = circle.Id;
+            ToolTipService.SetToolTip(
+                _circle,
+                new ToolTip(_whiteboardClient.UserId, DateTime.Now));
+            _circle.IsHitTestVisible = true;
+            _canvas.Children.Remove(_circle);
+            _whiteboardClient.AddItem(circle);
+        }
+
+        _circle = null;
+        e.Handled = true;
+    }
+
     public void PointerCaptureLost(object sender, PointerRoutedEventArgs e)
     {
         if (!_isDrawing)
