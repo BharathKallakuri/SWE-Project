@@ -244,6 +244,11 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
     public ObservableCollection<IChange> ChangeTimeline { get; } = [];
 
     /// <summary>
+    /// Incidents connected to the currently displayed incident.
+    /// </summary>
+    public ObservableCollection<Incident> CorrelatedIncidents { get; } = [];
+
+    /// <summary>
     /// Switches between read-only and edit mode.
     /// </summary>
     public RelayCommand ToggleEditModeCommand { get; }
@@ -274,6 +279,7 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
             {
                 ResetEditableFields();
                 RefreshCollections();
+                await RefreshCorrelatedIncidentsAsync();
             }
         }
         catch (Exception ex)
@@ -421,6 +427,63 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         foreach (IChange change in Incident.ChangeHistory.OrderByDescending(c => c.ChangedTime))
         {
             ChangeTimeline.Add(change);
+        }
+    }
+
+    /// <summary>
+    /// Loads all incidents connected to the current incident.
+    /// </summary>
+    public async Task RefreshCorrelatedIncidentsAsync()
+    {
+        if (Incident == null) { return; }
+
+        CorrelatedIncidents.Clear();
+
+        List<Incident> correlated =
+            await _incidentController.GetCorrelatedIncidents(Incident.Id);
+
+        foreach (Incident incident in correlated)
+        {
+            CorrelatedIncidents.Add(incident);
+        }
+    }
+
+    /// <summary>
+    /// Correlates the current incident with the selected incidents.
+    /// </summary>
+    public async Task CorrelateIncidentsAsync(List<Guid> incidentIds)
+    {
+        if (Incident == null || incidentIds.Count == 0) { return; }
+
+        try
+        {
+            IsBusy = true;
+            ErrorMessage = string.Empty;
+
+            foreach (Guid id in incidentIds)
+            {
+                Incident otherIncident =
+                    await _incidentController.GetIncidentById(id);
+
+                await _incidentController.CorrelateIncident(
+                    Incident,
+                    otherIncident);
+            }
+
+            // Reload the incident and its correlated group.
+            Incident = await _incidentController.GetIncidentById(Incident.Id);
+
+            RefreshCollections();
+            await RefreshCorrelatedIncidentsAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to correlate incidents: {ex.Message}";
+            await RefreshCorrelatedIncidentsAsync();
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 }

@@ -88,4 +88,36 @@ public sealed partial class IncidentDetailsPage : Page
             await ViewModel.AddEvidenceItemsAsync([evidence]);
         }
     }
+
+    /// <summary>
+    /// Shows the Correlate Incidents dialog and correlates the selected incidents.
+    /// </summary>
+    private async void CorrelateIncidents_Click(object _, RoutedEventArgs __)
+    {
+        if (_context == null || ViewModel?.Incident == null)
+        {
+            return;
+        }
+
+        CorrelateIncidentsDialogViewModel dialogViewModel = new(
+            _context.IncidentController,
+            ViewModel.Incident.Id
+        );
+
+        await dialogViewModel.LoadIncidentsAsync();
+
+        CorrelateIncidentsDialog dialog = new() {
+            XamlRoot = this.XamlRoot,
+            DataContext = dialogViewModel
+        };
+
+        ContentDialogResult result = await dialog.ShowAsync();
+
+        if (result == ContentDialogResult.Primary)
+        {
+            List<Guid> selectedIds = dialogViewModel.GetSelectedIncidentIds();
+
+            await ViewModel.CorrelateIncidentsAsync(selectedIds);
+        }
+    }
 }

@@ -273,6 +273,54 @@
                         </StackPanel>
                     </Border>
 
+
+                    <!-- Correlated Incidents Card -->
+                    <Border
+                        Padding="20"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel Spacing="16">
+                            <Grid>
+                                <TextBlock
+                                    Text="Correlated Incidents"
+                                    FontSize="18"
+                                    FontWeight="SemiBold"
+                                    VerticalAlignment="Center" />
+
+                                <Button
+                                    HorizontalAlignment="Right"
+                                    Content="Add Incidents"
+                                    Click="CorrelateIncidents_Click" />
+                            </Grid>
+
+                            <ListView
+                                ItemsSource="{Binding CorrelatedIncidents}"
+                                SelectionMode="None"
+                                MaxHeight="250">
+
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Spacing="2" Padding="4">
+                                            <TextBlock
+                                                Text="{Binding Title}"
+                                                FontWeight="SemiBold"
+                                                TextWrapping="Wrap" />
+
+                                            <TextBlock
+                                                Text="{Binding Id}"
+                                                FontSize="11"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </StackPanel>
+                    </Border>
+
+
                 </StackPanel>
 
                 <!-- Right Column: Change History Timeline Card -->
