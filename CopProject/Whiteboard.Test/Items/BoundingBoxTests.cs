@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Whiteboard.Interfaces.Shapes;
+using Whiteboard.Interfaces;
 using Whiteboard.Test.RandomGenerators;
 
 namespace Whiteboard.Test.Items;
@@ -19,9 +20,21 @@ public class BoundingBoxTests : BaseGenerator
         };
 
         Assert.Equal(circle.Center.X - circle.Radius, circle.BoundingBox.Left);
-        Assert.Equal(circle.Center.Y + circle.Radius, circle.BoundingBox.Top);
+        Assert.Equal(circle.Center.Y - circle.Radius, circle.BoundingBox.Top);
         Assert.Equal(circle.Radius * 2, circle.BoundingBox.Width);
         Assert.Equal(circle.Radius * 2, circle.BoundingBox.Height);
+    }
+
+    [Fact]
+    public void CircleBoundingBoxSetter_UpdatesPositionAndUsesSmallerDimension()
+    {
+        Whiteboard.Items.Shapes.Circle circle = new() { Radius = 10 };
+
+        circle.BoundingBox = new Rect2D(10, 20, 30, 40);
+
+        Assert.Equal(25, circle.Left);
+        Assert.Equal(40, circle.Top);
+        Assert.Equal(15, circle.Radius);
     }
 
     [Fact]
