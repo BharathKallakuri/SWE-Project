@@ -1,4 +1,5 @@
 using Utils;
+using Networking;
 namespace Controller;
 
 // The UX layer depends on this abstraction, not on concrete Host/Client classes.
@@ -32,4 +33,8 @@ public interface IControllerService : IDisposable
 
     // Gets the port this controller is listening on.
     int ListenPort { get; }
+    
+     // Meeting connection and current user identity (for ScreenShare and other modules)
+    ICommunicator? Communicator { get; }
+    ControllerUser? CurrentUser { get; }
 }

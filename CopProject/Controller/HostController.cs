@@ -22,7 +22,8 @@ public sealed class HostController : IControllerService
     public event EventHandler<UserLeftEventArgs>? UserLeft;
 
     public int ListenPort => _communicator.ListenPort;
-
+    public ICommunicator? Communicator => _communicator;
+    public ControllerUser? CurrentUser => _hostUser;
     public bool IsMeetingActive => _sessionManager.HasActiveSession();
 
     public SessionManager SessionManager => _sessionManager;
