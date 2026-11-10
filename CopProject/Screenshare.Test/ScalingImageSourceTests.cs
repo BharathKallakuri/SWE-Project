@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace ScreenShare.Test;
+namespace ScreenShare.Tests;
 
 public class ScalingImageSourceTests
 {
