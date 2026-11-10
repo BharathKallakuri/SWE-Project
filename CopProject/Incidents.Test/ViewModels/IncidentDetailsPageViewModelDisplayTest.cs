@@ -58,6 +58,7 @@ public class IncidentDetailsPageViewModelDisplayTest
 
         Assert.IsEmpty(_viewModel.Evidences);
         Assert.IsEmpty(_viewModel.ChangeTimeline);
+        Assert.IsEmpty(_viewModel.CorrelatedIncidents);
     }
 
     /// <summary>
@@ -699,6 +700,96 @@ public class IncidentDetailsPageViewModelDisplayTest
         Assert.AreEqual(incident.Location.Latitude, _viewModel.EditableLatitude);
         Assert.AreEqual(incident.Location.Longitude, _viewModel.EditableLongitude);
         Assert.AreEqual(incident.Location.Address, _viewModel.EditableAddress);
+    }
+
+    // CorrelatedIncidents tests
+
+    /// <summary>
+    /// Loading an incident also loads its correlated incidents.
+    /// </summary>
+    [TestMethod]
+    public async Task LoadIncidentAsync_ExistingIncident_LoadsCorrelatedIncidents()
+    {
+        Incident currentIncident =
+            await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
+
+        Incident correlatedIncident =
+            await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
+
+        // Establish a correlation using the real controller.
+        Incident storedCurrent =
+            await _controller.GetIncidentById(currentIncident.Id);
+
+        Incident storedCorrelated =
+            await _controller.GetIncidentById(correlatedIncident.Id);
+
+        await _controller.CorrelateIncident(storedCurrent, storedCorrelated);
+
+        await _viewModel.LoadIncidentAsync(currentIncident.Id);
+
+        Assert.IsTrue(_viewModel.CorrelatedIncidents.Any(
+            incident => incident.Id == correlatedIncident.Id));
+    }
+
+    /// <summary>
+    /// Loading an incident does not include unrelated incidents
+    /// in the correlated incidents collection.
+    /// </summary>
+    [TestMethod]
+    public async Task LoadIncidentAsync_ExistingIncident_ExcludesUncorrelatedIncidents()
+    {
+        Incident currentIncident =
+            await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
+
+        Incident unrelatedIncident =
+            await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
+
+        await _viewModel.LoadIncidentAsync(currentIncident.Id);
+
+        Assert.IsFalse(_viewModel.CorrelatedIncidents.Any(
+            incident => incident.Id == unrelatedIncident.Id));
+    }
+
+    /// <summary>
+    /// RefreshCorrelatedIncidentsAsync does nothing when no incident is loaded.
+    /// </summary>
+    [TestMethod]
+    public async Task RefreshCorrelatedIncidentsAsync_NoIncident_DoesNothing()
+    {
+        await _viewModel.RefreshCorrelatedIncidentsAsync();
+
+        Assert.IsNull(_viewModel.Incident);
+        Assert.IsEmpty(_viewModel.CorrelatedIncidents);
+    }
+
+    /// <summary>
+    /// RefreshCorrelatedIncidentsAsync reloads the correlated incidents
+    /// for the currently loaded incident.
+    /// </summary>
+    [TestMethod]
+    public async Task RefreshCorrelatedIncidentsAsync_IncidentLoaded_RefreshesCollection()
+    {
+        Incident currentIncident =
+            await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
+
+        Incident correlatedIncident =
+            await VMTestHelpers.CreateIncidentAsync(_controller, _currentUserId);
+
+        await _viewModel.LoadIncidentAsync(currentIncident.Id);
+
+        // Create the correlation after the initial load.
+        Incident storedCurrent =
+            await _controller.GetIncidentById(currentIncident.Id);
+
+        Incident storedCorrelated =
+            await _controller.GetIncidentById(correlatedIncident.Id);
+
+        await _controller.CorrelateIncident(storedCurrent, storedCorrelated);
+
+        await _viewModel.RefreshCorrelatedIncidentsAsync();
+
+        Assert.IsTrue(_viewModel.CorrelatedIncidents.Any(
+            incident => incident.Id == correlatedIncident.Id));
     }
 
 }

@@ -480,7 +480,7 @@ public class CreateIncidentPageViewModelTest
         _viewModel.Latitude = 90.1;
         _viewModel.SubmitCommand.Execute(null);
 
-        Assert.AreEqual("Latitude must be between -90 and 90.",_viewModel.ErrorMessage);
+        Assert.AreEqual("Latitude must be between -90 and 90.", _viewModel.ErrorMessage);
         Assert.IsEmpty(await _controller.GetAllIncidents());
     }
 
@@ -508,7 +508,7 @@ public class CreateIncidentPageViewModelTest
         _viewModel.Longitude = 180.1;
         _viewModel.SubmitCommand.Execute(null);
 
-        Assert.AreEqual("Longitude must be between -180 and 180.",_viewModel.ErrorMessage);
+        Assert.AreEqual("Longitude must be between -180 and 180.", _viewModel.ErrorMessage);
         Assert.IsEmpty(await _controller.GetAllIncidents());
     }
 
@@ -528,7 +528,7 @@ public class CreateIncidentPageViewModelTest
 
         await VMTestHelpers.SubmitAndWaitForIncidentCreatedAsync(_viewModel);
 
-        List<Incident> incidents =await _controller.GetAllIncidents();
+        List<Incident> incidents = await _controller.GetAllIncidents();
 
         Assert.HasCount(1, incidents);
 
