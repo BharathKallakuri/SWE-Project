@@ -15,11 +15,11 @@ public class Circle : Shape, ICircle
     public double Radius { get; set; } = 10;
 
     public override Rect2D BoundingBox => new(
-            Center.X - Radius,
-            Center.Y - Radius,
-            Radius * 2,
-            Radius * 2
-        );
+        Center.X - Radius,
+        Center.Y - Radius,
+        Radius * 2,
+        Radius * 2
+    );
 
     public override void MoveBy(double dX, double dY)
     {
