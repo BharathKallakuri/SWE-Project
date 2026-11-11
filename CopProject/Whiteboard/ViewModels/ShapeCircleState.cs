@@ -2,16 +2,10 @@
 // LICENSE : MIT
 
 using System;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Shapes;
+using System.Threading.Tasks;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
 using Whiteboard.Items.Shapes;
-using Windows.Foundation;
-using Windows.UI;
-using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 
 namespace Whiteboard.ViewModels;
 
@@ -21,134 +15,99 @@ namespace Whiteboard.ViewModels;
 public class ShapeCircleState : IViewModelState
 {
     private readonly IWhiteboardClient _whiteboardClient;
-    private readonly Canvas _canvas;
+    private readonly ICanvasPreview _preview;
     private readonly ToolbarInfo _toolbarInfo;
     private bool _isDrawing;
-    private Point _startPoint;
-    private XamlEllipse? _circle;
+    private Point2D _startPoint = new(0, 0);
+    private Circle? _circle;
 
     public ShapeCircleState(
         IWhiteboardClient whiteboardClient,
-        Canvas canvas,
+        ICanvasPreview preview,
         ToolbarInfo toolbarInfo)
     {
         ArgumentNullException.ThrowIfNull(whiteboardClient);
-        ArgumentNullException.ThrowIfNull(canvas);
+        ArgumentNullException.ThrowIfNull(preview);
         ArgumentNullException.ThrowIfNull(toolbarInfo);
 
         _whiteboardClient = whiteboardClient;
-        _canvas = canvas;
+        _preview = preview;
         _toolbarInfo = toolbarInfo;
     }
 
-    public void PointerPressed(object sender, PointerRoutedEventArgs e)
+    public void PointerPressed(Point2D point)
     {
-        if (!_canvas.CapturePointer(e.Pointer))
-        {
-            return;
-        }
-
         _isDrawing = true;
-        _startPoint = e.GetCurrentPoint(_canvas).Position;
-        _circle = new XamlEllipse {
-            Stroke = _toolbarInfo.BorderBrush,
-            StrokeThickness = _toolbarInfo.StrokeThickness,
-            Fill = _toolbarInfo.FillBrush,
-            IsHitTestVisible = false
+
+        _startPoint = point;
+
+        _circle = new Circle {
+            CreatedBy = _whiteboardClient.UserId,
+
+            BorderColor = _toolbarInfo.BorderColor,
+            BorderWidth = _toolbarInfo.BorderWidth,
+            FillColor = _toolbarInfo.FillColor,
+
+            Center = new(_startPoint.X, _startPoint.Y),
+            Radius = 0
         };
 
-        Canvas.SetLeft(_circle, _startPoint.X);
-        Canvas.SetTop(_circle, _startPoint.Y);
-        _circle.Width = 0;
-        _circle.Height = 0;
-        _canvas.Children.Add(_circle);
-        e.Handled = true;
+        _preview.ShowPreview(_circle);
     }
 
-    public void PointerMoved(object sender, PointerRoutedEventArgs e)
+    public void PointerMoved(Point2D point)
     {
-        if (!_isDrawing)
+        if (!_isDrawing || _circle is null)
         {
             return;
         }
 
-        if (_circle is not null)
-        {
-            Point currentPoint = e.GetCurrentPoint(_canvas).Position;
-            double diameter = Math.Min(
-                Math.Abs(currentPoint.X - _startPoint.X),
-                Math.Abs(currentPoint.Y - _startPoint.Y));
-            double left = currentPoint.X >= _startPoint.X
-                ? _startPoint.X
-                : _startPoint.X - diameter;
-            double top = currentPoint.Y >= _startPoint.Y
-                ? _startPoint.Y
-                : _startPoint.Y - diameter;
+        double diameter = Math.Min(
+            Math.Abs(point.X - _startPoint.X),
+            Math.Abs(point.Y - _startPoint.Y)
+        );
 
-            Canvas.SetLeft(_circle, left);
-            Canvas.SetTop(_circle, top);
-            _circle.Width = diameter;
-            _circle.Height = diameter;
-        }
+        double centerX = point.X >= _startPoint.X ? _startPoint.X + (diameter / 2.0) : _startPoint.X - (diameter / 2.0);
+        double centerY = point.Y >= _startPoint.Y ? _startPoint.Y + (diameter / 2.0) : _startPoint.Y - (diameter / 2.0);
 
-        e.Handled = true;
+        _circle.MoveBy(centerX - _circle.Center.X, centerY - _circle.Center.Y);
+
+        _circle.Radius = diameter / 2;
+
+        _preview.ShowPreview(_circle);
     }
 
-    public void PointerReleased(object sender, PointerRoutedEventArgs e)
+    public void PointerReleased(Point2D point)
     {
-        if (!_isDrawing)
+        if (!_isDrawing || _circle is null)
         {
             return;
         }
 
         _isDrawing = false;
-        _canvas.ReleasePointerCapture(e.Pointer);
 
-        if (_circle is not null)
+        _preview.ClearPreview();
+
+        // Send to whiteboard client state manager off the UI thread
+        // But only if it has a non zero length
+        if (_circle.Radius > 0)
         {
-            double left = Canvas.GetLeft(_circle);
-            double top = Canvas.GetTop(_circle);
-            double diameter = _circle.Width;
-            Color borderColor = _toolbarInfo.BorderBrush is SolidColorBrush borderBrush
-                ? borderBrush.Color
-                : Color.FromArgb(255, 0, 0, 0);
-            Color fillColor = _toolbarInfo.FillBrush is SolidColorBrush fillBrush
-                ? fillBrush.Color
-                : Color.FromArgb(0, 0, 0, 0);
-            Circle circle = new() {
-                Center = new Point2D(left + diameter / 2, top + diameter / 2),
-                Radius = diameter / 2,
-                BorderColor = borderColor,
-                BorderWidth = _toolbarInfo.StrokeThickness,
-                FillColor = fillColor,
-                CreatedBy = _whiteboardClient.UserId,
-            };
-
-            _circle.Tag = circle.Id;
-            ToolTipService.SetToolTip(
-                _circle,
-                new ToolTip(_whiteboardClient.UserId, DateTime.Now));
-            _circle.IsHitTestVisible = true;
-            _canvas.Children.Remove(_circle);
-            _whiteboardClient.AddItem(circle);
+            Task.Run(() => _whiteboardClient.AddItem(_circle));
         }
 
         _circle = null;
-        e.Handled = true;
     }
 
-    public void PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    public void PointerCaptureLost(Point2D point)
     {
-        if (!_isDrawing)
+        if (!_isDrawing || _circle is null)
         {
             return;
         }
 
         _isDrawing = false;
-        if (_circle is not null)
-        {
-            _canvas.Children.Remove(_circle);
-        }
+
+        _preview.ClearPreview();
 
         _circle = null;
     }
