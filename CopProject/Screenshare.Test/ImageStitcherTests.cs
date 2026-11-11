@@ -272,4 +272,57 @@ public class ImageStitcherTests
         return new Tile(x, y, width, height, hash: 0, data: PngEncoder.Encode(tileBitmap));
 
     }
+
+    [Fact]
+    public void ApplyFullFrame_ThrowsArgumentNullException_WhenFrameIsNull()
+    {
+        using var stitcher = new ImageStitcher();
+
+        Assert.Throws<ArgumentNullException>(() => stitcher.ApplyFullFrame(0, null!));
+    }
+
+    [Fact]
+    public void ApplyFullFrame_ThrowsArgumentOutOfRangeException_WhenFrameNumberIsNegative()
+    {
+        using var stitcher = new ImageStitcher();
+        using var frame = new Bitmap(128, 128);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => stitcher.ApplyFullFrame(-1, frame));
+    }
+
+    [Fact]
+    public void ApplyChangedTiles_ThrowsArgumentException_WhenTileListIsEmpty()
+    {
+        using var stitcher = new ImageStitcher();
+        using var frame = new Bitmap(128, 128);
+
+        stitcher.ApplyFullFrame(0, frame);
+
+        Assert.Throws<ArgumentException>(() => stitcher.ApplyChangedTiles(1, Array.Empty<Tile>()));
+
+        Assert.Equal(0, stitcher.LastFrameNumber);
+    }
+
+    [Fact]
+    public void ApplyChangedTiles_ThrowsArgumentNullException_WhenTileIsNull()
+    {
+        using var stitcher = new ImageStitcher();
+        using var frame = new Bitmap(128, 128);
+
+        stitcher.ApplyFullFrame(0, frame);
+
+        Tile[] tiles = { null! };
+
+        Assert.Throws<ArgumentNullException>(() => stitcher.ApplyChangedTiles(1, tiles));
+
+        Assert.Equal(0, stitcher.LastFrameNumber);
+    }
+
+    [Fact]
+    public void ApplyPulse_ThrowsArgumentOutOfRangeException_WhenFrameNumberIsNegative()
+    {
+        using var stitcher = new ImageStitcher();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => stitcher.ApplyPulse(-1));
+    }
 }
