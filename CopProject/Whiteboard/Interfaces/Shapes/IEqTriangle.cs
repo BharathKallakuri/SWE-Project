@@ -12,7 +12,7 @@ public interface IEqTriangle : IShape
     /// <summary>
     /// Center of the equilateral triangle
     /// </summary>
-    public Point2D Center { get; init; }
+    public Point2D Center { get; }
 
     /// <summary>
     /// Side length of the equilateral triangle

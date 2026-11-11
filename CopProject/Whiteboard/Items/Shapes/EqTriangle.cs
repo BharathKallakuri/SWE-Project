@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -11,7 +11,7 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class EqTriangle : Shape, IEqTriangle
 {
-    public Point2D Center { get; init; } = new(0, 0);
+    public Point2D Center { get; private set; } = new(0, 0);
 
     public override Rect2D BoundingBox => new(
         Center.X - (SideLength / 2.0),
@@ -19,6 +19,11 @@ public class EqTriangle : Shape, IEqTriangle
         SideLength,
         GetTriangleHeight(SideLength)
     );
+
+    public override void MoveBy(double dX, double dY)
+    {
+        Center = Center with { X = Center.X + dX, Y = Center.Y + dY };
+    }
 
     public override bool HitTest(Point2D point)
     {
