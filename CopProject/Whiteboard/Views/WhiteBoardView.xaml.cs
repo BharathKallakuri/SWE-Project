@@ -6,10 +6,10 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
+using Whiteboard.Interfaces;
 using Whiteboard.ViewModels;
+using Windows.Foundation;
 
 namespace Whiteboard.Views;
 
@@ -116,21 +116,53 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void WhiteboardCanvas_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        _viewModel.PointerPressed(sender, e);
+        // Attempt to capture the pointer
+        if (WhiteboardCanvas.CapturePointer(e.Pointer))
+        {
+            // If successful, get the current pointer position
+            Point p = e.GetCurrentPoint(WhiteboardCanvas).Position;
+
+            // Pass the pointer position to the view model for computation
+            _viewModel.PointerPressed(new Point2D(p.X, p.Y));
+
+            // Mark the event as handled
+            e.Handled = true;
+        }
     }
 
     private void WhiteboardCanvas_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        _viewModel.PointerMoved(sender, e);
+        // Get the current pointer position
+        Point p = e.GetCurrentPoint(WhiteboardCanvas).Position;
+
+        // Pass the pointer position to the view model for computation
+        _viewModel.PointerMoved(new Point2D(p.X, p.Y));
+
+        // Mark the event as handled
+        e.Handled = true;
     }
 
     private void WhiteboardCanvas_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        _viewModel.PointerReleased(sender, e);
+        // Get the current pointer position
+        Point p = e.GetCurrentPoint(WhiteboardCanvas).Position;
+
+        // Pass the pointer position to the view model for computation
+        _viewModel.PointerReleased(new Point2D(p.X, p.Y));
+
+        // Release the pointer, if captured
+        WhiteboardCanvas.ReleasePointerCapture(e.Pointer);
+
+        // Mark the event as handled
+        e.Handled = true;
     }
 
     private void WhiteboardCanvas_PointerCaptureLost(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        _viewModel.PointerCaptureLost(sender, e);
+        // Get the current pointer position
+        Point p = e.GetCurrentPoint(WhiteboardCanvas).Position;
+
+        // Pass the pointer position to the view model for computation
+        _viewModel.PointerCaptureLost(new Point2D(p.X, p.Y));
     }
 }
