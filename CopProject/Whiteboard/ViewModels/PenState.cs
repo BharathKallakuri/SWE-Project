@@ -37,11 +37,6 @@ public class PenState : IViewModelState
     private bool _isDrawing = false;
 
     /// <summary>
-    /// Start point of the polyline
-    /// </summary>
-    private Point2D _startPoint = new(0, 0);
-
-    /// <summary>
     /// Active polyline
     /// </summary>
     private IFreehand? _freehand;
@@ -62,9 +57,6 @@ public class PenState : IViewModelState
         // Set flag to begin drawing
         _isDrawing = true;
 
-        // Record the location where the pointer was pressed
-        _startPoint = point;
-
         // Create a new polyline with brush and fill properties taken from the toolbar
         _freehand = new FreehandItem() {
             CreatedBy = _whiteboardClient.UserId,
@@ -73,7 +65,7 @@ public class PenState : IViewModelState
             StrokeWidth = _toolbarInfo.BorderWidth,
 
             // Begin the polyline with the first point
-            Points = [_startPoint]
+            Points = [point]
         };
 
         // Preview the drawing
