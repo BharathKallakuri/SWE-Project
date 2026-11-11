@@ -1,21 +1,20 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿/// Owner   : Raagam Hitesh Parmar
+/// LICENSE : MIT
 
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 
 namespace Whiteboard.ViewModels;
 
 /// <summary>
 /// Represents the currently selected tooltip options
 /// </summary>
-/// <param name="BorderBrush">Brush for borders</param>
-/// <param name="StrokeThickness">Stroke thickness</param>
-/// <param name="FillBrush">Brush for fill</param>
+/// <param name="BorderColor">Brush for borders</param>
+/// <param name="BorderWidth">Stroke thickness</param>
+/// <param name="FillColor">Brush for fill</param>
 [ExcludeFromCodeCoverage]
 public record ToolbarInfo(
-    Brush BorderBrush,
-    double StrokeThickness,
-    Brush FillBrush
+    Color BorderColor,
+    double BorderWidth,
+    Color FillColor
 );
