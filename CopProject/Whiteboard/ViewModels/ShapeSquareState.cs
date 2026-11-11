@@ -5,6 +5,7 @@ using System;
 using System.Threading.Tasks;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
+using Whiteboard.Interfaces.Shapes;
 using Whiteboard.Items.Shapes;
 
 namespace Whiteboard.ViewModels;
@@ -43,7 +44,7 @@ public class ShapeSquareState : IViewModelState
     /// <summary>
     /// Active square being previewed
     /// </summary>
-    private Square? _square;
+    private ISquare? _square;
 
     public ShapeSquareState(IWhiteboardClient whiteboardClient, ICanvasPreview preview, ToolbarInfo toolbarInfo)
     {

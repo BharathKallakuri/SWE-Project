@@ -5,6 +5,7 @@ using System;
 using System.Threading.Tasks;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
+using Whiteboard.Interfaces.Shapes;
 using Whiteboard.Items.Shapes;
 
 namespace Whiteboard.ViewModels;
@@ -19,7 +20,7 @@ public class ShapeCircleState : IViewModelState
     private readonly ToolbarInfo _toolbarInfo;
     private bool _isDrawing;
     private Point2D _startPoint = new(0, 0);
-    private Circle? _circle;
+    private ICircle? _circle;
 
     public ShapeCircleState(
         IWhiteboardClient whiteboardClient,
