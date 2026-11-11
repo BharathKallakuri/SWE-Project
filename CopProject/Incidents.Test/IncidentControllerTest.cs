@@ -102,7 +102,7 @@ public sealed class IncidentControllerTest
             category: IncidentCategory.Accident,
             severity: IncidentSeverity.Medium,
             location: new IncidentLocation(Latitude: 0.0, Longitude: 0.0),
-            evidences: new List<IncidentEvidence>()
+            evidences: new List<(IncidentEvidence Evidence, byte[] Content)>()
         );
 
         Incident createdIncident = await _incidentController.CreateIncident(incident);
@@ -124,7 +124,7 @@ public sealed class IncidentControllerTest
             category: IncidentCategory.Accident,
             severity: IncidentSeverity.Medium,
             location: new IncidentLocation(Latitude: 0.0, Longitude: 0.0),
-            evidences: new List<IncidentEvidence>()
+            evidences: new List<(IncidentEvidence Evidence, byte[] Content)>()
         );
 
         Incident createdIncident = await _incidentController.CreateIncident(incident);
@@ -288,7 +288,7 @@ public sealed class IncidentControllerTest
             category: IncidentCategory.Accident,
             severity: IncidentSeverity.Medium,
             location: new IncidentLocation(Latitude: 0.0, Longitude: 0.0),
-            evidences: new List<IncidentEvidence>()
+            evidences: new List<(IncidentEvidence Evidence, byte[] Content)>()
         ));
 
         if (incident == null)
