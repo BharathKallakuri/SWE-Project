@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Whiteboard.Interfaces;
 using Windows.UI;
@@ -15,6 +15,16 @@ public class FreehandItem : Item, IFreehand
     public FreehandItem()
     {
         Points = [];
+    }
+
+    public override void MoveBy(double dX, double dY)
+    {
+        Left += dX;
+        Top += dY;
+        for (int i = 0; i < Points.Count; i++)
+        {
+            Points[i] = Points[i] with { X = Points[i].X + dX, Y = Points[i].Y + dY };
+        }
     }
 
     public override bool HitTest(Point2D point)
