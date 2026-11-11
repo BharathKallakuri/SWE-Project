@@ -6,7 +6,7 @@ namespace Whiteboard.Interfaces;
 /// <summary>
 /// Provide live canvas animation when the mouse pointer is being dragged
 /// </summary>
-internal interface ICanvasPreview
+public interface ICanvasPreview
 {
     /// <summary>
     /// Update the temporary visual item on the screen
