@@ -1,4 +1,4 @@
-﻿// Owner   : Sasi Kiran
+// Owner   : Sasi Kiran
 // LICENSE : MIT
 
 using System;
@@ -93,7 +93,8 @@ public class ShapeCircleState : IViewModelState
         // But only if it has a non zero length
         if (_circle.Radius > 0)
         {
-            Task.Run(() => _whiteboardClient.AddItem(_circle));
+            ICircle item = _circle;
+            Task.Run(() => _whiteboardClient.AddItem(item));
         }
 
         _circle = null;

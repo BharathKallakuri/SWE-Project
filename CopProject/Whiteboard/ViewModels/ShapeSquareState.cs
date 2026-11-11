@@ -127,7 +127,8 @@ public class ShapeSquareState : IViewModelState
         // But only if it has a non zero length
         if (_square.SideLegth > 0)
         {
-            Task.Run(() => _whiteboardClient.AddItem(_square));
+            ISquare item = _square;
+            Task.Run(() => _whiteboardClient.AddItem(item));
         }
 
         // Reset square state back to null

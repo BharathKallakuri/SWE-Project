@@ -102,7 +102,11 @@ public class PenState : IViewModelState
         _preview.ClearPreview();
 
         // Send to whiteboard client state manager off the UI thread
-        Task.Run(() => _whiteboardClient.AddItem(_freehand));
+        if (_freehand.Points.Count >= 2)
+        {
+            IFreehand item = _freehand;
+            Task.Run(() => _whiteboardClient.AddItem(item));
+        }
 
         // Reset polyline state back to null
         _freehand = null;
