@@ -4,6 +4,7 @@
 
 using System.Linq;
 using Whiteboard.Interfaces.Shapes;
+using Whiteboard.Interfaces;
 using Whiteboard.Test.RandomGenerators;
 
 namespace Whiteboard.Test.Items;
@@ -30,6 +31,18 @@ public class BoundingBoxTests : BaseGenerator
     /// <summary>
     /// Test bounding box for ellipse is calculated properly
     /// </summary>
+    [Fact]
+    public void CircleBoundingBoxSetter_UpdatesPositionAndUsesSmallerDimension()
+    {
+        Whiteboard.Items.Shapes.Circle circle = new() {
+            Radius = 10
+        };
+
+        Assert.Equal(25, circle.Left);
+        Assert.Equal(40, circle.Top);
+        Assert.Equal(15, circle.Radius);
+    }
+
     [Fact]
     public void Ellipse()
     {

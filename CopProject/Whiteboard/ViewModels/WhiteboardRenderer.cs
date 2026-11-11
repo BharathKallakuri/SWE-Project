@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
 using XamlPolyline = Microsoft.UI.Xaml.Shapes.Polyline;
 using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
+using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 using Windows.Foundation;
 
 namespace Whiteboard.ViewModels;
@@ -91,6 +92,7 @@ internal sealed class WhiteboardRenderer : IDisposable
         return item switch {
             IFreehand freehand => CreateFreehand(freehand),
             Whiteboard.Items.Shapes.Square square => CreateSquare(square),
+            Whiteboard.Items.Shapes.Circle circle => CreateCircle(circle),
             _ => new Border()
         };
     }
@@ -112,6 +114,25 @@ internal sealed class WhiteboardRenderer : IDisposable
             visual.Points.Add(new Point(point.X, point.Y));
         }
 
+        ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
+        return visual;
+    }
+
+    private static XamlEllipse CreateCircle(Whiteboard.Items.Shapes.Circle item)
+    {
+        double diameter = item.Radius * 2;
+        XamlEllipse visual = new() {
+            Width = diameter,
+            Height = diameter,
+            Fill = new SolidColorBrush(ToColor(item.FillColor)),
+            Stroke = new SolidColorBrush(ToColor(item.BorderColor)),
+            StrokeThickness = item.BorderWidth,
+            IsHitTestVisible = true,
+            Tag = item.Id
+        };
+
+        Canvas.SetLeft(visual, item.Center.X - item.Radius);
+        Canvas.SetTop(visual, item.Center.Y - item.Radius);
         ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
         return visual;
     }

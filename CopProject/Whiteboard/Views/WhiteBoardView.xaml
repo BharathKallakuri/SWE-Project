@@ -82,6 +82,18 @@
                     </Button>
 
                     <Button
+                        x:Name="ButtonCircle"
+                        ToolTipService.ToolTip="Circle"
+                        Click="ButtonCircle_Click">
+                        <Ellipse
+                            Width="18"
+                            Height="18"
+                            Fill="Transparent"
+                            Stroke="Black"
+                            StrokeThickness="2" />
+                    </Button>
+
+                    <Button
                         x:Name="ButtonDeleteSelectedItems"
                         ToolTipService.ToolTip="Delete selected items">
                         <FontIcon Glyph="&#xE74D;"/>
