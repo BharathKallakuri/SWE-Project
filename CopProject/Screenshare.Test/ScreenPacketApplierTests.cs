@@ -197,4 +197,31 @@ public class ScreenPacketApplierTests
             _now += by;
         }
     }
+
+    [Fact]
+    public void Constructor_ThrowsArgumentException_WhenStreamIdIsBlank()
+    {
+        ImageStitcher stitcher = new ImageStitcher();
+
+        Assert.Throws<ArgumentException>(() => new ScreenPacketApplier(" ", stitcher));
+
+        stitcher.Dispose();
+    }
+
+    [Fact]
+    public void Constructor_ThrowsArgumentNullException_WhenStitcherIsNull()
+    {
+        Assert.Throws<ArgumentNullException>(() => new ScreenPacketApplier(StreamId, null!));
+    }
+
+    [Fact]
+    public void Apply_ThrowsArgumentNullException_WhenPacketIsNull()
+    {
+        ImageStitcher stitcher = new ImageStitcher();
+        ScreenPacketApplier applier = new ScreenPacketApplier(StreamId, stitcher);
+
+        Assert.Throws<ArgumentNullException>(() => applier.Apply(null!));
+
+        stitcher.Dispose();
+    }
 }

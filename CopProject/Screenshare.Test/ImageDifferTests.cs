@@ -123,4 +123,76 @@ public class ImageDifferTests
 
         Assert.Contains(result.ChangedTiles, tile => tile.X == 64 && tile.Y == 0 && tile.Width == 36 && tile.Height == 64);
     }
+
+    [Fact]
+    public void Compare_ReturnsFullFrame_WhenExactlyHalfTheTilesChange()
+    {
+        IImageDiffer differ = new ImageDiffer();
+
+        using var previousFrame = new Bitmap(128, 128);
+        using var currentFrame = new Bitmap(128, 128);
+
+        // A 128x128 image contains four 64x64 tiles.
+        // Changing two tiles means exactly 50% of the image is changed.
+        currentFrame.SetPixel(10, 10, Color.Red);
+        currentFrame.SetPixel(70, 10, Color.Red);
+
+        using ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
+
+        Assert.False(result.IsUnchanged);
+        Assert.True(result.IsFullFrame);
+        Assert.Empty(result.ChangedTiles);
+
+        Assert.NotNull(result.FullFrame);
+        Assert.Equal(128, result.FullFrame.Width);
+        Assert.Equal(128, result.FullFrame.Height);
+    }
+
+    [Fact]
+    public void Compare_ReturnsFullFrame_WhenMoreThanHalfTheTilesChange()
+    {
+        IImageDiffer differ = new ImageDiffer();
+
+        using var previousFrame = new Bitmap(128, 128);
+        using var currentFrame = new Bitmap(128, 128);
+
+        // Three out of four tiles change (75%).
+        currentFrame.SetPixel(10, 10, Color.Red);
+        currentFrame.SetPixel(70, 10, Color.Red);
+        currentFrame.SetPixel(10, 70, Color.Red);
+
+        using ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
+
+        Assert.False(result.IsUnchanged);
+        Assert.True(result.IsFullFrame);
+        Assert.Empty(result.ChangedTiles);
+        Assert.NotNull(result.FullFrame);
+    }
+
+    [Fact]
+    public void Compare_ReturnsMultipleChangedTiles_WhenChangeIsBelowThreshold()
+    {
+        IImageDiffer differ = new ImageDiffer();
+
+        using var previousFrame = new Bitmap(256, 256);
+        using var currentFrame = new Bitmap(256, 256);
+
+        // Change one pixel in each of three different tiles.
+        // Each tile is 64x64, so the changed area is 3/16 = 18.75%.
+        currentFrame.SetPixel(10, 10, Color.Red);
+        currentFrame.SetPixel(70, 10, Color.Red);
+        currentFrame.SetPixel(130, 10, Color.Red);
+
+        using ImageDiffResult result = differ.Compare(previousFrame, currentFrame);
+
+        Assert.False(result.IsUnchanged);
+        Assert.False(result.IsFullFrame);
+        Assert.Null(result.FullFrame);
+        Assert.Equal(3, result.ChangedTiles.Count);
+
+        Assert.Contains(result.ChangedTiles, tile => tile.X == 0 && tile.Y == 0);
+        Assert.Contains(result.ChangedTiles, tile => tile.X == 64 && tile.Y == 0);
+        Assert.Contains(result.ChangedTiles, tile => tile.X == 128 && tile.Y == 0);
+    }
+
 }

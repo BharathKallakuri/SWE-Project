@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
+using ScreenShare;
 
-namespace ScreenShare.Tests;
+namespace Screenshare.Tests;
 
 public class ScalingImageSourceTests
 {
@@ -125,5 +126,21 @@ public class ScalingImageSourceTests
         {
             return new Bitmap(100, 100);
         }
+    }
+
+    [Fact]
+    public void Capture_FrameHeightExactlyAtLimit_ReturnsOriginalFrame()
+    {
+        FakeImageSource source = new FakeImageSource(1280, 720);
+        ScalingImageSource scalingSource = new ScalingImageSource(source, 720);
+
+        Bitmap result = scalingSource.Capture();
+
+        Assert.Same(source.LastCapturedBitmap, result);
+        Assert.Equal(1280, result.Width);
+        Assert.Equal(720, result.Height);
+
+        result.Dispose();
+        scalingSource.Dispose();
     }
 }
