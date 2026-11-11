@@ -1,4 +1,4 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 using System;
@@ -14,8 +14,8 @@ public abstract class Item : IItem
     public string CreatedBy { get; set; } = string.Empty;
     public DateTime CreatedDateTime { get; set; } = DateTime.Now;
     public DateTime LastModifiedDateTime { get; set; } = DateTime.Now;
-    public double Left { get; set; } = 0;
-    public double Top { get; set; } = 0;
+    public double Left => BoundingBox.Left;
+    public double Top => BoundingBox.Top;
     public double Orientation { get; set; } = 0;
     public abstract Rect2D BoundingBox { get; }
     public abstract void MoveBy(double dX, double dY);

@@ -21,8 +21,6 @@ public class Square : Shape, ISquare
 
     public override void MoveBy(double dX, double dY)
     {
-        Left += dX;
-        Top += dY;
         Center = Center with { X = Center.X + dX, Y = Center.Y + dY };
     }
 

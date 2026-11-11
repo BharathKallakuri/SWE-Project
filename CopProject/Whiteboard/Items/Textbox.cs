@@ -13,8 +13,6 @@ public class Textbox : Item, ITextbox
 
     public override void MoveBy(double dX, double dY)
     {
-        Left += dX;
-        Top += dY;
         Center = Center with { X = Center.X + dX, Y = Center.Y + dY };
     }
 
@@ -23,8 +21,8 @@ public class Textbox : Item, ITextbox
     public double Height { get; set; } = 40;
 
     public override Rect2D BoundingBox => new(
-        Left,
-        Top,
+        Center.X - (Width / 2.0),
+        Center.Y - (Height / 2.0),
         Width,
         Height
     );

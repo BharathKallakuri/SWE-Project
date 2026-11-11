@@ -1,4 +1,4 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 using System;
@@ -39,12 +39,12 @@ public interface IItem
     /// <summary>
     /// X-coordinate of the leftmost edge of the item's bounding box
     /// </summary>
-    double Left { get; set; }
+    double Left { get; }
 
     /// <summary>
     /// Y-coordinate of the topmost edge of the item's bounding box
     /// </summary>
-    double Top { get; set; }
+    double Top { get; }
 
     /// <summary>
     /// Orientation (rotation) of the item in degrees

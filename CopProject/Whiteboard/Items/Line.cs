@@ -34,8 +34,6 @@ public class Line : Item, ILine
 
     public override void MoveBy(double dX, double dY)
     {
-        Left += dX;
-        Top += dY;
         Begin = Begin with { X = Begin.X + dX, Y = Begin.Y + dY };
         End = End with { X = End.X + dX, Y = End.Y + dY };
     }

@@ -1,4 +1,4 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 using System;
@@ -17,7 +17,7 @@ public class Polygon : Shape, IPolygon
         get {
             if (Vertices == null || Vertices.Count == 0)
             {
-                return new Rect2D(Left, Top, 0, 0);
+                return new Rect2D(0, 0, 0, 0);
             }
 
             double minX = Vertices.Min(v => v.X);
@@ -36,9 +36,6 @@ public class Polygon : Shape, IPolygon
 
     public override void MoveBy(double dX, double dY)
     {
-        Left += dX;
-        Top += dY;
-
         for (int i = 0; i < Vertices.Count; i++)
         {
             Vertices[i] = Vertices[i] with { X = Vertices[i].X + dX, Y = Vertices[i].Y + dY };
