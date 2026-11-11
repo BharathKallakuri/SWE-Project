@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Incidents;
 using Incidents.ViewModels.Utils;
 using Microsoft.UI.Xaml;
 
@@ -71,7 +72,7 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
     /// <summary>
     /// Evidence items attached to the incident.
     /// </summary>
-    public ObservableCollection<IncidentEvidence> Evidences { get; } = [];
+    public ObservableCollection<(IncidentEvidence Evidence, byte[] Content)> Evidences { get; } = [];
 
     /// <summary>
     /// Validates the form and creates the incident when Submit is clicked.
@@ -251,7 +252,7 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
                 SelectedCategory,
                 SelectedSeverity,
                 location,
-                Evidences.ToList() // @todo(@sreenath): need to verify
+                Evidences.ToList()
             );
 
             await _incidentController.CreateIncident(request);
