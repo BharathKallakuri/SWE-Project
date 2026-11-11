@@ -1,4 +1,4 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 namespace Whiteboard.Interfaces.Shapes;
@@ -11,7 +11,7 @@ public interface ISquare : IShape
     /// <summary>
     /// Center of the square
     /// </summary>
-    public Point2D Center { get; init; }
+    public Point2D Center { get; }
 
     /// <summary>
     /// Side length of the square
