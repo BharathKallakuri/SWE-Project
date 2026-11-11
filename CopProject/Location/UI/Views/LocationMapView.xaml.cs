@@ -11,6 +11,7 @@ namespace LocationTracker.Views;
 public sealed partial class LocationMapView : UserControl
 {
     public event Action<Guid>? IncidentSelected;
+    public event Action<IncidentLocation>? LocationSelected;
 
     private IMapService? _map;
     private LocationMapViewModel? _viewModel;
@@ -60,15 +61,38 @@ public sealed partial class LocationMapView : UserControl
         MapView.NavigateToString(MapPage);
     }
 
-    private void WebView_WebMessageReceived(
+    /// <summary>
+    /// Handles messages received from the WebView2 control, such as map clicks and incident selections.
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="args"></param>
+    private async void WebView_WebMessageReceived(
         CoreWebView2 sender,
         CoreWebView2WebMessageReceivedEventArgs args)
     {
         string messageJson = args.TryGetWebMessageAsString()
             ?? args.WebMessageAsJson;
         using JsonDocument message = JsonDocument.Parse(messageJson);
-        if (!message.RootElement.TryGetProperty("type", out JsonElement type) ||
-            type.GetString() != "incident-click" ||
+        if (!message.RootElement.TryGetProperty("type", out JsonElement type))
+        {
+            return;
+        }
+
+        /// <summary>
+        /// Handles a click on the map by retrieving the location and invoking the LocationSelected event.
+        /// </summary>
+        if (type.GetString() == "map-click")
+        {
+            double latitude = message.RootElement.GetProperty("lat").GetDouble();
+            double longitude = message.RootElement.GetProperty("lng").GetDouble();
+            await OnMapClickedAsync(latitude, longitude);
+            return;
+        }
+
+        /// <summary>
+        /// Handles a click on an incident by retrieving the incident ID and invoking the IncidentSelected event.
+        /// </summary>
+        if (type.GetString() != "incident-click" ||
             !message.RootElement.TryGetProperty("id", out JsonElement id) ||
             !Guid.TryParse(id.GetString(), out Guid incidentId))
         {
@@ -76,6 +100,32 @@ public sealed partial class LocationMapView : UserControl
         }
 
         IncidentSelected?.Invoke(incidentId);
+    }
+
+    /// <summary>
+    /// Handles a click on the map by retrieving the location and invoking the LocationSelected event.
+    /// </summary>
+    private async Task OnMapClickedAsync(double latitude, double longitude)
+    {
+        if (_map is null)
+        {
+            return;
+        }
+
+        IncidentLocation? location;
+        try
+        {
+            location = await _map.GetLocationForClickAsync(latitude, longitude);
+        }
+        catch (HttpRequestException)
+        {
+            location = new IncidentLocation(latitude, longitude);
+        }
+
+        if (location is not null)
+        {
+            LocationSelected?.Invoke(location);
+        }
     }
 
     private async void MapView_NavigationCompleted(
@@ -218,6 +268,14 @@ public sealed partial class LocationMapView : UserControl
                   .bindPopup(popup);
               });
             }
+
+            map.on('click', e => {
+              window.chrome.webview.postMessage(JSON.stringify({
+                type: 'map-click',
+                lat: e.latlng.lat,
+                lng: e.latlng.lng
+              }));
+            });
 
             function selectIncident(id) {
               window.chrome.webview.postMessage(JSON.stringify({

@@ -347,6 +347,7 @@ public sealed partial class MainWindow : Window
             var geocoding = new NominatimGeocodingService(new HttpClient());
             var map = new LocationMapView();
             map.IncidentSelected += LocationIncidentSelected;
+            map.LocationSelected += LocationSelectedOnMap;
             map.Initialize(new MapService(context.IncidentController, geocoding));
             LocationHost.Content = map;
             ShowScreen("location");
@@ -371,6 +372,30 @@ public sealed partial class MainWindow : Window
         catch (Exception ex)
         {
             await ShowErrorAsync("Unable to load incident", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Handles a location selection on the map by navigating to the create incident page.
+    /// </summary>
+    private async void LocationSelectedOnMap(IncidentLocation location)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            IncidentsFrame.Navigate(
+                typeof(CreateIncidentPage),
+                new IncidentCreatePageWithLocation(
+                    context,
+                    location.Latitude,
+                    location.Longitude,
+                    location.Address));
+            LocationHost.Content = null;
+            ShowScreen("incidents");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to open create incident", ex.Message);
         }
     }
 
