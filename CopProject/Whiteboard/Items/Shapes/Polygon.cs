@@ -34,6 +34,17 @@ public class Polygon : Shape, IPolygon
         }
     }
 
+    public override void MoveBy(double dX, double dY)
+    {
+        Left += dX;
+        Top += dY;
+
+        for (int i = 0; i < Vertices.Count; i++)
+        {
+            Vertices[i] = Vertices[i] with { X = Vertices[i].X + dX, Y = Vertices[i].Y + dY };
+        }
+    }
+
     public override bool HitTest(Point2D point)
     {
         throw new NotImplementedException();
