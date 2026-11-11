@@ -15,6 +15,7 @@ public sealed class HostController : IControllerService
     private readonly ICommunicator _communicator;
     private readonly SessionManager _sessionManager;
     private bool _disposed;
+    private readonly List<IUserNotificationHandler> _notificationHandlers = new();
 
     //Events 
     public event EventHandler<MeetingEndedEventArgs>? MeetingEnded;
@@ -28,6 +29,17 @@ public sealed class HostController : IControllerService
 
     public SessionManager SessionManager => _sessionManager;
 
+    public void RegisterNotificationHandler(IUserNotificationHandler handler)
+    {
+        if(handler != null && !_notificationHandlers.Contains(handler))
+            _notificationHandlers.Add(handler);
+        
+    }
+    public void UnregisterNotificationHandler(IUserNotificationHandler handler)
+    {
+        if(handler != null && _notificationHandlers.Contains(handler))
+            _notificationHandlers.Remove(handler);
+    }
     public HostController(ControllerUser hostUser, ICommunicator communicator)
     {
         _hostUser = hostUser ?? throw new ArgumentNullException(nameof(hostUser));
@@ -60,6 +72,10 @@ public sealed class HostController : IControllerService
         {
             Trace.TraceWarning("StartMeeting failed: could not transition session to Active.");
             return false;
+        }
+        foreach(var handler in _notificationHandlers)
+        {
+            handler.OnUserJoined(_hostUser);
         }
 
         Trace.TraceInformation($"Meeting started by host '{_hostUser.Username}'.");
@@ -117,6 +133,10 @@ public sealed class HostController : IControllerService
         List<ControllerUser> allUsers = _sessionManager.GetActiveUsers();
         string payload = $"{JsonSerializer.Serialize(e.User)}{Protocol.Separator}{JsonSerializer.Serialize(allUsers)}";
         Broadcast(Protocol.FormatNotification(Protocol.NotifyUserJoined, payload));
+        foreach(var handler in _notificationHandlers)
+        {
+            handler.OnUserJoined(e.User);
+        }
     }
 
     private void OnUserLeft(object? sender, UserLeftEventArgs e)
@@ -126,6 +146,10 @@ public sealed class HostController : IControllerService
         List<ControllerUser> allUsers = _sessionManager.GetActiveUsers();
         string payload = $"{JsonSerializer.Serialize(e.User)}{Protocol.Separator}{JsonSerializer.Serialize(allUsers)}";
         Broadcast(Protocol.FormatNotification(Protocol.NotifyUserLeft, payload));
+        foreach(var handler in _notificationHandlers)
+        {
+            handler.OnUserLeft(e.User);
+        }
     }
 
     private void OnMeetingEnded(object? sender, MeetingEndedEventArgs e)
