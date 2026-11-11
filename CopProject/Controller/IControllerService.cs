@@ -37,4 +37,8 @@ public interface IControllerService : IDisposable
      // Meeting connection and current user identity (for ScreenShare and other modules)
     ICommunicator? Communicator { get; }
     ControllerUser? CurrentUser { get; }
+    
+    // Registration for external module notification handlers.
+    void RegisterNotificationHandler(IUserNotificationHandler handler);
+    void UnregisterNotificationHandler(IUserNotificationHandler handler);
 }
