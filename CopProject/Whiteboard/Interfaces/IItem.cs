@@ -1,4 +1,7 @@
-﻿using System;
+﻿/// Owner   : Raagam Hitesh Parmar
+/// LICENSE : MIT
+
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Whiteboard.Interfaces;
@@ -52,6 +55,13 @@ public interface IItem
     /// Minimal rectangle containing the item
     /// </summary>
     Rect2D BoundingBox { get; }
+
+    /// <summary>
+    /// Move the item by <paramref name="dX"/> rightwards and <paramref name="dY"/> downwards
+    /// </summary>
+    /// <param name="dX">Amount to move by, rightwards</param>
+    /// <param name="dY">Amount to move by, downwards</param>
+    void MoveBy(double dX, double dY);
 
     /// <summary>
     /// Check if a point intersects with the item

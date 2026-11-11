@@ -1,6 +1,5 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿/// Owner   : Raagam Hitesh Parmar
+/// LICENSE : MIT
 
 using System;
 using Whiteboard.Interfaces;
@@ -19,6 +18,7 @@ public abstract class Item : IItem
     public double Top { get; set; } = 0;
     public double Orientation { get; set; } = 0;
     public abstract Rect2D BoundingBox { get; }
+    public abstract void MoveBy(double dX, double dY);
     public abstract bool HitTest(Point2D point);
 
     /// <summary>
