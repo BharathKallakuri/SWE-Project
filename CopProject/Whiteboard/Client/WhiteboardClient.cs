@@ -88,13 +88,13 @@ public class WhiteboardClient : IWhiteboardClient
     {
         ArgumentNullException.ThrowIfNull(item);
 
-        //Canvas.AddItem(item);
+        Canvas.AddItem(item);
         SendToServer(new ClientMessage.ReqAddItem(item.Id, ItemMapper.ToDto(item)));
     }
 
     public void DeleteItem(Guid id)
-    {   
-        //Canvas.DeleteItem(id);
+    {
+        Canvas.DeleteItem(id);
         SendToServer(new ClientMessage.ReqDeleteItem(id));
     }
 
@@ -102,7 +102,7 @@ public class WhiteboardClient : IWhiteboardClient
     {
         ArgumentNullException.ThrowIfNull(item);
 
-        //Canvas.EditItem(item);
+        Canvas.EditItem(item);
         SendToServer(new ClientMessage.ReqUpdateItem(item.Id, ItemMapper.ToDto(item)));
     }
 
