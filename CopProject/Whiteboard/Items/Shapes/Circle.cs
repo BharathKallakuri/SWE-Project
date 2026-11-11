@@ -1,4 +1,4 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 using Whiteboard.Interfaces;
@@ -9,7 +9,7 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class Circle : Shape, ICircle
 {
-    public Point2D Center { get; private set; } = new(0, 0);
+    public Point2D Center { get; set; } = new(0, 0);
 
     public double Radius { get; set; } = 10;
 

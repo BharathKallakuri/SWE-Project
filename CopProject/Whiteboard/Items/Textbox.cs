@@ -9,7 +9,7 @@ namespace Whiteboard.Items;
 /// <inheritdoc/>
 public class Textbox : Item, ITextbox
 {
-    public Point2D Center { get; private set; } = new(0, 0);
+    public Point2D Center { get; set; } = new(0, 0);
 
     public override void MoveBy(double dX, double dY)
     {
