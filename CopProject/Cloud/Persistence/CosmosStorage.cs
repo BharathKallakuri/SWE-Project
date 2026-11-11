@@ -226,12 +226,7 @@ internal class CosmosStorage : IStorage
     }
 
     /// <inheritdoc/>
-
-    /*
-     The user calls the UpdateAll method only after getting all the Etags from the module's container.
-     A dictionary of Id : Etag of each item is returned
-    */
-
+    // this method may be deleted later if no use is found
     public async Task<(bool Success, Dictionary<string, string>)> ReadAllEtags()
     {
         Dictionary<string, string> etags = [];
@@ -270,13 +265,43 @@ internal class CosmosStorage : IStorage
     }
 
     /// <inheritdoc/>
+    /* reads ETags of the items specified by the keys in the array.
+       A dictionary of Id : Etag of each item is returned
+       UpdateAll method is called only after getting the ETags of all the required items
+    */
+    public async Task<(bool Success, Dictionary<string, string> Etags)> ReadEtags(string[] keys)
+    {
+        Dictionary<string, string> etags = new Dictionary<string, string>();
+        foreach (string key in keys)
+        {
+            (bool success, string etag) = await ReadEtag(key);
+            if (success)
+            {
+                etags[key] = etag;
+            }
+            else
+            {
+                return (false, new Dictionary<string, string>());
+            }
+        }
+        return (true, etags);
+    }
+
+    /// <inheritdoc/>
     /* 
-     Call UpdateAll method with the key-value pairs to be updated and Etags of all items from the 
-     container. 
-     The method will use only the etags of the required items from the Etags of all items
+     Call UpdateAll method with the key-value pairs to be updated and the Etags of all required items.
+     This should be obtained by calling ReadEtags method.
     */
     public async Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags)
     {
+        foreach (string key in items.Keys)
+        {
+            if (!etags.ContainsKey(key))
+            {
+                return false;
+            }
+        }
+
         try
         {
             foreach (KeyValuePair<string, byte[]> item in items)
@@ -314,7 +339,47 @@ internal class CosmosStorage : IStorage
         return true;
     }
 
+    /// <inheritdoc/>
+    /*  Read the latest n items from the container. Useful for retrieving recent records
+        eg: read the latest 10 incidents
+    */
+    public async Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int count)
+    {
+        Dictionary<string, byte[]> items = [];
 
+        /* return false and empty dictionary if count is invalid */
+        if (count <= 0)
+        {
+            return (false, items);
+        }
 
+        try
+        {
+            /* retrieve the latest 'count' items ordered by their last modification time (_ts) */
+            IQueryable<PersistenceItem> query = _container
+                .GetItemLinqQueryable<PersistenceItem>()
+                .OrderByDescending(item => item.TimeStamp)
+                .Take(count);
+
+            using FeedIterator<PersistenceItem> iterator = query.ToFeedIterator();
+
+            while (iterator.HasMoreResults)
+            {
+                FeedResponse<PersistenceItem> page = await iterator.ReadNextAsync();
+
+                foreach (PersistenceItem item in page)
+                {
+                    items[item.Id] = item.Data;
+                }
+            }
+
+            return (true, items);
+        }
+        catch (CosmosException)
+        {
+            return (false, []); /* return false and empty dict in case of exceptions */
+        }
+    }
 
 }
+
