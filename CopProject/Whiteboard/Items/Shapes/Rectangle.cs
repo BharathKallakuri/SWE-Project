@@ -1,4 +1,4 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 using Whiteboard.Interfaces;
@@ -9,7 +9,7 @@ namespace Whiteboard.Items.Shapes;
 /// <inheritdoc/>
 public class Rectangle : Shape, IRectangle
 {
-    public Point2D Center { get; init; } = new(0, 0);
+    public Point2D Center { get; private set; } = new(0, 0);
 
     public override Rect2D BoundingBox => new(
         Center.X - (Width / 2.0),
@@ -17,6 +17,13 @@ public class Rectangle : Shape, IRectangle
         Width,
         Height
     );
+
+    public override void MoveBy(double dX, double dY)
+    {
+        Left += dX;
+        Top += dY;
+        Center = Center with { X = Center.X + dX, Y = Center.Y + dY };
+    }
 
     public override bool HitTest(Point2D point)
     {

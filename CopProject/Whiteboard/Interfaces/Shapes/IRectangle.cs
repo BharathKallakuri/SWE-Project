@@ -11,7 +11,7 @@ public interface IRectangle : IShape
     /// <summary>
     /// Center of the rectangle
     /// </summary>
-    public Point2D Center { get; init; }
+    public Point2D Center { get; }
 
     /// <summary>
     /// Width of the rectangle
