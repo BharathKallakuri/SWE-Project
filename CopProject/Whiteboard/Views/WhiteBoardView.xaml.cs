@@ -26,7 +26,7 @@ public sealed partial class WhiteBoardView : UserControl
 
         _viewModel = viewModel;
 
-        ToolbarInfo toolbarInfo = new(new SolidColorBrush(Colors.Black), 3, new SolidColorBrush(Colors.Red));
+        ToolbarInfo toolbarInfo = new(Colors.Black, 3, Colors.Red);
         _viewModel.InitializeViewModel(WhiteboardCanvas, toolbarInfo);
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
