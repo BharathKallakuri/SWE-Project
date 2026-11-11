@@ -1,4 +1,4 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 using System;
@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Whiteboard.Client;
+using Whiteboard.Interfaces;
 
 namespace Whiteboard.ViewModels;
 
@@ -70,7 +71,7 @@ public class WhiteBoardViewModel
         _penState = new PenState(_whiteboardClient, canvas, toolbarInfo);
         _squareState = new ShapeSquareState(_whiteboardClient, canvas, toolbarInfo);
         _circleState = new ShapeCircleState(_whiteboardClient, canvas, toolbarInfo);
-        _eraserState = new EraserState(_whiteboardClient, canvas);
+        _eraserState = new EraserState(_whiteboardClient);
         _renderer = new WhiteboardRenderer(_whiteboardClient.Canvas, canvas);
 
         _currentState = _penState;
@@ -112,28 +113,28 @@ public class WhiteBoardViewModel
         SelectedTool = tool;
     }
 
-    public void PointerPressed(object sender, PointerRoutedEventArgs e)
+    public void PointerPressed(Point2D point)
     {
         EnsureInitialized();
-        _currentState.PointerPressed(sender, e);
+        _currentState.PointerPressed(point);
     }
 
-    public void PointerMoved(object sender, PointerRoutedEventArgs e)
+    public void PointerMoved(Point2D point)
     {
         EnsureInitialized();
-        _currentState.PointerMoved(sender, e);
+        _currentState.PointerMoved(point);
     }
 
-    public void PointerReleased(object sender, PointerRoutedEventArgs e)
+    public void PointerReleased(Point2D point)
     {
         EnsureInitialized();
-        _currentState.PointerReleased(sender, e);
+        _currentState.PointerReleased(point);
     }
 
-    public void PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    public void PointerCaptureLost(Point2D point)
     {
         EnsureInitialized();
-        _currentState.PointerCaptureLost(sender, e);
+        _currentState.PointerCaptureLost(point);
     }
 
     private void EnsureInitialized()
