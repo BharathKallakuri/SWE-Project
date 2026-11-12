@@ -4,6 +4,7 @@
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
 using Whiteboard.Models;
+using Whiteboard.Network.Dtos;
 
 namespace Whiteboard.Test.Mocks;
 
@@ -68,4 +69,6 @@ public class MockWhiteboardClient : IWhiteboardClient
     public void Redo() { }
     public void Reset() { }
     public void OnMessageReceived(byte[] message) { }
+
+    public void RestoreSnapshot(WhiteboardDto whiteboard) { }
 }
