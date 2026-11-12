@@ -1,5 +1,12 @@
+﻿// Author : Murali
+
+using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Threading.Tasks;
 using FileSynchroniser.Models;
+using FileSynchroniser.Network;
 using FileSynchroniser.ViewModels;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
@@ -21,6 +28,10 @@ public sealed partial class FileSyncPage : Page
     /// </summary>
     public FileSyncViewModel ViewModel { get; }
 
+    private SimulatedCommunicator? _communicator;
+    private NetworkSyncHandler? _syncHandler;
+    private int _currentPort = 0;
+
     /// <summary>
     /// Creates the page and its ViewModel.
     /// </summary>
@@ -33,11 +44,76 @@ public sealed partial class FileSyncPage : Page
     }
 
     /// <summary>
+    /// ensures communicator is initialized on the configured listening port
+    /// </summary>
+    private void EnsureCommunicator(int listenPort)
+    {
+        if (_communicator != null && _currentPort == listenPort)
+        {
+            return;
+        }
+
+        _communicator?.Dispose();
+        _communicator = new SimulatedCommunicator(listenPort);
+        _currentPort = listenPort;
+
+        _syncHandler = new NetworkSyncHandler(ViewModel.RootDirectory, _communicator);
+
+        _syncHandler.OnLog += msg => {
+            DispatcherQueue.TryEnqueue(() => {
+                StatusTextBlock.Text = msg;
+            });
+        };
+
+        _syncHandler.OnSyncCompleted += () => {
+            DispatcherQueue.TryEnqueue(() => {
+                ViewModel.RefreshCommand.Execute(null);
+                StatusTextBlock.Text = "[sync] synchronisation finished successfully!";
+            });
+        };
+    }
+
+    /// <summary>
     /// handles click event on the sync button
     /// </summary>
     private void OnSyncButtonClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        ViewModel.RefreshCommand.Execute(null);
+        string peerIp = PeerIpTextBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(peerIp))
+        {
+            peerIp = "127.0.0.1";
+        }
+
+        if (!int.TryParse(MyPortTextBox.Text.Trim(), out int listenPort))
+        {
+            listenPort = 8001;
+        }
+
+        if (!int.TryParse(PeerPortTextBox.Text.Trim(), out int peerPort))
+        {
+            peerPort = 8002;
+        }
+
+        StatusTextBlock.Text = $"Connecting on port {listenPort} to {peerIp}:{peerPort}...";
+
+        System.Threading.Tasks.Task.Run(() => {
+            try
+            {
+                EnsureCommunicator(listenPort);
+
+                var peerEndpoint = new System.Net.IPEndPoint(System.Net.IPAddress.Parse(peerIp), peerPort);
+                _communicator!.RegisterPeer(peerEndpoint);
+                _syncHandler!.DefaultPeerEndpoint = peerEndpoint;
+
+                _syncHandler.StartSync();
+            }
+            catch (Exception ex)
+            {
+                DispatcherQueue.TryEnqueue(() => {
+                    StatusTextBlock.Text = $"Network sync error: {ex.Message}";
+                });
+            }
+        });
     }
 
     /// <summary>
@@ -65,12 +141,13 @@ public sealed partial class FileSyncPage : Page
     /// </summary>
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
+        _communicator?.Dispose();
         ViewModel.Dispose();
         base.OnNavigatedFrom(e);
     }
 
     /// <summary>
-    /// Opens a file picker and adds the chosen file to the synchronised folder.
+    /// Opens a file picker and adds the chosen file(s) to the synchronised folder.
     /// </summary>
     /// <param name="sender">The Add File button.</param>
     /// <param name="e">Event data for the click.</param>
@@ -85,21 +162,69 @@ public sealed partial class FileSyncPage : Page
             IntPtr hwnd = Win32Interop.GetWindowFromWindowId(XamlRoot.ContentIslandEnvironment.AppWindowId);
             InitializeWithWindow.Initialize(picker, hwnd);
 
-            StorageFile? file = await picker.PickSingleFileAsync();
-            if (file is null)
+            IReadOnlyList<StorageFile> pickedFiles = await picker.PickMultipleFilesAsync();
+            if (pickedFiles is null || pickedFiles.Count == 0)
             {
                 return; // user cancelled
             }
 
-            byte[] content = await File.ReadAllBytesAsync(file.Path);
+            var filesToSave = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
+            var unreadable = new List<string>();
+
+            foreach (StorageFile file in pickedFiles)
+            {
+                try
+                {
+                    byte[] content = await File.ReadAllBytesAsync(file.Path);
+                    filesToSave[GetUniqueName(file.Name, filesToSave)] = content;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    unreadable.Add($"{file.Name}: {ex.Message}");
+                }
+            }
 
             // The ViewModel reports success/failure through its status message.
-            ViewModel.AddFile(file.Name, content);
+            if (filesToSave.Count > 0)
+            {
+                ViewModel.AddFile(filesToSave);
+            }
+
+            if (unreadable.Count > 0)
+            {
+                await ShowMessageAsync("Could not read some selected files", string.Join(Environment.NewLine, unreadable));
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             await ShowMessageAsync("Could not read the selected file", ex.Message);
         }
+    }
+
+    /// <summary>
+    /// Returns a name that is not already used in the batch, e.g. "report (2).pdf"
+    /// when two picked files from different folders are both called "report.pdf".
+    /// </summary>
+    private static string GetUniqueName(string fileName, IReadOnlyDictionary<string, byte[]> existing)
+    {
+        if (!existing.ContainsKey(fileName))
+        {
+            return fileName;
+        }
+
+        string baseName = Path.GetFileNameWithoutExtension(fileName);
+        string extension = Path.GetExtension(fileName);
+        int counter = 2;
+        string candidate;
+
+        do
+        {
+            candidate = $"{baseName} ({counter}){extension}";
+            counter++;
+        }
+        while (existing.ContainsKey(candidate));
+
+        return candidate;
     }
 
     /// <summary>
