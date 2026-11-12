@@ -20,6 +20,11 @@ public class MockWhiteboardClient : IWhiteboardClient
     public event Action HistoryChanged = delegate { };
 
     /// <summary>
+    /// Event signaled whenever an item is added through <see cref="AddItem(IItem)"/>.
+    /// </summary>
+    public ManualResetEventSlim ItemAddedEvent { get; } = new(false);
+
+    /// <summary>
     /// A history of items added through the client
     /// </summary>
     public List<IItem> AddedItems { get; } = [];
@@ -42,6 +47,7 @@ public class MockWhiteboardClient : IWhiteboardClient
 
         AddedItems.Add(item);
         Canvas.AddItem(item);
+        ItemAddedEvent.Set();
     }
 
     public void DeleteItem(Guid id)
