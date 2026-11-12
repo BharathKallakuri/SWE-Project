@@ -161,6 +161,27 @@ public class PenStateTests
     }
 
     /// <summary>
+    /// Assert that losing the pointer when drawing clears the preview
+    /// </summary>
+    [Fact]
+    public void PointerCaptureLost_WhenDrawing_ClearsPreviewWithoutSubmitting()
+    {
+        PenState state = new(_client, _preview, _toolbar);
+
+        state.PointerPressed(new Point2D(0, 0));
+        state.PointerMoved(new Point2D(10, 10));
+        state.PointerCaptureLost(new Point2D(10, 10));
+
+        Assert.Equal(1, _preview.ClearCount);
+        Assert.Empty(_client.AddedItems);
+
+        // Subsequent move does not do anything
+        state.PointerMoved(new Point2D(20, 20));
+
+        Assert.Equal(2, _preview.ShownItems.Count);
+    }
+
+    /// <summary>
     /// Assert that losing pointer when not drawing does not do anything
     /// </summary>
     [Fact]
