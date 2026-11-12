@@ -1,20 +1,23 @@
 ﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
-using System.Diagnostics.CodeAnalysis;
 using Windows.UI;
 
 namespace Whiteboard.ViewModels;
 
 /// <summary>
-/// Represents the currently selected tooltip options
+/// Represents the currently selected toolbar options
 /// </summary>
-/// <param name="BorderColor">Brush for borders</param>
-/// <param name="BorderWidth">Stroke thickness</param>
-/// <param name="FillColor">Brush for fill</param>
-[ExcludeFromCodeCoverage]
-public record ToolbarInfo(
-    Color BorderColor,
-    double BorderWidth,
-    Color FillColor
-);
+public class ToolbarInfo
+{
+    public Color BorderColor { get; set; }
+    public double BorderWidth { get; set; }
+    public Color FillColor { get; set; }
+
+    public ToolbarInfo(Color borderColor, double borderWidth, Color fillColor)
+    {
+        BorderColor = borderColor;
+        BorderWidth = borderWidth;
+        FillColor = fillColor;
+    }
+}
