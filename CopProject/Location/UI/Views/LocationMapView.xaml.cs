@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Incident_module;
+using Incidents;
 using LocationTracker.Interfaces;
 using LocationTracker.ViewModels;
 using Microsoft.Web.WebView2.Core;
@@ -38,6 +38,8 @@ public sealed partial class LocationMapView : UserControl
         await InitializeMapAsync();
     }
 
+    /// <summary>Initializes WebView2 before loading the map.</summary>
+    /// <remarks>OpenStreetMap requires a descriptive User-Agent for tile requests.</remarks>
     private async Task InitializeMapAsync()
     {
         if (_map is null || _mapInitializationStarted || MapView.CoreWebView2 is not null)
@@ -47,11 +49,8 @@ public sealed partial class LocationMapView : UserControl
 
         _mapInitializationStarted = true;
         MapView.NavigationCompleted += MapView_NavigationCompleted;
-        // CoreWebView2 is initialized asynchronously; wait for it before navigating,
-        // otherwise NavigateToString throws "A method was called at an unexpected time."
         await MapView.EnsureCoreWebView2Async();
 
-        // OpenStreetMap blocks tile requests without a descriptive User-Agent.
         CoreWebView2 webView = MapView.CoreWebView2
             ?? throw new InvalidOperationException("WebView2 failed to initialize.");
         webView.Settings.UserAgent =

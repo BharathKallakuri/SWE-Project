@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Incident_module.ViewModels.Utils;
+using Incidents.ViewModels.Utils;
 using Microsoft.UI.Xaml;
 
-namespace Incident_module.ViewModels;
+namespace Incidents.ViewModels;
 
+/// <summary>
+/// ViewModel for the Incident Details page that shows an incident and lets the user edit it.
+/// </summary>
 public sealed class IncidentDetailsPageViewModel : ViewModelBase
 {
     private readonly IIncidentController _incidentController;
-    private readonly Guid _currentUserId;
+    private readonly string _currentUserId;
 
     private Incident? _incident;
     private bool _isEditMode;
@@ -26,9 +29,12 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
     private double _editableLongitude;
     private string? _editableAddress;
 
+    /// <summary>
+    /// Creates the ViewModel and builds the dropdown options and commands.
+    /// </summary>
     public IncidentDetailsPageViewModel(
         IIncidentController incidentController,
-        Guid currentUserId)
+        string currentUserId)
     {
         _incidentController = incidentController ?? throw new ArgumentNullException(nameof(incidentController));
         _currentUserId = currentUserId;
@@ -42,6 +48,9 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         SaveChangesCommand = new RelayCommand(async () => await SaveChangesAsync());
     }
 
+    /// <summary>
+    /// Incident currently shown on the page.
+    /// </summary>
     public Incident? Incident
     {
         get => _incident;
@@ -51,6 +60,9 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// True while the user is editing the incident.
+    /// </summary>
     public bool IsEditMode
     {
         get => _isEditMode;
@@ -65,14 +77,31 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Opposite of IsEditMode.
+    /// </summary>
     public bool IsReadOnlyMode => !IsEditMode;
 
     // Direct Visibility properties for XAML binding
+
+    /// <summary>
+    /// Shows the edit controls only in edit mode.
+    /// </summary>
     public Visibility EditVisibility => IsEditMode ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>
+    /// Shows the read-only view only when not editing.
+    /// </summary>
     public Visibility ReadOnlyVisibility => IsReadOnlyMode ? Visibility.Visible : Visibility.Collapsed;
 
+    /// <summary>
+    /// Text on the edit button, which changes while editing.
+    /// </summary>
     public string EditButtonText => IsEditMode ? "Editing..." : "Edit Incident";
 
+    /// <summary>
+    /// True while a load or save is in progress.
+    /// </summary>
     public bool IsBusy
     {
         get => _isBusy;
@@ -84,8 +113,14 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Opposite of IsBusy, used to enable controls while idle.
+    /// </summary>
     public bool IsNotBusy => !IsBusy;
 
+    /// <summary>
+    /// Load or save error shown to the user.
+    /// </summary>
     public string ErrorMessage
     {
         get => _errorMessage;
@@ -97,10 +132,17 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Shows the error text only when there is an error message.
+    /// </summary>
     public Visibility ErrorVisibility =>
         string.IsNullOrWhiteSpace(ErrorMessage) ? Visibility.Collapsed : Visibility.Visible;
 
     // Editable bindings
+
+    /// <summary>
+    /// Status being edited.
+    /// </summary>
     public IncidentStatus EditableStatus
     {
         get => _editableStatus;
@@ -111,6 +153,9 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Category being edited.
+    /// </summary>
     public IncidentCategory EditableCategory
     {
         get => _editableCategory;
@@ -121,6 +166,9 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Severity being edited.
+    /// </summary>
     public IncidentSeverity EditableSeverity
     {
         get => _editableSeverity;
@@ -131,6 +179,9 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Latitude being edited.
+    /// </summary>
     public double EditableLatitude
     {
         get => _editableLatitude;
@@ -141,6 +192,9 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Longitude being edited.
+    /// </summary>
     public double EditableLongitude
     {
         get => _editableLongitude;
@@ -151,6 +205,9 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Address being edited.
+    /// </summary>
     public string? EditableAddress
     {
         get => _editableAddress;
@@ -161,17 +218,54 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Choices for the status dropdown.
+    /// </summary>
     public List<IncidentStatus> StatusOptions { get; }
+
+    /// <summary>
+    /// Choices for the category dropdown.
+    /// </summary>
     public List<IncidentCategory> CategoryOptions { get; }
+
+    /// <summary>
+    /// Choices for the severity dropdown.
+    /// </summary>
     public List<IncidentSeverity> SeverityOptions { get; }
 
+    /// <summary>
+    /// Evidence items attached to the incident.
+    /// </summary>
     public ObservableCollection<IncidentEvidence> Evidences { get; } = [];
+
+    /// <summary>
+    /// History of changes made to the incident, newest first.
+    /// </summary>
     public ObservableCollection<IChange> ChangeTimeline { get; } = [];
 
+    /// <summary>
+    /// Incidents connected to the currently displayed incident.
+    /// </summary>
+    public ObservableCollection<Incident> CorrelatedIncidents { get; } = [];
+
+    /// <summary>
+    /// Switches between read-only and edit mode.
+    /// </summary>
     public RelayCommand ToggleEditModeCommand { get; }
+
+    /// <summary>
+    /// Discards edits and returns to read-only mode.
+    /// </summary>
     public RelayCommand CancelEditCommand { get; }
+
+    /// <summary>
+    /// Saves the edited values.
+    /// </summary>
     public RelayCommand SaveChangesCommand { get; }
 
+    /// <summary>
+    /// Loads the incident with the given id and fills the editable fields and lists.
+    /// </summary>
     public async Task LoadIncidentAsync(Guid incidentId)
     {
         try
@@ -185,6 +279,7 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
             {
                 ResetEditableFields();
                 RefreshCollections();
+                await RefreshCorrelatedIncidentsAsync();
             }
         }
         catch (Exception ex)
@@ -197,6 +292,9 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Flips edit mode on or off and resets the editable fields to the saved values.
+    /// </summary>
     public void ToggleEditMode()
     {
         if (Incident == null) { return; }
@@ -204,12 +302,18 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         IsEditMode = !IsEditMode;
     }
 
+    /// <summary>
+    /// Throws away the edits and leaves edit mode.
+    /// </summary>
     public void CancelEdit()
     {
         ResetEditableFields();
         IsEditMode = false;
     }
 
+    /// <summary>
+    /// Sends only the changed values to the controller, then reloads the incident.
+    /// </summary>
     public async Task SaveChangesAsync()
     {
         if (Incident == null) { return; }
@@ -263,6 +367,9 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Adds new evidence to the incident and refreshes the lists.
+    /// </summary>
     public async Task AddEvidenceItemsAsync(List<IncidentEvidence> newEvidences)
     {
         if (Incident == null || newEvidences.Count == 0) { return; }
@@ -287,6 +394,9 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Copies the saved incident values into the editable fields.
+    /// </summary>
     private void ResetEditableFields()
     {
         if (Incident == null) { return; }
@@ -299,6 +409,9 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         EditableAddress = Incident.Location.Address;
     }
 
+    /// <summary>
+    /// Refills the evidence and change timeline lists from the current incident.
+    /// </summary>
     private void RefreshCollections()
     {
         if (Incident == null) { return; }
@@ -314,6 +427,63 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
         foreach (IChange change in Incident.ChangeHistory.OrderByDescending(c => c.ChangedTime))
         {
             ChangeTimeline.Add(change);
+        }
+    }
+
+    /// <summary>
+    /// Loads all incidents connected to the current incident.
+    /// </summary>
+    public async Task RefreshCorrelatedIncidentsAsync()
+    {
+        if (Incident == null) { return; }
+
+        CorrelatedIncidents.Clear();
+
+        List<Incident> correlated =
+            await _incidentController.GetCorrelatedIncidents(Incident.Id);
+
+        foreach (Incident incident in correlated)
+        {
+            CorrelatedIncidents.Add(incident);
+        }
+    }
+
+    /// <summary>
+    /// Correlates the current incident with the selected incidents.
+    /// </summary>
+    public async Task CorrelateIncidentsAsync(List<Guid> incidentIds)
+    {
+        if (Incident == null || incidentIds.Count == 0) { return; }
+
+        try
+        {
+            IsBusy = true;
+            ErrorMessage = string.Empty;
+
+            foreach (Guid id in incidentIds)
+            {
+                Incident otherIncident =
+                    await _incidentController.GetIncidentById(id);
+
+                await _incidentController.CorrelateIncident(
+                    Incident,
+                    otherIncident);
+            }
+
+            // Reload the incident and its correlated group.
+            Incident = await _incidentController.GetIncidentById(Incident.Id);
+
+            RefreshCollections();
+            await RefreshCorrelatedIncidentsAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to correlate incidents: {ex.Message}";
+            await RefreshCorrelatedIncidentsAsync();
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 }

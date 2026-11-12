@@ -20,7 +20,6 @@
     <Project Path="Cloud.UI/Cloud.UI.csproj" />
     <Project Path="Cloud/Cloud.csproj" />
     <Project Path="Controller/Controller.csproj" />
-    <Project Path="FileSync.Console/FileSync.Console.csproj" />
     <Project Path="Filesync.Test/Filesync.Test.csproj" />
     <Project Path="FileSynchroniser.UIharness/FileSynchroniser.UIharness.csproj" Id="2420b872-bb5a-44b9-a6d0-65bebf0c022e">
         <Platform Project="x64" />
@@ -41,6 +40,7 @@
     <Project Path="Networking.Test/Networking.Test.csproj" />
     <Project Path="Networking/Networking.csproj" />
     <Project Path="Screenshare/Screenshare.csproj" />
+    <Project Path="Utils/Utils.csproj" />
     <Project Path="UX/UX.csproj">
         <Platform Project="x64" />
         <Deploy />

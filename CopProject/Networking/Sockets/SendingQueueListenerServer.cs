@@ -51,7 +51,7 @@ public class SendingQueueListenerServer : IDisposable
         {
             if (_sendingQueue.IsEmpty())
             {
-                Thread.Sleep(100);
+                _sendingQueue.WaitForItem(100);
                 continue;
             }
 
