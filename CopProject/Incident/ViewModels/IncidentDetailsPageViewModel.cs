@@ -14,7 +14,7 @@ namespace Incidents.ViewModels;
 public sealed class IncidentDetailsPageViewModel : ViewModelBase
 {
     private readonly IIncidentController _incidentController;
-    private readonly Guid _currentUserId;
+    private readonly string _currentUserId;
 
     private Incident? _incident;
     private bool _isEditMode;
@@ -34,7 +34,7 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
     /// </summary>
     public IncidentDetailsPageViewModel(
         IIncidentController incidentController,
-        Guid currentUserId)
+        string currentUserId)
     {
         _incidentController = incidentController ?? throw new ArgumentNullException(nameof(incidentController));
         _currentUserId = currentUserId;
