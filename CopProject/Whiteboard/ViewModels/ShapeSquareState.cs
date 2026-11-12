@@ -13,29 +13,9 @@ namespace Whiteboard.ViewModels;
 /// <summary>
 /// Represents the state when the Shape Square tool is selected
 /// </summary>
-// Temporary exclusion from code coverage
-public class ShapeSquareState : IViewModelState
+/// <inheritdoc/>
+public class ShapeSquareState : ViewModelStateBase
 {
-    /// <summary>
-    /// The whiteboard client
-    /// </summary>
-    private readonly IWhiteboardClient _whiteboardClient;
-
-    /// <summary>
-    /// The canvas UI
-    /// </summary>
-    private readonly ICanvasPreview _preview;
-
-    /// <summary>
-    /// Current toolbar information
-    /// </summary>
-    private readonly ToolbarInfo _toolbarInfo;
-
-    /// <summary>
-    /// Flag to check whether the user is currently drawing on screen
-    /// </summary>
-    private bool _isDrawing = false;
-
     /// <summary>
     /// Start point of the square
     /// </summary>
@@ -46,18 +26,10 @@ public class ShapeSquareState : IViewModelState
     /// </summary>
     private ISquare? _square;
 
-    public ShapeSquareState(IWhiteboardClient whiteboardClient, ICanvasPreview preview, ToolbarInfo toolbarInfo)
-    {
-        ArgumentNullException.ThrowIfNull(whiteboardClient);
-        ArgumentNullException.ThrowIfNull(preview);
-        ArgumentNullException.ThrowIfNull(toolbarInfo);
-
-        _whiteboardClient = whiteboardClient;
-        _preview = preview;
-        _toolbarInfo = toolbarInfo;
+    public ShapeSquareState(IWhiteboardClient whiteboardClient, ICanvasPreview preview, ToolbarInfo toolbarInfo) : base(whiteboardClient, preview, toolbarInfo) {
     }
 
-    public void PointerPressed(Point2D point)
+    public override void PointerPressed(Point2D point)
     {
         // Set flag to begin drawing
         _isDrawing = true;
@@ -67,21 +39,24 @@ public class ShapeSquareState : IViewModelState
 
         // Create a new square with brush and fill properties taken from the toolbar
         _square = new Square {
-            CreatedBy = _whiteboardClient.UserId,
+            CreatedBy = WhiteboardClient.UserId,
 
-            BorderColor = _toolbarInfo.BorderColor,
-            BorderWidth = _toolbarInfo.BorderWidth,
-            FillColor = _toolbarInfo.FillColor,
+            BorderColor = ToolbarInfo.BorderColor,
+            BorderWidth = ToolbarInfo.BorderWidth,
+            FillColor = ToolbarInfo.FillColor,
 
             Center = new(_startPoint.X, _startPoint.Y),
-            SideLegth = 0
+            SideLegth = 0,
+
+            // Add the Z index information
+            Zindex = GetNextZIndex()
         };
 
         // Preview the square
-        _preview.ShowPreview(_square);
+        Preview.ShowPreview(_square);
     }
 
-    public void PointerMoved(Point2D point)
+    public override void PointerMoved(Point2D point)
     {
         // Return early if the user is not drawing
         if (!_isDrawing || _square is null)
@@ -106,10 +81,10 @@ public class ShapeSquareState : IViewModelState
         _square.SideLegth = side;
 
         // Preview the square
-        _preview.ShowPreview(_square);
+        Preview.ShowPreview(_square);
     }
 
-    public void PointerReleased(Point2D point)
+    public override void PointerReleased(Point2D point)
     {
         // Return early if the user is not drawing
         if (!_isDrawing || _square is null)
@@ -121,21 +96,21 @@ public class ShapeSquareState : IViewModelState
         _isDrawing = false;
 
         // Stop preview
-        _preview.ClearPreview();
+        Preview.ClearPreview();
 
         // Send to whiteboard client state manager off the UI thread
         // But only if it has a non zero length
         if (_square.SideLegth > 0)
         {
             ISquare item = _square;
-            Task.Run(() => _whiteboardClient.AddItem(item));
+            Task.Run(() => WhiteboardClient.AddItem(item));
         }
 
         // Reset square state back to null
         _square = null;
     }
 
-    public void PointerCaptureLost(Point2D point)
+    public override void PointerCaptureLost(Point2D point)
     {
         // Return early if the user is not drawing
         if (!_isDrawing || _square is null)
@@ -147,7 +122,7 @@ public class ShapeSquareState : IViewModelState
         _isDrawing = false;
 
         // Remove partially formed square from the canvas
-        _preview.ClearPreview();
+        Preview.ClearPreview();
 
         // Reset square state back to null
         _square = null;
