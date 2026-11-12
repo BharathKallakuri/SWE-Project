@@ -49,6 +49,8 @@ public sealed partial class MainWindow : Window
         _meetingService.Initialize(_session);
         ControllerMeetingView.ViewModel = new MeetingViewModel(_session);
 
+        // SCREEN SHARING TEAM: runs ScreenShare for every meeting, shown in SharePanel
+        _ = new ScreenShare.ScreenShareMeetingIntegration(_meetingService, _session, ScreenShareView);
         _session.ParticipantCountChanged += count => {
             DispatcherQueue.TryEnqueue(() => SetParticipants(count));
         };
