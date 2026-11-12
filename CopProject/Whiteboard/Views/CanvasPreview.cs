@@ -10,6 +10,7 @@ using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 using Windows.Foundation;
 using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
+using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
 using XamlPolyline = Microsoft.UI.Xaml.Shapes.Polyline;
 using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
 
@@ -96,6 +97,7 @@ public class CanvasPreview : ICanvasPreview
             IFreehand freehand => CreateFreehandVisual(freehand),
             ISquare square => CreateSquareVisual(square),
             ICircle circle => CreateCircleVisual(circle),
+            IEqTriangle triangle => CreateEqTriangleVisual(triangle),
             _ => null
         };
     }
@@ -174,6 +176,36 @@ public class CanvasPreview : ICanvasPreview
 
         Canvas.SetLeft(visual, item.Center.X - item.Radius);
         Canvas.SetTop(visual, item.Center.Y - item.Radius);
+
+        return visual;
+    }
+
+    /// <summary>
+    /// Helper function to create an equilateral triangle from an equilateral triangle item
+    /// </summary>
+    /// <param name="item">Equilateral triangle item</param>
+    /// <returns>UI polygon which resembles an equilateral triangle</returns>
+    private static XamlPolygon CreateEqTriangleVisual(IEqTriangle item)
+    {
+        double height = item.SideLength * Math.Sqrt(3.0) / 2.0;
+        XamlPolygon visual = new() {
+            Width = item.SideLength,
+            Height = height,
+
+            Fill = new SolidColorBrush(item.FillColor),
+            Stroke = new SolidColorBrush(item.BorderColor),
+            StrokeThickness = item.BorderWidth,
+
+            // disable hittesting for previews
+            IsHitTestVisible = false
+        };
+
+        visual.Points.Add(new Point(item.SideLength / 2.0, 0));
+        visual.Points.Add(new Point(0, height));
+        visual.Points.Add(new Point(item.SideLength, height));
+
+        Canvas.SetLeft(visual, item.BoundingBox.Left);
+        Canvas.SetTop(visual, item.BoundingBox.Top);
 
         return visual;
     }
