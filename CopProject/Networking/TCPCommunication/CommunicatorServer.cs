@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -494,10 +494,28 @@ public class CommunicatorServer : ICommunicator, IDisposable
         _receivingQueueListenerLossy?.Dispose();
         _udpSocketListener?.Dispose();
         _udpClient?.Dispose();
+
+        foreach (TcpClient tcpClient in _clientToTcpListenerMap.Values)
+        {
+            try
+            {
+                tcpClient.Close();
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine($"[Networking] CommunicatorServer.Dispose: Error closing client TcpClient. Exception: {e.Message}");
+            }
+        }
+
         foreach (SocketListener socketListener in _clientToSocketListenerMap.Values)
         {
             socketListener.Dispose();
         }
+        _clientToTcpListenerMap.Clear();
+        _clientToSocketListenerMap.Clear();
+        _multicastGroupMap.Clear();
+        _moduleToMessageListenerMap.Clear();
+        _moduleToLossyMessageListenerMap.Clear();
 
         _sendingQueue.Dispose();
         _receivingQueue.Dispose();
