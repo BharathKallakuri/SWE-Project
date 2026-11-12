@@ -1,151 +1,100 @@
-﻿using System;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Shapes;
+﻿/// Owner   : Raagam Hitesh Parmar
+/// LICENSE : MIT
+
+using System;
+using System.Threading.Tasks;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
-using Windows.Foundation;
-using Windows.UI;
-using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
+using Whiteboard.Interfaces.Shapes;
+using Whiteboard.Items.Shapes;
 
 namespace Whiteboard.ViewModels;
 
 /// <summary>
 /// Represents the state when the equilateral triangle tool is selected.
 /// </summary>
-public class ShapeEqTriangleState : IViewModelState
+public class ShapeEqTriangleState : ViewModelStateBase
 {
-    private readonly IWhiteboardClient _whiteboardClient;
-    private readonly Canvas _canvas;
-    private readonly ToolbarInfo _toolbarInfo;
-    private bool _isDrawing;
-    private Point _startPoint;
-    private XamlPolygon? _triangle;
+    private Point2D _startPoint = new(0, 0);
+    private IEqTriangle? _triangle;
 
     public ShapeEqTriangleState(
-        IWhiteboardClient whiteboardClient,
-        Canvas canvas,
-        ToolbarInfo toolbarInfo)
+        IWhiteboardClient whiteboardClient, ICanvasPreview preview, ToolbarInfo toolbarInfo) : base(whiteboardClient, preview, toolbarInfo)
     {
-        ArgumentNullException.ThrowIfNull(whiteboardClient);
-        ArgumentNullException.ThrowIfNull(canvas);
-        ArgumentNullException.ThrowIfNull(toolbarInfo);
-
-        _whiteboardClient = whiteboardClient;
-        _canvas = canvas;
-        _toolbarInfo = toolbarInfo;
     }
 
-    public void PointerPressed(object sender, PointerRoutedEventArgs e)
+    public override void PointerPressed(Point2D point)
     {
-        if (!_canvas.CapturePointer(e.Pointer))
-        {
-            return;
-        }
-
         _isDrawing = true;
-        _startPoint = e.GetCurrentPoint(_canvas).Position;
-        _triangle = new XamlPolygon {
-            Stroke = _toolbarInfo.BorderBrush,
-            StrokeThickness = _toolbarInfo.StrokeThickness,
-            Fill = _toolbarInfo.FillBrush,
-            IsHitTestVisible = false
+        _startPoint = point;
+        _triangle = new EqTriangle {
+            CreatedBy = WhiteboardClient.UserId,
+
+            BorderColor = ToolbarInfo.BorderColor,
+            BorderWidth = ToolbarInfo.BorderWidth,
+            FillColor = ToolbarInfo.FillColor,
+
+            Center = new Point2D(_startPoint.X, _startPoint.Y),
+            SideLength = 0,
+
+            Zindex = GetNextZIndex()
         };
-        _canvas.Children.Add(_triangle);
-        UpdateTriangle(_startPoint);
-        e.Handled = true;
+
+        Preview.ShowPreview(_triangle);
     }
 
-    public void PointerMoved(object sender, PointerRoutedEventArgs e)
+    public override void PointerMoved(Point2D point)
     {
         if (!_isDrawing || _triangle is null)
         {
             return;
         }
 
-        UpdateTriangle(e.GetCurrentPoint(_canvas).Position);
-        e.Handled = true;
+        double horizontal = Math.Abs(point.X - _startPoint.X);
+        double vertical = Math.Abs(point.Y - _startPoint.Y);
+        double side = Math.Min(horizontal, vertical * 2.0 / Math.Sqrt(3.0));
+
+        double height = side * Math.Sqrt(3.0) / 2.0;
+        double boundingLeft = point.X >= _startPoint.X ? _startPoint.X : _startPoint.X - side;
+        double boundingTop = point.Y >= _startPoint.Y ? _startPoint.Y : _startPoint.Y - height;
+
+        double centerX = boundingLeft + (side / 2.0);
+        double centerY = boundingTop + ((2.0 / 3.0) * height);
+
+        _triangle.MoveBy(centerX - _triangle.Center.X, centerY - _triangle.Center.Y);
+        _triangle.SideLength = side;
+
+        Preview.ShowPreview(_triangle);
     }
 
-    public void PointerReleased(object sender, PointerRoutedEventArgs e)
+    public override void PointerReleased(Point2D point)
     {
-        if (!_isDrawing)
+        if (!_isDrawing || _triangle is null)
         {
             return;
         }
 
         _isDrawing = false;
-        _canvas.ReleasePointerCapture(e.Pointer);
+        Preview.ClearPreview();
 
-        if (_triangle is not null)
+        if (_triangle.SideLength > 0)
         {
-            double left = Canvas.GetLeft(_triangle);
-            double top = Canvas.GetTop(_triangle);
-            double side = _triangle.Width;
-            double height = side * Math.Sqrt(3) / 2;
-            Color borderColor = _toolbarInfo.BorderBrush is SolidColorBrush borderBrush
-                ? borderBrush.Color
-                : Color.FromArgb(255, 0, 0, 0);
-            Color fillColor = _toolbarInfo.FillBrush is SolidColorBrush fillBrush
-                ? fillBrush.Color
-                : Color.FromArgb(0, 0, 0, 0);
-            Whiteboard.Items.Shapes.EqTriangle triangle = new() {
-                Left = left,
-                Top = top,
-                Center = new Point2D(left + side / 2, top + height / 2),
-                SideLength = side,
-                BorderColor = borderColor,
-                BorderWidth = _toolbarInfo.StrokeThickness,
-                FillColor = fillColor,
-                CreatedBy = _whiteboardClient.UserId
-            };
-
-            _whiteboardClient.AddItem(triangle);
-            _canvas.Children.Remove(_triangle);
+            IEqTriangle item = _triangle;
+            Task.Run(() => WhiteboardClient.AddItem(item));
         }
 
         _triangle = null;
-        e.Handled = true;
     }
 
-    public void PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    public override void PointerCaptureLost(Point2D point)
     {
-        if (!_isDrawing)
+        if (!_isDrawing || _triangle is null)
         {
             return;
         }
 
         _isDrawing = false;
-        if (_triangle is not null)
-        {
-            _canvas.Children.Remove(_triangle);
-        }
-
+        Preview.ClearPreview();
         _triangle = null;
-    }
-
-    private void UpdateTriangle(Point currentPoint)
-    {
-        if (_triangle is null)
-        {
-            return;
-        }
-
-        double horizontal = Math.Abs(currentPoint.X - _startPoint.X);
-        double vertical = Math.Abs(currentPoint.Y - _startPoint.Y);
-        double side = Math.Min(horizontal, vertical * 2 / Math.Sqrt(3));
-        double left = currentPoint.X >= _startPoint.X ? _startPoint.X : _startPoint.X - side;
-        double top = currentPoint.Y >= _startPoint.Y ? _startPoint.Y : _startPoint.Y - side * Math.Sqrt(3) / 2;
-        double height = side * Math.Sqrt(3) / 2;
-
-        Canvas.SetLeft(_triangle, left);
-        Canvas.SetTop(_triangle, top);
-        _triangle.Width = side;
-        _triangle.Height = height;
-        _triangle.Points.Clear();
-        _triangle.Points.Add(new Point(side / 2, 0));
-        _triangle.Points.Add(new Point(0, height));
-        _triangle.Points.Add(new Point(side, height));
     }
 }

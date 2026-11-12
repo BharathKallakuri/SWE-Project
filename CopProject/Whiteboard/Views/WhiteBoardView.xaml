@@ -265,6 +265,7 @@
                                 </StackPanel>
                             </Flyout>
                         </Button.Flyout>
+                    </Button>
 
                     <!-- Border width slider -->
                     <StackPanel

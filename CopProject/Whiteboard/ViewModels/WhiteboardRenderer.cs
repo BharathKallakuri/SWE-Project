@@ -139,16 +139,10 @@ internal sealed class WhiteboardRenderer : IDisposable
         visual.Points.Add(new Point(item.SideLength / 2, 0));
         visual.Points.Add(new Point(0, height));
         visual.Points.Add(new Point(item.SideLength, height));
-        double left = item.Left;
-        double top = item.Top;
-        if (left == 0 && top == 0 && (item.Center.X != 0 || item.Center.Y != 0))
-        {
-            left = item.Center.X - item.SideLength / 2;
-            top = item.Center.Y - height / 2;
-        }
 
-        Canvas.SetLeft(visual, left);
-        Canvas.SetTop(visual, top);
+        Canvas.SetLeft(visual, item.BoundingBox.Left);
+        Canvas.SetTop(visual, item.BoundingBox.Top);
+        Canvas.SetZIndex(visual, (int)item.Zindex);
         ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
         return visual;
     }
