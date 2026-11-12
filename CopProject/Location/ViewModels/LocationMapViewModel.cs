@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
 using Incidents;
 using LocationTracker.Interfaces;
 using LocationTracker.Models;
@@ -15,6 +16,7 @@ public sealed class LocationMapViewModel : ViewModelBase
     private string _selectedStatus = "All";
     private DateTimeOffset? _fromDate;
     private DateTimeOffset? _toDate;
+    private string _errorMessage = string.Empty;
 
     public ObservableCollection<MapIncident> Incidents { get; } = [];
 
@@ -32,6 +34,17 @@ public sealed class LocationMapViewModel : ViewModelBase
     public List<string> CategoryOptions { get; }
     public List<string> SeverityOptions { get; }
     public List<string> StatusOptions { get; }
+
+    public string ErrorMessage
+    {
+        get => _errorMessage;
+        private set
+        {
+            if (_errorMessage == value) { return; }
+            _errorMessage = value;
+            OnPropertyChanged(nameof(ErrorMessage));
+        }
+    }
 
     public string TitleText
     {
@@ -89,7 +102,7 @@ public sealed class LocationMapViewModel : ViewModelBase
             if (_fromDate == value) { return; }
             _fromDate = value;
             OnPropertyChanged(nameof(FromDate));
-            _ = LoadAsync();
+            ApplyFilter();
         }
     }
 
@@ -101,12 +114,18 @@ public sealed class LocationMapViewModel : ViewModelBase
             if (_toDate == value) { return; }
             _toDate = value;
             OnPropertyChanged(nameof(ToDate));
-            _ = LoadAsync();
+            ApplyFilter();
         }
     }
 
     public async Task LoadAsync()
     {
+        if (!IsDateRangeValid())
+        {
+            return;
+        }
+
+        ErrorMessage = string.Empty;
         List<Incident> incidents =
             await _mapService.GetIncidentsForMapAsync(BuildFilter());
 
@@ -131,7 +150,7 @@ public sealed class LocationMapViewModel : ViewModelBase
     private IncidentFilter BuildFilter()
     {
         string search = TitleText.Trim();
-        string? title = string.IsNullOrEmpty(search) ? null : search;
+        string? title = string.IsNullOrEmpty(search) ? null : Regex.Escape(search);
 
         IncidentCategory? category =
             Enum.TryParse(SelectedCategory, out IncidentCategory categoryValue)
@@ -155,5 +174,23 @@ public sealed class LocationMapViewModel : ViewModelBase
             ToDate?.DateTime,
             null,
             null);
+    }
+
+    private void ApplyFilter()
+    {
+        if (!IsDateRangeValid())
+        {
+            ErrorMessage = "The start date must be before the end date.";
+            return;
+        }
+
+        _ = LoadAsync();
+    }
+
+    private bool IsDateRangeValid()
+    {
+        return !FromDate.HasValue ||
+               !ToDate.HasValue ||
+               FromDate <= ToDate;
     }
 }

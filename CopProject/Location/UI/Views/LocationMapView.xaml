@@ -46,6 +46,10 @@
                 <CalendarDatePicker x:Name="ToDatePicker"
                                     Foreground="Black"
                                     Date="{Binding ToDate, Mode=TwoWay}" />
+
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Foreground="DarkRed"
+                           TextWrapping="Wrap" />
             </StackPanel>
         </Border>
 
