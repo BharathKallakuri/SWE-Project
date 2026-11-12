@@ -21,4 +21,7 @@ public sealed record NotificationItem
 
     /// <summary>Local time shown</summary>
     public string TimeText => ReceivedAt.ToLocalTime().ToString("t");
+
+    /// <summary>Second line shown under the content.</summary>
+    public string Subtitle => SenderId + " · " + TimeText;
 }
