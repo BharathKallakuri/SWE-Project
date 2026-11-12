@@ -50,6 +50,13 @@
                     Padding="8,4" CornerRadius="4" Background="#99000000">
                 <TextBlock Text="{x:Bind ViewModel.ZoomedTile.Name, Mode=OneWay}" Foreground="White"/>
             </Border>
+            <!-- pictures drawn per second for the zoomed stream, updated once a second -->
+            <Border VerticalAlignment="Top" HorizontalAlignment="Left" Margin="12"
+                    Padding="8,4" CornerRadius="4" Background="White">
+                <TextBlock x:Name="ZoomedFps" AutomationProperties.AutomationId="ZoomedFps"
+                           Text="{x:Bind ViewModel.ZoomedTile.FpsText, Mode=OneWay}"
+                           Foreground="Black" FontFamily="Consolas"/>
+            </Border>
             <Button Content="Back to grid" Click="Back_Click"
                     HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12"/>
         </Grid>
@@ -59,7 +66,8 @@
                     Spacing="12" Padding="12">
             <ToggleButton IsChecked="{x:Bind ViewModel.IsSharingScreen, Mode=TwoWay}"
                           Width="56" Height="56" CornerRadius="28"
-                          ToolTipService.ToolTip="Share screen">
+                          ToolTipService.ToolTip="Share screen"
+                          AutomationProperties.Name="Share screen">
                 <FontIcon Glyph="&#xE7F4;"/>
             </ToggleButton>
         </StackPanel>
