@@ -384,7 +384,7 @@ public sealed class SharedWhiteboardHistoryService
             : ItemDtoStringSerializer.Serialize(ItemMapper.ToDto(item));
     }
 
-    public void RestoreState(string userId, IEnumerable<Item> items)
+    public void RestoreState(string userId, IEnumerable<IItem> items)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
         ArgumentNullException.ThrowIfNull(items);
