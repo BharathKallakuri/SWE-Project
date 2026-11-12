@@ -1,4 +1,5 @@
 using Chat;
+using Controller;
 using Microsoft.UI.Dispatching;
 
 namespace UI.Services;
@@ -9,7 +10,9 @@ namespace UI.Services;
 /// </summary>
 public sealed class ChatClientAdapter : IDisposable
 {
-    private readonly ChatClient _client;
+    private readonly ChatClient? _client;
+    private readonly ChatServer? _server;
+    private readonly IControllerService? _controller;
     private readonly DispatcherQueue _dispatcherQueue;
 
     private int _disposed;
@@ -31,16 +34,38 @@ public sealed class ChatClientAdapter : IDisposable
         _client.ParticipantsChanged += OnParticipantsChanged;
     }
 
+    /// <summary>
+    /// Creates an adapter for the host, whose chat operations are applied
+    /// directly by the authoritative <see cref="ChatServer"/>.
+    /// </summary>
+    public ChatClientAdapter(
+        ChatServer server,
+        IControllerService controller,
+        DispatcherQueue dispatcherQueue)
+    {
+        ArgumentNullException.ThrowIfNull(server);
+        ArgumentNullException.ThrowIfNull(controller);
+        ArgumentNullException.ThrowIfNull(dispatcherQueue);
+
+        _server = server;
+        _controller = controller;
+        _dispatcherQueue = dispatcherQueue;
+
+        _server.OperationApplied += OnOperationApplied;
+        _controller.UserJoined += OnControllerUserJoined;
+        _controller.UserLeft += OnControllerUserLeft;
+    }
+
     // Initial information from the connected chatroom.
 
-    public string Username => _client.Username;
+    public string Username => _client?.Username ?? _server!.Chatroom.HostName;
 
-    public string HostName => _client.Chatroom.HostName;
+    public string HostName => _client?.Chatroom.HostName ?? _server!.Chatroom.HostName;
 
-    public bool IsHost => string.Equals(Username, HostName, StringComparison.Ordinal);
+    public bool IsHost => _server is not null || string.Equals(Username, HostName, StringComparison.Ordinal);
 
     public IReadOnlySet<string> Participants =>
-        _client.Chatroom.Participants;
+        _client?.Chatroom.Participants ?? _server!.Chatroom.Participants;
 
     // Events exposed to the ViewModels.
     // These events are always raised on the UI thread.
@@ -83,6 +108,24 @@ public sealed class ChatClientAdapter : IDisposable
 
         DispatchToUI(() => {
             ParticipantsChanged?.Invoke(snapshot);
+        });
+    }
+
+    private void OnControllerUserJoined(object? sender, UserJoinedEventArgs e) => RaiseHostParticipantsChanged();
+
+    private void OnControllerUserLeft(object? sender, UserLeftEventArgs e) => RaiseHostParticipantsChanged();
+
+    private void RaiseHostParticipantsChanged()
+    {
+        if (_server is null)
+            return;
+
+        var snapshot = new HashSet<string>(_server.Chatroom.Participants);
+
+        // Queue this so ChatServer has already applied the participant change.
+        _dispatcherQueue.TryEnqueue(() => {
+            if (Volatile.Read(ref _disposed) == 0)
+                ParticipantsChanged?.Invoke(snapshot);
         });
     }
 
@@ -130,13 +173,24 @@ public sealed class ChatClientAdapter : IDisposable
     public Guid Sync()
     {
         ThrowIfDisposed();
-        return _client.Sync();
+
+        if (_server is not null)
+        {
+            RaiseHostParticipantsChanged();
+            return Guid.NewGuid();
+        }
+
+        return _client!.Sync();
     }
 
     public Guid Reset()
     {
         ThrowIfDisposed();
-        return _client.Reset();
+
+        if (_server is not null)
+            return Guid.NewGuid();
+
+        return _client!.Reset();
     }
 
     public Guid SendMessage(
@@ -147,7 +201,17 @@ public sealed class ChatClientAdapter : IDisposable
     {
         ThrowIfDisposed();
 
-        return _client.SendMessage(
+        if (_server is not null)
+        {
+            return SubmitHostRequest(new SendMessage(
+                DateTimeOffset.UtcNow,
+                mentions.Clone(),
+                content,
+                threadParentMessageId,
+                replyToMessageId));
+        }
+
+        return _client!.SendMessage(
             content,
             mentions,
             threadParentMessageId,
@@ -161,7 +225,10 @@ public sealed class ChatClientAdapter : IDisposable
     {
         ThrowIfDisposed();
 
-        return _client.EditMessage(
+        if (_server is not null)
+            return SubmitHostRequest(new EditMessage(messageId, newContent, threadParentMessageId));
+
+        return _client!.EditMessage(
             messageId,
             newContent,
             threadParentMessageId);
@@ -173,7 +240,10 @@ public sealed class ChatClientAdapter : IDisposable
     {
         ThrowIfDisposed();
 
-        return _client.DeleteMessage(
+        if (_server is not null)
+            return SubmitHostRequest(new DeleteMessage(messageId, threadParentMessageId));
+
+        return _client!.DeleteMessage(
             messageId,
             threadParentMessageId);
     }
@@ -185,10 +255,28 @@ public sealed class ChatClientAdapter : IDisposable
     {
         ThrowIfDisposed();
 
-        return _client.ToggleReaction(
+        if (_server is not null)
+            return SubmitHostRequest(new global::Chat.ToggleReaction(messageId, emoji, threadParentMessageId));
+
+        return _client!.ToggleReaction(
             messageId,
             emoji,
             threadParentMessageId);
+    }
+
+    private Guid SubmitHostRequest(ChatRoomChangeRequest request)
+    {
+        Guid requestId = Guid.NewGuid();
+        RoomResult result = _server!.SubmitHostRequest(request);
+
+        // Defer the completion so ChatPanelViewModel has registered its pending request.
+        _dispatcherQueue.TryEnqueue(() =>
+        {
+            if (Volatile.Read(ref _disposed) == 0)
+                RequestCompleted?.Invoke(requestId, result);
+        });
+
+        return requestId;
     }
 
     private void ThrowIfDisposed()
@@ -205,9 +293,21 @@ public sealed class ChatClientAdapter : IDisposable
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
             return;
 
-        _client.OperationApplied -= OnOperationApplied;
-        _client.RequestCompleted -= OnRequestCompleted;
-        _client.RoomReset -= OnRoomReset;
-        _client.ParticipantsChanged -= OnParticipantsChanged;
+        if (_client is not null)
+        {
+            _client.OperationApplied -= OnOperationApplied;
+            _client.RequestCompleted -= OnRequestCompleted;
+            _client.RoomReset -= OnRoomReset;
+            _client.ParticipantsChanged -= OnParticipantsChanged;
+        }
+
+        if (_server is not null)
+            _server.OperationApplied -= OnOperationApplied;
+
+        if (_controller is not null)
+        {
+            _controller.UserJoined -= OnControllerUserJoined;
+            _controller.UserLeft -= OnControllerUserLeft;
+        }
     }
 }

@@ -13,14 +13,14 @@ namespace UI.ViewModels;
 /// <summary>Presentation state for one chat message or thread reply.</summary>
 public sealed class MessageViewModel : AvatarViewModel
 {
-    private static readonly Brush IncomingBrush = new SolidColorBrush(Color.FromArgb(255, 37, 43, 53));
-    private static readonly Brush OutgoingBrush = new SolidColorBrush(Color.FromArgb(255, 41, 73, 104));
-    private static readonly Brush DeletedBrush = new SolidColorBrush(Color.FromArgb(255, 32, 35, 42));
-    private static readonly Brush MentionBorderBrush = new SolidColorBrush(Color.FromArgb(255, 240, 190, 92));
-    private static readonly Brush MentionedBubbleBrush = new SolidColorBrush(Color.FromArgb(255, 75, 58, 31));
-    private static readonly Brush MentionedOtherBubbleBrush = new SolidColorBrush(Color.FromArgb(255, 54, 49, 39));
-    private static readonly Brush JumpHighlightBrush = new SolidColorBrush(Color.FromArgb(255, 105, 78, 30));
-    private static readonly Brush JumpHighlightBorderBrush = new SolidColorBrush(Color.FromArgb(255, 255, 220, 125));
+    private static readonly Brush IncomingBrush = new SolidColorBrush(Color.FromArgb(255, 241, 244, 248));
+    private static readonly Brush OutgoingBrush = new SolidColorBrush(Color.FromArgb(255, 220, 235, 255));
+    private static readonly Brush DeletedBrush = new SolidColorBrush(Color.FromArgb(255, 243, 244, 246));
+    private static readonly Brush MentionBorderBrush = new SolidColorBrush(Color.FromArgb(255, 224, 168, 62));
+    private static readonly Brush MentionedBubbleBrush = new SolidColorBrush(Color.FromArgb(255, 255, 244, 214));
+    private static readonly Brush MentionedOtherBubbleBrush = new SolidColorBrush(Color.FromArgb(255, 255, 249, 232));
+    private static readonly Brush JumpHighlightBrush = new SolidColorBrush(Color.FromArgb(255, 255, 233, 168));
+    private static readonly Brush JumpHighlightBorderBrush = new SolidColorBrush(Color.FromArgb(255, 217, 154, 0));
     private static readonly Brush NormalBorderBrush = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
     private readonly string _hostName;
     private readonly Action<MessageViewModel> _replyInChat;
@@ -107,7 +107,7 @@ public sealed class MessageViewModel : AvatarViewModel
     public Brush MessageBorderBrush => IsJumpHighlighted ? JumpHighlightBorderBrush
         : IsMentioned ? MentionBorderBrush : NormalBorderBrush;
     public Thickness MessageBorderThickness => new(IsJumpHighlighted ? 3 : IsMentioned ? 2 : 0);
-    public Brush ContentForeground => IsDeleted ? new SolidColorBrush(Color.FromArgb(255, 164, 171, 182)) : new SolidColorBrush(Color.FromArgb(255, 240, 243, 248));
+    public Brush ContentForeground => IsDeleted ? new SolidColorBrush(Color.FromArgb(255, 107, 114, 128)) : new SolidColorBrush(Color.FromArgb(255, 31, 41, 55));
     public FontStyle ContentFontStyle => IsDeleted ? FontStyle.Italic : FontStyle.Normal;
     public double MessageOpacity => IsDeleted ? 0.82 : 1.0;
     public Visibility LeftAvatarVisibility => IsOwnMessage ? Visibility.Collapsed : Visibility.Visible;
