@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -15,6 +16,7 @@ using Windows.Foundation;
 
 namespace Whiteboard.ViewModels;
 
+[ExcludeFromCodeCoverage]
 internal sealed class WhiteboardRenderer : IDisposable
 {
     private readonly IWhiteboard _board;
