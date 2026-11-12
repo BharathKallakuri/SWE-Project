@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
@@ -129,5 +129,58 @@ public class SocketListenerTests
         using MemoryStream tinyStream = new();
         tinyStream.Write(new byte[] { 1, 2 }, 0, 2);
         listener.ProcessData(tinyStream);
+    }
+
+    /// <summary>
+    /// Checks ReceivingQueueListener dequeue handling when enqueued packet is null.
+    /// </summary>
+    [TestMethod]
+    public void ReceivingQueueListener_NullPacket_ContinuesListening()
+    {
+        ReceivingQueue receivingQueue = new();
+        ConcurrentDictionary<int, IMessageListener> map = new();
+        using ReceivingQueueListener listener = new(receivingQueue, map);
+
+        receivingQueue.Enqueue(null!);
+        Thread.Sleep(150);
+    }
+
+    /// <summary>
+    /// Checks SendingQueueListenerClient handling when packets are enqueued.
+    /// </summary>
+    [TestMethod]
+    public void SendingQueueListenerClient_SendPacket_HandledSafely()
+    {
+        int port = GetAvailablePort();
+        using TcpListener server = new(IPAddress.Loopback, port);
+        server.Start();
+
+        SendingQueue queue = new();
+        using TcpClient client = new();
+        client.Connect(IPAddress.Loopback, port);
+        using TcpClient accepted = server.AcceptTcpClient();
+
+        using SendingQueueListenerClient listener = new(queue, client);
+
+        Packet packet = new(Encoding.UTF8.GetBytes("test_send"), new IPEndPoint(IPAddress.Loopback, port), 1, 1);
+        queue.Enqueue(packet);
+        Thread.Sleep(150);
+    }
+
+    /// <summary>
+    /// Checks SendingQueueListenerServer handling with IPv4 mapped destination endpoint.
+    /// </summary>
+    [TestMethod]
+    public void SendingQueueListenerServer_IPv6Mapped_HandledSafely()
+    {
+        SendingQueue queue = new();
+        ConcurrentDictionary<IPEndPoint, TcpClient> map = new();
+        using SendingQueueListenerServer listener = new(queue, map);
+
+        IPEndPoint ipv6Mapped = new(IPAddress.Parse("::ffff:127.0.0.1"), 8888);
+        Packet packet = new(Encoding.UTF8.GetBytes("test"), ipv6Mapped, 1, 1);
+        queue.Enqueue(packet);
+
+        Thread.Sleep(150);
     }
 }

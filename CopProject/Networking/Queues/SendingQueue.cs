@@ -65,6 +65,12 @@ public class SendingQueue : Queue
 
     public override void Enqueue(Packet packet)
     {
+        if (packet == null)
+        {
+            Trace.WriteLine($"[Networking] SendingQueue.Enqueue: Cannot enqueue null packet");
+            return;
+        }
+
         Priority priority = NormalizePriority(packet.Priority);
         Trace.WriteLine($"[Networking] Enqueuing to {GetType().Name} with priority {priority}");
 
@@ -80,6 +86,8 @@ public class SendingQueue : Queue
                 _lowQueue.Enqueue(packet);
                 break;
         }
+
+        SignalItemAdded();
     }
 
     public override Packet? Dequeue()
@@ -175,6 +183,7 @@ public class SendingQueue : Queue
             _consecutiveHigherPriorityCount = 0;
             _highBurstCount = 0;
             _mediumServedCount = 0;
+            ResetItemAdded();
         }
     }
 
