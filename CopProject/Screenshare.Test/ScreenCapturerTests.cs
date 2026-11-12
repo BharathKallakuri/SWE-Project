@@ -129,6 +129,13 @@ public class ScreenCapturerTests
             () => new ScreenCapturer(null!));
     }
 
+    [Fact]
+    public void DefaultConstructor_UsesWindowsPlatform()
+    {
+        var capturer = new ScreenCapturer();
+
+        Assert.IsAssignableFrom<IImageSource>(capturer);
+    }
     private sealed class FakeScreenCapturePlatform : IScreenCapturePlatform
     {
         public int Width { get; set; }

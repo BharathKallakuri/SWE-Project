@@ -15,7 +15,8 @@ public static class PngEncoder
 {
     private const int LookupAttempts = 5;
 
-    private static readonly ImageCodecInfo s_codec = FindPngCodec();
+    private static readonly ImageCodecInfo s_codec =
+        FindPngCodec(ImageCodecInfo.GetImageEncoders, Thread.Sleep);
 
     /// <summary>
     /// encodes the bitmap as png bytes
@@ -29,12 +30,20 @@ public static class PngEncoder
         return stream.ToArray();
     }
 
-    private static ImageCodecInfo FindPngCodec()
+    /// <summary>
+    /// looks up the png encoder, retrying with a growing delay while the codec list is incomplete.
+    /// the encoder source and the sleep are parameters so tests can simulate a list without png.
+    /// </summary>
+    /// <param name="getEncoders">returns the current GDI+ encoder list</param>
+    /// <param name="sleep">waits for the given number of milliseconds between attempts</param>
+    internal static ImageCodecInfo FindPngCodec(
+        Func<ImageCodecInfo[]> getEncoders,
+        Action<int> sleep
+        )
     {
         for (int attempt = 1; attempt <= LookupAttempts; attempt++)
         {
-            ImageCodecInfo? codec = ImageCodecInfo.GetImageEncoders()
-                .FirstOrDefault(c => c.FormatID == ImageFormat.Png.Guid);
+            ImageCodecInfo? codec = getEncoders().FirstOrDefault(c => c.FormatID == ImageFormat.Png.Guid);
 
             if (codec != null)
             {
@@ -42,7 +51,7 @@ public static class PngEncoder
             }
 
             // another thread may still be initializing GDI+ codec list
-            Thread.Sleep(10 * attempt);
+            sleep(10 * attempt);
         }
 
         throw new InvalidOperationException("GDI+ has no PNG encoder");
