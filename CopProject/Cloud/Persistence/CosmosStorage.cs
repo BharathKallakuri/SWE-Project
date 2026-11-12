@@ -257,7 +257,7 @@ internal class CosmosStorage : IStorage
     }
 
     /// <inheritdoc/>
-    // this method may be deleted later if no use is found
+    /* this will be helpful when all the items are to be updated */
     public async Task<(bool Success, Dictionary<string, string>)> ReadAllEtags()
     {
         Dictionary<string, string> etags = [];
@@ -331,28 +331,20 @@ internal class CosmosStorage : IStorage
             }
         }
 
-        try
+        foreach (KeyValuePair<string, byte[]> item in items)
         {
-            foreach (KeyValuePair<string, byte[]> item in items)
+            bool success = await Update(
+                item.Key,
+                item.Value,
+                etags[item.Key]);
+
+            if (!success)
             {
-                bool success = await Update(
-                    item.Key,
-                    item.Value,
-                    etags[item.Key]);
-
-                if (!success)
-                {
-                    return false;
-                }
+                return false;
             }
-
-            return true;
-
         }
-        catch (CosmosException)
-        {
-            return false;
-        }
+
+        return true;
     }
 
     /// <inheritdoc/>
