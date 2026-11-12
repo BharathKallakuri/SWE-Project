@@ -9,7 +9,7 @@ public class WhiteboardSnapshot
     public string SessionId { get; set; } = string.Empty;
     public string SnapshotId { get; set; } = string.Empty;
     public string SavedBy { get; set; } = string.Empty;
-    public DateTime SavedAt { get; set; }
+    public DateTimeOffset SavedAt { get; set; }
     public List<ItemDto> Items { get; set; } = new();
 }
 
