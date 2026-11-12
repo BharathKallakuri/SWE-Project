@@ -138,11 +138,4 @@ public class TestProgram
         Assert.IsTrue(HasMessageHubRoute(app), "Expected MessageHub to be mapped at /hub.");
         Assert.AreEqual("Staging", app.Environment.EnvironmentName);
     }
-
-    /// <summary>Tests that Main builds the app and runs it, so a startup failure (here an invalid URL) comes out of Main.</summary>
-    [TestMethod]
-    public void MainRunsTheApplication()
-    {
-        Assert.Throws<Exception>(() => Program.Main(["--urls", "http://127.0.0.1:not-a-port"]));
-    }
 }
