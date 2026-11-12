@@ -15,7 +15,7 @@ namespace Incidents.ViewModels;
 public sealed class CreateIncidentPageViewModel : ViewModelBase
 {
     private readonly IIncidentController _incidentController;
-    private readonly Guid _currentUserId;
+    private readonly string _currentUserId;
 
     /// <summary>
     /// Raised after an incident is created successfully.
@@ -36,7 +36,7 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
     /// </summary>
     public CreateIncidentPageViewModel(
         IIncidentController incidentController,
-        Guid currentUserId)
+        string currentUserId)
     {
         _incidentController = incidentController ?? throw new ArgumentNullException(nameof(incidentController));
         _currentUserId = currentUserId;
