@@ -1,6 +1,8 @@
 ﻿using System.Net;
 using System.Text.Json;
+using Controller;
 using Networking;
+using Utils;
 
 namespace Chat;
 
@@ -13,27 +15,40 @@ public sealed class ChatServer : IMessageListener, IDisposable
     private readonly ICommunicator _communicator;
     private readonly List<ChatOperation> _operations = new();
     private readonly Dictionary<string, int> _clientVersions = new(StringComparer.Ordinal);
-    private readonly IChatController _controller;
+    private readonly IControllerService _controller;
+    private readonly Dictionary<string, ControllerUser> _controllerUsers = new(StringComparer.Ordinal);
     private bool _disposed;
 
     /// <summary>
     /// Creates a chat server.
     /// </summary>
     /// <param name="chatroom">The server's chatroom copy.</param>
-    /// <param name="communicator">The networking communicator.</param>
     /// <param name="controller">The controller.</param>
-    public ChatServer(Chatroom chatroom, ICommunicator communicator, IChatController controller)
+    public ChatServer(Chatroom chatroom, IControllerService controller)
     {
         ArgumentNullException.ThrowIfNull(chatroom);
-        ArgumentNullException.ThrowIfNull(communicator);
         ArgumentNullException.ThrowIfNull(controller);
+
+        ICommunicator communicator = controller.Communicator
+            ?? throw new InvalidOperationException("The controller does not have an active communicator.");
+        ControllerUser currentUser = controller.CurrentUser
+            ?? throw new InvalidOperationException("The controller does not have a current user.");
 
         Chatroom = chatroom;
         _communicator = communicator;
         _controller = controller;
         _communicator.AddSubscriber(ChatConstants.ModuleId, this);
-        _controller.ParticipantAdded += OnParticipantAdded;
-        _controller.ParticipantRemoved += OnParticipantRemoved;
+        _controller.UserJoined += OnControllerUserJoined;
+        _controller.UserLeft += OnControllerUserLeft;
+
+        foreach (ControllerUser user in _controller.GetActiveUsers())
+        {
+            if (!string.Equals(user.Username, currentUser.Username, StringComparison.Ordinal))
+            {
+                _controllerUsers[user.Username] = user;
+                RegisterClient(user.Username);
+            }
+        }
     }
 
     /// <summary>
@@ -168,8 +183,9 @@ public sealed class ChatServer : IMessageListener, IDisposable
         }
 
         _communicator.RemoveSubscriber(ChatConstants.ModuleId);
-        _controller.ParticipantAdded -= OnParticipantAdded;
-        _controller.ParticipantRemoved -= OnParticipantRemoved;
+        _controller.UserJoined -= OnControllerUserJoined;
+        _controller.UserLeft -= OnControllerUserLeft;
+
         _disposed = true;
     }
 
@@ -209,21 +225,33 @@ public sealed class ChatServer : IMessageListener, IDisposable
     }
 
     /// <summary>
-    /// Registers a participant added by the controller.
+    /// Registers a participant reported by the Controller.
     /// </summary>
-    /// <param name="username">The participant's username.</param>
-    private void OnParticipantAdded(string username)
+    /// <param name="sender">The Controller raising the event.</param>
+    /// <param name="e">The participant who joined.</param>
+    private void OnControllerUserJoined(object? sender, UserJoinedEventArgs e)
     {
-        RegisterClient(username);
+        lock (_syncRoot)
+        {
+            _controllerUsers[e.User.Username] = e.User;
+        }
+
+        RegisterClient(e.User.Username);
     }
 
     /// <summary>
-    /// Unregisters a participant removed by the controller.
+    /// Unregisters a participant reported as leaving by the Controller.
     /// </summary>
-    /// <param name="username">The participant's username.</param>
-    private void OnParticipantRemoved(string username)
+    /// <param name="sender">The Controller raising the event.</param>
+    /// <param name="e">The participant who left.</param>
+    private void OnControllerUserLeft(object? sender, UserLeftEventArgs e)
     {
-        UnregisterClient(username);
+        lock (_syncRoot)
+        {
+            _controllerUsers.Remove(e.User.Username);
+        }
+
+        UnregisterClient(e.User.Username);
     }
 
     /// <summary>
@@ -403,11 +431,25 @@ public sealed class ChatServer : IMessageListener, IDisposable
         }
 
         IPEndPoint endPoint;
-        try
+        if (!_controllerUsers.TryGetValue(username, out ControllerUser? user))
         {
-            endPoint = _controller.GetParticipantEndPoint(username);
+            user = _controller.GetActiveUsers()
+                .FirstOrDefault(candidate =>
+                    string.Equals(candidate.Username, username, StringComparison.Ordinal));
+            if (user is not null)
+            {
+                // Refresh the cache if the Controller had not reported this user yet.
+                _controllerUsers[username] = user;
+            }
         }
-        catch (KeyNotFoundException)
+
+        if (user is not null
+            && IPAddress.TryParse(user.Ip, out IPAddress? ipAddress)
+            && user.Port is >= 1 and <= 65535)
+        {
+            endPoint = new IPEndPoint(ipAddress, user.Port);
+        }
+        else
         {
             DeliveryFailed?.Invoke(username);
             return false;

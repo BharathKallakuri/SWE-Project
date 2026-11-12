@@ -1,6 +1,8 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Sockets;
-using Networking.TCPCommunication;
+using Controller;
+using Networking;
+using Utils;
 
 namespace Chat;
 
@@ -54,12 +56,21 @@ internal static class Program
 
     private static void RunHost(string username, string hostIp, int serverPort)
     {
-        using CommunicatorServer communicator = new(new IPEndPoint(IPAddress.Parse(hostIp), serverPort));
-        using MockChatController controller = new(username, communicator);
+        IPEndPoint hostEndpoint = new(IPAddress.Parse(hostIp), serverPort);
+        ICommunicator communicator = CommunicatorFactory.CreateServerCommunicator(hostEndpoint);
+        ControllerUser hostUser = new(username, string.Empty, null, hostIp, serverPort, isHost: true);
+        using IControllerService controller = new HostController(hostUser, communicator);
+        if (!controller.StartMeeting())
+        {
+            throw new InvalidOperationException("Could not start the Controller meeting.");
+        }
+
         using ChatServer server = new(
             new Chatroom("console-chat", username),
-            communicator,
             controller);
+        Console.WriteLine(
+            $"Controller meeting available at {controller.CurrentUser?.Ip}:{controller.ListenPort}.");
+
         server.OperationApplied += operation =>
         {
             if (operation is MessageAdded added)
@@ -87,14 +98,23 @@ internal static class Program
         string hostIp,
         int serverPort)
     {
+        using IControllerService controller = ControllerFactory.CreateClient(username);
+        ControllerUser user = controller.CurrentUser
+            ?? throw new InvalidOperationException("The Controller client has no current user.");
+
+        if (!controller.JoinMeeting(hostIp, serverPort, user))
+        {
+            throw new SocketException((int)SocketError.ConnectionRefused);
+        }
+
         IPEndPoint serverAddress = new(IPAddress.Parse(hostIp), serverPort);
-        using CommunicatorClient communicator = new(serverAddress);
         using ChatClient client = new(
             username,
             new Chatroom("console-chat", "host"),
-            communicator,
+            controller.Communicator
+                ?? throw new InvalidOperationException("The Controller client has no communicator."),
             serverAddress);
-        using MockChatClientController controller = new(username, communicator, serverAddress);
+        client.Sync();
 
         client.OperationApplied += operation =>
         {
@@ -103,17 +123,6 @@ internal static class Program
                 Console.WriteLine($"{added.Message.SenderName}: {added.Message.Content}");
             }
         };
-
-        try
-        {
-            controller.JoinMeeting();
-        }
-        catch (SocketException exception)
-        {
-            Console.Error.WriteLine($"Could not connect to the host: {exception.Message}");
-            Environment.ExitCode = 1;
-            return;
-        }
 
         RunChatInput(client.Username, content => client.SendMessage(content, new Mentions()));
     }
