@@ -51,6 +51,7 @@ public class CanvasPreview : ICanvasPreview
             _previewElement = CreatePreviewVisual(item);
             if (_previewElement is not null)
             {
+                Canvas.SetZIndex(_previewElement, (int)item.Zindex);
                 _canvas.Children.Add(_previewElement);
             }
         });
