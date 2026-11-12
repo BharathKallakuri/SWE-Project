@@ -17,6 +17,11 @@ public class MockCanvasPreview : ICanvasPreview
     public List<IItem> ShownItems { get; } = [];
 
     /// <summary>
+    /// The last itme shown on the preview
+    /// </summary>
+    public IItem? LastShownItem => ShownItems.Count > 0 ? ShownItems[^1] : null;
+
+    /// <summary>
     /// Number of times ClearPreview has been called
     /// </summary>
     public int ClearCount { get; private set; }
