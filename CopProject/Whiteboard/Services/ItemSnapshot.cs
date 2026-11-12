@@ -54,6 +54,8 @@ public static class ItemSnapshot
 
             EqTriangle item => new EqTriangle {
                 Center = CopyPoint(item.Center),
+                Left = item.Left,
+                Top = item.Top,
                 SideLength = item.SideLength
             },
 
