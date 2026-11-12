@@ -1,4 +1,4 @@
-namespace Networking;
+﻿namespace Networking;
 
 /// <summary>
 /// Declares a listener for lossy (UDP) messages from the communicator.
