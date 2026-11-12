@@ -110,6 +110,20 @@ public class TestServerMonitor
         Assert.AreEqual(3, raised);
     }
 
+    /// <summary>Tests that a message added to a real store makes the monitor raise Changed.</summary>
+    [TestMethod]
+    public async Task AddingAMessageToTheStoreRaisesChanged()
+    {
+        InMemoryMessageStore store = new();
+        using ServerMonitor monitor = new(store);
+        int raised = 0;
+        monitor.Changed += () => raised++;
+
+        await store.AddAsync(NewMessage("hello"));
+
+        Assert.AreEqual(1, raised);
+    }
+
     /// <summary>Tests that Dispose stops the monitor from listening to the store.</summary>
     [TestMethod]
     public void DisposeStopsListeningToTheStore()
