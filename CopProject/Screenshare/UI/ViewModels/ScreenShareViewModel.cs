@@ -15,6 +15,8 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
     private readonly IScreenShareFeed _feed;
     private readonly DispatcherQueue _ui;
     private readonly DispatcherQueueTimer _feedTimer;
+    private readonly DispatcherQueueTimer _fpsTimer;
+    private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly Dictionary<string, ParticipantTile> _byId = new();
     private readonly HashSet<string> _onScreen = new();   // tiles currently in the viewport
     private string? _zoomedId;
@@ -48,6 +50,13 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
         _feedTimer.IsRepeating = false;
         _feedTimer.Tick += OnFeedTimerTick;
 
+        // refreshes the zoomed tile's fps once a second
+        _fpsTimer = _ui.CreateTimer();
+        _fpsTimer.Interval = TimeSpan.FromSeconds(1);
+        _fpsTimer.IsRepeating = true;
+        _fpsTimer.Tick += OnFpsTimerTick;
+        _fpsTimer.Start();
+
         // Feed events can arrive on any thread, so hop to the UI thread first.
         _feed.ParticipantJoined += OnParticipantJoined;
         _feed.ParticipantLeft += OnParticipantLeft;
@@ -71,6 +80,8 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
         _feed.FrameReady -= QueueFrame;
         _feedTimer.Stop();
         _feedTimer.Tick -= OnFeedTimerTick;
+        _fpsTimer.Stop();
+        _fpsTimer.Tick -= OnFpsTimerTick;
 
         lock (_pendingLock)
         {
@@ -92,6 +103,11 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
         SendFeedRequests();
     }
 
+    private void OnFpsTimerTick(DispatcherQueueTimer sender, object args)
+    {
+        ZoomedTile?.SampleFps(_clock.Elapsed);
+    }
+
     private void OnParticipantJoined(string id, string name)
     {
         _ui.TryEnqueue(() => AddParticipant(id, name));
@@ -111,6 +127,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
         }
 
         _zoomedId = id;
+        _byId[id].ResetFps(_clock.Elapsed);   // count only frames drawn while zoomed
         Mode = ViewMode.Zoomed;
         RaiseModeChanged();
         SendFeedRequests();

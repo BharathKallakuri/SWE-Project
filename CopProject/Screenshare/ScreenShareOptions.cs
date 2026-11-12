@@ -6,13 +6,13 @@
 public sealed record ScreenShareOptions
 {
     /// <summary>gets how many frames per second the sender tries to capture (spec: 24 to 30)</summary>
-    public int FramesPerSecond { get; init; } = 24;
+    public int FramesPerSecond { get; init; } = 50;
 
     /// <summary>gets the height captures are scaled down to; wider aspect ratios keep their shape</summary>
-    public int MaxHeight { get; init; } = 720;
+    public int MaxHeight { get; init; } = 480;
 
     /// <summary>gets how many frames the sender may send before the host acknowledges them</summary>
-    public int MaxFramesInFlight { get; init; } = 2;
+    public int MaxFramesInFlight { get; init; } = 8;
 
     /// <summary>
     /// gets how long the sender waits for an acknowledgement before assuming the frames
