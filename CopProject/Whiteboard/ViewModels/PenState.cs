@@ -13,66 +13,41 @@ namespace Whiteboard.ViewModels;
 /// Represents the state when the Pen tool is selected
 /// </summary>
 /// <inheritdoc/>
-// Temporary exclusion from code coverage
-public class PenState : IViewModelState
+public class PenState : ViewModelStateBase
 {
-    /// <summary>
-    /// The whiteboard client
-    /// </summary>
-    private readonly IWhiteboardClient _whiteboardClient;
-
-    /// <summary>
-    /// The canvas UI
-    /// </summary>
-    private readonly ICanvasPreview _preview;
-
-    /// <summary>
-    /// Current toolbar information
-    /// </summary>
-    private readonly ToolbarInfo _toolbarInfo;
-
-    /// <summary>
-    /// Flag to check whether the user is currently drawing on screen
-    /// </summary>
-    private bool _isDrawing = false;
-
     /// <summary>
     /// Active polyline
     /// </summary>
     private IFreehand? _freehand;
 
-    public PenState(IWhiteboardClient whiteboardClient, ICanvasPreview preview, ToolbarInfo toolbarInfo)
+    public PenState(IWhiteboardClient whiteboardClient, ICanvasPreview preview, ToolbarInfo toolbarInfo) : base(whiteboardClient, preview, toolbarInfo)
     {
-        ArgumentNullException.ThrowIfNull(whiteboardClient);
-        ArgumentNullException.ThrowIfNull(preview);
-        ArgumentNullException.ThrowIfNull(toolbarInfo);
-
-        _whiteboardClient = whiteboardClient;
-        _preview = preview;
-        _toolbarInfo = toolbarInfo;
     }
 
-    public void PointerPressed(Point2D point)
+    public override void PointerPressed(Point2D point)
     {
         // Set flag to begin drawing
         _isDrawing = true;
 
         // Create a new polyline with brush and fill properties taken from the toolbar
         _freehand = new FreehandItem() {
-            CreatedBy = _whiteboardClient.UserId,
+            CreatedBy = WhiteboardClient.UserId,
 
-            StrokeColor = _toolbarInfo.BorderColor,
-            StrokeWidth = _toolbarInfo.BorderWidth,
+            StrokeColor = ToolbarInfo.BorderColor,
+            StrokeWidth = ToolbarInfo.BorderWidth,
 
             // Begin the polyline with the first point
-            Points = [point]
+            Points = [point],
+
+            // Add the Z index information
+            Zindex = GetNextZIndex()
         };
 
         // Preview the drawing
-        _preview.ShowPreview(_freehand);
+        Preview.ShowPreview(_freehand);
     }
 
-    public void PointerMoved(Point2D point)
+    public override void PointerMoved(Point2D point)
     {
         // Return early if the user is not drawing
         if (!_isDrawing || _freehand is null)
@@ -84,10 +59,10 @@ public class PenState : IViewModelState
         _freehand.Points.Add(point);
 
         // Preview the drawing
-        _preview.ShowPreview(_freehand);
+        Preview.ShowPreview(_freehand);
     }
 
-    public void PointerReleased(Point2D point)
+    public override void PointerReleased(Point2D point)
     {
         // Return early if the user is not drawing
         if (!_isDrawing || _freehand is null)
@@ -99,20 +74,20 @@ public class PenState : IViewModelState
         _isDrawing = false;
 
         // Stop preview
-        _preview.ClearPreview();
+        Preview.ClearPreview();
 
         // Send to whiteboard client state manager off the UI thread
         if (_freehand.Points.Count >= 2)
         {
             IFreehand item = _freehand;
-            Task.Run(() => _whiteboardClient.AddItem(item));
+            Task.Run(() => WhiteboardClient.AddItem(item));
         }
 
         // Reset polyline state back to null
         _freehand = null;
     }
 
-    public void PointerCaptureLost(Point2D point)
+    public override void PointerCaptureLost(Point2D point)
     {
         // Return early if the user is not drawing
         if (!_isDrawing || _freehand is null)
@@ -124,7 +99,7 @@ public class PenState : IViewModelState
         _isDrawing = false;
 
         // Stop preview
-        _preview.ClearPreview();
+        Preview.ClearPreview();
 
         // Reset polyline state back to null
         _freehand = null;
