@@ -317,12 +317,8 @@ public sealed partial class MainWindow : Window
         IFileOperations fileSynchronizer = new Synchroniser();
         IIncidentController controller = await IncidentController.CreateAsync(storage, fileSynchronizer);
 
-        string currentUserId = Guid.TryParse(_userId, out Guid parsedUserId)
-            ? parsedUserId.ToString()
-            : Guid.NewGuid().ToString();
-
         IntPtr windowHandle = WindowNative.GetWindowHandle(this);
-        return new IncidentPageContext(controller, currentUserId, windowHandle);
+        return new IncidentPageContext(controller, _userId, windowHandle);
     }
 
     private async void Incidents_Click(object sender, RoutedEventArgs e)
