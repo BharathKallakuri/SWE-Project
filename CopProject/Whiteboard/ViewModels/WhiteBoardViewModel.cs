@@ -1,4 +1,4 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 using System;
@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
+using Whiteboard.Views;
 
 namespace Whiteboard.ViewModels;
 
@@ -68,9 +69,10 @@ public class WhiteBoardViewModel
             throw new InvalidOperationException("The whiteboard view model has already been initialized.");
         }
 
-        _penState = new PenState(_whiteboardClient, canvas, toolbarInfo);
-        _squareState = new ShapeSquareState(_whiteboardClient, canvas, toolbarInfo);
-        _circleState = new ShapeCircleState(_whiteboardClient, canvas, toolbarInfo);
+        CanvasPreview preview = new(canvas);
+        _penState = new PenState(_whiteboardClient, preview, toolbarInfo);
+        _squareState = new ShapeSquareState(_whiteboardClient, preview, toolbarInfo);
+        _circleState = new ShapeCircleState(_whiteboardClient, preview, toolbarInfo);
         _eraserState = new EraserState(_whiteboardClient);
         _renderer = new WhiteboardRenderer(_whiteboardClient.Canvas, canvas);
 
