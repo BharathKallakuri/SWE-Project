@@ -17,7 +17,7 @@ public class WhiteboardSnapshotSummary
 {
     public string SnapshotId { get; set; } = string.Empty;
     public string SavedBy { get; set; } = string.Empty;
-    public DateTime SavedAt { get; set; }
+    public DateTimeOffset SavedAt { get; set; }
 
     public override string ToString()
     {

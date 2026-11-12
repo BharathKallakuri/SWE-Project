@@ -47,7 +47,7 @@ public sealed class WhiteboardSnapshotStore
             SessionId = sessionId,
             SnapshotId = Guid.NewGuid().ToString("N"),
             SavedBy = userId,
-            SavedAt = DateTime.UtcNow,
+            SavedAt = DateTimeOffset.UtcNow,
             Items = items.ToList()
        };
 
