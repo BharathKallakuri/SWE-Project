@@ -61,4 +61,32 @@ public class ScreenPacketizerTests
         Assert.Equal(DataPacketType.ChangedTiles, packet.Type);
         Assert.Same(tile, Assert.Single(packet.ChangedTiles));
     }
+
+    [Fact]
+    public void CreatePacket_PulseBeforeFullFrame_ThrowsAndKeepsFrameNumber()
+    {
+        ScreenPacketizer packetizer = new ScreenPacketizer("sanjays-screen");
+        using ImageDiffResult unchanged = ImageDiffResult.Unchanged();
+
+        Assert.Throws<InvalidOperationException>(() => packetizer.CreatePacket(unchanged, s_captureTime));
+        Assert.Equal(0, packetizer.NextFrameNumber);
+    }
+
+    [Fact]
+    public void CreatePacket_DeltaBeforeFullFrame_Throws()
+    {
+        ScreenPacketizer packetizer = new ScreenPacketizer("sanjays-screen");
+        var tile = new Tile(0, 0, 64, 64, 1, new byte[] { 1 });
+        using ImageDiffResult delta = ImageDiffResult.Delta(new List<Tile> { tile });
+
+        Assert.Throws<InvalidOperationException>(() => packetizer.CreatePacket(delta, s_captureTime));
+    }
+
+    [Fact]
+    public void CreatePacket_NullResult_ThrowsArgumentNullException()
+    {
+        ScreenPacketizer packetizer = new ScreenPacketizer("sanjays-screen");
+
+        Assert.Throws<ArgumentNullException>(() => packetizer.CreatePacket(null!, s_captureTime));
+    }
 }

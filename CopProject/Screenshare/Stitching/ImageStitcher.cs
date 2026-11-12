@@ -159,12 +159,6 @@ public class ImageStitcher : IImageStitcher, IDisposable
     {
         ArgumentNullException.ThrowIfNull(tile);
 
-        if (tile.X < 0 || tile.Y < 0 || tile.Width <= 0 || tile.Height <= 0)
-        {
-            throw new ArgumentException(
-                "tile coordinates and dimensions are invalid.", nameof(tile));
-        }
-
         // using subtraction to avoid integer overflow in X+width or Y+height
         if (tile.X > _currentFrame!.Width - tile.Width ||
             tile.Y > _currentFrame.Height - tile.Height)
@@ -174,12 +168,6 @@ public class ImageStitcher : IImageStitcher, IDisposable
 
         // Tile.Data returns a fresh copy on every read, so read it once
         byte[] data = tile.Data;
-
-        if (data.Length == 0)
-        {
-            throw new ArgumentException(
-                "tile image data cannot be empty", nameof(tile));
-        }
 
         // ImageDiffer stores the changed tile as PNG bytes. decode the bytes back to a bitmap
         // Bitmap keeps reading from its stream, so copy it into a standalone bitmap.

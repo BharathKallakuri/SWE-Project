@@ -120,6 +120,31 @@ public class ScalingImageSourceTests
         }
     }
 
+    [Fact]
+    public void Capture_ScalingFails_PropagatesExceptionAndDisposesFrame()
+    {
+        // GDI+ cannot draw 16bpp grayscale bitmaps, so DrawImage throws while scaling
+        var source = new UndrawableImageSource();
+        using var scalingSource = new ScalingImageSource(source, 720);
+
+        Assert.ThrowsAny<Exception>(() => { scalingSource.Capture(); });
+
+        // the captured frame was disposed by the scaler, so reading it fails
+        Assert.NotNull(source.LastCapturedBitmap);
+        Assert.ThrowsAny<ArgumentException>(() => source.LastCapturedBitmap!.Width);
+    }
+
+    private sealed class UndrawableImageSource : IImageSource
+    {
+        public Bitmap? LastCapturedBitmap { get; private set; }
+
+        public Bitmap Capture()
+        {
+            LastCapturedBitmap = new Bitmap(100, 1000, System.Drawing.Imaging.PixelFormat.Format16bppGrayScale);
+            return LastCapturedBitmap;
+        }
+    }
+
     private sealed class NonDisposableImageSource : IImageSource
     {
         public Bitmap Capture()
