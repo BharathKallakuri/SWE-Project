@@ -1,4 +1,4 @@
-// Owner   : Sasi Kiran
+﻿// Owner   : Sasi Kiran
 // LICENSE : MIT
 
 using System;
@@ -13,50 +13,38 @@ namespace Whiteboard.ViewModels;
 /// <summary>
 /// Represents the state when the Circle tool is selected.
 /// </summary>
-public class ShapeCircleState : IViewModelState
+/// <inheritdoc/>
+public class ShapeCircleState : ViewModelStateBase
 {
-    private readonly IWhiteboardClient _whiteboardClient;
-    private readonly ICanvasPreview _preview;
-    private readonly ToolbarInfo _toolbarInfo;
-    private bool _isDrawing;
     private Point2D _startPoint = new(0, 0);
     private ICircle? _circle;
 
-    public ShapeCircleState(
-        IWhiteboardClient whiteboardClient,
-        ICanvasPreview preview,
-        ToolbarInfo toolbarInfo)
+    public ShapeCircleState(IWhiteboardClient whiteboardClient, ICanvasPreview preview, ToolbarInfo toolbarInfo) : base(whiteboardClient, preview, toolbarInfo)
     {
-        ArgumentNullException.ThrowIfNull(whiteboardClient);
-        ArgumentNullException.ThrowIfNull(preview);
-        ArgumentNullException.ThrowIfNull(toolbarInfo);
-
-        _whiteboardClient = whiteboardClient;
-        _preview = preview;
-        _toolbarInfo = toolbarInfo;
     }
 
-    public void PointerPressed(Point2D point)
+    public override void PointerPressed(Point2D point)
     {
         _isDrawing = true;
 
         _startPoint = point;
 
         _circle = new Circle {
-            CreatedBy = _whiteboardClient.UserId,
+            CreatedBy = WhiteboardClient.UserId,
 
-            BorderColor = _toolbarInfo.BorderColor,
-            BorderWidth = _toolbarInfo.BorderWidth,
-            FillColor = _toolbarInfo.FillColor,
+            BorderColor = ToolbarInfo.BorderColor,
+            BorderWidth = ToolbarInfo.BorderWidth,
+            FillColor = ToolbarInfo.FillColor,
 
             Center = new(_startPoint.X, _startPoint.Y),
-            Radius = 0
+            Radius = 0,
+            Zindex = GetNextZIndex()
         };
 
-        _preview.ShowPreview(_circle);
+        Preview.ShowPreview(_circle);
     }
 
-    public void PointerMoved(Point2D point)
+    public override void PointerMoved(Point2D point)
     {
         if (!_isDrawing || _circle is null)
         {
@@ -75,10 +63,10 @@ public class ShapeCircleState : IViewModelState
 
         _circle.Radius = diameter / 2;
 
-        _preview.ShowPreview(_circle);
+        Preview.ShowPreview(_circle);
     }
 
-    public void PointerReleased(Point2D point)
+    public override void PointerReleased(Point2D point)
     {
         if (!_isDrawing || _circle is null)
         {
@@ -87,20 +75,20 @@ public class ShapeCircleState : IViewModelState
 
         _isDrawing = false;
 
-        _preview.ClearPreview();
+        Preview.ClearPreview();
 
         // Send to whiteboard client state manager off the UI thread
         // But only if it has a non zero length
         if (_circle.Radius > 0)
         {
             ICircle item = _circle;
-            Task.Run(() => _whiteboardClient.AddItem(item));
+            Task.Run(() => WhiteboardClient.AddItem(item));
         }
 
         _circle = null;
     }
 
-    public void PointerCaptureLost(Point2D point)
+    public override void PointerCaptureLost(Point2D point)
     {
         if (!_isDrawing || _circle is null)
         {
@@ -109,7 +97,7 @@ public class ShapeCircleState : IViewModelState
 
         _isDrawing = false;
 
-        _preview.ClearPreview();
+        Preview.ClearPreview();
 
         _circle = null;
     }
