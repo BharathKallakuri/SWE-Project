@@ -273,6 +273,48 @@ public class TestPersistence
     }
 
     [TestMethod]
+    public async Task GetAllKeysReturnsFailureWhenQueryThrows()
+    {
+        IStorage storage = new CosmosStorage(
+            _mockContainer.Object,
+            () => throw CosmosError(HttpStatusCode.InternalServerError),
+            () => CreateIterator(new List<PersistenceItem>()),
+            count => CreateIterator(new List<PersistenceItem>()));
+
+        (bool success, List<string> keys) = await storage.GetAllKeys();
+
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, keys.Count);
+    }
+
+    [TestMethod]
+    public async Task ReadAllEtagsReturnsFailureWhenAnItemHasNoEtag()
+    {
+        IStorage storage = new CosmosStorage(
+            _mockContainer.Object,
+            () => CreateIterator(new List<string>()),
+            () => CreateIterator(new List<PersistenceItem> {
+                new() { Id = NewKey(), Etag = null! }
+            }),
+            count => CreateIterator(new List<PersistenceItem>()));
+
+        (bool success, Dictionary<string, string> etags) = await storage.ReadAllEtags();
+
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, etags.Count);
+    }
+
+    [TestMethod]
+    public async Task ReadEtagsReturnsFailureWhenAKeyIsMissing()
+    {
+        (bool success, Dictionary<string, string> etags) =
+            await _storage.ReadEtags([NewKey()]);
+
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, etags.Count);
+    }
+
+    [TestMethod]
     ///<summary>
     /// Updating multiple items updates them and rejects stale Etags.
     /// </summary>
@@ -302,6 +344,16 @@ public class TestPersistence
         CollectionAssert.AreEqual(Bytes("new first"), firstData);
         CollectionAssert.AreEqual(Bytes("new second"), secondData);
         TestContext.WriteLine($"Test completed for keys: {firstKey}, {secondKey}");
+    }
+
+    [TestMethod]
+    public async Task UpdateAllReturnsFalseWhenAnItemHasNoEtag()
+    {
+        Dictionary<string, byte[]> updates = new() {
+            [NewKey()] = Bytes("update")
+        };
+
+        Assert.IsFalse(await _storage.UpdateAll(updates, new Dictionary<string, string>()));
     }
 
     [TestMethod]
@@ -387,6 +439,61 @@ public class TestPersistence
         (bool success, Dictionary<string, byte[]> items) = await _storage.ReadLatest(2);
         Assert.IsTrue(success);
         Assert.AreEqual(2, items.Count);
+    }
+
+    [TestMethod]
+    /// <summary>
+    /// ReadLatest(n) returns FALSE and an empty dictionary when there are no items in the storage.
+    /// </summary>
+    /// <returns></returns>
+    public async Task ReadLatestRejectsZeroAndNegativeCounts()
+    {
+        (bool success, Dictionary<string, byte[]> items) = await _storage.ReadLatest(0);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, items.Count);
+
+        (success, items) = await _storage.ReadLatest(-1);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, items.Count);
+    }
+
+    [TestMethod]
+    ///<summary>
+    /// hits the exception branch of ReadLatest
+    ///</summary>
+    public async Task ReadLatestReturnsFailureWhenQueryThrows()
+    {
+        IStorage storage = new CosmosStorage(
+            _mockContainer.Object,
+            () => CreateIterator(new List<string>()),
+            () => CreateIterator(new List<PersistenceItem>()),
+            count => throw CosmosError(HttpStatusCode.InternalServerError));
+
+        (bool success, Dictionary<string, byte[]> items) = await storage.ReadLatest(1);
+
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, items.Count);
+    }
+
+    [TestMethod]
+    ///<summary>
+    /// verifies CosmosStorage constructor throws exceptions when dependencies are missing
+    ///</summary>
+    public void ConstructorRejectsMissingDependencies()
+    {
+        Func<FeedIterator<string>> keys = () => CreateIterator(new List<string>());
+        Func<FeedIterator<PersistenceItem>> etags = () => CreateIterator(new List<PersistenceItem>());
+        Func<int, FeedIterator<PersistenceItem>> latest =
+            _ => CreateIterator(new List<PersistenceItem>());
+
+        Assert.ThrowsExactly<ArgumentNullException>(
+            () => new CosmosStorage(null!, keys, etags, latest));
+        Assert.ThrowsExactly<ArgumentNullException>(
+            () => new CosmosStorage(_mockContainer.Object, null!, etags, latest));
+        Assert.ThrowsExactly<ArgumentNullException>(
+            () => new CosmosStorage(_mockContainer.Object, keys, null!, latest));
+        Assert.ThrowsExactly<ArgumentNullException>(
+            () => new CosmosStorage(_mockContainer.Object, keys, etags, null!));
     }
 
 
