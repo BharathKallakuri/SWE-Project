@@ -102,6 +102,19 @@
                         </Button>
 
                         <Button
+                            x:Name="ButtonEqTriangle"
+                            ToolTipService.ToolTip="Equilateral triangle"
+                            Click="ButtonEqTriangle_Click">
+                            <Polygon
+                                Width="18"
+                                Height="18"
+                                Points="9,0 18,18 0,18"
+                                Fill="Transparent"
+                                Stroke="Black"
+                                StrokeThickness="2" />
+                        </Button>
+
+                        <Button
                             x:Name="ButtonDeleteSelectedItems"
                             ToolTipService.ToolTip="Delete selected items">
                             <FontIcon Glyph="&#xE74D;"/>
@@ -252,7 +265,6 @@
                                 </StackPanel>
                             </Flyout>
                         </Button.Flyout>
-                    </Button>
 
                     <!-- Border width slider -->
                     <StackPanel
