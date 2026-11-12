@@ -2,7 +2,7 @@
 
 using Cloud.Persistence;
 using FileSynchroniser.Models;
-using Incidents.Models;
+using Incidents;
 
 public class IncidentController : IIncidentController
 {
@@ -69,49 +69,6 @@ public class IncidentController : IIncidentController
         }
     }
 
-    /// <summary>
-    /// Creates a new Incident.
-    /// </summary>
-    /// <param name="request"> Information to create the Incident.</param>
-    /// <returns>The created Incident.</returns>
-    /// <exception cref="InvalidOperationException">Throws InvalidOperationException if Incident can't be created.</exception>
-    [Obsolete("Use CreateIncidentV2() instead.")]
-    public async Task<Incident> CreateIncident(CreateIncidentRequest request)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-
-        Incident incident = new Incident(
-            request.Title,
-            request.Description,
-            request.CreatedBy,
-            request.Category,
-            request.Severity,
-            request.Location,
-            request.Evidences.ToList()
-        );
-
-        bool success;
-        try
-        {
-            success = await _cloudStorageService.Create(
-                incident.Id.ToString(),
-                Incidents.IncidentSerializer.Serialize(incident)
-            );
-
-            if (!success)
-            {
-                throw new InvalidOperationException("Failed to persist incident to cloud storage.");
-            }
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException("Failed to persist incident to cloud storage.", ex);
-        }
-
-        _incidentMap.Add(incident.Id, incident);
-
-        return incident;
-    }
 
     /// <summary>
     /// Redacts/Delete files that were saved by FileSynchronizer.
@@ -140,7 +97,7 @@ public class IncidentController : IIncidentController
     /// <param name="request"> Information to create the Incident.</param>
     /// <returns>The created Incident.</returns>
     /// <exception cref="InvalidOperationException">Throws InvalidOperationException if Incident can't be created.</exception>
-    public async Task<Incident> CreateIncidentV2(CreateIncidentRequestV2 request)
+    public async Task<Incident> CreateIncident(CreateIncidentRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
 

@@ -20,6 +20,8 @@ public sealed class ClientController : IControllerService
     //for storing the user count and users information
     private int _lastKnownUserCount;
     private readonly Dictionary<string,ControllerUser> _knownUsers = new();
+    private readonly List<IUserNotificationHandler> _notificationHandlers=new();
+    internal bool _initialSync=false;
 
     // Events
     public event EventHandler<MeetingEndedEventArgs>? MeetingEnded;
@@ -29,6 +31,35 @@ public sealed class ClientController : IControllerService
     public int ListenPort => _communicator?.ListenPort ?? 0;
     public ICommunicator? Communicator => _communicator;
     public ControllerUser? CurrentUser => _currentUser;
+    
+    public void RegisterNotificationHandler(IUserNotificationHandler handler)
+    {
+        if(handler != null && !_notificationHandlers.Contains(handler))
+            _notificationHandlers.Add(handler);
+        
+    }
+
+    public void UnregisterNotificationHandler(IUserNotificationHandler handler)
+    {
+        if(handler != null && _notificationHandlers.Contains(handler))
+            _notificationHandlers.Remove(handler);
+    }
+
+    internal void NotifyHandlersUserJoined(ControllerUser user)
+    {
+        foreach(var handler in _notificationHandlers)
+        {
+            handler.OnUserJoined(user);
+        }
+    }
+    
+    internal void NotifyHandlersUserLeft(ControllerUser user)
+    {
+        foreach(var handler in _notificationHandlers)
+        {
+            handler.OnUserLeft(user);
+        }
+    }
 
     public ClientController(ControllerUser user, ICommunicator? communicator = null)
     {
@@ -288,6 +319,26 @@ internal class ClientNotificationListener : IMessageListener
                             }
                             _client.UpdateUserCount(_client.GetActiveUserCount());
                             _client.RaiseUserJoined(new UserJoinedEventArgs(joinedUser, _client.GetActiveUserCount()));
+                            if(!_client._initialSync)
+                            {
+                                _client._initialSync=true;
+                                //First call always notifies about the Current User
+                                if(_client.CurrentUser != null)
+                                {
+                                    _client.NotifyHandlersUserJoined(_client.CurrentUser);
+                                }
+                                foreach(var user in _client.GetActiveUsers())
+                                {
+                                    if(user.UserKey != _client.CurrentUser?.UserKey)
+                                    {
+                                        _client.NotifyHandlersUserJoined(user);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                _client.NotifyHandlersUserJoined(joinedUser);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -313,6 +364,7 @@ internal class ClientNotificationListener : IMessageListener
                             }
                             _client.UpdateUserCount(_client.GetActiveUserCount());
                             _client.RaiseUserLeft(new UserLeftEventArgs(leftUser, _client.GetActiveUserCount()));
+                            _client.NotifyHandlersUserLeft(leftUser);
                         }
                     }
                     catch (Exception ex)

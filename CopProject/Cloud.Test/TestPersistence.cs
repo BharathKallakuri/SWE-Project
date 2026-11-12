@@ -279,6 +279,26 @@ public class TestPersistence
     }
 
     /// <summary>
+    /// Tests that ReadEtags returns the ETags for the specified items.
+    /// </summary>
+    /// <returns></returns>
+    public async Task ReadEtagsReturnsEtagsForSpecifiedItems()
+    {
+        string firstKey = NewKey();
+        string secondKey = NewKey();
+        Assert.IsTrue(await _storage.CreateAll(new Dictionary<string, byte[]> {
+            [firstKey] = Bytes("first"),
+            [secondKey] = Bytes("second")
+        }));
+
+        (bool success, Dictionary<string, string> etags) = await _storage.ReadEtags([firstKey, secondKey]);
+
+        Assert.IsTrue(success);
+        Assert.IsTrue(etags.ContainsKey(firstKey));
+        Assert.IsTrue(etags.ContainsKey(secondKey));
+        Assert.AreEqual(2, etags.Count);
+    }
+    /// <summary>
     /// Logs the key and ETag of a test item to the test context output.
     /// </summary>
     /// <returns></returns>
@@ -299,6 +319,24 @@ public class TestPersistence
         Assert.IsTrue(found);
         CollectionAssert.AreEqual(updated, actual);
         TestContext.WriteLine($"Test completed for key: {key}");
+    }
+
+    [TestMethod]
+    /// <summary>
+    /// Tests that ReadLatest(n) returns the latest n items from the storage.
+    /// </summary>
+    /// <returns></returns>
+    public async Task ReadLatestReturnsLatestItems()
+    {
+        string firstKey = NewKey();
+        string secondKey = NewKey();
+        Assert.IsTrue(await _storage.CreateAll(new Dictionary<string, byte[]> {
+            [firstKey] = Bytes("first"),
+            [secondKey] = Bytes("second")
+        }));
+        (bool success, Dictionary<string, byte[]> items) = await _storage.ReadLatest(2);
+        Assert.IsTrue(success);
+        Assert.AreEqual(2, items.Count);
     }
 
     /// <summary>
