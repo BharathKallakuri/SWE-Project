@@ -19,6 +19,7 @@ namespace Whiteboard.Network.Messages;
 [JsonDerivedType(typeof(ReqUpdateItem), "req_update_item")]
 [JsonDerivedType(typeof(ReqUndo), "req_undo")]
 [JsonDerivedType(typeof(ReqRedo), "req_redo")]
+[JsonDerivedType(typeof(ReqRestoreSnapshot), "req_restore_snapshot")]
 [ExcludeFromCodeCoverage]
 public abstract record ClientMessage
 {
@@ -78,4 +79,9 @@ public abstract record ClientMessage
     /// </summary>
     [ExcludeFromCodeCoverage]
     public sealed record ReqRedo() : ClientMessage;
+
+    /// <summary>
+    /// Requests server to replace the shared canvas with a saved snapshot
+    /// </summary>
+    public sealed record ReqRestoreSnapshot(WhiteboardDto Whiteboard) : ClientMessage;
 }

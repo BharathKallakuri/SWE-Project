@@ -5,6 +5,7 @@
 using System;
 using Networking;
 using Whiteboard.Interfaces;
+using Whiteboard.Network.Dtos;
 
 namespace Whiteboard.Client;
 
@@ -73,4 +74,9 @@ public interface IWhiteboardClient : IMessageListener
     /// An empty redo history leaves the canvas unchanged.
     /// </summary>
     public void Redo();
+
+    /// <summary>
+    /// Requests server to replace the shared canvas with a saved snapshot
+    /// </summary>
+    public void RestoreSnapshot(WhiteboardDto whiteboard);
 }

@@ -167,4 +167,10 @@ public class WhiteboardClient : IWhiteboardClient
                 break;
         }
     }
+
+    public void RestoreSnapshot(WhiteboardDto whiteboard)
+    {
+        ArgumentNullException.ThrowIfNull(whiteboard);
+        SendToServer(new ClientMessage.ReqRestoreSnapshot(whiteboard));
+    }
 }

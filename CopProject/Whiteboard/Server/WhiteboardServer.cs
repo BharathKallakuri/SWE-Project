@@ -95,6 +95,10 @@ public class WhiteboardServer : IWhiteboardServer
                 case ClientMessage.ReqRedo:
                     _history.Redo(request.UserId);
                     break;
+
+                case ClientMessage.ReqRestoreSnapshot(var whiteboard):
+                    _history.RestoreState(request.UserId, whiteboard.Items.Select(ItemMapper.FromDto));
+                    break;
             }
 
             BroadcastCanvas();
