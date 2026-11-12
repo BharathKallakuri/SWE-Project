@@ -15,8 +15,8 @@ public class IncidentDetailsPageViewModelUpdateTest
     private IIncidentController _controller = null!;
     private IncidentDetailsPageViewModel _viewModel = null!;
 
-    private readonly Guid _currentUserId =
-        Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private readonly string _currentUserId =
+        "11111111-1111-1111-1111-111111111111";
 
     /// <summary>
     /// Initializes the real IncidentController and IncidentDetailsPageViewModel

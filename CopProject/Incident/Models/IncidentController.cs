@@ -269,7 +269,7 @@ public class IncidentController : IIncidentController
 
         Incident clone = incident.Clone();
 
-        clone.UpdateStatus(newStatus, Guid.Empty);
+        clone.UpdateStatus(newStatus, "");
 
         try
         {
@@ -291,7 +291,7 @@ public class IncidentController : IIncidentController
                 throw new InvalidOperationException("Failed to update Incident to cloud storage.");
             }
 
-            incident.UpdateStatus(newStatus, Guid.Empty);
+            incident.UpdateStatus(newStatus, "");
 
             return true;
         }
@@ -317,7 +317,7 @@ public class IncidentController : IIncidentController
 
         Incident clone = incident.Clone();
 
-        clone.UpdateCategory(newCategory, Guid.Empty);
+        clone.UpdateCategory(newCategory, "");
 
         try
         {
@@ -339,7 +339,7 @@ public class IncidentController : IIncidentController
                 throw new InvalidOperationException("Failed to update Incident to cloud storage.");
             }
 
-            incident.UpdateCategory(newCategory, Guid.Empty);
+            incident.UpdateCategory(newCategory, "");
 
             return true;
         }
@@ -365,7 +365,7 @@ public class IncidentController : IIncidentController
 
         Incident clone = incident.Clone();
 
-        clone.UpdateSeverity(newSeverity, Guid.Empty);
+        clone.UpdateSeverity(newSeverity, "");
 
         try
         {
@@ -387,7 +387,7 @@ public class IncidentController : IIncidentController
                 throw new InvalidOperationException("Failed to update Incident to cloud storage.");
             }
 
-            incident.UpdateSeverity(newSeverity, Guid.Empty);
+            incident.UpdateSeverity(newSeverity, "");
 
             return true;
         }
@@ -409,7 +409,7 @@ public class IncidentController : IIncidentController
 
         Incident clone = incident.Clone();
 
-        clone.UpdateLocation(location, Guid.Empty);
+        clone.UpdateLocation(location, "");
 
         try
         {
@@ -431,7 +431,7 @@ public class IncidentController : IIncidentController
                 throw new InvalidOperationException("Failed to update Incident to cloud storage.");
             }
 
-            incident.UpdateLocation(location, Guid.Empty);
+            incident.UpdateLocation(location, "");
 
             return true;
         }
@@ -468,7 +468,7 @@ public class IncidentController : IIncidentController
         Incident incident1Clone = incident1.Clone();
         Incident incident2Clone = incident2.Clone();
 
-        bool success = Incident.AddAdjacentIncident(incident1Clone, incident2Clone, Guid.Empty);
+        bool success = Incident.AddAdjacentIncident(incident1Clone, incident2Clone, "");
 
         // TODO(@shreesh): Change the signature to void and throw error
         if (!success)
@@ -506,7 +506,7 @@ public class IncidentController : IIncidentController
                 throw new InvalidOperationException("Failed to update Incident to cloud storage.");
             }
 
-            Incident.AddAdjacentIncident(incident1, incident2, Guid.Empty);
+            Incident.AddAdjacentIncident(incident1, incident2, "");
 
             return true;
         }
