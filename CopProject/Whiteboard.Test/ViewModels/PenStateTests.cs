@@ -94,4 +94,27 @@ public class PenStateTests
         // Assert its Z index matches (1 + max(5, 12))
         Assert.Equal(13, freehand.Zindex);
     }
+
+    /// <summary>
+    /// Assert that moving the pointer also updates the pen as expected
+    /// </summary>
+    [Fact]
+    public void PointerMoved_WhenDrawing_AppendsPointsAndUpdatesPreview()
+    {
+        PenState state = new(_client, _preview, _toolbar);
+
+        // Simulate pointer press, then two pointer move events
+        state.PointerPressed(new Point2D(0, 0));
+        state.PointerMoved(new Point2D(5, 10));
+        state.PointerMoved(new Point2D(15, 20));
+
+        // Assert that preview is called three times
+        Assert.Equal(3, _preview.ShownItems.Count);
+
+        IFreehand freehand = Assert.IsAssignableFrom<IFreehand>(_preview.LastShownItem);
+
+        // Assert that the freehand item is the same as what we expect it to be
+        Assert.Equal(3, freehand.Points.Count);
+        Assert.Equal(new Point2D(15, 20), freehand.Points[2]);
+    }
 }
