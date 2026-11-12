@@ -345,10 +345,9 @@ public sealed partial class MainWindow : Window
         {
             IncidentPageContext context = await GetIncidentContextAsync();
             var geocoding = new NominatimGeocodingService(new HttpClient());
-            var map = new LocationMapView();
+            var map = new LocationMapView(new MapService(context.IncidentController, geocoding));
             map.IncidentSelected += LocationIncidentSelected;
             map.LocationSelected += LocationSelectedOnMap;
-            map.Initialize(new MapService(context.IncidentController, geocoding));
             LocationHost.Content = map;
             ShowScreen("location");
         }
