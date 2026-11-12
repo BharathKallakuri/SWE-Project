@@ -47,4 +47,69 @@ public class PngEncoderTests
         Assert.Throws<ArgumentNullException>(
             () => PngEncoder.Encode(null!));
     }
+
+    [Fact]
+    public void FindPngCodec_PngAvailableImmediately_ReturnsWithoutSleeping()
+    {
+        var sleeps = new List<int>();
+
+        ImageCodecInfo codec = PngEncoder.FindPngCodec(
+            ImageCodecInfo.GetImageEncoders,
+            sleeps.Add);
+
+        Assert.Equal(ImageFormat.Png.Guid, codec.FormatID);
+        Assert.Empty(sleeps);
+    }
+
+    [Fact]
+    public void FindPngCodec_PngMissingAtFirst_RetriesUntilFound()
+    {
+        // simulates GDI+ still building its codec list: the first two lookups
+        // come back without png, the third returns the full list
+        int calls = 0;
+        var sleeps = new List<int>();
+
+        ImageCodecInfo codec = PngEncoder.FindPngCodec(
+            () => ++calls < 3 ? EncodersWithoutPng() : ImageCodecInfo.GetImageEncoders(),
+            sleeps.Add);
+
+        Assert.Equal(ImageFormat.Png.Guid, codec.FormatID);
+        Assert.Equal(3, calls);
+        Assert.Equal(new[] { 10, 20 }, sleeps);
+    }
+
+    [Fact]
+    public void FindPngCodec_PngNeverAvailable_ThrowsAfterAllAttempts()
+    {
+        int calls = 0;
+        var sleeps = new List<int>();
+
+        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(
+            () => PngEncoder.FindPngCodec(
+                () => {
+                    calls++;
+                    return EncodersWithoutPng();
+                },
+                sleeps.Add));
+
+        Assert.Equal("GDI+ has no PNG encoder", ex.Message);
+        Assert.Equal(5, calls);
+        Assert.Equal(new[] { 10, 20, 30, 40, 50 }, sleeps);
+    }
+
+    [Fact]
+    public void FindPngCodec_EmptyEncoderList_ThrowsInvalidOperationException()
+    {
+        Assert.Throws<InvalidOperationException>(
+            () => PngEncoder.FindPngCodec(
+                () => Array.Empty<ImageCodecInfo>(),
+                _ => { }));
+    }
+
+    private static ImageCodecInfo[] EncodersWithoutPng()
+    {
+        return ImageCodecInfo.GetImageEncoders()
+            .Where(c => c.FormatID != ImageFormat.Png.Guid)
+            .ToArray();
+    }
 }
