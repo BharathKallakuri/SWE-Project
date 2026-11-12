@@ -47,6 +47,7 @@ internal sealed class WhiteboardRenderer : IDisposable
         RunOnUIThread(() => {
             RemoveDeletedInternal(item.Id);
             Microsoft.UI.Xaml.UIElement visual = CreateVisual(item);
+            Canvas.SetZIndex(visual, (int)item.Zindex);
             _visuals[item.Id] = visual;
             _canvas.Children.Add(visual);
         });
