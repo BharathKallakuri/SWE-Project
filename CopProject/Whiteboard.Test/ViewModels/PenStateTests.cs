@@ -117,4 +117,58 @@ public class PenStateTests
         Assert.Equal(3, freehand.Points.Count);
         Assert.Equal(new Point2D(15, 20), freehand.Points[2]);
     }
+
+    /// <summary>
+    /// Assert that moving the pointer when drawing does nothing
+    /// </summary>
+    [Fact]
+    public void PointerMoved_WhenNotDrawing_DoesNothing()
+    {
+        PenState state = new(_client, _preview, _toolbar);
+
+        state.PointerMoved(new Point2D(5, 10));
+
+        Assert.Empty(_preview.ShownItems);
+    }
+
+    /// <summary>
+    /// Assert that clicking does not create a new stroke
+    /// </summary>
+    [Fact]
+    public void PointerReleased_WithSinglePoint_DoesNotSubmit()
+    {
+        PenState state = new(_client, _preview, _toolbar);
+
+        state.PointerPressed(new Point2D(0, 0));
+        state.PointerReleased(new Point2D(0, 0));
+
+        Assert.Equal(1, _preview.ClearCount);
+        Assert.Empty(_client.AddedItems);
+    }
+
+    /// <summary>
+    /// Assert that pointer released, when not drawing, does nothing
+    /// </summary>
+    [Fact]
+    public void PointerReleased_WhenNotDrawing_DoesNothing()
+    {
+        PenState state = new(_client, _preview, _toolbar);
+
+        state.PointerReleased(new Point2D(10, 10));
+
+        Assert.Equal(0, _preview.ClearCount);
+        Assert.Empty(_client.AddedItems);
+    }
+
+    /// <summary>
+    /// Assert that losing pointer when not drawing does not do anything
+    /// </summary>
+    [Fact]
+    public void PointerCaptureLost_WhenNotDrawing_DoesNothing()
+    {
+        PenState state = new(_client, _preview, _toolbar);
+        state.PointerCaptureLost(new Point2D(10, 10));
+
+        Assert.Equal(0, _preview.ClearCount);
+    }
 }
