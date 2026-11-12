@@ -16,6 +16,25 @@ public sealed class ControllerMeetingService
     private bool _isHost;
     private readonly SynchronizationContext? _uiThread = SynchronizationContext.Current;
     public IControllerService? ActiveController => _activeController;
+    private readonly List<IUserNotificationHandler> _registeredHandlers = new();
+
+    public void RegisterNotificationHandler(IUserNotificationHandler handler)
+    {
+        if (handler != null && !_registeredHandlers.Contains(handler))
+        {
+            _registeredHandlers.Add(handler);
+            _activeController?.RegisterNotificationHandler(handler);
+        }
+    }
+
+    public void UnregisterNotificationHandler(IUserNotificationHandler handler)
+    {
+        if (handler != null)
+        {
+            _registeredHandlers.Remove(handler);
+            _activeController?.UnregisterNotificationHandler(handler);
+        }
+    }
 
     public void Initialize(MeetingSession session)
     {
@@ -37,7 +56,10 @@ public sealed class ControllerMeetingService
         var host = ControllerFactory.CreateHost(hostUser);
         _activeController = host;
         _isHost = true;
-
+        foreach (var handler in _registeredHandlers)
+        {
+            host.RegisterNotificationHandler(handler);
+        }
         bool started = host.StartMeeting();
         if (!started)
         {
@@ -75,6 +97,10 @@ public sealed class ControllerMeetingService
         }
 
         _activeController = client;
+        foreach (var handler in _registeredHandlers)
+        {
+            client.RegisterNotificationHandler(handler);
+        }
         HookControllerEvents(client);
         UpdateParticipantCount(client.GetActiveUserCount());
         UpdateActiveParticipants();

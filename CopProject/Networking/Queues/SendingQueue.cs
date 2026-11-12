@@ -86,6 +86,8 @@ public class SendingQueue : Queue
                 _lowQueue.Enqueue(packet);
                 break;
         }
+
+        SignalItemAdded();
     }
 
     public override Packet? Dequeue()
@@ -181,6 +183,7 @@ public class SendingQueue : Queue
             _consecutiveHigherPriorityCount = 0;
             _highBurstCount = 0;
             _mediumServedCount = 0;
+            ResetItemAdded();
         }
     }
 
