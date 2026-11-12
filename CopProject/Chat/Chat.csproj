@@ -14,7 +14,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Networking\Networking.csproj" />
     <Compile Remove="UI/**/*.cs" />
-    <Compile Remove="UI.Demo/**/*.cs" />
 
   </ItemGroup>
 
