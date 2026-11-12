@@ -477,6 +477,19 @@ public class TestPersistence
 
     [TestMethod]
     ///<summary>
+    /// verifies that the CosmosStorage constructor accepts valid credentials and container names.
+    ///</summary>
+    public void ConstructorAcceptsCosmosClientAndContainerNames()
+    {
+        Mock<CosmosClient> client = new();
+
+        CosmosStorage storage = new(client.Object, "TestDatabase", "TestContainer");
+
+        Assert.IsNotNull(storage);
+    }
+
+    [TestMethod]
+    ///<summary>
     /// verifies CosmosStorage constructor throws exceptions when dependencies are missing
     ///</summary>
     public void ConstructorRejectsMissingDependencies()
