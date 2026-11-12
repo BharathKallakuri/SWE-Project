@@ -21,6 +21,8 @@
                            VerticalAlignment="Center" Visibility="Collapsed"/>
                 <PersonPicture x:Name="ProfilePic" Width="30" Height="30"/>
                 <TextBlock x:Name="ProfileName" Foreground="White" VerticalAlignment="Center"/>
+                <Button Content="Edit profile" Click="EditProfile_Click" Foreground="White"
+                        Background="#1F4A78"/>
                 <Button Content="Sign out" Click="SignOut_Click" Foreground="White"
                         Background="#1F4A78"/>
             </StackPanel>
@@ -30,21 +32,21 @@
         <Grid x:Name="LoginView" Grid.Row="1">
             <Border Background="White" Width="400" Padding="30" CornerRadius="10"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel Spacing="10">
+                <StackPanel Spacing="16">
                     <TextBlock Text="Welcome" FontSize="28" FontWeight="SemiBold"
                                HorizontalAlignment="Center"/>
-
-                    <PersonPicture Width="80" Height="80"/>
-                    <Button Content="Add profile picture" HorizontalAlignment="Center"/>
-
-                    <TextBox x:Name="UserIdBox" Header="User ID"/>
-                    <TextBox x:Name="EmailBox" Header="Email" PlaceholderText="name@smail.iitpkd.ac.in"/>
+                    <PersonPicture x:Name="LoginPic" Width="90" Height="90"
+                                   HorizontalAlignment="Center"/>
+                    <Button Content="Add profile picture" Click="PickLoginPicture_Click"
+                            HorizontalAlignment="Center"/>
+                    <TextBox x:Name="UserIdBox" Header="User ID"
+                             PlaceholderText="Choose your User ID"/>
 
                     <TextBlock x:Name="LoginError" Foreground="Red" TextWrapping="Wrap"
                                Visibility="Collapsed"/>
-
-                    <Button Content="CONTINUE" Click="Continue_Click" Background="#0F5FC2"
-                            Foreground="White" HorizontalAlignment="Stretch" Height="40"/>
+                    <Button x:Name="SignInBtn" Content="Sign in with Google" Click="SignIn_Click"
+                            Background="#0F5FC2" Foreground="White"
+                            HorizontalAlignment="Stretch" Height="40"/>
                 </StackPanel>
             </Border>
         </Grid>
@@ -63,28 +65,12 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                     <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
 
                 <Button Content="Start Meeting" Click="Start_Click" Height="100"
                         Background="#0F5FC2" Foreground="White"
                         FontSize="20" HorizontalAlignment="Stretch"/>
                 <Button Grid.Column="1" Content="Join with ID" Click="Join_Click"
-                        Height="100" FontSize="20" Background="White"
-                        HorizontalAlignment="Stretch"/>
-                <Button Grid.Column="2" Content="Incidents" Click="Incidents_Click"
-                        Height="100" FontSize="20" Background="White"
-                        HorizontalAlignment="Stretch"/>
-                <Button Grid.Column="3" Content="Location" Click="Location_Click"
-                        Height="100" FontSize="20" Background="White"
-                        HorizontalAlignment="Stretch"/>
-                <Button Grid.Column="4" Content="Cloud" Click="Cloud_Click"
-                        Height="100" FontSize="20" Background="White"
-                        HorizontalAlignment="Stretch"/>
-                <Button Grid.Column="5" Content="FileSync" Click="FileSync_Click"
                         Height="100" FontSize="20" Background="White"
                         HorizontalAlignment="Stretch"/>
             </Grid>
@@ -97,82 +83,6 @@
                     </Grid.RowDefinitions>
                     <TextBlock Text="Previous Meeting Records" FontSize="18" FontWeight="SemiBold"/>
                     <ListView x:Name="RecordsList" Grid.Row="1" SelectionMode="None"/>
-                </Grid>
-            </Border>
-        </Grid>
-
-        <!-- Incidents page -->
-        <Grid x:Name="IncidentsView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <Button Content="Back" Click="IncidentsBack_Click" Background="White"/>
-                <TextBlock Text="Incidents" FontSize="32" FontWeight="SemiBold"/>
-            </StackPanel>
-
-            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
-                <Grid>
-                    <!-- INCIDENTS TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
-                </Grid>
-            </Border>
-        </Grid>
-
-        <!-- Locations page -->
-        <Grid x:Name="LocationView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <Button Content="Back" Click="LocationBack_Click" Background="White"/>
-                <TextBlock Text="Location" FontSize="32" FontWeight="SemiBold"/>
-            </StackPanel>
-
-            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
-                <Grid>
-                    <!-- LOCATION TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
-                </Grid>
-            </Border>
-        </Grid>
-
-        <!-- Cloud page -->
-        <Grid x:Name="CloudView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <Button Content="Back" Click="CloudBack_Click" Background="White"/>
-                <TextBlock Text="Cloud" FontSize="32" FontWeight="SemiBold"/>
-            </StackPanel>
-
-            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
-                <Grid>
-                    <!-- CLOUD TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
-                </Grid>
-            </Border>
-        </Grid>
-
-        <!-- FileSync page -->
-        <Grid x:Name="FileSyncView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <Button Content="Back" Click="FileSyncBack_Click" Background="White"/>
-                <TextBlock Text="FileSync" FontSize="32" FontWeight="SemiBold"/>
-            </StackPanel>
-
-            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
-                <Grid>
-                    <!-- FILESYNC TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
                 </Grid>
             </Border>
         </Grid>
@@ -204,20 +114,36 @@
                         <TextBlock Text="Whiteboard module goes here"/>
                     </StackPanel>
                 </Border>
+
+                <Border x:Name="IncidentsPanel" Background="White" CornerRadius="10" Visibility="Collapsed">
+                    <Grid Padding="20">
+                        <!-- INCIDENTS TEAM: the in-meeting incidents UI goes here -->
+                        <TextBlock Text="Incidents module goes here"/>
+                    </Grid>
+                </Border>
+                
+                <Border x:Name="LocationPanel" Background="White" CornerRadius="10" Visibility="Collapsed">
+                    <Grid Padding="20">
+                        <!-- LOCATION TEAM: the in-meeting location UI goes here -->
+                        <TextBlock Text="Location module goes here"/>
+                    </Grid>
+                </Border>
             </Grid>
 
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center"
                         Spacing="8" Margin="0,0,0,16">
-                <ToggleButton x:Name="HomeBtn" Content="Home" Click="HomeBtn_Click"
+                <ToggleButton x:Name="HomeBtn" Content="Home" Tag="home" Click="Panel_Click"
                               Width="100" Height="50" IsChecked="True"/>
-                <ToggleButton x:Name="ShareBtn" Content="Share" Click="ShareBtn_Click"
+                <ToggleButton x:Name="ShareBtn" Content="Share" Tag="share" Click="Panel_Click"
                               Width="100" Height="50"/>
-                <ToggleButton x:Name="BoardBtn" Content="Whiteboard" Click="BoardBtn_Click"
+                <ToggleButton x:Name="BoardBtn" Content="Whiteboard" Tag="board" Click="Panel_Click"
                               Width="100" Height="50"/>
                 <ToggleButton x:Name="ChatBtn" Content="Chat" Click="ChatBtn_Click"
                               Width="100" Height="50"/>
-                <Button Content="Incidents" Click="Incidents_Click" Width="100" Height="50"/>
-                <Button Content="Location" Click="Location_Click" Width="100" Height="50"/>
+                <ToggleButton x:Name="IncidentsBtn" Content="Incidents" Tag="incidents" Click="Panel_Click"
+                              Width="100" Height="50"/>
+                <ToggleButton x:Name="LocationBtn" Content="Location" Tag="location" Click="Panel_Click"
+                              Width="100" Height="50"/>
                 <Button x:Name="EndBtn" Content="End Meeting" Click="End_Click" Width="120" Height="50"
                         Background="#D13438" Foreground="White"/>
             </StackPanel>
