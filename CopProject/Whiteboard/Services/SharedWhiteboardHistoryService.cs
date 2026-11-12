@@ -16,6 +16,7 @@ using Whiteboard.Interfaces;
 using Whiteboard.Network.Mappers;
 using Whiteboard.Network.Serializations;
 using System.Linq;
+using System.IO;
 using Whiteboard.Network.Dtos;
 
 namespace Whiteboard.Services;
@@ -381,5 +382,36 @@ public sealed class SharedWhiteboardHistoryService
         return item is null
             ? null
             : ItemDtoStringSerializer.Serialize(ItemMapper.ToDto(item));
+    }
+
+    public void RestoreState(string userId, IEnumerable<Item> items)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+        ArgumentNullException.ThrowIfNull(items);
+
+        IItem[] restoredItems = items.Select(ItemSnapshot.Copy).ToArray(); 
+
+        if(restoredItems.Select(item => item.Id).Distinct().Count() != restoredItems.Length)
+        {
+            throw new InvalidDataException("Snapshot contains duplicate item IDs");
+        }
+
+        foreach(Guid id in _canvas.Items.Keys.ToArray())
+        {
+            _canvas.DeleteItem(id);
+        }
+
+        foreach (UserHistory history in _histories.Values)
+        {
+            history.Undo.Clear();
+            history.Redo.Clear();
+        }
+        
+        RegisterUser(userId);
+
+        foreach (IItem item in restoredItems)
+        {
+            _canvas.AddItem(item);
+        }
     }
 }
