@@ -132,6 +132,29 @@ public class PenStateTests
     }
 
     /// <summary>
+    /// Ensure the core functionality of drawing, sending to client and clearing preview works
+    /// </summary>
+    [Fact]
+    public void PointerReleased_WithAtLeastTwoPoints_SubmitsAndClearsPreview()
+    {
+        PenState state = new(_client, _preview, _toolbar);
+
+        state.PointerPressed(new Point2D(0, 0));
+        state.PointerMoved(new Point2D(10, 10));
+        state.PointerReleased(new Point2D(10, 10));
+
+        Assert.Equal(1, _preview.ClearCount);
+
+        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(2)); // Wait for at most 2000ms
+        Assert.True(wasAdded, "Item was not added in due time.");
+
+        Assert.Single(_client.AddedItems);
+        IFreehand submitted = Assert.IsAssignableFrom<IFreehand>(_client.AddedItems[0]);
+
+        Assert.Equal(2, submitted.Points.Count);
+    }
+
+    /// <summary>
     /// Assert that clicking does not create a new stroke
     /// </summary>
     [Fact]
