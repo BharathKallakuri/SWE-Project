@@ -11,6 +11,7 @@ using Whiteboard.Interfaces;
 using XamlPolyline = Microsoft.UI.Xaml.Shapes.Polyline;
 using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
 using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
+using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
 using Windows.Foundation;
 
 namespace Whiteboard.ViewModels;
@@ -93,6 +94,7 @@ internal sealed class WhiteboardRenderer : IDisposable
             IFreehand freehand => CreateFreehand(freehand),
             Whiteboard.Items.Shapes.Square square => CreateSquare(square),
             Whiteboard.Items.Shapes.Circle circle => CreateCircle(circle),
+            Whiteboard.Items.Shapes.EqTriangle triangle => CreateEqTriangle(triangle),
             _ => new Border()
         };
     }
@@ -118,6 +120,36 @@ internal sealed class WhiteboardRenderer : IDisposable
         return visual;
     }
 
+    private static XamlPolygon CreateEqTriangle(Whiteboard.Items.Shapes.EqTriangle item)
+    {
+        double height = item.SideLength * Math.Sqrt(3) / 2;
+        XamlPolygon visual = new() {
+            Width = item.SideLength,
+            Height = height,
+            Fill = new SolidColorBrush(ToColor(item.FillColor)),
+            Stroke = new SolidColorBrush(ToColor(item.BorderColor)),
+            StrokeThickness = item.BorderWidth,
+            IsHitTestVisible = true,
+            Tag = item.Id
+        };
+
+        visual.Points.Add(new Point(item.SideLength / 2, 0));
+        visual.Points.Add(new Point(0, height));
+        visual.Points.Add(new Point(item.SideLength, height));
+        double left = item.Left;
+        double top = item.Top;
+        if (left == 0 && top == 0 && (item.Center.X != 0 || item.Center.Y != 0))
+        {
+            left = item.Center.X - item.SideLength / 2;
+            top = item.Center.Y - height / 2;
+        }
+
+        Canvas.SetLeft(visual, left);
+        Canvas.SetTop(visual, top);
+        ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
+        return visual;
+    }
+
     private static XamlEllipse CreateCircle(Whiteboard.Items.Shapes.Circle item)
     {
         double diameter = item.Radius * 2;
@@ -131,7 +163,7 @@ internal sealed class WhiteboardRenderer : IDisposable
             Tag = item.Id
         };
 
-        Canvas.SetLeft(visual, item.Center.X - item.Radius);
+        Canvas.SetLeft(visual, item.Center.X - item.Radius); 
         Canvas.SetTop(visual, item.Center.Y - item.Radius);
         ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
         return visual;
