@@ -1,8 +1,9 @@
 ﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
-using Microsoft.UI;
+using Windows.UI;
 using Whiteboard.Interfaces;
+using Whiteboard.Items.Shapes;
 using Whiteboard.Test.Mocks;
 using Whiteboard.ViewModels;
 
@@ -26,7 +27,7 @@ public class PenStateTests
     /// <summary>
     /// A random toolbar
     /// </summary>
-    private readonly ToolbarInfo _toolbar = new(Colors.Black, 3, Colors.Red);
+    private readonly ToolbarInfo _toolbar = new(Color.FromArgb(255, 0, 0, 0), 3, Color.FromArgb(255, 255, 0, 0));
 
     /// <summary>
     /// Assert that constructor throws <see cref="ArgumentNullException"/> if any of the arguments is null
@@ -71,5 +72,26 @@ public class PenStateTests
 
         // Assert that the index matches
         Assert.Equal(0, freehand.Zindex);
+    }
+
+    /// <summary>
+    /// Asser that the Z index is correctly instantiated when items are present on the whiteboard
+    /// </summary>
+    [Fact]
+    public void PointerPressed_AssignsTopZIndexWhenItemsExist()
+    {
+        // Add some items on the whiteboard
+        _client.Canvas.AddItem(new Square { Zindex = 5 });
+        _client.Canvas.AddItem(new Square { Zindex = 12 });
+
+        PenState state = new(_client, _preview, _toolbar);
+
+        // Simluate a pointer press event
+        state.PointerPressed(new Point2D(0, 0));
+
+        IFreehand freehand = Assert.IsAssignableFrom<IFreehand>(_preview.LastShownItem);
+
+        // Assert its Z index matches (1 + max(5, 12))
+        Assert.Equal(13, freehand.Zindex);
     }
 }
