@@ -11,11 +11,12 @@ namespace ScreenShare;
 /// this participant's own stream is not shown in their own grid.
 /// events are raised on ScreenShare's thread; the view model moves them to the UI thread.
 /// </summary>
-public sealed class ScreenShareFeed : IScreenShareFeed
+public sealed class ScreenShareFeed : IScreenShareFeed, IDisposable
 {
     private readonly ScreenShareNode _node;
     private readonly object _subscriptionLock = new();
     private HashSet<string> _subscribed = new();
+    private bool _disposed;
 
     public event Action<string, string>? ParticipantJoined;
 
@@ -33,6 +34,27 @@ public sealed class ScreenShareFeed : IScreenShareFeed
         _node.StreamAdded += OnStreamAdded;
         _node.StreamRemoved += OnStreamRemoved;
         _node.FrameUpdated += OnFrameUpdated;
+    }
+
+    /// <summary>
+    /// stops passing on the node's events; the node itself stays owned by the caller
+    /// </summary>
+    public void Dispose()
+    {
+        lock (_subscriptionLock)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            _subscribed.Clear();
+        }
+
+        _node.StreamAdded -= OnStreamAdded;
+        _node.StreamRemoved -= OnStreamRemoved;
+        _node.FrameUpdated -= OnFrameUpdated;
     }
 
     public bool IsSharing => _node.IsSharing;
@@ -63,6 +85,11 @@ public sealed class ScreenShareFeed : IScreenShareFeed
         List<string> toUnsubscribe;
         lock (_subscriptionLock)
         {
+            if (_disposed)
+            {
+                return;
+            }
+
             toSubscribe = wanted.Except(_subscribed).ToList();
             toUnsubscribe = _subscribed.Except(wanted).ToList();
             _subscribed = wanted;

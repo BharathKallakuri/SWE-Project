@@ -6,7 +6,7 @@ using ScreenShare.ViewModels;
 
 namespace ScreenShare.Views;
 
-public sealed partial class ScreenShareGridView : UserControl
+public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
 {
     public ScreenShareViewModel? ViewModel { get; private set; }
 
@@ -15,10 +15,26 @@ public sealed partial class ScreenShareGridView : UserControl
         InitializeComponent();
     }
 
+    /// <summary>shows a feed's streams; any previous feed is let go first. call on the UI thread.</summary>
     public void Initialize(IScreenShareFeed feed)
     {
+        ViewModel?.Dispose();
         ViewModel = new ScreenShareViewModel(feed, DispatcherQueue);
         Bindings.Update();
+    }
+
+    /// <summary>
+    /// empties the grid and lets go of the feed, e.g. when the meeting ends. the emptied view
+    /// model stays bound so the grid shows nothing until the next Initialize.
+    /// </summary>
+    public void Clear()
+    {
+        ViewModel?.Dispose();
+    }
+
+    void IScreenShareView.Show(IScreenShareFeed feed)
+    {
+        Initialize(feed);
     }
 
     // ----- Tile visibility (drives which feeds are requested) -----

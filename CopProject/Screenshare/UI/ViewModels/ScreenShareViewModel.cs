@@ -7,7 +7,7 @@ using ScreenShare.Models;
 
 namespace ScreenShare.ViewModels;
 
-public sealed class ScreenShareViewModel : INotifyPropertyChanged
+public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
 {
     // every stream is sent at 720p (spec), so grid and zoom ask for the same quality
     private const int StreamQuality = 720;
@@ -19,6 +19,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
     private readonly HashSet<string> _onScreen = new();   // tiles currently in the viewport
     private string? _zoomedId;
     private bool _isSharingScreen;
+    private bool _disposed;
 
     // latest frame per stream not yet shown; only the newest is drawn if the UI falls behind
     private readonly Dictionary<string, ScreenFrame> _pendingFrames = new();
@@ -45,12 +46,60 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
         _feedTimer = _ui.CreateTimer();
         _feedTimer.Interval = TimeSpan.FromMilliseconds(150);
         _feedTimer.IsRepeating = false;
-        _feedTimer.Tick += (_, _) => SendFeedRequests();
+        _feedTimer.Tick += OnFeedTimerTick;
 
         // Feed events can arrive on any thread, so hop to the UI thread first.
-        _feed.ParticipantJoined += (id, name) => _ui.TryEnqueue(() => AddParticipant(id, name));
-        _feed.ParticipantLeft += id => _ui.TryEnqueue(() => RemoveParticipant(id));
+        _feed.ParticipantJoined += OnParticipantJoined;
+        _feed.ParticipantLeft += OnParticipantLeft;
         _feed.FrameReady += QueueFrame;
+    }
+
+    /// <summary>
+    /// stops listening to the feed and empties the grid, e.g. when the meeting ends.
+    /// call on the UI thread.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _feed.ParticipantJoined -= OnParticipantJoined;
+        _feed.ParticipantLeft -= OnParticipantLeft;
+        _feed.FrameReady -= QueueFrame;
+        _feedTimer.Stop();
+        _feedTimer.Tick -= OnFeedTimerTick;
+
+        lock (_pendingLock)
+        {
+            _pendingFrames.Clear();
+        }
+
+        Tiles.Clear();
+        _byId.Clear();
+        _onScreen.Clear();
+        _zoomedId = null;
+        Mode = ViewMode.Grid;
+        _isSharingScreen = false;
+        RaiseModeChanged();
+        Raise(nameof(IsSharingScreen));
+    }
+
+    private void OnFeedTimerTick(DispatcherQueueTimer sender, object args)
+    {
+        SendFeedRequests();
+    }
+
+    private void OnParticipantJoined(string id, string name)
+    {
+        _ui.TryEnqueue(() => AddParticipant(id, name));
+    }
+
+    private void OnParticipantLeft(string id)
+    {
+        _ui.TryEnqueue(() => RemoveParticipant(id));
     }
 
     // ----- Called by the View -----
@@ -94,7 +143,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
     // ----- Called from feed events  -----
     private void AddParticipant(string id, string name)
     {
-        if (_byId.ContainsKey(id))
+        if (_disposed || _byId.ContainsKey(id))
         {
             return;
         }
@@ -106,7 +155,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
 
     private void RemoveParticipant(string id)
     {
-        if (!_byId.Remove(id, out ParticipantTile? tile))
+        if (_disposed || !_byId.Remove(id, out ParticipantTile? tile))
         {
             return;
         }
@@ -148,6 +197,11 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
             _pendingFrames.Remove(id, out frame);
         }
 
+        if (_disposed)
+        {
+            return;
+        }
+
         bool shown = IsZoomedMode ? id == _zoomedId : _onScreen.Contains(id);
         if (frame != null && shown && _byId.TryGetValue(id, out ParticipantTile? tile))
         {
@@ -161,7 +215,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
     {
         get => _isSharingScreen;
         set {
-            if (_isSharingScreen == value)
+            if (_disposed || _isSharingScreen == value)
             {
                 return;
             }
@@ -199,6 +253,11 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged
     private void SendFeedRequests()
     {
         _feedTimer.Stop();
+        if (_disposed)
+        {
+            return;
+        }
+
         Dictionary<string, int> wanted = IsZoomedMode && _zoomedId != null
             ? new() { [_zoomedId] = StreamQuality }
             : _onScreen.ToDictionary(id => id, _ => StreamQuality);
