@@ -7,9 +7,11 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
 using Whiteboard.ViewModels;
 using Windows.Foundation;
+using Windows.UI;
 
 namespace Whiteboard.Views;
 
@@ -17,6 +19,7 @@ namespace Whiteboard.Views;
 public sealed partial class WhiteBoardView : UserControl
 {
     private readonly WhiteBoardViewModel _viewModel;
+    private readonly ToolbarInfo _toolbarInfo;
 
     public WhiteBoardView(WhiteBoardViewModel viewModel)
     {
@@ -26,8 +29,8 @@ public sealed partial class WhiteBoardView : UserControl
 
         _viewModel = viewModel;
 
-        ToolbarInfo toolbarInfo = new(Colors.Black, 3, Colors.Red);
-        _viewModel.InitializeViewModel(WhiteboardCanvas, toolbarInfo);
+        _toolbarInfo = new(Colors.Black, 3, Colors.Black);
+        _viewModel.InitializeViewModel(WhiteboardCanvas, _toolbarInfo);
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -164,5 +167,89 @@ public sealed partial class WhiteBoardView : UserControl
 
         // Pass the pointer position to the view model for computation
         _viewModel.PointerCaptureLost(new Point2D(p.X, p.Y));
+    }
+
+    /// <summary>
+    /// Called when the user clicks one of the fill color options
+    /// </summary>
+    private void FillColorOption_Click(object sender, RoutedEventArgs e)
+    {
+        // Extract the tag message from the button
+        if (sender is Button { Tag: string hex } && TryParseHexColor(hex, out Color color))
+        {
+            _toolbarInfo.FillColor = color;
+
+            FillColorIndicator.Background = new SolidColorBrush(color);
+
+            FlyoutFillColor.Hide();
+        }
+    }
+
+    /// <summary>
+    /// Called when the user clicks one of the border color options
+    /// </summary>
+    private void BorderColorOption_Click(object sender, RoutedEventArgs e)
+    {
+        // Extract the tag message from the button
+        if (sender is Button { Tag: string hex } && TryParseHexColor(hex, out Color color))
+        {
+            _toolbarInfo.BorderColor = color;
+
+            BorderColorIndicator.Background = new SolidColorBrush(color);
+
+            FlyoutBorderColor.Hide();
+        }
+    }
+
+    /// <summary>
+    /// Called when the user moves the border width slider
+    /// </summary>
+    private void SliderBorderWidth_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_toolbarInfo is null)
+        {
+            return;
+        }
+
+        double width = Math.Round(e.NewValue);
+
+        _toolbarInfo.BorderWidth = width;
+
+        // Update width text next to the slider
+        TextBorderWidth?.Text = $"{width}";
+    }
+
+    /// <summary>
+    /// Attempt parsing a 6 digit or 8 digit hex color code
+    /// </summary>
+    private static bool TryParseHexColor(string hex, out Color color)
+    {
+        color = Colors.Black;
+
+        if (string.IsNullOrWhiteSpace(hex))
+        {
+            return false;
+        }
+
+        hex = hex.TrimStart('#');
+        if (hex.Length == 6)
+        {
+            byte r = Convert.ToByte(hex[..2], 16);
+            byte g = Convert.ToByte(hex.Substring(2, 2), 16);
+            byte b = Convert.ToByte(hex.Substring(4, 2), 16);
+            color = Color.FromArgb(255, r, g, b);
+            return true;
+        }
+        else if (hex.Length == 8)
+        {
+            byte a = Convert.ToByte(hex[..2], 16);
+            byte r = Convert.ToByte(hex.Substring(2, 2), 16);
+            byte g = Convert.ToByte(hex.Substring(4, 2), 16);
+            byte b = Convert.ToByte(hex.Substring(6, 2), 16);
+            color = Color.FromArgb(a, r, g, b);
+            return true;
+        }
+
+        return false;
     }
 }
