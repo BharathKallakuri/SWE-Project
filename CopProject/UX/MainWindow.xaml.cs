@@ -25,6 +25,8 @@ using Microsoft.UI.Xaml.Input;
 using WinRT.Interop;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using Whiteboard.Services;
+using Whiteboard.ViewModels;
 
 
 namespace UX;
@@ -49,6 +51,7 @@ public sealed partial class MainWindow : Window
     private ChatClient? _chatClient;
     private ChatClientAdapter? _chatAdapter;
     private ChatPanelViewModel? _chatViewModel;
+    private WhiteboardSession? _whiteboardSession;
 
     public MainWindow()
     {
@@ -162,6 +165,7 @@ public sealed partial class MainWindow : Window
         LocationHost.Content = null;
         _incidentContextTask = null;
         DisposeChatSession();
+        DisposeWhiteboardSession();
         ShowScreen("login");
     }
 
@@ -224,6 +228,18 @@ public sealed partial class MainWindow : Window
 
         // CONTROLLER TEAM: call SetParticipants() with the real number
         SetParticipants(_session.ParticipantCount);
+
+        /// whiteboard temporary integration
+        if (int.TryParse(port, out int portNumber) && _meetingService.ActiveController?.Communicator != null)
+        {
+            DisposeWhiteboardSession();
+            _whiteboardSession = WhiteboardSession.Start(_userId, _meetingService.ActiveController.Communicator, id, portNumber, host);
+            var wbViewModel = new WhiteBoardViewModel(_whiteboardSession.Client);
+            _whiteboardSession.UserLeft += username => DispatcherQueue.TryEnqueue(() => wbViewModel.OnUserLeft(username));
+            WhiteboardViewControl.SetViewModel(wbViewModel);
+            _meetingService.RegisterNotificationHandler(_whiteboardSession);
+        }
+        /// End Whiteboard temporary integration
 
         ChatBtn.IsChecked = false;
         ShowChat(false);
@@ -353,6 +369,16 @@ public sealed partial class MainWindow : Window
         _chatServer = null;
     }
 
+    private void DisposeWhiteboardSession()
+    {
+        if (_whiteboardSession != null)
+        {
+            _meetingService.UnregisterNotificationHandler(_whiteboardSession);
+            _whiteboardSession.Dispose();
+            _whiteboardSession = null;
+        }
+    }
+
     private async void End_Click(object sender, RoutedEventArgs e)
     {
         string text = _isHost
@@ -367,6 +393,8 @@ public sealed partial class MainWindow : Window
         }
 
         // CONTROLLER TEAM: end the meeting (Host) or disconnect (Participant) here.
+        DisposeChatSession();
+        DisposeWhiteboardSession();
         _session.EndMeeting();
 
         _records.Insert(0, "Meeting " + _meetingId + " - " + DateTime.Now.ToString("ddd, dd MMM") + " - Just now");
