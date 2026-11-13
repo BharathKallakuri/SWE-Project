@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Incidents.Views.AllIncidentsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Incidents.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock
+            Grid.Row="0"
+            Text="All Incidents"
+            FontSize="28"
+            FontWeight="SemiBold" />
+
+        <!-- Search Bar and Action Buttons -->
+        <Grid Grid.Row="1" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                Grid.Column="0"
+                Height="40"
+                VerticalAlignment="Center"
+                PlaceholderText="Search incidents by title..."
+                Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <!-- Filters Toggle Button -->
+            <ToggleButton
+                x:Name="FilterToggleButton"
+                Grid.Column="1"
+                Height="40"
+                Content="Filters" />
+
+            <Button
+                Grid.Column="2"
+                Height="40"
+                Content="Clear Filters"
+                Command="{Binding ClearFiltersCommand}" />
+
+            <Button
+                Grid.Column="3"
+                Height="40"
+                Padding="16,0"
+                Style="{StaticResource AccentButtonStyle}"
+                Content="Create Incident"
+                Click="CreateIncident_Click" />
+        </Grid>
+
+        <!-- Advanced Filters Collapsible Card -->
+        <Border
+            Grid.Row="2"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="20"
+            HorizontalAlignment="Stretch"
+            Visibility="{Binding ElementName=FilterToggleButton, Path=IsChecked}">
+
+            <StackPanel Spacing="16">
+                <!-- Row 1: Dropdowns spanning equal 1/3 width each -->
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <ComboBox
+                        Grid.Column="0"
+                        Header="Status"
+                        HorizontalAlignment="Stretch"
+                        ItemsSource="{Binding StatusOptions}"
+                        SelectedItem="{Binding SelectedStatus, Mode=TwoWay}" />
+
+                    <ComboBox
+                        Grid.Column="1"
+                        Header="Category"
+                        HorizontalAlignment="Stretch"
+                        ItemsSource="{Binding CategoryOptions}"
+                        SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" />
+
+                    <ComboBox
+                        Grid.Column="2"
+                        Header="Severity"
+                        HorizontalAlignment="Stretch"
+                        ItemsSource="{Binding SeverityOptions}"
+                        SelectedItem="{Binding SelectedSeverity, Mode=TwoWay}" />
+                </Grid>
+
+                <!-- Row 2: Dates & User ID spanning equal 1/3 width each -->
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <CalendarDatePicker
+                        Grid.Column="0"
+                        Header="From Date"
+                        HorizontalAlignment="Stretch"
+                        Date="{Binding FromDate, Mode=TwoWay}" />
+
+                    <CalendarDatePicker
+                        Grid.Column="1"
+                        Header="To Date"
+                        HorizontalAlignment="Stretch"
+                        Date="{Binding ToDate, Mode=TwoWay}" />
+
+                    <TextBox
+                        Grid.Column="2"
+                        Header="Created By (User ID)"
+                        HorizontalAlignment="Stretch"
+                        PlaceholderText="Enter Guid..."
+                        Text="{Binding CreatedByInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Incident Table -->
+        <Grid Grid.Row="3" RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Column Headings -->
+            <Grid
+                Grid.Row="0"
+                Padding="12,10"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="4*" />
+                    <ColumnDefinition Width="1.5*" />
+                    <ColumnDefinition Width="1.5*" />
+                    <ColumnDefinition Width="1.5*" />
+                    <ColumnDefinition Width="2*" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="Title" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="1" Text="Status" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="2" Text="Severity" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="3" Text="Category" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="4" Text="Created By" FontWeight="SemiBold" />
+            </Grid>
+
+            <!-- Incident Rows -->
+            <Grid Grid.Row="1">
+                <ListView ItemsSource="{Binding Incidents}" 
+                          SelectionMode="None"
+                          IsItemClickEnabled="True"
+                          ItemClick="Incident_ItemClick">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="12,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="4*" />
+                                    <ColumnDefinition Width="1.5*" />
+                                    <ColumnDefinition Width="1.5*" />
+                                    <ColumnDefinition Width="1.5*" />
+                                    <ColumnDefinition Width="2*" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Text="{Binding Title}"
+                                    VerticalAlignment="Center"
+                                    TextTrimming="CharacterEllipsis" />
+                                
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Text="{Binding Status}"
+                                    VerticalAlignment="Center" />
+
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Text="{Binding Severity}"
+                                    VerticalAlignment="Center" />
+
+                                <TextBlock
+                                    Grid.Column="3"
+                                    Text="{Binding Category}"
+                                    VerticalAlignment="Center" />
+                                
+                                <TextBlock
+                                    Grid.Column="4"
+                                    Text="{Binding CreatedBy}"
+                                    VerticalAlignment="Center"
+                                    TextTrimming="CharacterEllipsis" />
+                                
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <TextBlock
+                    Text="No incidents found."
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Visibility="{Binding EmptyMessageVisibility}" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Page>

@@ -1,6 +1,9 @@
-﻿using System;
+﻿// Author : Eswar
+
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace FileSynchroniser.Models;
 
@@ -92,10 +95,14 @@ public class FileChunker
 
     /// <summary>
     /// Merges chunks in chunk order and writes the full file.
+    /// The caller's list is not modified.
     /// </summary>
     public void MergeChunks(List<FileChunk> receivedChunks, string savePath)
     {
-        receivedChunks.Sort((a, b) => a.ChunkNumber.CompareTo(b.ChunkNumber));
+        ArgumentNullException.ThrowIfNull(receivedChunks);
+
+        // Sort a copy so the caller's list is left untouched.
+        List<FileChunk> ordered = receivedChunks.OrderBy(c => c.ChunkNumber).ToList();
 
         string? parent = Path.GetDirectoryName(savePath);
         if (parent != null)
@@ -105,7 +112,7 @@ public class FileChunker
 
         using FileStream fs = new FileStream(savePath, FileMode.Create, FileAccess.Write);
 
-        foreach (FileChunk chunk in receivedChunks)
+        foreach (FileChunk chunk in ordered)
         {
             fs.Write(chunk.Data, 0, chunk.Data.Length);
         }

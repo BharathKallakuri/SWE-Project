@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Net.Http;
@@ -129,6 +129,10 @@ public sealed partial class MainWindow : Window
         // CONTROLLER TEAM: store current user identity into session
         _session.CurrentUserId = _userId;
         _session.CurrentUserEmail = _userEmail;
+
+        // CONTROLLER TEAM: store current user identity into session
+        _session.CurrentUserId = _userId;
+        _session.CurrentUserEmail = mail;
 
         int hour = DateTime.Now.Hour;
         string greeting = "Good Evening";
@@ -347,6 +351,7 @@ public sealed partial class MainWindow : Window
         ShowChat(false);
         ShowPanel("home");
         ShowScreen("meeting");
+        TryInitializeChatSession(host);
     }
 
     public void SetParticipants(int count)
@@ -390,6 +395,9 @@ public sealed partial class MainWindow : Window
 
     private void ChatBtn_Click(object sender, RoutedEventArgs e)
     {
+        if (ChatBtn.IsChecked == true)
+            TryInitializeChatSession(_isHost);
+
         ShowChat(ChatBtn.IsChecked == true);
     }
 
@@ -397,6 +405,74 @@ public sealed partial class MainWindow : Window
     {
         ChatPanel.Visibility = Vis(show);
         ChatResizer.Visibility = Vis(show);
+    }
+
+    private void TryInitializeChatSession(bool isHost)
+    {
+        if (_chatViewModel is not null)
+            return;
+
+        IControllerService? controller = _meetingService.ActiveController;
+        if (controller?.Communicator is null || controller.CurrentUser is null)
+            return;
+
+        try
+        {
+            string username = controller.CurrentUser.Username;
+            string hostName = isHost
+                ? username
+                : controller.GetActiveUsers().FirstOrDefault(user => user.IsHost)?.Username
+                  ?? _session.ActiveParticipants.FirstOrDefault(participant => participant.IsHost)?.Username
+                  ?? string.Empty;
+
+            // A participant needs the host's username before the local room is valid.
+            if (string.IsNullOrWhiteSpace(hostName))
+                return;
+
+            var room = new Chatroom($"{_meetingId}:{_meetingPort}", hostName);
+
+            if (isHost)
+            {
+                _chatServer = new ChatServer(room, controller);
+                _chatAdapter = new ChatClientAdapter(_chatServer, controller, DispatcherQueue);
+            }
+            else
+            {
+                string hostIp = _meetingId.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                    ? "127.0.0.1"
+                    : _meetingId;
+
+                if (!IPAddress.TryParse(hostIp, out IPAddress? address)
+                    || address is null
+                    || !int.TryParse(_meetingPort, out int port))
+                    return;
+
+                _chatClient = new ChatClient(username, room, controller.Communicator, new IPEndPoint(address, port));
+                _chatAdapter = new ChatClientAdapter(_chatClient, DispatcherQueue);
+            }
+
+            _chatViewModel = new ChatPanelViewModel(_chatAdapter);
+            MeetingChatPanel.ViewModel = _chatViewModel;
+            _chatViewModel.Initialize();
+        }
+        catch (Exception exception)
+        {
+            DisposeChatSession();
+            System.Diagnostics.Trace.WriteLine($"[Chat] Could not start the chat session: {exception}");
+        }
+    }
+
+    private void DisposeChatSession()
+    {
+        MeetingChatPanel.ViewModel = null;
+        _chatViewModel?.Dispose();
+        _chatAdapter?.Dispose();
+        _chatClient?.Dispose();
+        _chatServer?.Dispose();
+        _chatViewModel = null;
+        _chatAdapter = null;
+        _chatClient = null;
+        _chatServer = null;
     }
 
     private async void End_Click(object sender, RoutedEventArgs e)
