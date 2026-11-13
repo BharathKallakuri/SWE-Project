@@ -12,9 +12,15 @@ public static class FileTraceListener
     /// </summary>
     public static void Initialize()
     {
-        /* The log file created for the current app run */
+        /* The log file is created in C:\Users\<username>\AppData\Local\PawPatrol */
+        string logDirectory = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "PawPatrol");
+
+        Directory.CreateDirectory(logDirectory);
+
         string logPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            logDirectory,
             $"PawPatrol-{Guid.NewGuid():N}.txt");
 
         Trace.Listeners.Add(new TextWriterTraceListener(logPath));
