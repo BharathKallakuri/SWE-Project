@@ -11,6 +11,7 @@ namespace Cloud.Test;
 /// This class contains integration tests for the persistence layer.
 /// </summary>
 [TestClass]
+[Ignore("Skipping Cosmos DB integration tests in CI to avoid interactions with production resources")]
 public class TestPersistence
 {
     private IStorage _storage = null!;
