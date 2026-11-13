@@ -34,6 +34,11 @@ public class FileSyncSessionTest
         public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority) { }
         public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp) { }
         public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp) { }
+        public void AddLossySubscriber(int module, IMessageListenerLossy subscriber) { }
+        public void RemoveLossySubscriber(int module) { }
+        public void SendMessageLossy(IPEndPoint ipEndPoint, byte[] message, int module, int priority) { }
+        public void BroadcastMessageLossy(byte[] message, int module, int priority) { }
+        public void MulticastMessageLossy(int multicastGroup, byte[] message, int module, int priority) { }
     }
 
     [TestInitialize]
