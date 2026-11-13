@@ -491,7 +491,6 @@ public sealed partial class MainWindow : Window
             await ShowErrorAsync("Unable to load location", ex.Message);
         }
     }
-
     private async void LocationIncidentSelected(Guid incidentId)
     {
         try
