@@ -18,6 +18,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using WinRT.Interop;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
+
 
 namespace UX;
 
@@ -44,6 +46,8 @@ public sealed partial class MainWindow : Window
         Title = "SecureMeet";
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1280, 800));
         RecordsList.ItemsSource = _records;
+
+        IncidentsFrame.Navigated += IncidentsFrame_Navigated;
 
         // CONTROLLER TEAM: initialize controller service and bind MeetingView
         _meetingService.Initialize(_session);
@@ -341,9 +345,9 @@ public sealed partial class MainWindow : Window
         {
             IncidentPageContext context = await GetIncidentContextAsync();
             var geocoding = new NominatimGeocodingService(new HttpClient());
-            var map = new LocationMapView();
+            var map = new LocationMapView(new MapService(context.IncidentController, geocoding));
             map.IncidentSelected += LocationIncidentSelected;
-            map.Initialize(new MapService(context.IncidentController, geocoding));
+            map.LocationSelected += LocationSelectedOnMap;
             LocationHost.Content = map;
             ShowScreen("location");
         }
@@ -369,6 +373,42 @@ public sealed partial class MainWindow : Window
             await ShowErrorAsync("Unable to load incident", ex.Message);
         }
     }
+
+    /// <summary>
+    /// Handles a location selection on the map by navigating to the create incident page.
+    /// </summary>
+    private async void LocationSelectedOnMap(IncidentLocation location)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            IncidentsFrame.Navigate(
+                typeof(CreateIncidentPage),
+                new IncidentCreatePageWithLocation(
+                    context,
+                    location.Latitude,
+                    location.Longitude,
+                    location.Address));
+            LocationHost.Content = null;
+            ShowScreen("incidents");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to open create incident", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Adds the location tracker mini map whenever the create incident page is opened.
+    /// </summary>
+    private void IncidentsFrame_Navigated(object sender, NavigationEventArgs e)
+    {
+        if (e.Content is CreateIncidentPage page)
+        {
+            MiniMapView.AttachTo(page);
+        }
+    }
+
 
     private async Task ShowErrorAsync(string title, string message)
     {
