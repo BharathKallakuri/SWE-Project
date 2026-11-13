@@ -18,6 +18,7 @@
     </Project>
     <Project Path="Cloud.Test/Cloud.Test.csproj" />
     <Project Path="Cloud.UI/Cloud.UI.csproj" />
+    <Project Path="Cloud.UI.Test/Cloud.UI.Test.csproj" />
     <Project Path="Cloud/Cloud.csproj" />
     <Project Path="Controller/Controller.csproj" />
     <Project Path="Filesync.Test/Filesync.Test.csproj" />
