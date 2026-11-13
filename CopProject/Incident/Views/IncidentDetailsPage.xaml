@@ -265,7 +265,7 @@
                                             <StackPanel Spacing="2">
                                                 <TextBlock Text="{Binding StoragePath}" TextTrimming="CharacterEllipsis" />
                                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                                    <TextBlock Text="Created by:" FontWeight="SemiBold"  />
+                                                    <TextBlock Text="Uploaded by:" FontWeight="SemiBold"  />
                                                     <TextBlock Text="{Binding UploadedBy}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                                                 </StackPanel>
                                                 <TextBlock Text="{Binding Description}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextTrimming="CharacterEllipsis" />
