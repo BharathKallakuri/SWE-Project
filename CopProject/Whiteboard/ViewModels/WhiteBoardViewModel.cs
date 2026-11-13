@@ -143,6 +143,18 @@ public class WhiteBoardViewModel
         _currentState.PointerCaptureLost(point);
     }
 
+    /// <summary>
+    /// Force a pointer lost event for the user who left the meeting
+    /// </summary>
+    /// <param name="username">Username of the leaving user</param>
+    public void OnUserLeft(string username)
+    {
+        if (_isInitialized && _whiteboardClient.UserId == username)
+        {
+            _currentState.PointerCaptureLost(new Point2D(0, 0));
+        }
+    }
+
     private void EnsureInitialized()
     {
         if (!_isInitialized)
