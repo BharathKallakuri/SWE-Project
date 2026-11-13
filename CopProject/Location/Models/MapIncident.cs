@@ -1,4 +1,4 @@
-namespace LocationTracker.Models;
+﻿namespace LocationTracker.Models;
 
 public sealed record MapIncident(
     Guid Id,

@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
 using Incidents;
 using LocationTracker.Interfaces;
@@ -38,8 +38,7 @@ public sealed class LocationMapViewModel : ViewModelBase
     public string ErrorMessage
     {
         get => _errorMessage;
-        private set
-        {
+        private set {
             if (_errorMessage == value) { return; }
             _errorMessage = value;
             OnPropertyChanged(nameof(ErrorMessage));
@@ -49,8 +48,7 @@ public sealed class LocationMapViewModel : ViewModelBase
     public string TitleText
     {
         get => _titleText;
-        set
-        {
+        set {
             if (_titleText == value) { return; }
             _titleText = value;
             OnPropertyChanged(nameof(TitleText));
@@ -61,8 +59,7 @@ public sealed class LocationMapViewModel : ViewModelBase
     public string SelectedCategory
     {
         get => _selectedCategory;
-        set
-        {
+        set {
             if (_selectedCategory == value) { return; }
             _selectedCategory = value;
             OnPropertyChanged(nameof(SelectedCategory));
@@ -73,8 +70,7 @@ public sealed class LocationMapViewModel : ViewModelBase
     public string SelectedSeverity
     {
         get => _selectedSeverity;
-        set
-        {
+        set {
             if (_selectedSeverity == value) { return; }
             _selectedSeverity = value;
             OnPropertyChanged(nameof(SelectedSeverity));
@@ -85,8 +81,7 @@ public sealed class LocationMapViewModel : ViewModelBase
     public string SelectedStatus
     {
         get => _selectedStatus;
-        set
-        {
+        set {
             if (_selectedStatus == value) { return; }
             _selectedStatus = value;
             OnPropertyChanged(nameof(SelectedStatus));
@@ -97,8 +92,7 @@ public sealed class LocationMapViewModel : ViewModelBase
     public DateTimeOffset? FromDate
     {
         get => _fromDate;
-        set
-        {
+        set {
             if (_fromDate == value) { return; }
             _fromDate = value;
             OnPropertyChanged(nameof(FromDate));
@@ -109,8 +103,7 @@ public sealed class LocationMapViewModel : ViewModelBase
     public DateTimeOffset? ToDate
     {
         get => _toDate;
-        set
-        {
+        set {
             if (_toDate == value) { return; }
             _toDate = value;
             OnPropertyChanged(nameof(ToDate));

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Incidents.ViewModels;
 using Incidents.Views;
 using LocationTracker.Models;
@@ -13,6 +13,8 @@ namespace LocationTracker.Views;
 /// </summary>
 public sealed partial class MiniMapView : UserControl
 {
+    public event Action<double, double>? LocationSelected;
+
     private bool _mapInitializationStarted;
     private bool _isMapReady;
     private double _latitude = double.NaN;
@@ -30,8 +32,7 @@ public sealed partial class MiniMapView : UserControl
     /// </summary>
     public static void AttachTo(CreateIncidentPage page)
     {
-        page.Loaded += async (sender, e) =>
-        {
+        page.Loaded += async (sender, e) => {
             CreateIncidentPageViewModel? viewModel = page.ViewModel;
             if (viewModel is null || page.MiniMapHost.Content is not null)
             {
@@ -40,9 +41,12 @@ public sealed partial class MiniMapView : UserControl
 
             MiniMapView miniMap = new();
             page.MiniMapHost.Content = miniMap;
+            miniMap.LocationSelected += (latitude, longitude) => {
+                viewModel.Latitude = latitude;
+                viewModel.Longitude = longitude;
+            };
 
-            viewModel.PropertyChanged += async (s, args) =>
-            {
+            viewModel.PropertyChanged += async (s, args) => {
                 if (args.PropertyName == nameof(viewModel.Latitude) ||
                     args.PropertyName == nameof(viewModel.Longitude))
                 {
@@ -86,9 +90,28 @@ public sealed partial class MiniMapView : UserControl
         MapView.NavigationCompleted += MapView_NavigationCompleted;
         await MapView.EnsureCoreWebView2Async();
 
-        MapView.CoreWebView2.Settings.UserAgent =
+        CoreWebView2 webView = MapView.CoreWebView2
+            ?? throw new InvalidOperationException("WebView2 failed to initialize.");
+        webView.Settings.UserAgent =
             "CopProject-LocationTracker/1.0 (https://github.com/Software-Engineering-CS5617/project)";
+        webView.WebMessageReceived += WebMessageReceived;
         MapView.NavigateToString(MapPage);
+    }
+
+    private void WebMessageReceived(
+        CoreWebView2 sender,
+        CoreWebView2WebMessageReceivedEventArgs args)
+    {
+        string[] values = args.TryGetWebMessageAsString().Split(',');
+        if (values.Length != 2 ||
+            !double.TryParse(values[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double latitude) ||
+            !double.TryParse(values[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double longitude) ||
+            !Coordinates.IsValid(latitude, longitude))
+        {
+            return;
+        }
+
+        LocationSelected?.Invoke(latitude, longitude);
     }
 
     private async void MapView_NavigationCompleted(
@@ -132,6 +155,11 @@ public sealed partial class MiniMapView : UserControl
             }).addTo(map);
 
             let marker = null;
+
+            map.on('click', e => {
+              window.chrome.webview.postMessage(
+                e.latlng.lat + ',' + e.latlng.lng);
+            });
 
             function showLocation(lat, lng) {
               if (marker) {
