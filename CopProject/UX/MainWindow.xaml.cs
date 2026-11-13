@@ -145,6 +145,9 @@ public sealed partial class MainWindow : Window
         ProfileName.Text = _inMeeting ? _userId + " (" + Role + ")" : _userId;
         ProfilePic.DisplayName = _userId;
         SetPicture(ProfilePic, _picture);
+        IncidentsTopBtn.Visibility = Vis(!_inMeeting);
+        LocationTopBtn.Visibility = Vis(!_inMeeting);
+        CloudTopBtn.Visibility = Vis(!_inMeeting);
 
         // CONTROLLER TEAM: store current user identity into session
         _session.CurrentUserId = _userId;
@@ -354,6 +357,7 @@ public sealed partial class MainWindow : Window
     private void StartMeeting(string id, string port, bool host)
     {
         _inMeeting = true;
+        ShowProfile();
         _isHost = host;
         _meetingId = id;
         _meetingPort = port;
