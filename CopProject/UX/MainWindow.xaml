@@ -4,7 +4,9 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:UX"
-    xmlns:controller="using:Controller.Views">
+    xmlns:controller="using:Controller.Views"
+    xmlns:cloudnet="using:Cloud.UI.Views">
+   
 
     <Grid x:Name="Root" RequestedTheme="Light" Background="#EEF3F9">
         <Grid.RowDefinitions>
@@ -147,6 +149,9 @@
             <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
                 <Grid>
                     <!-- CLOUD TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
+                    <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
+                        <Grid x:Name="CloudHost"/>
+                    </Border>
                 </Grid>
             </Border>
         </Grid>

@@ -2,7 +2,10 @@
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Cloud.Networking;
 using Cloud.Persistence;
+using Cloud.UI.ViewModels;
+using Cloud.UI.Views;
 using FileSynchroniser.Models;
 using FileSynchroniser.Views;
 using Incidents;
@@ -38,6 +41,10 @@ public sealed partial class MainWindow : Window
     private readonly MeetingSession _session = new();
     private readonly ControllerMeetingService _meetingService = new();
 
+    // CLOUD TEAM: created on first visit to the Cloud page and kept, so the connection
+    // and the notification list survive pressing Back and coming back.
+    private NotificationServiceViewModel? _cloudViewModel;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -62,6 +69,9 @@ public sealed partial class MainWindow : Window
                 }
             });
         };
+
+        // CLOUD TEAM: close the server connection when the app closes.
+        Closed += async (_, _) => await ResetCloudAsync();
 
         ShowScreen("login");
     }
@@ -132,7 +142,7 @@ public sealed partial class MainWindow : Window
         ShowScreen("dash");
     }
 
-    private void SignOut_Click(object sender, RoutedEventArgs e)
+    private async void SignOut_Click(object sender, RoutedEventArgs e)
     {
         if (_inMeeting)
         {
@@ -141,6 +151,10 @@ public sealed partial class MainWindow : Window
         _inMeeting = false;
         LocationHost.Content = null;
         _incidentContextTask = null;
+
+        // CLOUD TEAM: the next user starts with a fresh connection and an empty list.
+        await ResetCloudAsync();
+
         ShowScreen("login");
     }
 
@@ -380,9 +394,44 @@ public sealed partial class MainWindow : Window
         }.ShowAsync();
     }
 
-    private void Cloud_Click(object sender, RoutedEventArgs e)
+    private async void Cloud_Click(object sender, RoutedEventArgs e)
     {
-        ShowScreen("cloud");
+        try
+        {
+            EnsureCloudView();
+            ShowScreen("cloud");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load cloud", ex.Message);
+        }
+    }
+
+    /// <summary>Builds the Notification Service page the first time it is needed.</summary>
+    private void EnsureCloudView()
+    {
+        if (_cloudViewModel is not null)
+        {
+            return;
+        }
+
+        // Must run on the UI thread (it does: this is called from a click handler).
+        _cloudViewModel = new NotificationServiceViewModel(MessengerFactory.GetMessenger);
+        CloudHost.Children.Add(new NotificationServiceView(_cloudViewModel));
+    }
+
+    /// <summary>Closes the connection and removes the page; the next visit builds a fresh one.</summary>
+    private async Task ResetCloudAsync()
+    {
+        NotificationServiceViewModel? viewModel = _cloudViewModel;
+        if (viewModel is null)
+        {
+            return;
+        }
+
+        _cloudViewModel = null;
+        CloudHost.Children.Clear();
+        await viewModel.DisposeAsync();
     }
 
     private void IncidentsBack_Click(object sender, RoutedEventArgs e)
