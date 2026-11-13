@@ -155,6 +155,17 @@ public class WhiteBoardViewModel
         }
     }
 
+    /// <summary>
+    /// Handles session termination when the host ends the meeting
+    /// </summary>
+    public void OnMeetingEnded()
+    {
+        if (_isInitialized)
+        {
+            _currentState.PointerCaptureLost(new Point2D(0, 0));
+        }
+    }
+
     private void EnsureInitialized()
     {
         if (!_isInitialized)
