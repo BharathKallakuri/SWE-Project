@@ -44,13 +44,6 @@
                 <StackPanel Spacing="16">
                     <TextBlock Text="Welcome" FontSize="28" FontWeight="SemiBold"
                                HorizontalAlignment="Center"/>
-                    <PersonPicture x:Name="LoginPic" Width="90" Height="90"
-                                   HorizontalAlignment="Center"/>
-                    <Button Content="Add profile picture" Click="PickLoginPicture_Click"
-                            HorizontalAlignment="Center"/>
-                    <TextBox x:Name="UserIdBox" Header="User ID"
-                             PlaceholderText="Choose your User ID"/>
-
                     <TextBlock x:Name="LoginError" Foreground="Red" TextWrapping="Wrap"
                                Visibility="Collapsed"/>
                     <Button x:Name="SignInBtn" Content="Sign in with Google" Click="SignIn_Click"
