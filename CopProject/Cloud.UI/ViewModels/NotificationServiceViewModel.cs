@@ -13,7 +13,7 @@ namespace Cloud.UI.ViewModels;
 public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDisposable
 {
     private readonly NotificationService _service;
-    private readonly DispatcherQueue _ui;
+    private readonly Action<Action> _runOnUi;
     private readonly HashSet<Guid> _seen = new();
 
     private ConnectionState _state = ConnectionState.Disconnected;
@@ -25,11 +25,18 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
     private DateTimeOffset _lastMessageTime = DateTimeOffset.MinValue;
 
     /// <param name="createMessenger">Creates a messenger for a server URL, e.g. <c>url =&gt; MessengerFactory.GetMessenger(url)</c>.</param>
-    public NotificationServiceViewModel(Func<string, IMessenger> createMessenger)
+    /// <param name="runOnUi">Runs an action on the UI thread. Defaults to the current thread's DispatcherQueue; tests can pass <c>action =&gt; action()</c>.</param>
+    public NotificationServiceViewModel(Func<string, IMessenger> createMessenger, Action<Action>? runOnUi = null)
     {
         ArgumentNullException.ThrowIfNull(createMessenger);
-        _ui = DispatcherQueue.GetForCurrentThread()
-              ?? throw new InvalidOperationException("Create the view model on the UI thread.");
+        if (runOnUi is null)
+        {
+            DispatcherQueue queue = DispatcherQueue.GetForCurrentThread()
+                                    ?? throw new InvalidOperationException("Create the view model on the UI thread.");
+            runOnUi = action => queue.TryEnqueue(() => action());
+        }
+
+        _runOnUi = runOnUi;
 
         _service = new NotificationService(createMessenger);
         _service.ServerChanged += OnServerChanged;
@@ -205,7 +212,7 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
 
     private void OnMessageReceived(Message message)
     {
-        _ui.TryEnqueue(() => {
+        _runOnUi(() => {
             if (AddNotification(message) is { } item)
             {
                 NotificationReceived?.Invoke(item);
@@ -215,14 +222,14 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
 
     private void OnReconnecting(Exception? _)
     {
-        _ui.TryEnqueue(() => {
+        _runOnUi(() => {
             State = _service.State;
         });
     }
 
     private void OnReconnected(string? _)
     {
-        _ui.TryEnqueue(() => {
+        _runOnUi(() => {
             ErrorText = null;
             State = _service.State;
         });
@@ -230,7 +237,7 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
 
     private void OnClosed(Exception? exception)
     {
-        _ui.TryEnqueue(() => {
+        _runOnUi(() => {
             if (exception is not null)
             {
                 ErrorText = $"Connection closed: {exception.Message}";
