@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Linq;
 using Cloud.Persistence;
 using FileSynchroniser.Models;
 using FileSynchroniser.Views;
@@ -12,6 +13,7 @@ using LocationTracker.Services;
 using LocationTracker.Views;
 using Controller.Models;
 using Controller.ViewModels;
+using Controller;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -22,6 +24,8 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using UX.Models;
 using Windows.Storage.Pickers;
+using Microsoft.UI.Xaml.Navigation;
+
 
 namespace UX;
 
@@ -66,6 +70,7 @@ public sealed partial class MainWindow : Window
                 {
                     _inMeeting = false;
                     ShowProfile();
+                    ProfileName.Text = _userId;
                     ShowScreen("dash");
                 }
             });
@@ -86,6 +91,7 @@ public sealed partial class MainWindow : Window
         MeetingView.Visibility = Vis(screen == "meeting");
         IncidentsView.Visibility = Vis(screen == "incidents");
         LocationView.Visibility = Vis(screen == "location");
+        CloudView.Visibility = Vis(screen == "cloud");
         UserPanel.Visibility = Vis(screen != "login");
         MeetingInfoText.Visibility = Vis(_inMeeting);
     }
@@ -119,6 +125,10 @@ public sealed partial class MainWindow : Window
         ProfileName.Text = _inMeeting ? _userId + " (" + Role + ")" : _userId;
         ProfilePic.DisplayName = _userId;
         SetPicture(ProfilePic, _picture);
+
+        // CONTROLLER TEAM: store current user identity into session
+        _session.CurrentUserId = _userId;
+        _session.CurrentUserEmail = _userEmail;
 
         int hour = DateTime.Now.Hour;
         string greeting = "Good Evening";
@@ -264,8 +274,19 @@ public sealed partial class MainWindow : Window
         ShowScreen("login");
     }
 
+    private void Cloud_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen("cloud");
+    }
+
+    private void CloudBack_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen(_inMeeting ? "meeting" : "dash");
+    }
+
     private void Start_Click(object sender, RoutedEventArgs e)
     {
+        // CONTROLLER TEAM: the real meeting ID and port come from the controller.
         (string? id, string? port) = _meetingService.CreateMeeting();
         _session.StartMeeting(new MeetingInfo(id, port, IsHost: true));
 
@@ -295,6 +316,7 @@ public sealed partial class MainWindow : Window
                 continue;
             }
 
+            // CONTROLLER TEAM: connect to the meeting using this id and port.
             bool joined = _meetingService.JoinMeeting(id, number);
             if (!joined)
             {
@@ -318,6 +340,7 @@ public sealed partial class MainWindow : Window
         EndBtn.Content = host ? "End Meeting" : "Leave Meeting";
         ShowProfile();
 
+        // CONTROLLER TEAM: call SetParticipants() with the real number
         SetParticipants(_session.ParticipantCount);
 
         ChatBtn.IsChecked = false;
@@ -389,6 +412,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        // CONTROLLER TEAM: end the meeting (Host) or disconnect (Participant) here.
         _session.EndMeeting();
 
         _records.Insert(0, "Meeting " + _meetingId + " - " + DateTime.Now.ToString("ddd, dd MMM") + " - Just now");
@@ -497,12 +521,12 @@ public sealed partial class MainWindow : Window
 
     private void IncidentsBack_Click(object sender, RoutedEventArgs e)
     {
-        ShowScreen("meeting");
+        ShowScreen(_inMeeting ? "meeting" : "dash");
     }
 
     private void LocationBack_Click(object sender, RoutedEventArgs e)
     {
-        ShowScreen("meeting");
+        ShowScreen(_inMeeting ? "meeting" : "dash");
     }
 }
 
