@@ -268,14 +268,16 @@ public sealed class IncidentControllerTest
         }
 
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(
-            () => _incidentController.AddEvidence(incident, new List<IncidentEvidence> {
-                new IncidentEvidence(
+            () => _incidentController.AddEvidence(incident, new List<(IncidentEvidence, byte[])> {
+                (new IncidentEvidence(
                     Id: Guid.NewGuid(),
                     Description: "Test Evidence",
                     FilePath: "/path/to/test_image.jpg",
                     UploadTime: DateTime.UtcNow,
-            UploadedBy: "person1"
-        )}));
+                    UploadedBy: "person1"
+                    ), []
+                )
+            }));
     }
 
     [TestMethod]
@@ -296,14 +298,14 @@ public sealed class IncidentControllerTest
             Assert.Fail("No incidents created for testing.");
         }
 
-        Assert.IsTrue(await _incidentController.AddEvidence(incident, new List<IncidentEvidence> {
-            new IncidentEvidence(
+        Assert.IsTrue(await _incidentController.AddEvidence(incident, new List<(IncidentEvidence, byte[])> {
+            (new IncidentEvidence(
                 Id: Guid.NewGuid(),
                 Description: "Test Evidence",
                 FilePath: "/path/to/test_image.jpg",
                 UploadTime: DateTime.UtcNow,
                 UploadedBy: "person1"
-            )
+            ), [])
         }));
     }
 }

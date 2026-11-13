@@ -214,10 +214,10 @@ public class IncidentController : IIncidentController
         return correlated;
     }
 
-    public async Task<bool> AddEvidence(Incident incident, List<IncidentEvidence> evidence)
+    public async Task<bool> AddEvidence(Incident incident, List<(IncidentEvidence, byte[])> evidences)
     {
         ArgumentNullException.ThrowIfNull(incident);
-        ArgumentNullException.ThrowIfNull(evidence);
+        ArgumentNullException.ThrowIfNull(evidences);
 
         if (IncidentResolved(incident))
         {
@@ -226,10 +226,27 @@ public class IncidentController : IIncidentController
 
         Incident clone = incident.Clone();
 
-        clone.AddEvidence(evidence);
-
         try
         {
+            Dictionary<string, byte[]> files = evidences.ToDictionary(
+                    e => $"{_relativePath}/{e.Item1.Id}",
+                    e => e.Item2);
+
+            IReadOnlyDictionary<string, bool> saveResults = _fileSynchronizerService.SaveFile(files);
+
+            if (saveResults.Count != files.Count || saveResults.Values.Any(saved => !saved))
+            {
+                throw new InvalidOperationException("Failed to save evidence files to file synchronizer service.");
+            }
+
+            // set storage path in which files will be stored by file synchronizer service.
+            List<IncidentEvidence> evidenceMeta = evidences.Select(e =>
+                e.Item1.FilePath is not null
+                ? e.Item1 with { StoragePath = $"{_relativePath}/{e.Item1.Id}" }
+                : e.Item1).ToList();
+
+            clone.AddEvidence(evidenceMeta);
+
             (bool success, string etag) = await _cloudStorageService.ReadEtag(clone.Id.ToString());
 
             if (!success)
@@ -248,7 +265,7 @@ public class IncidentController : IIncidentController
                 throw new InvalidOperationException("Failed to update Incident to cloud storage.");
             }
 
-            incident.AddEvidence(evidence);
+            incident.AddEvidence(evidenceMeta);
 
             return true;
         }
