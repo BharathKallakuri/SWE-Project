@@ -1,33 +1,50 @@
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Cloud.Persistence;
+using FileSynchroniser.Models;
+using FileSynchroniser.Views;
+using Incidents;
+using Incidents.Views;
+using LocationTracker.Services;
+using LocationTracker.Views;
+using Controller.Models;
+using Controller.ViewModels;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using WinRT.Interop;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using UX.Models;
-using Windows.Storage;
 using Windows.Storage.Pickers;
 
 namespace UX;
+
 public sealed partial class MainWindow : Window
 {
+    private const string HostRole = "Host";
+    private const string ParticipantRole = "Participant";
+    private const string AllowedDomain = "@smail.iitpkd.ac.in";
     private readonly ObservableCollection<string> _records = new() { "Weekly Review - Mon, 28 Sep - 45 min", "Patrol Planning - Fri, 25 Sep - 30 min", "Case Briefing - Wed, 23 Sep - 1 hr 10 min" };
-    private string _userId = "";
-    private string _userEmail = "";
-    private string _picture = "";
+    private Task<IncidentPageContext>? _incidentContextTask;
+    private string _userId = string.Empty;
+    private string _userEmail = string.Empty;
+    private string _picture = string.Empty;
     private string? _pickedPicture;
-    private string _meetingId = "";
-    private string _meetingPort = "";
+    private string _meetingId = string.Empty;
+    private string _meetingPort = string.Empty;
     private bool _inMeeting;
     private bool _isHost;
     private bool _resizingChat;
+    private readonly MeetingSession _session = new();
+    private readonly ControllerMeetingService _meetingService = new();
 
-    private string Role => _isHost ? "Host" : "Participant";
+    private string Role => _isHost ? HostRole : ParticipantRole;
 
     public MainWindow()
     {
@@ -36,17 +53,39 @@ public sealed partial class MainWindow : Window
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1280, 800));
         RecordsList.ItemsSource = _records;
 
+        // CONTROLLER TEAM: initialize controller service and bind MeetingView
+        _meetingService.Initialize(_session);
+        ControllerMeetingView.ViewModel = new MeetingViewModel(_session);
+
+        _session.ParticipantCountChanged += count => {
+            DispatcherQueue.TryEnqueue(() => SetParticipants(count));
+        };
+        _session.MeetingEnded += () => {
+            DispatcherQueue.TryEnqueue(() => {
+                if (_inMeeting)
+                {
+                    _inMeeting = false;
+                    ShowProfile();
+                    ShowScreen("dash");
+                }
+            });
+        };
+
         ShowScreen("login");
     }
+
     private static Visibility Vis(bool show)
     {
         return show ? Visibility.Visible : Visibility.Collapsed;
     }
+
     private void ShowScreen(string screen)
     {
         LoginView.Visibility = Vis(screen == "login");
         DashView.Visibility = Vis(screen == "dash");
         MeetingView.Visibility = Vis(screen == "meeting");
+        IncidentsView.Visibility = Vis(screen == "incidents");
+        LocationView.Visibility = Vis(screen == "location");
         UserPanel.Visibility = Vis(screen != "login");
         MeetingInfoText.Visibility = Vis(_inMeeting);
     }
@@ -66,11 +105,11 @@ public sealed partial class MainWindow : Window
     private async Task<string?> PickPictureAsync()
     {
         var picker = new FileOpenPicker();
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(this));
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
         picker.FileTypeFilter.Add(".png");
         picker.FileTypeFilter.Add(".jpg");
         picker.FileTypeFilter.Add(".jpeg");
-        StorageFile? file = await picker.PickSingleFileAsync();
+        Windows.Storage.StorageFile? file = await picker.PickSingleFileAsync();
         return file?.Path;
     }
 
@@ -81,19 +120,20 @@ public sealed partial class MainWindow : Window
         ProfilePic.DisplayName = _userId;
         SetPicture(ProfilePic, _picture);
 
+        int hour = DateTime.Now.Hour;
         string greeting = "Good Evening";
-        if (DateTime.Now.Hour < 12)
+        if (hour < 12)
         {
             greeting = "Good Morning";
         }
-        else if (DateTime.Now.Hour < 17)
+        else if (hour < 17)
         {
             greeting = "Good Afternoon";
         }
+
         GreetingText.Text = greeting + ", " + _userId + "!";
     }
 
-    // login
     private async void PickLoginPicture_Click(object sender, RoutedEventArgs e)
     {
         string? path = await PickPictureAsync();
@@ -116,20 +156,35 @@ public sealed partial class MainWindow : Window
             string typedId = UserIdBox.Text.Trim();
             GoogleUser user = await GoogleAuth.SignInAsync();
             Activate();
-            SavedProfile? saved = ProfileStore.Load(user.Email);
-            _userEmail = user.Email;
+
+            string mail = user.Email.Trim().ToLowerInvariant();
+            if (!mail.EndsWith(AllowedDomain, StringComparison.Ordinal) || mail == AllowedDomain)
+            {
+                LoginError.Text = "Please sign in with your " + AllowedDomain + " Google account.";
+                LoginError.Visibility = Visibility.Visible;
+                return;
+            }
+
+            SavedProfile? saved = ProfileStore.Load(mail);
+            _userEmail = mail;
             _userId = typedId.Length > 0 ? typedId : (saved?.UserId ?? user.Name);
-            string savedPicture = saved?.PicturePath ?? "";
+            string savedPicture = saved?.PicturePath ?? string.Empty;
             if (_pickedPicture != null)
             {
                 savedPicture = ProfileStore.CopyPicture(_pickedPicture);
             }
+
             if (!File.Exists(savedPicture))
             {
-                savedPicture = "";
+                savedPicture = string.Empty;
             }
+
             _picture = savedPicture.Length > 0 ? savedPicture : user.Picture;
-            ProfileStore.Save(user.Email, _userId, savedPicture);
+            ProfileStore.Save(mail, _userId, savedPicture);
+
+            // CONTROLLER TEAM: store current user identity into session
+            _session.CurrentUserId = _userId;
+            _session.CurrentUserEmail = mail;
 
             ShowProfile();
             ShowScreen("dash");
@@ -145,14 +200,14 @@ public sealed partial class MainWindow : Window
             SignInBtn.Content = "Sign in with Google";
         }
     }
+
     private async void EditProfile_Click(object sender, RoutedEventArgs e)
     {
         string? newPicture = null;
         var pic = new PersonPicture { Width = 80, Height = 80 };
         SetPicture(pic, _picture);
         var changePic = new Button { Content = "Change picture", HorizontalAlignment = HorizontalAlignment.Center };
-        changePic.Click += async (s, args) =>
-        {
+        changePic.Click += async (_, _) => {
             string? path = await PickPictureAsync();
             if (path != null)
             {
@@ -176,45 +231,53 @@ public sealed partial class MainWindow : Window
             {
                 _picture = ProfileStore.CopyPicture(newPicture);
             }
+
+            if (id != _userId)
+            {
+                // the incident pages were created with the old user ID, so rebuild them on next use
+                _incidentContextTask = null;
+            }
+
             _userId = id;
+            _session.CurrentUserId = _userId;
             ShowProfile();
-            ProfileStore.Save(_userEmail, _userId, _picture.StartsWith("http") ? "" : _picture);
+            ProfileStore.Save(_userEmail, _userId, _picture.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? string.Empty : _picture);
             return;
         }
     }
 
     private void SignOut_Click(object sender, RoutedEventArgs e)
     {
+        if (_inMeeting)
+        {
+            _session.EndMeeting();
+        }
         _inMeeting = false;
-        _userId = "";
-        _userEmail = "";
-        _picture = "";
+        LocationHost.Content = null;
+        _incidentContextTask = null;
+        _userId = string.Empty;
+        _userEmail = string.Empty;
+        _picture = string.Empty;
         _pickedPicture = null;
-        UserIdBox.Text = "";
+        UserIdBox.Text = string.Empty;
         LoginPic.ProfilePicture = null;
-        ProfilePic.ProfilePicture = null;
         ShowScreen("login");
     }
 
-    // dashboard
     private void Start_Click(object sender, RoutedEventArgs e)
     {
-        // The real meeting ID and port come from the controller.
-        string id = "123-456-789";
-        string port = "5000";
+        (string? id, string? port) = _meetingService.CreateMeeting();
+        _session.StartMeeting(new MeetingInfo(id, port, IsHost: true));
 
         StartMeeting(id, port, true);
     }
 
-    // the person who joins with a meeting ID and port is a Participant
     private async void Join_Click(object sender, RoutedEventArgs e)
     {
-        var idBox = new TextBox { Header = "Meeting ID", PlaceholderText = "e.g. 123-456-789" };
+        var idBox = new TextBox { Header = "Meeting ID", PlaceholderText = "e.g. 192.168.1.5" };
         var portBox = new TextBox { Header = "Port", PlaceholderText = "e.g. 5000" };
         var error = new TextBlock { Foreground = new SolidColorBrush(Colors.Red) };
         ContentDialog dialog = MakeDialog("Join meeting", new StackPanel { Spacing = 10, Children = { idBox, portBox, error } }, "Join");
-
-        // keep showing the dialog until the details are fine or the user cancels
         while (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             string id = idBox.Text.Trim();
@@ -232,13 +295,19 @@ public sealed partial class MainWindow : Window
                 continue;
             }
 
-            // Connect to the meeting using this id and port.
+            bool joined = _meetingService.JoinMeeting(id, number);
+            if (!joined)
+            {
+                error.Text = "Could not connect to meeting at " + id + ":" + port;
+                continue;
+            }
+
+            _session.StartMeeting(new MeetingInfo(id, port, IsHost: false));
             StartMeeting(id, port, false);
             return;
         }
     }
 
-    // inside a meeting
     private void StartMeeting(string id, string port, bool host)
     {
         _inMeeting = true;
@@ -249,21 +318,17 @@ public sealed partial class MainWindow : Window
         EndBtn.Content = host ? "End Meeting" : "Leave Meeting";
         ShowProfile();
 
-        // CONTROLLER TEAM: call SetParticipants() with the real number
-        SetParticipants(1);
+        SetParticipants(_session.ParticipantCount);
 
         ChatBtn.IsChecked = false;
         ShowChat(false);
         ShowPanel("home");
         ShowScreen("meeting");
     }
+
     public void SetParticipants(int count)
     {
         MeetingInfoText.Text = "Role: " + Role + "   ID: " + _meetingId + "   Port: " + _meetingPort + "   Participants: " + count;
-    }
-    private void Panel_Click(object sender, RoutedEventArgs e)
-    {
-        ShowPanel((string)((FrameworkElement)sender).Tag);
     }
 
     private void ShowPanel(string which)
@@ -271,13 +336,33 @@ public sealed partial class MainWindow : Window
         HomePanel.Visibility = Vis(which == "home");
         SharePanel.Visibility = Vis(which == "share");
         BoardPanel.Visibility = Vis(which == "board");
-        IncidentsPanel.Visibility = Vis(which == "incidents");
-        LocationPanel.Visibility = Vis(which == "location");
+        FileSyncView.Visibility = Vis(which == "filesync");
+
         HomeBtn.IsChecked = which == "home";
         ShareBtn.IsChecked = which == "share";
         BoardBtn.IsChecked = which == "board";
-        IncidentsBtn.IsChecked = which == "incidents";
-        LocationBtn.IsChecked = which == "location";
+        FileSyncBtn.IsChecked = which == "filesync";
+    }
+
+    private void HomeBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ShowPanel("home");
+    }
+
+    private void ShareBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ShowPanel("share");
+    }
+
+    private void BoardBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ShowPanel("board");
+    }
+
+    private void FileSyncBtn_Click(object sender, RoutedEventArgs e)
+    {
+        FileSyncFrame.Navigate(typeof(FileSyncPage));
+        ShowPanel("filesync");
     }
 
     private void ChatBtn_Click(object sender, RoutedEventArgs e)
@@ -285,7 +370,6 @@ public sealed partial class MainWindow : Window
         ShowChat(ChatBtn.IsChecked == true);
     }
 
-    // the chat panel and its drag handle are shown or hidden together
     private void ShowChat(bool show)
     {
         ChatPanel.Visibility = Vis(show);
@@ -297,20 +381,22 @@ public sealed partial class MainWindow : Window
         string text = _isHost
             ? "Are you sure you want to end this meeting?"
             : "Are you sure you want to leave this meeting?";
-        string buttonText = EndBtn.Content.ToString() ?? "";
+        string buttonText = EndBtn.Content.ToString() ?? string.Empty;
 
         ContentDialogResult result = await MakeDialog(buttonText, text, buttonText).ShowAsync();
         if (result != ContentDialogResult.Primary)
         {
             return;
         }
+
+        _session.EndMeeting();
+
         _records.Insert(0, "Meeting " + _meetingId + " - " + DateTime.Now.ToString("ddd, dd MMM") + " - Just now");
         _inMeeting = false;
         ShowProfile();
         ShowScreen("dash");
     }
 
-    // resizing the chat
     private void ChatResizer_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         _resizingChat = true;
@@ -333,7 +419,93 @@ public sealed partial class MainWindow : Window
         _resizingChat = false;
         ChatResizer.ReleasePointerCapture(e.Pointer);
     }
+
+    private async Task<IncidentPageContext> GetIncidentContextAsync()
+    {
+        _incidentContextTask ??= InitializeIncidentContextAsync();
+        return await _incidentContextTask;
+    }
+
+    private async Task<IncidentPageContext> InitializeIncidentContextAsync()
+    {
+        IStorage storage = await StorageFactory.CreateAsync(ModuleType.IncidentManagement);
+        IFileOperations fileSynchronizer = new Synchroniser();
+        IIncidentController controller = await IncidentController.CreateAsync(storage, fileSynchronizer);
+
+        IntPtr windowHandle = WindowNative.GetWindowHandle(this);
+        return new IncidentPageContext(controller, _userId, windowHandle);
+    }
+
+    private async void Incidents_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            IncidentsFrame.Navigate(typeof(AllIncidentsPage), context);
+            ShowScreen("incidents");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load incidents", ex.Message);
+        }
+    }
+
+    private async void Location_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            var geocoding = new NominatimGeocodingService(new HttpClient());
+            var map = new LocationMapView();
+            map.IncidentSelected += LocationIncidentSelected;
+            map.Initialize(new MapService(context.IncidentController, geocoding));
+            LocationHost.Content = map;
+            ShowScreen("location");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load location", ex.Message);
+        }
+    }
+
+    private async void LocationIncidentSelected(Guid incidentId)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            IncidentsFrame.Navigate(
+                typeof(IncidentDetailsPage),
+                new IncidentDetailsPageParameters(context, incidentId));
+            LocationHost.Content = null;
+            ShowScreen("incidents");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load incident", ex.Message);
+        }
+    }
+
+    private async Task ShowErrorAsync(string title, string message)
+    {
+        await new ContentDialog {
+            Title = title,
+            Content = message,
+            CloseButtonText = "OK",
+            XamlRoot = Root.XamlRoot
+        }.ShowAsync();
+    }
+
+    private void IncidentsBack_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen("meeting");
+    }
+
+    private void LocationBack_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen("meeting");
+    }
 }
+
 public sealed class ResizeHandle : ContentControl
 {
     public ResizeHandle()
