@@ -22,10 +22,6 @@
 
                 <TextBlock x:Name="MeetingInfoText" Foreground="White" FontSize="12"
                            VerticalAlignment="Center" Visibility="Collapsed"/>
-                <Button Content="Incidents" Click="Incidents_Click" Foreground="White"
-                        Background="#1F4A78"/>
-                <Button Content="Location" Click="Location_Click" Foreground="White"
-                        Background="#1F4A78"/>
                 <PersonPicture x:Name="ProfilePic" Width="30" Height="30"/>
                 <TextBlock x:Name="ProfileName" Foreground="White" VerticalAlignment="Center"/>
                 <Button Content="Edit profile" Click="EditProfile_Click" Foreground="White"
@@ -72,24 +68,12 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                     <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
 
                 <Button Content="Start Meeting" Click="Start_Click" Height="100"
                         Background="#0F5FC2" Foreground="White"
                         FontSize="20" HorizontalAlignment="Stretch"/>
                 <Button Grid.Column="1" Content="Join with ID" Click="Join_Click"
-                        Height="100" FontSize="20" Background="White"
-                        HorizontalAlignment="Stretch"/>
-                <Button Grid.Column="2" Content="Incidents" Click="Incidents_Click"
-                        Height="100" FontSize="20" Background="White"
-                        HorizontalAlignment="Stretch"/>
-                <Button Grid.Column="3" Content="Location" Click="Location_Click"
-                        Height="100" FontSize="20" Background="White"
-                        HorizontalAlignment="Stretch"/>
-                <Button Grid.Column="4" Content="Cloud" Click="Cloud_Click"
                         Height="100" FontSize="20" Background="White"
                         HorizontalAlignment="Stretch"/>
             </Grid>
