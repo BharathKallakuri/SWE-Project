@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Diagnostics.CodeAnalysis;
 using Cloud.Networking.Server.Components;
 using Cloud.Networking.Server.Models;
 using Cloud.Networking.Server.ViewModels;
@@ -14,6 +15,7 @@ public class Program
     /* Testing a Main function is quite difficult unless you separate
     * business logic into something that can be tested (like a function or a class)*/
 
+    [ExcludeFromCodeCoverage]
     /// <summary>
     /// Create a web application and runs it
     /// </summary>

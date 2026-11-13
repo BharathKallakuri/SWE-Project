@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
 using Cloud.Networking;
 using Cloud.UI.Models;
@@ -12,6 +13,7 @@ using Windows.System;
 
 namespace Cloud.UI.Views;
 
+[ExcludeFromCodeCoverage]
 /// <summary>
 /// Notification Service page. The logic lives in <see cref="NotificationServiceViewModel"/>;
 /// this class only handles view-only concerns: status colour, Enter key, and the alert popup.
