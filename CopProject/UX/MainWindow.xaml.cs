@@ -56,6 +56,7 @@ public sealed partial class MainWindow : Window
         Title = "SecureMeet";
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1280, 800));
         RecordsList.ItemsSource = _records;
+        IncidentsFrame.Navigated += IncidentsFrame_Navigated;
 
         // CONTROLLER TEAM: initialize controller service and bind MeetingView
         _meetingService.Initialize(_session);
@@ -483,6 +484,7 @@ public sealed partial class MainWindow : Window
             var geocoding = new NominatimGeocodingService(new HttpClient());
             var map = new LocationMapView(new MapService(context.IncidentController, geocoding));
             map.IncidentSelected += LocationIncidentSelected;
+            map.LocationSelected += LocationSelectedOnMap;
             LocationHost.Content = map;
             ShowScreen("location");
         }
@@ -507,6 +509,35 @@ public sealed partial class MainWindow : Window
         catch (Exception ex)
         {
             await ShowErrorAsync("Unable to load incident", ex.Message);
+        }
+    }
+
+    private async void LocationSelectedOnMap(IncidentLocation location)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            IncidentsFrame.Navigate(
+                typeof(CreateIncidentPage),
+                new IncidentCreatePageWithLocation(
+                    context,
+                    location.Latitude,
+                    location.Longitude,
+                    location.Address));
+            LocationHost.Content = null;
+            ShowScreen("incidents");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to open create incident", ex.Message);
+        }
+    }
+
+    private void IncidentsFrame_Navigated(object sender, NavigationEventArgs e)
+    {
+        if (e.Content is CreateIncidentPage page)
+        {
+            MiniMapView.AttachTo(page);
         }
     }
 
