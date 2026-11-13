@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Chat;
 
@@ -143,5 +143,40 @@ public class ChatMessageTests
         message.Delete("moderator");
 
         Assert.Throws<InvalidOperationException>(() => message.ToggleReaction("👍", "guest"));
+    }
+
+    [Fact]
+    public void CloneCopiesMutableStateAndReactionSets()
+    {
+        ChatMessage message = new()
+        {
+            Timestamp = DateTimeOffset.Parse("2026-01-01T12:00:00+00:00"),
+            SenderName = "guest",
+            Content = "Original",
+            ParentMessageId = Guid.NewGuid()
+        };
+        message.Edit("Edited");
+        message.ToggleReaction("👍", "host");
+        message.Delete("moderator");
+
+        ChatMessage clone = message.DeepClone();
+        clone.Reactions["👍"].Add("clone-only");
+
+        Assert.Equal(message.Timestamp, clone.Timestamp);
+        Assert.Equal(message.SenderName, clone.SenderName);
+        Assert.Equal(message.Content, clone.Content);
+        Assert.Equal(message.EditCount, clone.EditCount);
+        Assert.Equal(message.DeletedByUser, clone.DeletedByUser);
+        Assert.Equal(message.ParentMessageId, clone.ParentMessageId);
+        Assert.Contains("host", clone.Reactions["👍"]);
+        Assert.DoesNotContain("clone-only", message.Reactions["👍"]);
+    }
+
+    [Fact]
+    public void CopyMutableStateFromThrowsForNullSource()
+    {
+        ChatMessage target = new() { SenderName = "guest" };
+
+        Assert.Throws<ArgumentNullException>(() => target.CopyMutableStateFrom(null!));
     }
 }

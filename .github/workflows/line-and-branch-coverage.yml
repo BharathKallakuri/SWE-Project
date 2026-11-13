@@ -43,10 +43,12 @@ jobs:
       - name: Build dotnet projects
         run: dotnet build CopProject --configuration Release --no-restore
 
-        # NOTE: Requires the coverlet.collector package in the test projects.
       - name: Test dotnet projects with coverage
+        env:
+          COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
         run: >
           dotnet test CopProject --configuration Release --no-build
+          --settings CopProject/ci.runsettings
           --collect:"XPlat Code Coverage"
           --results-directory ./coverage
 
@@ -82,13 +84,20 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           {
+            echo "<!-- coverage-report -->"
             echo "## Code coverage report"
             echo
             cat coverage-report/SummaryGithub.md
             echo
             echo "**Full HTML report:** [download artifact (zip)]($HTML_URL)"
           } > comment.md
-          gh pr comment "$PR_NUMBER" --body-file comment.md --edit-last --create-if-none
+
+          COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("<!-- coverage-report -->")) | .id' | tail -n 1)
+          if [ -n "$COMMENT_ID" ]; then
+            gh api "repos/${{ github.repository }}/issues/comments/$COMMENT_ID" -X PATCH -F body=@comment.md
+          else
+            gh pr comment "$PR_NUMBER" --body-file comment.md
+          fi
 
       - name: Enforce line coverage threshold
         run: |
