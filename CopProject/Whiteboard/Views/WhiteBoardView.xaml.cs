@@ -18,42 +18,55 @@ namespace Whiteboard.Views;
 [ExcludeFromCodeCoverage]
 public sealed partial class WhiteBoardView : UserControl
 {
-    private readonly WhiteBoardViewModel _viewModel;
-    private readonly ToolbarInfo _toolbarInfo;
+    private WhiteBoardViewModel? _viewModel;
+    private readonly ToolbarInfo _toolbarInfo = new(Colors.Black, 3, Colors.Black);
 
-    public WhiteBoardView(WhiteBoardViewModel viewModel)
+    public WhiteBoardView()
     {
-        ArgumentNullException.ThrowIfNull(viewModel);
-
         InitializeComponent();
-
-        _viewModel = viewModel;
-
-        _toolbarInfo = new(Colors.Black, 3, Colors.Black);
-        _viewModel.InitializeViewModel(WhiteboardCanvas, _toolbarInfo);
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
 
-    /// <summary>
-    /// Subscribes to history changes and displays the latest button availability.
-    /// </summary>
-    /// <param name="sender">Source of the event.</param>
-    /// <param name="e">Event details.</param>
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    public WhiteBoardView(WhiteBoardViewModel viewModel) : this()
     {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        SetViewModel(viewModel);
+    }
+
+    /// <summary>
+    /// Binds a view model to the view and initializes canvas and toolbar listeners.
+    /// </summary>
+    public void SetViewModel(WhiteBoardViewModel viewModel)
+    {
+        ArgumentNullException.ThrowIfNull(viewModel);
+
+        if (_viewModel is not null)
+        {
+            _viewModel.HistoryChanged -= UpdateHistoryButtons;
+        }
+
+        _viewModel = viewModel;
+        _viewModel.InitializeViewModel(WhiteboardCanvas, _toolbarInfo);
         _viewModel.HistoryChanged += UpdateHistoryButtons;
         UpdateHistoryButtons();
     }
 
-    /// <summary>
-    /// Detaches the history listener when the view leaves the visual tree.
-    /// </summary>
-    /// <param name="sender">Source of the event.</param>
-    /// <param name="e">Event details.</param>
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel is not null)
+        {
+            _viewModel.HistoryChanged += UpdateHistoryButtons;
+            UpdateHistoryButtons();
+        }
+    }
+
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        _viewModel.HistoryChanged -= UpdateHistoryButtons;
+        if (_viewModel is not null)
+        {
+            _viewModel.HistoryChanged -= UpdateHistoryButtons;
+        }
     }
 
     /// <summary>
