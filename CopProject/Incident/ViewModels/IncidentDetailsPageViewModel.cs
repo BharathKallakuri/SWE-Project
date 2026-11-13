@@ -370,7 +370,7 @@ public sealed class IncidentDetailsPageViewModel : ViewModelBase
     /// <summary>
     /// Adds new evidence to the incident and refreshes the lists.
     /// </summary>
-    public async Task AddEvidenceItemsAsync(List<IncidentEvidence> newEvidences)
+    public async Task AddEvidenceItemsAsync(List<(IncidentEvidence, byte[])> newEvidences)
     {
         if (Incident == null || newEvidences.Count == 0) { return; }
 

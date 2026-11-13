@@ -1,19 +1,22 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Cloud.Networking;
+using Chat;
 using Cloud.Persistence;
-using Cloud.UI.ViewModels;
-using Cloud.UI.Views;
 using FileSynchroniser.Models;
 using FileSynchroniser.Views;
 using Incidents;
 using Incidents.Views;
 using LocationTracker.Services;
 using LocationTracker.Views;
+using Controller;
 using Controller.Models;
 using Controller.ViewModels;
+using UI.Services;
+using UI.ViewModels;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -21,6 +24,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using WinRT.Interop;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
+
 
 namespace UX;
 
@@ -40,10 +45,10 @@ public sealed partial class MainWindow : Window
     private bool _resizingChat;
     private readonly MeetingSession _session = new();
     private readonly ControllerMeetingService _meetingService = new();
-
-    // CLOUD TEAM: created on first visit to the Cloud page and kept, so the connection
-    // and the notification list survive pressing Back and coming back.
-    private NotificationServiceViewModel? _cloudViewModel;
+    private ChatServer? _chatServer;
+    private ChatClient? _chatClient;
+    private ChatClientAdapter? _chatAdapter;
+    private ChatPanelViewModel? _chatViewModel;
 
     public MainWindow()
     {
@@ -51,6 +56,8 @@ public sealed partial class MainWindow : Window
         Title = "SecureMeet";
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1280, 800));
         RecordsList.ItemsSource = _records;
+
+        IncidentsFrame.Navigated += IncidentsFrame_Navigated;
 
         // CONTROLLER TEAM: initialize controller service and bind MeetingView
         _meetingService.Initialize(_session);
@@ -69,9 +76,12 @@ public sealed partial class MainWindow : Window
                 }
             });
         };
-
-        // CLOUD TEAM: close the server connection when the app closes.
-        Closed += async (_, _) => await ResetCloudAsync();
+        _session.MeetingEnding += DisposeChatSession;
+        _session.ParticipantsChanged += participants => {
+            if (_inMeeting && !_isHost && _chatViewModel is null && participants.Any(participant => participant.IsHost))
+                DispatcherQueue.TryEnqueue(() => TryInitializeChatSession(false));
+        };
+        Closed += (_, _) => DisposeChatSession();
 
         ShowScreen("login");
     }
@@ -142,7 +152,7 @@ public sealed partial class MainWindow : Window
         ShowScreen("dash");
     }
 
-    private async void SignOut_Click(object sender, RoutedEventArgs e)
+    private void SignOut_Click(object sender, RoutedEventArgs e)
     {
         if (_inMeeting)
         {
@@ -151,10 +161,7 @@ public sealed partial class MainWindow : Window
         _inMeeting = false;
         LocationHost.Content = null;
         _incidentContextTask = null;
-
-        // CLOUD TEAM: the next user starts with a fresh connection and an empty list.
-        await ResetCloudAsync();
-
+        DisposeChatSession();
         ShowScreen("login");
     }
 
@@ -222,6 +229,7 @@ public sealed partial class MainWindow : Window
         ShowChat(false);
         ShowPanel("home");
         ShowScreen("meeting");
+        TryInitializeChatSession(host);
     }
 
     public void SetParticipants(int count)
@@ -265,6 +273,9 @@ public sealed partial class MainWindow : Window
 
     private void ChatBtn_Click(object sender, RoutedEventArgs e)
     {
+        if (ChatBtn.IsChecked == true)
+            TryInitializeChatSession(_isHost);
+
         ShowChat(ChatBtn.IsChecked == true);
     }
 
@@ -272,6 +283,74 @@ public sealed partial class MainWindow : Window
     {
         ChatPanel.Visibility = Vis(show);
         ChatResizer.Visibility = Vis(show);
+    }
+
+    private void TryInitializeChatSession(bool isHost)
+    {
+        if (_chatViewModel is not null)
+            return;
+
+        IControllerService? controller = _meetingService.ActiveController;
+        if (controller?.Communicator is null || controller.CurrentUser is null)
+            return;
+
+        try
+        {
+            string username = controller.CurrentUser.Username;
+            string hostName = isHost
+                ? username
+                : controller.GetActiveUsers().FirstOrDefault(user => user.IsHost)?.Username
+                  ?? _session.ActiveParticipants.FirstOrDefault(participant => participant.IsHost)?.Username
+                  ?? string.Empty;
+
+            // A participant needs the host's username before the local room is valid.
+            if (string.IsNullOrWhiteSpace(hostName))
+                return;
+
+            var room = new Chatroom($"{_meetingId}:{_meetingPort}", hostName);
+
+            if (isHost)
+            {
+                _chatServer = new ChatServer(room, controller);
+                _chatAdapter = new ChatClientAdapter(_chatServer, controller, DispatcherQueue);
+            }
+            else
+            {
+                string hostIp = _meetingId.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                    ? "127.0.0.1"
+                    : _meetingId;
+
+                if (!IPAddress.TryParse(hostIp, out IPAddress? address)
+                    || address is null
+                    || !int.TryParse(_meetingPort, out int port))
+                    return;
+
+                _chatClient = new ChatClient(username, room, controller.Communicator, new IPEndPoint(address, port));
+                _chatAdapter = new ChatClientAdapter(_chatClient, DispatcherQueue);
+            }
+
+            _chatViewModel = new ChatPanelViewModel(_chatAdapter);
+            MeetingChatPanel.ViewModel = _chatViewModel;
+            _chatViewModel.Initialize();
+        }
+        catch (Exception exception)
+        {
+            DisposeChatSession();
+            System.Diagnostics.Trace.WriteLine($"[Chat] Could not start the chat session: {exception}");
+        }
+    }
+
+    private void DisposeChatSession()
+    {
+        MeetingChatPanel.ViewModel = null;
+        _chatViewModel?.Dispose();
+        _chatAdapter?.Dispose();
+        _chatClient?.Dispose();
+        _chatServer?.Dispose();
+        _chatViewModel = null;
+        _chatAdapter = null;
+        _chatClient = null;
+        _chatServer = null;
     }
 
     private async void End_Click(object sender, RoutedEventArgs e)
@@ -355,9 +434,9 @@ public sealed partial class MainWindow : Window
         {
             IncidentPageContext context = await GetIncidentContextAsync();
             var geocoding = new NominatimGeocodingService(new HttpClient());
-            var map = new LocationMapView();
+            var map = new LocationMapView(new MapService(context.IncidentController, geocoding));
             map.IncidentSelected += LocationIncidentSelected;
-            map.Initialize(new MapService(context.IncidentController, geocoding));
+            map.LocationSelected += LocationSelectedOnMap;
             LocationHost.Content = map;
             ShowScreen("location");
         }
@@ -384,6 +463,42 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Handles a location selection on the map by navigating to the create incident page.
+    /// </summary>
+    private async void LocationSelectedOnMap(IncidentLocation location)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            IncidentsFrame.Navigate(
+                typeof(CreateIncidentPage),
+                new IncidentCreatePageWithLocation(
+                    context,
+                    location.Latitude,
+                    location.Longitude,
+                    location.Address));
+            LocationHost.Content = null;
+            ShowScreen("incidents");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to open create incident", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Adds the location tracker mini map whenever the create incident page is opened.
+    /// </summary>
+    private void IncidentsFrame_Navigated(object sender, NavigationEventArgs e)
+    {
+        if (e.Content is CreateIncidentPage page)
+        {
+            MiniMapView.AttachTo(page);
+        }
+    }
+
+
     private async Task ShowErrorAsync(string title, string message)
     {
         await new ContentDialog {
@@ -394,44 +509,9 @@ public sealed partial class MainWindow : Window
         }.ShowAsync();
     }
 
-    private async void Cloud_Click(object sender, RoutedEventArgs e)
+    private void Cloud_Click(object sender, RoutedEventArgs e)
     {
-        try
-        {
-            EnsureCloudView();
-            ShowScreen("cloud");
-        }
-        catch (Exception ex)
-        {
-            await ShowErrorAsync("Unable to load cloud", ex.Message);
-        }
-    }
-
-    /// <summary>Builds the Notification Service page the first time it is needed.</summary>
-    private void EnsureCloudView()
-    {
-        if (_cloudViewModel is not null)
-        {
-            return;
-        }
-
-        // Must run on the UI thread (it does: this is called from a click handler).
-        _cloudViewModel = new NotificationServiceViewModel(MessengerFactory.GetMessenger);
-        CloudHost.Children.Add(new NotificationServiceView(_cloudViewModel));
-    }
-
-    /// <summary>Closes the connection and removes the page; the next visit builds a fresh one.</summary>
-    private async Task ResetCloudAsync()
-    {
-        NotificationServiceViewModel? viewModel = _cloudViewModel;
-        if (viewModel is null)
-        {
-            return;
-        }
-
-        _cloudViewModel = null;
-        CloudHost.Children.Clear();
-        await viewModel.DisposeAsync();
+        ShowScreen("cloud");
     }
 
     private void IncidentsBack_Click(object sender, RoutedEventArgs e)
