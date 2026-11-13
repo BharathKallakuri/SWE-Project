@@ -558,7 +558,7 @@ public sealed partial class MainWindow : Window
         IIncidentController controller = await IncidentController.CreateAsync(storage, fileSynchronizer);
 
         IntPtr windowHandle = WindowNative.GetWindowHandle(this);
-        return new IncidentPageContext(controller, _userId, windowHandle);
+        return new IncidentPageContext(controller, _userEmail, windowHandle);
     }
 
     private async void Incidents_Click(object sender, RoutedEventArgs e)
