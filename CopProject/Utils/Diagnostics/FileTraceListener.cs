@@ -20,9 +20,8 @@ public static class FileTraceListener
         Trace.Listeners.Add(new TextWriterTraceListener(logPath));
         Trace.AutoFlush = true;
 
-        Trace.TraceInformation("application started.");
-        Trace.TraceWarning("some warning.");
-        Trace.TraceError("some error.");
+        Trace.TraceInformation($"Application started at {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+    
 
     }
 }
