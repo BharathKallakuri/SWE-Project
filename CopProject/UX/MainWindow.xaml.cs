@@ -47,7 +47,10 @@ public sealed partial class MainWindow : Window
     private bool _resizingChat;
     private readonly MeetingSession _session = new();
     private readonly ControllerMeetingService _meetingService = new();
-
+    private ChatServer? _chatServer;
+    private ChatClient? _chatClient;
+    private ChatClientAdapter? _chatAdapter;
+    private ChatPanelViewModel? _chatViewModel;
     private string Role => _isHost ? HostRole : ParticipantRole;
 
     public MainWindow()
