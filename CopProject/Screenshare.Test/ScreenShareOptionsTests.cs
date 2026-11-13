@@ -11,9 +11,9 @@ public class ScreenShareOptionsTests
     {
         var options = new ScreenShareOptions();
 
-        Assert.Equal(24, options.FramesPerSecond);
-        Assert.Equal(720, options.MaxHeight);
-        Assert.Equal(2, options.MaxFramesInFlight);
+        Assert.Equal(50, options.FramesPerSecond);
+        Assert.Equal(480, options.MaxHeight);
+        Assert.Equal(8, options.MaxFramesInFlight);
         Assert.Equal(TimeSpan.FromSeconds(2), options.AckTimeout);
         Assert.Equal(5, options.MaxViewerLag);
         Assert.Equal(TimeSpan.FromSeconds(10), options.ViewerTimeout);
