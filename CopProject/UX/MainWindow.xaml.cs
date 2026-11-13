@@ -166,17 +166,6 @@ public sealed partial class MainWindow : Window
 
         GreetingText.Text = greeting + ", " + _userId + "!";
     }
-
-    private async void PickLoginPicture_Click(object sender, RoutedEventArgs e)
-    {
-        string? path = await PickPictureAsync();
-        if (path != null)
-        {
-            _pickedPicture = path;
-            SetPicture(LoginPic, path);
-        }
-    }
-
     // opens the browser so the person can log in with their Google account
     private async void SignIn_Click(object sender, RoutedEventArgs e)
     {
@@ -186,7 +175,6 @@ public sealed partial class MainWindow : Window
 
         try
         {
-            string typedId = UserIdBox.Text.Trim();
             GoogleUser user = await GoogleAuth.SignInAsync();
             Activate();
 
@@ -200,7 +188,7 @@ public sealed partial class MainWindow : Window
 
             SavedProfile? saved = ProfileStore.Load(mail);
             _userEmail = mail;
-            _userId = typedId.Length > 0 ? typedId : (saved?.UserId ?? user.Name);
+            _userId = user.Name;
             string savedPicture = saved?.PicturePath ?? string.Empty;
             if (_pickedPicture != null)
             {
@@ -234,49 +222,60 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    
     private async void EditProfile_Click(object sender, RoutedEventArgs e)
     {
         string? newPicture = null;
-        var pic = new PersonPicture { Width = 80, Height = 80 };
+    
+        var pic = new PersonPicture
+        {
+            Width = 80,
+            Height = 80,
+            DisplayName = _userId
+        };
+    
         SetPicture(pic, _picture);
-        var changePic = new Button { Content = "Change picture", HorizontalAlignment = HorizontalAlignment.Center };
-        changePic.Click += async (_, _) => {
+    
+        var changePic = new Button
+        {
+            Content = "Change picture",
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+    
+        changePic.Click += async (_, _) =>
+        {
             string? path = await PickPictureAsync();
+    
             if (path != null)
             {
                 newPicture = path;
                 SetPicture(pic, path);
             }
         };
-        var idBox = new TextBox { Header = "User ID", Text = _userId };
-        var error = new TextBlock { Foreground = new SolidColorBrush(Colors.Red) };
-        ContentDialog dialog = MakeDialog("Edit profile", new StackPanel { Spacing = 10, Children = { pic, changePic, idBox, error } }, "Save");
-        while (await dialog.ShowAsync() == ContentDialogResult.Primary)
-        {
-            string id = idBox.Text.Trim();
-            if (id.Length == 0)
+    
+        ContentDialog dialog = MakeDialog(
+            "Edit profile",
+            new StackPanel
             {
-                error.Text = "User ID cannot be empty.";
-                continue;
-            }
-
-            if (newPicture != null)
-            {
-                _picture = ProfileStore.CopyPicture(newPicture);
-            }
-
-            if (id != _userId)
-            {
-                // the incident pages were created with the old user ID, so rebuild them on next use
-                _incidentContextTask = null;
-            }
-
-            _userId = id;
-            _session.CurrentUserId = _userId;
-            ShowProfile();
-            ProfileStore.Save(_userEmail, _userId, _picture.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? string.Empty : _picture);
+                Spacing = 10,
+                Children = { pic, changePic }
+            },
+            "Save");
+    
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
             return;
+    
+        if (newPicture != null)
+        {
+            _picture = ProfileStore.CopyPicture(newPicture);
+    
+            ProfileStore.Save(
+                _userEmail,
+                _userId,
+                _picture);
         }
+    
+        ShowProfile();
     }
 
     private void SignOut_Click(object sender, RoutedEventArgs e)
@@ -292,8 +291,6 @@ public sealed partial class MainWindow : Window
         _userEmail = string.Empty;
         _picture = string.Empty;
         _pickedPicture = null;
-        UserIdBox.Text = string.Empty;
-        LoginPic.ProfilePicture = null;
         DisposeChatSession();
         ShowScreen("login");
     }
