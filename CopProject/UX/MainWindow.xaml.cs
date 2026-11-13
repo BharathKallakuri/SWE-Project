@@ -474,25 +474,24 @@ public sealed partial class MainWindow : Window
         }
     }
 
+
     private async void Location_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-
             IncidentPageContext context = await GetIncidentContextAsync();
             var geocoding = new NominatimGeocodingService(new HttpClient());
-            var map = new LocationMapView();
-            map.Initialize(new MapService(context.IncidentController, geocoding));
+            var map = new LocationMapView(new MapService(context.IncidentController, geocoding));
             map.IncidentSelected += LocationIncidentSelected;
             LocationHost.Content = map;
             ShowScreen("location");
-
         }
         catch (Exception ex)
         {
             await ShowErrorAsync("Unable to load location", ex.Message);
         }
     }
+
 
     private async void LocationIncidentSelected(Guid incidentId)
     {
