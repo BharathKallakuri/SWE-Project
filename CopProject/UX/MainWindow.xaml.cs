@@ -385,7 +385,7 @@ public sealed partial class MainWindow : Window
 
     private void FileSyncBtn_Click(object sender, RoutedEventArgs e)
     {
-        FileSyncFrame.Navigate(typeof(FileSyncPage));
+        FileSyncFrame.Navigate(typeof(FileSyncPage), _meetingService.ActiveController);
         ShowPanel("filesync");
     }
 
