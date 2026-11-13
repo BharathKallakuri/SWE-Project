@@ -7,7 +7,6 @@
     xmlns:controller="using:Controller.Views"
     xmlns:chat="using:UI.Views"
     xmlns:screenshare="using:ScreenShare.Views">
->
 
     <Grid x:Name="Root" RequestedTheme="Light" Background="#EEF3F9">
         <Grid.RowDefinitions>
