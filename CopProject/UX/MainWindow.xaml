@@ -5,7 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:UX"
     xmlns:controller="using:Controller.Views"
-    xmlns:chat="using:UI.Views">
+    xmlns:chat="using:UI.Views"
+    xmlns:screenshare="using:ScreenShare.Views">
 
     <Grid x:Name="Root" RequestedTheme="Light" Background="#EEF3F9">
         <Grid.RowDefinitions>
@@ -172,7 +173,7 @@
                 <Border x:Name="SharePanel" Background="White" CornerRadius="10" Visibility="Collapsed">
                     <StackPanel Padding="20">
                         <!-- SCREEN SHARING TEAM: add your UI here -->
-                        <TextBlock Text="Screen sharing module goes here"/>
+                        <screenshare:ScreenShareGridView x:Name="ScreenShareView"/>
                     </StackPanel>
                 </Border>
 
