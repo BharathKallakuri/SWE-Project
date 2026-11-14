@@ -4,6 +4,9 @@ using System.Diagnostics;
 using Cloud.Persistence;
 using FileSynchroniser.Models;
 
+/// <summary>
+/// Incident controller for creating, retrieving, updating and correlating incidents.
+/// </summary>
 public class IncidentController : IIncidentController
 {
     private readonly string _currentUserId;
@@ -12,6 +15,9 @@ public class IncidentController : IIncidentController
     private readonly IFileOperations _fileSynchronizerService;
     private readonly Dictionary<Guid, Incident> _incidentMap;
 
+    /// <summary>
+    /// Constructor for creating an incident.
+    /// </summary>
     private IncidentController(
         string currentUserId,
         IStorage cloudStorageService,
@@ -25,6 +31,9 @@ public class IncidentController : IIncidentController
         _incidentMap = incidentMap;
     }
 
+    /// <summary>
+    /// Factory method for creating an IncidentController.
+    /// </summary>
     public async static Task<IncidentController> CreateAsync(string currentUserId, IStorage cloudStorageService, IFileOperations fileSynchronizerService)
     {
         try
@@ -171,6 +180,9 @@ public class IncidentController : IIncidentController
         }
     }
 
+    /// <summary>
+    /// Returns the incident with the specified id. If no such incident exists, an exception is thrown.
+    /// </summary>
     public async Task<Incident> GetIncidentById(Guid id)
     {
         Incident incident = FindIncident(id) ?? throw new KeyNotFoundException($"Incident with ID {id} not found.");
@@ -178,6 +190,9 @@ public class IncidentController : IIncidentController
         return incident;
     }
 
+    /// <summary>
+    /// Returns all incidents that satisfy the filter.
+    /// </summary>
     public async Task<List<Incident>> GetAllIncidents(IncidentFilter? filter = null)
     {
         return _incidentMap.Values.
@@ -231,16 +246,25 @@ public class IncidentController : IIncidentController
         }
     }
 
+    /// <summary>
+    /// Find incident in the local cache.
+    /// </summary>
     private Incident? FindIncident(Guid id)
     {
         return _incidentMap.GetValueOrDefault(id);
     }
 
+    /// <summary>
+    /// Checks if the incident is resolved.
+    /// </summary>
     private bool IncidentResolved(Incident incident)
     {
         return incident.Status == IncidentStatus.Resolved;
     }
 
+    /// <summary>
+    /// Returns correlated incidents of an incident with the specified id.
+    /// </summary>
     public async Task<List<Incident>> GetCorrelatedIncidents(Guid id)
     {
         Incident _ = FindIncident(id) ?? throw new KeyNotFoundException($"Incident with ID {id} not found.");
@@ -273,6 +297,9 @@ public class IncidentController : IIncidentController
         return correlated;
     }
 
+    /// <summary>
+    /// Add evidence to an incident.
+    /// </summary>
     public async Task<bool> AddEvidence(Incident incident, List<(IncidentEvidence, byte[])> evidences)
     {
         ArgumentNullException.ThrowIfNull(incident);
@@ -339,6 +366,9 @@ public class IncidentController : IIncidentController
         }
     }
 
+    /// <summary>
+    /// Update status of an incident.
+    /// </summary>
     public async Task<bool> UpdateStatus(Incident incident, IncidentStatus newStatus)
     {
         ArgumentNullException.ThrowIfNull(incident);
@@ -385,6 +415,9 @@ public class IncidentController : IIncidentController
         }
     }
 
+    /// <summary>
+    /// Update category of an incident.
+    /// </summary>
     public async Task<bool> UpdateCategory(Incident incident, IncidentCategory newCategory)
     {
         ArgumentNullException.ThrowIfNull(incident);
@@ -436,6 +469,9 @@ public class IncidentController : IIncidentController
         }
     }
 
+    /// <summary>
+    /// Update severity of an incident.
+    /// </summary>
     public async Task<bool> UpdateSeverity(Incident incident, IncidentSeverity newSeverity)
     {
         ArgumentNullException.ThrowIfNull(incident);
@@ -487,6 +523,9 @@ public class IncidentController : IIncidentController
         }
     }
 
+    /// <summary>
+    /// Update location of an incident.
+    /// </summary>
     public async Task<bool> UpdateLocation(Incident incident, IncidentLocation location)
     {
         ArgumentNullException.ThrowIfNull(incident);
@@ -536,6 +575,9 @@ public class IncidentController : IIncidentController
         }
     }
 
+    /// <summary>
+    /// Correlate two incidents with each other.
+    /// </summary>
     public async Task<bool> CorrelateIncident(Incident incident1, Incident incident2)
     {
         ArgumentNullException.ThrowIfNull(incident1);

@@ -1,5 +1,8 @@
 ﻿namespace Incidents;
 
+/// <summary>
+/// The class that represents an incident.
+/// </summary>
 public partial class Incident
 {
     public Guid Id { get; }

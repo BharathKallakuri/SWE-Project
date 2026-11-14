@@ -1,5 +1,8 @@
 ﻿namespace Incidents;
 
+/// <summary>
+/// A filter object for filtering incidents
+/// </summary>
 public record IncidentFilter(
     string? Title = null,
     IncidentStatus? Status = null,
