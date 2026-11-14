@@ -140,6 +140,7 @@ public sealed partial class MainWindow : Window
         IncidentsView.Visibility = Vis(screen == "incidents");
         LocationView.Visibility = Vis(screen == "location");
         CloudView.Visibility = Vis(screen == "cloud");
+        CrashHandlerView.Visibility = Vis(screen == "crashhandler");
         UserPanel.Visibility = Vis(screen != "login");
         MeetingInfoText.Visibility = Vis(_inMeeting);
     }
@@ -176,6 +177,7 @@ public sealed partial class MainWindow : Window
         IncidentsTopBtn.Visibility = Vis(!_inMeeting);
         LocationTopBtn.Visibility = Vis(!_inMeeting);
         CloudTopBtn.Visibility = Vis(!_inMeeting);
+        CrashHandlerTopBtn.Visibility = Vis(!_inMeeting);
 
         // CONTROLLER TEAM: store current user identity into session
         _session.CurrentUserId = _userId;
@@ -290,8 +292,9 @@ public sealed partial class MainWindow : Window
             },
             "Save");
     
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary){
             return;
+        }
     
         if (newPicture != null)
         {
@@ -330,6 +333,16 @@ public sealed partial class MainWindow : Window
     }
 
     private void CloudBack_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen(_inMeeting ? "meeting" : "dash");
+    }
+
+    private void CrashHandler_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen("crashhandler");
+    }
+
+    private void CrashHandlerBack_Click(object sender, RoutedEventArgs e)
     {
         ShowScreen(_inMeeting ? "meeting" : "dash");
     }

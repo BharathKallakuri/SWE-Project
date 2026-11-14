@@ -29,6 +29,8 @@
        Foreground="White" Background="#1F4A78"/>
                <Button x:Name="CloudTopBtn" Content="Cloud" Click="Cloud_Click"
        Foreground="White" Background="#1F4A78"/>
+                <Button x:Name="CrashHandlerTopBtn" Content="CrashHandler" Click="CrashHandler_Click"
+       Foreground="White" Background="#1F4A78"/>
                 <PersonPicture x:Name="ProfilePic" Width="30" Height="30"/>
                 <TextBlock x:Name="ProfileName" Foreground="White" VerticalAlignment="Center"/>
                 <Button Content="Edit profile" Click="EditProfile_Click" Foreground="White"
@@ -135,6 +137,25 @@
             <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
                 <Grid>
                     <!-- CLOUD TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- CrashHandler page -->
+        <Grid x:Name="CrashHandlerView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <Button Content="Back" Click="CrashHandlerBack_Click" Background="White"/>
+                <TextBlock Text="CrashHandler" FontSize="32" FontWeight="SemiBold"/>
+            </StackPanel>
+
+            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
+                <Grid>
+                    <!-- CrashHandler TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
                 </Grid>
             </Border>
         </Grid>
