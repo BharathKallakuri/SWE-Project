@@ -3,10 +3,11 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
+using Whiteboard.Services;
 using Whiteboard.Views;
 
 namespace Whiteboard.ViewModels;
@@ -22,7 +23,7 @@ public enum WhiteboardTool
 
 [ExcludeFromCodeCoverage]
 // Temporary exclusion from code coverage
-public class WhiteBoardViewModel : IDisposable
+public partial class WhiteBoardViewModel : IDisposable
 {
     private IViewModelState _penState;
     private IViewModelState _squareState;
@@ -30,6 +31,8 @@ public class WhiteBoardViewModel : IDisposable
     private IViewModelState _eqTriangleState;
     private IViewModelState _eraserState;
     private readonly IWhiteboardClient _whiteboardClient;
+    private readonly WhiteboardSession? _session;
+    private readonly DispatcherQueue? _dispatcherQueue;
     private WhiteboardRenderer _renderer;
 
     private IViewModelState _currentState;
@@ -62,6 +65,29 @@ public class WhiteBoardViewModel : IDisposable
         ArgumentNullException.ThrowIfNull(whiteboardClient);
 
         _whiteboardClient = whiteboardClient;
+    }
+
+    public WhiteBoardViewModel(WhiteboardSession session, DispatcherQueue? dispatcherQueue = null)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        _session = session;
+        _dispatcherQueue = dispatcherQueue;
+        _whiteboardClient = session.Client;
+
+        _session.UserLeft += OnSessionUserLeft;
+    }
+
+    private void OnSessionUserLeft(string username)
+    {
+        if (_dispatcherQueue is not null)
+        {
+            _dispatcherQueue.TryEnqueue(() => OnUserLeft(username));
+        }
+        else
+        {
+            OnUserLeft(username);
+        }
     }
 
     public void InitializeViewModel(Canvas canvas, ToolbarInfo toolbarInfo)
@@ -171,6 +197,8 @@ public class WhiteBoardViewModel : IDisposable
     /// </summary>
     public void Dispose()
     {
+        _session?.UserLeft -= OnSessionUserLeft;
+
         _renderer?.Dispose();
     }
 

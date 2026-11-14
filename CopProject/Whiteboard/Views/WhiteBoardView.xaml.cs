@@ -21,6 +21,36 @@ public sealed partial class WhiteBoardView : UserControl
     private WhiteBoardViewModel? _viewModel;
     private readonly ToolbarInfo _toolbarInfo = new(Colors.Black, 3, Colors.Black);
 
+    /// <summary>
+    /// Gets or sets the view model bound to this whiteboard view.
+    /// </summary>
+    public WhiteBoardViewModel? ViewModel
+    {
+        get => _viewModel;
+        set {
+            if (ReferenceEquals(_viewModel, value))
+            {
+                return;
+            }
+
+            _viewModel?.HistoryChanged -= UpdateHistoryButtons;
+
+            _viewModel = value;
+
+            if (_viewModel is not null)
+            {
+                _viewModel.InitializeViewModel(WhiteboardCanvas, _toolbarInfo);
+                _viewModel.HistoryChanged += UpdateHistoryButtons;
+                UpdateHistoryButtons();
+            }
+            else
+            {
+                WhiteboardCanvas.Children.Clear();
+                UpdateHistoryButtons();
+            }
+        }
+    }
+
     public WhiteBoardView()
     {
         InitializeComponent();
@@ -31,7 +61,7 @@ public sealed partial class WhiteBoardView : UserControl
     public WhiteBoardView(WhiteBoardViewModel viewModel) : this()
     {
         ArgumentNullException.ThrowIfNull(viewModel);
-        SetViewModel(viewModel);
+        ViewModel = viewModel;
     }
 
     /// <summary>
@@ -39,17 +69,7 @@ public sealed partial class WhiteBoardView : UserControl
     /// </summary>
     public void SetViewModel(WhiteBoardViewModel viewModel)
     {
-        ArgumentNullException.ThrowIfNull(viewModel);
-
-        if (_viewModel is not null)
-        {
-            _viewModel.HistoryChanged -= UpdateHistoryButtons;
-        }
-
-        _viewModel = viewModel;
-        _viewModel.InitializeViewModel(WhiteboardCanvas, _toolbarInfo);
-        _viewModel.HistoryChanged += UpdateHistoryButtons;
-        UpdateHistoryButtons();
+        ViewModel = viewModel;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -63,10 +83,7 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        if (_viewModel is not null)
-        {
-            _viewModel.HistoryChanged -= UpdateHistoryButtons;
-        }
+        _viewModel?.HistoryChanged -= UpdateHistoryButtons;
     }
 
     /// <summary>
@@ -76,8 +93,8 @@ public sealed partial class WhiteBoardView : UserControl
     {
         // Network notifications arrive outside the UI thread.
         DispatcherQueue.TryEnqueue(() => {
-            ButtonUndo.IsEnabled = _viewModel.CanUndo;
-            ButtonRedo.IsEnabled = _viewModel.CanRedo;
+            ButtonUndo.IsEnabled = _viewModel?.CanUndo ?? false;
+            ButtonRedo.IsEnabled = _viewModel?.CanRedo ?? false;
         });
     }
 
@@ -89,7 +106,7 @@ public sealed partial class WhiteBoardView : UserControl
     /// <param name="e">Event details.</param>
     private void ButtonUndo_Click(object sender, RoutedEventArgs e)
     {
-        _viewModel.Undo();
+        _viewModel?.Undo();
     }
 
     /// <summary>
@@ -99,34 +116,34 @@ public sealed partial class WhiteBoardView : UserControl
     /// <param name="e">Event details.</param>
     private void ButtonRedo_Click(object sender, RoutedEventArgs e)
     {
-        _viewModel.Redo();
+        _viewModel?.Redo();
     }
 
 
     private void ButtonPen_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        _viewModel.SelectTool(WhiteboardTool.Pen);
+        _viewModel?.SelectTool(WhiteboardTool.Pen);
     }
 
     private void ButtonSquare_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        _viewModel.SelectTool(WhiteboardTool.Square);
+        _viewModel?.SelectTool(WhiteboardTool.Square);
 
     }
 
     private void ButtonCircle_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        _viewModel.SelectTool(WhiteboardTool.Circle);
+        _viewModel?.SelectTool(WhiteboardTool.Circle);
     }
 
     private void ButtonEqTriangle_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        _viewModel.SelectTool(WhiteboardTool.EqTriangle);
+        _viewModel?.SelectTool(WhiteboardTool.EqTriangle);
     }
 
     private void ButtonEraseItems_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        _viewModel.SelectTool(WhiteboardTool.Eraser);
+        _viewModel?.SelectTool(WhiteboardTool.Eraser);
     }
 
     private void CanvasContainer_SizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e)
@@ -137,6 +154,11 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void WhiteboardCanvas_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
         // Attempt to capture the pointer
         if (WhiteboardCanvas.CapturePointer(e.Pointer))
         {
@@ -153,6 +175,11 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void WhiteboardCanvas_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
         // Get the current pointer position
         Point p = e.GetCurrentPoint(WhiteboardCanvas).Position;
 
@@ -165,6 +192,11 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void WhiteboardCanvas_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
         // Get the current pointer position
         Point p = e.GetCurrentPoint(WhiteboardCanvas).Position;
 
@@ -180,6 +212,11 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void WhiteboardCanvas_PointerCaptureLost(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
         // Get the current pointer position
         Point p = e.GetCurrentPoint(WhiteboardCanvas).Position;
 
