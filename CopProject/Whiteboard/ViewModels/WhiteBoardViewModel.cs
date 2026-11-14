@@ -22,7 +22,7 @@ public enum WhiteboardTool
 
 [ExcludeFromCodeCoverage]
 // Temporary exclusion from code coverage
-public class WhiteBoardViewModel
+public class WhiteBoardViewModel : IDisposable
 {
     private IViewModelState _penState;
     private IViewModelState _squareState;
@@ -164,6 +164,14 @@ public class WhiteBoardViewModel
         {
             _currentState.PointerCaptureLost(new Point2D(0, 0));
         }
+    }
+
+    /// <summary>
+    /// Disposes the renderer and event subscriptions.
+    /// </summary>
+    public void Dispose()
+    {
+        _renderer?.Dispose();
     }
 
     private void EnsureInitialized()
