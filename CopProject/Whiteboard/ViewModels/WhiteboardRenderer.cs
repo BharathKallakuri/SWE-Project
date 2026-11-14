@@ -1,4 +1,7 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+﻿//owner : U Sai Vignesh
+// License : MIT
+
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -23,20 +26,40 @@ internal sealed class WhiteboardRenderer : IDisposable
     private readonly IWhiteboard _board;
     private readonly Canvas _canvas;
     private readonly TextboxState _textboxState;
+    private readonly SelectState _selectState;
     private readonly Dictionary<Guid, Microsoft.UI.Xaml.UIElement> _visuals = [];
 
-    public WhiteboardRenderer(IWhiteboard board, Canvas canvas, TextboxState textboxState)
+    /// <summary>
+    /// Gap between the selected item and its dashed outline
+    /// </summary>
+    private const double SelectionPadding = 4;
+
+    /// <summary>
+    /// Z-index for the selection outline so it sits above every item.
+    /// WinUI only accepts Canvas.ZIndex values within ±1,000,000.
+    /// </summary>
+    private const int SelectionOutlineZIndex = 1_000_000;
+
+    /// <summary>
+    /// Dashed outline drawn around the selected item; null when nothing is selected
+    /// </summary>
+    private XamlRectangle? _selectionOutline;
+
+    public WhiteboardRenderer(IWhiteboard board, Canvas canvas, TextboxState textboxState, SelectState selectState)
     {
         ArgumentNullException.ThrowIfNull(board);
         ArgumentNullException.ThrowIfNull(canvas);
         ArgumentNullException.ThrowIfNull(textboxState);
+        ArgumentNullException.ThrowIfNull(selectState);
 
         _board = board;
         _canvas = canvas;
         _textboxState = textboxState;
+        _selectState = selectState;
         _board.ItemAdded += RenderAdded;
         _board.ItemUpdated += RenderUpdated;
         _board.ItemDeleted += RemoveDeleted;
+        _selectState.SelectionChanged += RefreshSelectionOutline;
 
         foreach (IItem item in _board.Items.Values)
         {
@@ -49,6 +72,7 @@ internal sealed class WhiteboardRenderer : IDisposable
         _board.ItemAdded -= RenderAdded;
         _board.ItemUpdated -= RenderUpdated;
         _board.ItemDeleted -= RemoveDeleted;
+        _selectState.SelectionChanged -= RefreshSelectionOutline;
     }
 
     private void RenderAdded(IItem item)
@@ -73,24 +97,85 @@ internal sealed class WhiteboardRenderer : IDisposable
 
     private void RenderUpdated(IItem item)
     {
-        if (item is not ITextbox textbox)
+        RunOnUIThread(() => {
+            if (item is not ITextbox textbox)
+            {
+                RenderAddedInternal(item);
+            }
+
+            // Rebuilding a TextBox would drop focus and whatever the user is typing,
+            // so update the existing control in place instead.
+            else if (_visuals.TryGetValue(textbox.Id, out Microsoft.UI.Xaml.UIElement? visual)
+                && visual is TextBox textBox)
+            {
+                UpdateTextbox(textBox, textbox);
+            }
+            else
+            {
+                RenderAddedInternal(textbox);
+            }
+
+            // Keep the outline on the item if the selected item changed
+            if (item.Id == _selectState.SelectedItemId)
+            {
+                RefreshSelectionOutlineInternal();
+            }
+        });
+    }
+
+    /// <summary>
+    /// Redraws or removes the selection outline to match the select tool's state
+    /// </summary>
+    private void RefreshSelectionOutline()
+    {
+        RunOnUIThread(RefreshSelectionOutlineInternal);
+    }
+
+    private void RefreshSelectionOutlineInternal()
+    {
+        IItem? selected = _selectState.SelectedItem;
+
+        if (selected is null)
         {
-            RenderAdded(item);
+            if (_selectionOutline is not null)
+            {
+                _canvas.Children.Remove(_selectionOutline);
+                _selectionOutline = null;
+            }
+
             return;
         }
 
-        RunOnUIThread(() => {
-            // Rebuilding a TextBox would drop focus and whatever the user is typing,
-            // so update the existing control in place instead.
-            if (!_visuals.TryGetValue(textbox.Id, out Microsoft.UI.Xaml.UIElement? visual)
-                || visual is not TextBox textBox)
-            {
-                RenderAddedInternal(textbox);
-                return;
-            }
+        if (_selectionOutline is null)
+        {
+            _selectionOutline = new XamlRectangle {
+                Stroke = new SolidColorBrush(Microsoft.UI.Colors.DodgerBlue),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 4, 3 },
+                Fill = null,
 
-            UpdateTextbox(textBox, textbox);
-        });
+                // The outline must never steal clicks from the items under it
+                IsHitTestVisible = false
+            };
+            Canvas.SetZIndex(_selectionOutline, SelectionOutlineZIndex);
+            _canvas.Children.Add(_selectionOutline);
+        }
+
+        Rect2D box = selected.BoundingBox;
+        double height = box.Height;
+
+        // A textbox grows with its text, so its on-screen height can exceed the model height
+        if (_visuals.TryGetValue(selected.Id, out Microsoft.UI.Xaml.UIElement? visual)
+            && visual is TextBox textBox
+            && textBox.ActualHeight > height)
+        {
+            height = textBox.ActualHeight;
+        }
+
+        _selectionOutline.Width = box.Width + (2 * SelectionPadding);
+        _selectionOutline.Height = height + (2 * SelectionPadding);
+        Canvas.SetLeft(_selectionOutline, box.Left - SelectionPadding);
+        Canvas.SetTop(_selectionOutline, box.Top - SelectionPadding);
     }
 
     /// <summary>
