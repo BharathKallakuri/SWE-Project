@@ -6,12 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using FileSynchroniser.Models;
-using Incidents;
 using Incidents.Test.Implementations;
 using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.EventHandlers;
 using Cloud.Persistence;
 
-namespace Incidents.Test;
+namespace Incidents.Test.Models;
 
 
 /// <summary>

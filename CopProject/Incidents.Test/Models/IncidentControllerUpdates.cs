@@ -1,9 +1,8 @@
 ﻿using FileSynchroniser.Models;
-using Incidents;
 using Incidents.Test.Implementations;
 using Cloud.Persistence;
 
-namespace Incidents.Test;
+namespace Incidents.Test.Models;
 
 /// <summary>
 /// Test class for update requests to IncidentController
