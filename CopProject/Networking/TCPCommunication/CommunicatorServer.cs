@@ -91,7 +91,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
             }
             catch (Exception udpEx)
             {
-                Trace.WriteLine($"[Networking] CommunicatorServer: Unable to start UDP server on {ipEndPoint}. Exception: {udpEx.Message}");
+                Trace.TraceWarning($"[Networking] CommunicatorServer: Unable to start UDP server on {ipEndPoint}. Exception: {udpEx.Message}");
             }
 
             AddSubscriber(NetworkingModuleId, new NetworkMessageListener(this));
@@ -99,12 +99,13 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
             _isRunning = true;
             _clientConnectionListenerThread = new Thread(AcceptClientConnections) { IsBackground = true };
             _clientConnectionListenerThread.Start();
+            Trace.TraceInformation($"[Networking] CommunicatorServer: Started server listening on {ipEndPoint}");
         }
         catch (Exception e)
         {
             _thisIpEndPoint = null;
             _tcpClientRequestListener = null;
-            Trace.WriteLine($"[Networking] CommunicatorServer.CommunicatorServer: Unable to start the TCP server. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorServer.CommunicatorServer: Unable to start the TCP server. Exception: {e.Message}");
         }
     }
 
@@ -132,7 +133,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
             }
             catch (Exception e) when (e is SocketException or ObjectDisposedException or InvalidOperationException)
             {
-                Trace.WriteLine($"[Networking] CommunicatorServer: TCP Listener Socket stopped or closed: {e.Message}");
+                Trace.TraceInformation($"[Networking] CommunicatorServer: TCP Listener Socket stopped or closed: {e.Message}");
                 break;
             }
         }
@@ -161,10 +162,11 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
 
             _clientToTcpListenerMap[clientIp] = tcpClient;
             _clientToSocketListenerMap[clientIp] = new SocketListener(_receivingQueue, tcpClient);
+            Trace.TraceInformation($"[Networking] CommunicatorServer.AddClient: Successfully connected client {clientIp}");
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.AddClient: Failed to add client {clientIp}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorServer.AddClient: Failed to add client {clientIp}. Exception: {e.Message}");
         }
     }
 
@@ -195,7 +197,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.RemoveClient: Failed to remove client {clientIp}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorServer.RemoveClient: Failed to remove client {clientIp}. Exception: {e.Message}");
         }
     }
 
@@ -206,7 +208,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
             return;
         }
 
-        Trace.WriteLine($"[Networking] CommunicatorServer.OnUserJoined: User '{user.Username}' ({user.Gmail}) joined at {user.Ip}:{user.Port}");
+        Trace.TraceInformation($"[Networking] CommunicatorServer.OnUserJoined: User '{user.Username}' ({user.Gmail}) joined at {user.Ip}:{user.Port}");
     }
 
     public void OnUserLeft(ControllerUser user)
@@ -220,11 +222,11 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         {
             IPEndPoint clientEp = new IPEndPoint(ip, user.Port);
             RemoveClient(clientEp);
-            Trace.WriteLine($"[Networking] CommunicatorServer.OnUserLeft: Cleaned up client {clientEp} for user '{user.Username}'");
+            Trace.TraceInformation($"[Networking] CommunicatorServer.OnUserLeft: Cleaned up client {clientEp} for user '{user.Username}'");
         }
         else
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.OnUserLeft: Invalid endpoint '{user.Ip}:{user.Port}' for user '{user.Username}'");
+            Trace.TraceWarning($"[Networking] CommunicatorServer.OnUserLeft: Invalid endpoint '{user.Ip}:{user.Port}' for user '{user.Username}'");
         }
     }
 
@@ -237,7 +239,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.SendMessage: Failed to enqueue message for destination {iPEndPoint}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorServer.SendMessage: Failed to enqueue message for destination {iPEndPoint}. Exception: {e.Message}");
         }
     }
 
@@ -246,10 +248,11 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         try
         {
             _moduleToMessageListenerMap.TryAdd(module, messageListener);
+            Trace.TraceInformation($"[Networking] CommunicatorServer.AddSubscriber: Subscribed listener for module {module}");
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.AddSubscriber: Failed to add subscriber for module {module}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorServer.AddSubscriber: Failed to add subscriber for module {module}. Exception: {e.Message}");
         }
     }
     public void RemoveSubscriber(int module)
@@ -257,10 +260,11 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         try
         {
             _moduleToMessageListenerMap.TryRemove(module, out _);
+            Trace.TraceInformation($"[Networking] CommunicatorServer.RemoveSubscriber: Removed subscriber for module {module}");
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.RemoveSubscriber: Failed to remove subscriber for module {module}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorServer.RemoveSubscriber: Failed to remove subscriber for module {module}. Exception: {e.Message}");
         }
     }
 
@@ -273,7 +277,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.SendMessageLossy: Failed to enqueue lossy message for destination {iPEndPoint}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorServer.SendMessageLossy: Failed to enqueue lossy message for destination {iPEndPoint}. Exception: {e.Message}");
         }
     }
 
@@ -282,10 +286,11 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         try
         {
             _moduleToLossyMessageListenerMap.TryAdd(module, messageListener);
+            Trace.TraceInformation($"[Networking] CommunicatorServer.AddLossySubscriber: Subscribed lossy listener for module {module}");
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.AddLossySubscriber: Failed to add subscriber for module {module}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorServer.AddLossySubscriber: Failed to add subscriber for module {module}. Exception: {e.Message}");
         }
     }
 
@@ -294,10 +299,11 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         try
         {
             _moduleToLossyMessageListenerMap.TryRemove(module, out _);
+            Trace.TraceInformation($"[Networking] CommunicatorServer.RemoveLossySubscriber: Removed lossy subscriber for module {module}");
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.RemoveLossySubscriber: Failed to remove subscriber for module {module}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorServer.RemoveLossySubscriber: Failed to remove subscriber for module {module}. Exception: {e.Message}");
         }
     }
 
@@ -337,7 +343,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.JoinMulticastGroup: Failed to join native multicast group. Exception: {e.Message}");
+            Trace.TraceWarning($"[Networking] CommunicatorServer.JoinMulticastGroup: Failed to join native multicast group: {e.Message}");
         }
     }
 
@@ -369,7 +375,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.LeaveMulticastGroup: Failed to drop native multicast group. Exception: {e.Message}");
+            Trace.TraceWarning($"[Networking] CommunicatorServer.LeaveMulticastGroup: Failed to drop native multicast group: {e.Message}");
         }
     }
 
@@ -411,7 +417,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.MulticastMessageLossy: Failed to multicast to group {multicastGroup}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorServer.MulticastMessageLossy: Failed to multicast to group {multicastGroup}. Exception: {e.Message}");
         }
     }
 
@@ -447,7 +453,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorServer.BroadcastMessageLossy: Failed to broadcast. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorServer.BroadcastMessageLossy: Failed to broadcast. Exception: {e.Message}");
         }
     }
 
@@ -495,13 +501,13 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
                         _server.LeaveMulticastGroup(leave.MulticastGroup, leave.ClientIp);
                         break;
                     default:
-                        Trace.WriteLine("[Networking] CommunicatorServer.NetworkMessageListener: Unknown or null message type.");
+                        Trace.TraceWarning("[Networking] CommunicatorServer.NetworkMessageListener: Unknown or null message type.");
                         break;
                 }
             }
             catch (Exception e)
             {
-                Trace.WriteLine($"[Networking] CommunicatorServer.NetworkMessageListener: Failed to process message. Exception: {e.Message}");
+                Trace.TraceError($"[Networking] CommunicatorServer.NetworkMessageListener: Failed to process message. Exception: {e.Message}");
             }
         }
     }
@@ -522,6 +528,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
             _isRunning = false;
         }
 
+        Trace.TraceInformation("[Networking] CommunicatorServer.Dispose: Disposing server communicator.");
         _sendingQueueListenerServer?.Dispose();
         _sendingQueueListenerLossy?.Dispose();
         _tcpClientRequestListener?.Stop();
@@ -538,7 +545,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
             }
             catch (Exception e)
             {
-                Trace.WriteLine($"[Networking] CommunicatorServer.Dispose: Error closing client TcpClient. Exception: {e.Message}");
+                Trace.TraceWarning($"[Networking] CommunicatorServer.Dispose: Error closing client TcpClient. Exception: {e.Message}");
             }
         }
 

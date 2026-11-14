@@ -43,6 +43,7 @@ public class SendingQueueListenerServer : IDisposable
         _packetSerializer = new();
         _listeningThread = new Thread(ListenOnQueue) { IsBackground = true };
         _listeningThread.Start();
+        Trace.TraceInformation("[Networking] SendingQueueListenerServer: Started server sending queue listener thread.");
     }
 
     public void ListenOnQueue()
@@ -72,7 +73,7 @@ public class SendingQueueListenerServer : IDisposable
 
         if (destination == null || !_clientToTcpListenerMap.TryGetValue(destination, out TcpClient? socket) || socket == null)
         {
-            Trace.WriteLine($"[Networking] SendingQueueListenerServer.SendDataToClient: Destination client {destination} not found in client map.");
+            Trace.TraceWarning($"[Networking] SendingQueueListenerServer.SendDataToClient: Destination client {destination} not found in client map.");
             return;
         }
         int maxAttempts = 7;
@@ -85,17 +86,18 @@ public class SendingQueueListenerServer : IDisposable
             {
                 NetworkStream stream = socket.GetStream();
                 stream.Write(data, 0, data.Length);
+                Trace.TraceInformation($"[Networking] SendingQueueListenerServer: Sent {data.Length} bytes to {destination} (attempt {attempt}).");
                 return;
             }
             catch (Exception e)
             {
-                Trace.WriteLine($"[Networking] SendingQueueListenerServer.SendDataToClient: Unable to send data to client {destination} (Attempt {attempt}/{maxAttempts}). Retrying in {delay}ms. Exception: {e.Message}");
+                Trace.TraceWarning($"[Networking] SendingQueueListenerServer.SendDataToClient: Unable to send data to client {destination} (Attempt {attempt}/{maxAttempts}). Retrying in {delay}ms. Exception: {e.Message}");
                 Thread.Sleep(delay);
                 currentDelay = delay * 2;
             }
         }
         _clientToTcpListenerMap.TryRemove(destination, out _);
-        Trace.WriteLine($"[Networking] SendingQueueListenerServer.SendDataToClient: Max retry attempts reached. Client {destination} disconnected and removed.");
+        Trace.TraceError($"[Networking] SendingQueueListenerServer.SendDataToClient: Max retry attempts reached. Client {destination} disconnected and removed.");
     }
 
     public void Dispose()
