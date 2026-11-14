@@ -26,17 +26,17 @@ public class Queue : IQueue, IDisposable
 
     public virtual void Enqueue(Packet packet)
     {
-        Trace.WriteLine($"[Networking] Enqueuing to the queue {this.GetType().Name}");
+        Trace.TraceInformation($"[Networking] Enqueuing to queue {GetType().Name}");
         _queue.Enqueue(packet);
         SignalItemAdded();
     }
 
     public virtual Packet? Dequeue()
     {
-        Trace.WriteLine($"[Networking] Dequeuing to the queue {this.GetType().Name}");
+        Trace.TraceInformation($"[Networking] Dequeuing from queue {GetType().Name}");
         if (!_queue.TryDequeue(out Packet? top))
         {
-            Trace.WriteLine($"[Networking] Unable to dequeue {this.GetType().Name}, queue is empty");
+            Trace.TraceWarning($"[Networking] Unable to dequeue from {GetType().Name}: queue is empty");
         }
         return top;
     }
@@ -46,7 +46,7 @@ public class Queue : IQueue, IDisposable
     {
         if (!_queue.TryPeek(out Packet? peek))
         {
-            Trace.WriteLine($"[Networking] Unable to peek {this.GetType().Name}, queue is empty");
+            Trace.TraceWarning($"[Networking] Unable to peek from {GetType().Name}: queue is empty");
         }
         return peek;
     }

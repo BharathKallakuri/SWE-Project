@@ -36,7 +36,7 @@ public class ReceivingQueueListener : IDisposable
         _isRunning = true;
         _listeningThread = new Thread(ListenOnQueue) { IsBackground = true };
         _listeningThread.Start();
-
+        Trace.TraceInformation("[Networking] ReceivingQueueListener: Started listening thread.");
     }
 
     public void ListenOnQueue()
@@ -59,14 +59,12 @@ public class ReceivingQueueListener : IDisposable
                 }
                 catch (Exception e)
                 {
-                    Trace.WriteLine($"[Networking] Message handler for module {packet.Module} threw: {e}");
+                    Trace.TraceError($"[Networking] Message handler for module {packet.Module} threw: {e}");
                 }
             }
             else
-
             {
-                Trace.WriteLine($"[Networking] Module {packet.Module} is not found. Unable to handle the data.");
-
+                Trace.TraceWarning($"[Networking] Module {packet.Module} is not found. Unable to handle the data.");
             }
         }
     }

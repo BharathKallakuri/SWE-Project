@@ -67,12 +67,11 @@ public class SendingQueue : Queue
     {
         if (packet == null)
         {
-            Trace.WriteLine($"[Networking] SendingQueue.Enqueue: Cannot enqueue null packet");
+            Trace.TraceWarning("[Networking] SendingQueue.Enqueue: Cannot enqueue null packet.");
             return;
         }
 
         Priority priority = NormalizePriority(packet.Priority);
-        Trace.WriteLine($"[Networking] Enqueuing to {GetType().Name} with priority {priority}");
 
         switch (priority)
         {
@@ -87,13 +86,13 @@ public class SendingQueue : Queue
                 break;
         }
 
+        Trace.TraceInformation($"[Networking] SendingQueue.Enqueue: {priority} priority packet for {packet.Destination} (Module: {packet.Module}). Queue: [H:{_highQueue.Count}, M:{_mediumQueue.Count}, L:{_lowQueue.Count}]");
+
         SignalItemAdded();
     }
 
     public override Packet? Dequeue()
     {
-        Trace.WriteLine($"[Networking] Dequeuing to the queue {GetType().Name}");
-
         lock (_dequeueLock)
         {
             if (_consecutiveHigherPriorityCount >= _maxStarvationLimit &&
@@ -101,6 +100,7 @@ public class SendingQueue : Queue
             {
                 _consecutiveHigherPriorityCount = 0;
                 _mediumServedCount = 0;
+                Trace.TraceInformation($"[Networking] SendingQueue.Dequeue: Low priority packet for {starvedPacket.Destination} (anti-starvation).");
                 return starvedPacket;
             }
 
@@ -112,6 +112,7 @@ public class SendingQueue : Queue
                 {
                     _consecutiveHigherPriorityCount++;
                 }
+                Trace.TraceInformation($"[Networking] SendingQueue.Dequeue: High priority packet for {highPacket.Destination} (burst {_highBurstCount}/{_maxHighBurst}).");
                 return highPacket;
             }
 
@@ -124,6 +125,7 @@ public class SendingQueue : Queue
                 {
                     _consecutiveHigherPriorityCount++;
                 }
+                Trace.TraceInformation($"[Networking] SendingQueue.Dequeue: Medium priority packet for {mediumPacket.Destination} (served {_mediumServedCount}/{_mediumWeightRatio}).");
                 return mediumPacket;
             }
 
@@ -132,10 +134,11 @@ public class SendingQueue : Queue
                 _mediumServedCount = 0;
                 _highBurstCount = 0;
                 _consecutiveHigherPriorityCount = 0;
+                Trace.TraceInformation($"[Networking] SendingQueue.Dequeue: Low priority packet for {lowPacket.Destination}.");
                 return lowPacket;
             }
 
-            Trace.WriteLine($"[Networking] Unable to dequeue {GetType().Name}, queue is empty");
+            Trace.TraceWarning("[Networking] SendingQueue.Dequeue: Queue is empty.");
             return null;
         }
     }
@@ -147,27 +150,31 @@ public class SendingQueue : Queue
             if (_consecutiveHigherPriorityCount >= _maxStarvationLimit &&
                 _lowQueue.TryPeek(out Packet? starvedPacket))
             {
+                Trace.TraceInformation($"[Networking] SendingQueue.Peek: Low priority packet for {starvedPacket.Destination} (anti-starvation).");
                 return starvedPacket;
             }
 
             bool allowHigh = _highBurstCount < _maxHighBurst || (_mediumQueue.IsEmpty && _lowQueue.IsEmpty);
             if (allowHigh && _highQueue.TryPeek(out Packet? highPacket))
             {
+                Trace.TraceInformation($"[Networking] SendingQueue.Peek: High priority packet for {highPacket.Destination}.");
                 return highPacket;
             }
 
             bool allowMedium = _mediumServedCount < _mediumWeightRatio || _lowQueue.IsEmpty;
             if (allowMedium && _mediumQueue.TryPeek(out Packet? mediumPacket))
             {
+                Trace.TraceInformation($"[Networking] SendingQueue.Peek: Medium priority packet for {mediumPacket.Destination}.");
                 return mediumPacket;
             }
 
             if (_lowQueue.TryPeek(out Packet? lowPacket))
             {
+                Trace.TraceInformation($"[Networking] SendingQueue.Peek: Low priority packet for {lowPacket.Destination}.");
                 return lowPacket;
             }
 
-            Trace.WriteLine($"[Networking] Unable to peek {GetType().Name}, queue is empty");
+            Trace.TraceWarning("[Networking] SendingQueue.Peek: Queue is empty.");
             return null;
         }
     }
@@ -176,6 +183,7 @@ public class SendingQueue : Queue
     {
         lock (_dequeueLock)
         {
+            Trace.TraceInformation($"[Networking] SendingQueue.Clear: Cleared queues [H:{_highQueue.Count}, M:{_mediumQueue.Count}, L:{_lowQueue.Count}].");
             _highQueue.Clear();
             _mediumQueue.Clear();
             _lowQueue.Clear();
