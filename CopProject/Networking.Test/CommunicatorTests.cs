@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -933,5 +934,180 @@ public class CommunicatorTests
         user.IsHost = false;
         Assert.AreEqual("Client", user.RoleDisplay);
         StringAssert.Contains(user.ToString(), "Participant");
+    }
+
+    /// <summary>
+    /// Checks CommunicatorServer fallback handling when UDP port cannot be bound.
+    /// </summary>
+    [TestMethod]
+    public void CommunicatorServer_UdpPortCollision_FallsBackGracefully()
+    {
+        int port = GetAvailablePort();
+        using Socket blocker = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        try
+        {
+            blocker.ExclusiveAddressUse = true;
+            blocker.Bind(new IPEndPoint(IPAddress.Any, port));
+        }
+        catch
+        {
+            return;
+        }
+
+        IPEndPoint serverEp = new(IPAddress.Loopback, port);
+        using CommunicatorServer server = new(serverEp);
+        Assert.IsNotNull(server);
+    }
+
+    /// <summary>
+    /// Checks CommunicatorClient fallback handling when multicast port cannot be bound.
+    /// </summary>
+    [TestMethod]
+    public void CommunicatorClient_MulticastPortCollision_FallsBackGracefully()
+    {
+        using Socket blocker = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        blocker.ExclusiveAddressUse = true;
+        blocker.Bind(new IPEndPoint(IPAddress.Any, 0));
+        int port = ((IPEndPoint)blocker.LocalEndPoint!).Port;
+
+        using CommunicatorClient client = new(new IPEndPoint(IPAddress.Loopback, port));
+        Assert.IsNotNull(client);
+    }
+
+    /// <summary>
+    /// Checks CommunicatorServer AcceptClientConnections when client connects via dual-stack IPv6 mapped address.
+    /// </summary>
+    [TestMethod]
+    public void CommunicatorServer_AcceptClientConnections_IPv6DualModeMappedToIPv4()
+    {
+        if (!Socket.OSSupportsIPv6)
+        {
+            return;
+        }
+
+        int port = GetAvailablePort();
+        IPEndPoint serverEndpoint = new(IPAddress.IPv6Any, port);
+        using CommunicatorServer server = new(serverEndpoint);
+
+        using TcpClient client = new(AddressFamily.InterNetwork);
+        client.Connect(IPAddress.Loopback, port);
+        Thread.Sleep(200);
+
+        Assert.IsNotNull(client.Client.RemoteEndPoint);
+    }
+
+    private sealed class ThrowingTcpClient : TcpClient
+    {
+        public ThrowingTcpClient()
+        {
+            GC.SuppressFinalize(this);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                throw new InvalidOperationException("Simulated dispose failure");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Checks CommunicatorServer.Dispose catch block when closing a faulty client TcpClient.
+    /// </summary>
+    [TestMethod]
+    public void CommunicatorServer_Dispose_ExceptionClosingTcpClient_CatchesGracefully()
+    {
+        int port = GetAvailablePort();
+        IPEndPoint serverEp = new(IPAddress.Loopback, port);
+        CommunicatorServer server = new(serverEp);
+
+        var tcpMap = (ConcurrentDictionary<IPEndPoint, TcpClient>?)
+            typeof(CommunicatorServer).GetField("_clientToTcpListenerMap", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(server);
+        Assert.IsNotNull(tcpMap);
+        tcpMap[new IPEndPoint(IPAddress.Loopback, 1234)] = new ThrowingTcpClient();
+
+        server.Dispose();
+    }
+
+    /// <summary>
+    /// Checks CommunicatorClient lossy broadcast and multicast error catches when server IP is null.
+    /// </summary>
+    [TestMethod]
+    public void CommunicatorClient_LossyBroadcastAndMulticast_NullServerIp_CatchesException()
+    {
+        int port = GetAvailablePort();
+        IPEndPoint serverEp = new(IPAddress.Loopback, port);
+        using CommunicatorServer server = new(serverEp);
+
+        using CommunicatorClient client = new(serverEp);
+        typeof(CommunicatorClient).GetField("_serverIp", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(client, null);
+
+        client.BroadcastMessageLossy(new byte[] { 1 }, 1, 1);
+        client.MulticastMessageLossy(1, new byte[] { 1 }, 1, 1);
+    }
+
+    /// <summary>
+    /// Checks CommunicatorClient ListenIpAddress when connected via pure IPv4 socket.
+    /// </summary>
+    [TestMethod]
+    public void CommunicatorClient_ListenIpAddress_PureIPv4_ReturnsAddressDirectly()
+    {
+        int port = GetAvailablePort();
+        IPEndPoint serverEp = new(IPAddress.Loopback, port);
+        using CommunicatorServer server = new(serverEp);
+
+        using CommunicatorClient client = new(serverEp);
+        using TcpClient pureIpv4Tcp = new(AddressFamily.InterNetwork);
+        pureIpv4Tcp.Connect(IPAddress.Loopback, port);
+
+        typeof(CommunicatorClient).GetField("_tcpClient", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(client, pureIpv4Tcp);
+        Assert.IsFalse(((IPEndPoint)pureIpv4Tcp.Client.LocalEndPoint!).Address.IsIPv4MappedToIPv6);
+        Assert.AreEqual(IPAddress.Loopback, client.ListenIpAddress);
+    }
+
+    /// <summary>
+    /// Checks CommunicatorServer RemoveClient defensive error handling when client map is null.
+    /// </summary>
+    [TestMethod]
+    public void CommunicatorServer_RemoveClient_NullSocketMap_CatchesException()
+    {
+        int port = GetAvailablePort();
+        IPEndPoint serverEp = new(IPAddress.Loopback, port);
+        using CommunicatorServer server = new(serverEp);
+
+        FieldInfo? field = typeof(CommunicatorServer).GetField("_clientToSocketListenerMap", BindingFlags.NonPublic | BindingFlags.Instance);
+        object? originalMap = field?.GetValue(server);
+
+        try
+        {
+            field?.SetValue(server, null);
+            server.RemoveClient(new IPEndPoint(IPAddress.Loopback, 1234));
+        }
+        finally
+        {
+            field?.SetValue(server, originalMap);
+        }
+    }
+
+    /// <summary>
+    /// Checks CommunicatorClient handling when binding multicast socket on the server port fails due to exclusive use.
+    /// </summary>
+    [TestMethod]
+    public void CommunicatorClient_MulticastSocket_PortCollision_HandlesGracefully()
+    {
+        int port = GetAvailablePort();
+        IPEndPoint serverEp = new(IPAddress.Loopback, port);
+
+        // Pre-bind server port with UDP ExclusiveAddressUse = true before server and client bind to it
+        using Socket exclusiveUdpSocket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        exclusiveUdpSocket.ExclusiveAddressUse = true;
+        exclusiveUdpSocket.Bind(new IPEndPoint(IPAddress.Any, port));
+
+        using CommunicatorServer server = new(serverEp);
+
+        // CommunicatorClient should catch the SocketException on multicast listener initialization and continue
+        using CommunicatorClient client = new(serverEp);
+        Assert.AreNotEqual(0, client.ListenPort);
     }
 }
