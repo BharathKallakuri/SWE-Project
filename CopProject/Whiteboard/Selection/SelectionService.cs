@@ -9,7 +9,6 @@ using System.Diagnostics.CodeAnalysis;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Items.Shapes;
-using Whiteboard.Models;
 
 namespace Whiteboard.Selection;
 
@@ -17,10 +16,10 @@ namespace Whiteboard.Selection;
 // Temporary exclusion from code coverage
 public class SelectionService : ISelectionService
 {
-    private readonly WhiteboardCanvas _canvas;
+    private readonly IWhiteboard _canvas;
     private readonly ISelectionState _selectionState;
 
-    public SelectionService(WhiteboardCanvas canvas, ISelectionState selectionState)
+    public SelectionService(IWhiteboard canvas, ISelectionState selectionState)
     {
         _canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
         _selectionState = selectionState ?? throw new ArgumentNullException(nameof(selectionState));
