@@ -211,6 +211,83 @@ public sealed class GeminiProviderTests
             () => provider.GenerateChatResponseAsync("   "));
     }
 
+    [Fact]
+    public async Task GenerateStructuredContentAsync_ValidRequest_ForwardsArgumentsAndReturnsResponse()
+    {
+        string? capturedModel = null;
+        string? capturedPrompt = null;
+        GenerateContentConfig? capturedConfig = null;
+
+        var config = new GenerateContentConfig
+        {
+            ResponseMimeType = "application/json",
+            Temperature = 0.1
+        };
+
+        var provider = CreateProvider((model, textContents, _, receivedConfig) =>
+        {
+            capturedModel = model;
+            capturedPrompt = textContents;
+            capturedConfig = receivedConfig;
+
+            return Task.FromResult<string?>("{\"summary\":\"Analysis complete\"}");
+        });
+
+        string? result = await provider.GenerateStructuredContentAsync(
+            "test-model",
+            "Analyse these logs",
+            config);
+
+        Assert.Equal("{\"summary\":\"Analysis complete\"}", result);
+        Assert.Equal("test-model", capturedModel);
+        Assert.Equal("Analyse these logs", capturedPrompt);
+        Assert.Same(config, capturedConfig);
+    }
+
+    [Fact]
+    public async Task GenerateStructuredContentAsync_EmptyModel_ThrowsArgumentException()
+    {
+        var provider = CreateProvider((_, _, _, _) =>
+            Task.FromResult<string?>("unused"));
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => provider.GenerateStructuredContentAsync(
+                "",
+                "Analyse logs",
+                new GenerateContentConfig()));
+    }
+
+    [Fact]
+    public async Task GenerateStructuredContentAsync_EmptyPrompt_ThrowsArgumentException()
+    {
+        var provider = CreateProvider((_, _, _, _) =>
+            Task.FromResult<string?>("unused"));
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => provider.GenerateStructuredContentAsync(
+                "test-model",
+                " ",
+                new GenerateContentConfig()));
+    }
+
+    [Fact]
+    public async Task GenerateStructuredContentAsync_WhenGeminiFails_RethrowsException()
+    {
+        var expectedException =
+            new InvalidOperationException("Structured request failed.");
+
+        var provider = CreateProvider((_, _, _, _) =>
+            Task.FromException<string?>(expectedException));
+
+        var actualException = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => provider.GenerateStructuredContentAsync(
+                "test-model",
+                "Analyse logs",
+                new GenerateContentConfig()));
+
+        Assert.Same(expectedException, actualException);
+    }
+
     private static GeminiProvider CreateProvider(GeminiContentGenerator generator)
     {
         return new GeminiProvider(generator);

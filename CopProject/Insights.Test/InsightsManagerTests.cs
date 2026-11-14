@@ -1,4 +1,5 @@
-using Insights.AI;
+﻿using Insights.AI;
+using Google.GenAI.Types;
 using Xunit;
 
 namespace Insights.Test;
@@ -133,6 +134,104 @@ public class InsightsManagerTests
             () => manager.GenerateChatResponseAsync("question"));
     }
 
+    [Fact]
+    public async Task DiagnoseLogAsync_UsesActiveProviderAndReturnsFormattedDiagnosis()
+    {
+        var provider = new FakeInsightsProvider("TestModel")
+        {
+            StructuredResponse = """
+            {
+                "summary": "Database connection failed.",
+                "failureDetected": true,
+                "failureLocation": "DatabaseConnector.Connect",
+                "likelyCause": "Invalid connection string.",
+                "recommendations": ["Verify the connection string."]
+            }
+            """
+        };
+
+        var manager = new InsightsManager(provider);
+        string log = "[ERROR] Database connection failed.";
+
+        string result = await manager.DiagnoseLogAsync(log);
+
+        Assert.Contains("Summary: Database connection failed.", result);
+        Assert.Contains("Failure detected: Yes", result);
+        Assert.Contains("Failure location: DatabaseConnector.Connect", result);
+        Assert.Contains("Likely cause: Invalid connection string.", result);
+        Assert.Contains("Verify the connection string.", result);
+
+        Assert.Equal(1, provider.StructuredCallCount);
+        Assert.NotNull(provider.LastStructuredPrompt);
+        Assert.Contains(log, provider.LastStructuredPrompt);
+    }
+
+    [Fact]
+    public async Task DiagnoseLogAsync_EmptyLog_ThrowsArgumentException()
+    {
+        var provider = new FakeInsightsProvider("TestModel");
+        var manager = new InsightsManager(provider);
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => manager.DiagnoseLogAsync(" "));
+
+        Assert.Equal(0, provider.StructuredCallCount);
+    }
+
+    [Fact]
+    public async Task DiagnoseLogAsync_UnsupportedProvider_ThrowsInvalidOperationException()
+    {
+        var manager = new InsightsManager(new ThrowingInsightsProvider());
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.DiagnoseLogAsync("Application log"));
+    }
+
+    [Fact]
+    public async Task DiagnoseLogAsync_WhenProviderFails_RethrowsException()
+    {
+        var provider = new FakeInsightsProvider("TestModel")
+        {
+            StructuredException = new InvalidOperationException("Gemini request failed.")
+        };
+
+        var manager = new InsightsManager(provider);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.DiagnoseLogAsync("Application log"));
+
+        Assert.Equal(1, provider.StructuredCallCount);
+    }
+
+    [Fact]
+    public async Task DiagnoseLogAsync_WhenNoFailureAndNoRecommendations_ReturnsCorrectMessage()
+    {
+        var provider = new FakeInsightsProvider("TestModel")
+        {
+            StructuredResponse = """
+            {
+                "summary": "No errors found in the application log.",
+                "failureDetected": false,
+                "failureLocation": null,
+                "likelyCause": null,
+                "recommendations": []
+            }
+            """
+        };
+
+        var manager = new InsightsManager(provider);
+
+        string result = await manager.DiagnoseLogAsync(
+            "Application started successfully.");
+
+        Assert.Contains("Summary: No errors found", result);
+        Assert.Contains("Failure detected: No", result);
+        Assert.Contains("No recommendations provided.", result);
+
+        Assert.DoesNotContain("Failure location:", result);
+        Assert.DoesNotContain("Likely cause:", result);
+    }
+
     private sealed class ThrowingInsightsProvider : IInsightsProvider
     {
         public string ModelName => "ThrowingProvider";
@@ -147,7 +246,7 @@ public class InsightsManagerTests
             Task.FromException<string>(new InvalidOperationException("provider failed"));
     }
 
-    private class FakeInsightsProvider : IInsightsProvider
+    private class FakeInsightsProvider : IInsightsProvider, ILogAnalysisProvider
     {
         public string ModelName { get; }
 
@@ -157,9 +256,40 @@ public class InsightsManagerTests
         public string? LastUserMessage { get; private set; }
         public string? LastChatContext { get; private set; }
         public int ChatCallCount { get; private set; }
+        public int StructuredCallCount { get; private set; }
+        public string? LastStructuredModel { get; private set; }
+        public string? LastStructuredPrompt { get; private set; }
+        public Exception? StructuredException { get; set; }
+
+        public string StructuredResponse { get; set; } = """
+        {
+            "summary": "No failure detected.",
+            "failureDetected": false,
+            "failureLocation": null,
+            "likelyCause": null,
+            "recommendations": []
+        }
+        """;
+
 
         public int TextCallCount { get; private set; }
 
+        public Task<string?> GenerateStructuredContentAsync(
+            string model,
+            string prompt,
+            GenerateContentConfig config)
+        {
+            StructuredCallCount++;
+            LastStructuredModel = model;
+            LastStructuredPrompt = prompt;
+
+            if (StructuredException is not null)
+            {
+                return Task.FromException<string?>(StructuredException);
+            }
+
+            return Task.FromResult<string?>(StructuredResponse);
+        }
         public FakeInsightsProvider(string modelName)
         {
             ModelName = modelName;

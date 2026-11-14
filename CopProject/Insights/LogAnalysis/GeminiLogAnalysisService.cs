@@ -1,3 +1,4 @@
+﻿using Insights.AI;
 using Trace = System.Diagnostics.Trace;
 using System.Text.Json.Nodes;
 using Google.GenAI;
@@ -75,6 +76,38 @@ public sealed class GeminiLogAnalysisService : ILogAnalysisService
             _modelName);
     }
 
+    public static GeminiLogAnalysisService CreateWithProvider(
+    ILogAnalysisProvider provider,
+    string? modelName = null)
+    {
+        Trace.TraceInformation(
+            "[Insights] Log-analysis service initialization started using existing provider.");
+
+        ArgumentNullException.ThrowIfNull(provider);
+
+        string? environmentModel =
+            System.Environment.GetEnvironmentVariable("GEMINI_MODEL");
+
+        string fallbackModel =
+            string.IsNullOrWhiteSpace(environmentModel)
+                ? provider.ModelName
+                : environmentModel;
+
+        string resolvedModel = ResolveModelName(modelName, fallbackModel);
+
+        Func<string, string, GenerateContentConfig, Task<string?>> generator =
+            (model, prompt, config) =>
+                provider.GenerateStructuredContentAsync(model, prompt, config);
+
+        GeminiLogAnalysisService service =
+            new(generator, resolvedModel, forTesting: true);
+
+        Trace.TraceInformation(
+            "[Insights] Log-analysis service initialized using model '{0}'.",
+            resolvedModel);
+
+        return service;
+    }
     // Allows deterministic unit tests without making a live Gemini API call.
     internal static GeminiLogAnalysisService CreateForTesting(
         Func<string, string, GenerateContentConfig, Task<string?>> generateContentAsync,

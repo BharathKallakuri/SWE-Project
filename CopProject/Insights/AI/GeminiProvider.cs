@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Trace = System.Diagnostics.Trace;
 using Google.GenAI;
 using Google.GenAI.Types;
@@ -11,7 +11,7 @@ internal delegate Task<string?> GeminiContentGenerator(
     List<Content>? contentItems,
     GenerateContentConfig? config);
 
-public class GeminiProvider : IInsightsProvider
+public class GeminiProvider : IInsightsProvider, ILogAnalysisProvider
 {
     private readonly GeminiContentGenerator _generateContentAsync;
 
@@ -207,6 +207,40 @@ public class GeminiProvider : IInsightsProvider
         }
     }
 
+    public async Task<string?> GenerateStructuredContentAsync(
+        string model,
+        string prompt,
+        GenerateContentConfig config)
+    {
+        Trace.TraceInformation(
+            "[Insights] Structured content generation started using model '{0}'.",
+            model);
+
+        try
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(model);
+            ArgumentException.ThrowIfNullOrWhiteSpace(prompt);
+            ArgumentNullException.ThrowIfNull(config);
+
+            string? response = await _generateContentAsync(
+                model,
+                prompt,
+                contentItems: null,
+                config: config);
+
+            Trace.TraceInformation(
+                "[Insights] Structured content generation completed.");
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError(
+                "[Insights] Structured content generation failed: {0}", ex);
+
+            throw;
+        }
+    }
     // The adapter is a thin wrapper around the external Google SDK and is covered by live
     // integration testing rather than deterministic unit tests.
     private static GeminiContentGenerator CreateGenerator(Client client)

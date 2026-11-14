@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Text;
+using Insights.LogAnalysis;
 
 namespace Insights.AI;
 
@@ -8,6 +10,8 @@ public class InsightsManager
 
     public InsightsManager(IInsightsProvider defaultProvider)
     {
+        ArgumentNullException.ThrowIfNull(defaultProvider);
+
         _activeProvider = defaultProvider;
 
         Trace.TraceInformation(
@@ -17,11 +21,12 @@ public class InsightsManager
 
     public void SwitchModel(IInsightsProvider newProvider)
     {
+        _activeProvider = newProvider
+            ?? throw new ArgumentNullException(nameof(newProvider));
+
         Trace.TraceInformation(
             "[Insights] Switching active provider to '{0}'.",
-            newProvider?.GetType().Name ?? "null");
-
-        _activeProvider = newProvider;
+            newProvider.GetType().Name);
     }
 
     public async Task<string> RequestTextAnalysisAsync(string text)
@@ -80,5 +85,91 @@ public class InsightsManager
             Trace.TraceError("[Insights] Chat response request failed: {0}", ex);
             throw;
         }
+    }
+
+    public async Task<string> DiagnoseLogAsync(string log)
+    {
+        Trace.TraceInformation("[Insights] Log diagnosis request started.");
+
+        if (string.IsNullOrWhiteSpace(log))
+        {
+            Trace.TraceWarning("[Insights] Log diagnosis rejected because the log content is empty.");
+            throw new ArgumentException("Log content is required.", nameof(log));
+        }
+
+        if (_activeProvider is not ILogAnalysisProvider logProvider)
+        {
+            string providerName = _activeProvider.GetType().Name;
+
+            Trace.TraceError(
+                "[Insights] Active provider '{0}' does not support log analysis.",
+                providerName);
+
+            throw new InvalidOperationException(
+                $"The active provider '{providerName}' does not support log analysis.");
+        }
+
+        try
+        {
+            GeminiLogAnalysisService logAnalysisService =
+            GeminiLogAnalysisService.CreateWithProvider(logProvider);
+
+            LogAnalysisResult result =
+                await logAnalysisService.AnalyzeLogAsync(
+                    new LogAnalysisRequest(log));
+
+            string diagnosis = FormatLogAnalysisResult(result);
+
+            Trace.TraceInformation("[Insights] Log diagnosis request completed.");
+
+            return diagnosis;
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError("[Insights] Log diagnosis request failed: {0}", ex);
+            throw;
+        }
+    }
+
+    private static string FormatLogAnalysisResult(LogAnalysisResult result)
+    {
+        StringBuilder output = new();
+
+        string failureStatus = result.FailureDetected ? "Yes" : "No";
+
+        output.AppendLine("Log Diagnosis");
+        output.AppendLine();
+        output.AppendLine($"Summary: {result.Summary}");
+        output.AppendLine($"Failure detected: {failureStatus}");
+
+        if (!string.IsNullOrWhiteSpace(result.FailureLocation))
+        {
+            output.AppendLine($"Failure location: {result.FailureLocation}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(result.LikelyCause))
+        {
+            output.AppendLine($"Likely cause: {result.LikelyCause}");
+        }
+
+        output.AppendLine();
+        output.AppendLine("Recommendations:");
+
+        if (result.Recommendations.Count == 0)
+        {
+            output.AppendLine("- No recommendations provided.");
+        }
+        else
+        {
+            foreach (string recommendation in result.Recommendations)
+            {
+                if (!string.IsNullOrWhiteSpace(recommendation))
+                {
+                    output.AppendLine($"- {recommendation}");
+                }
+            }
+        }
+
+        return output.ToString().TrimEnd();
     }
 }

@@ -22,6 +22,23 @@ public sealed class GeminiLogAnalysisServiceTests
     }
 
     [Fact]
+    public void Constructor_WithValidApiKey_InitializesService()
+    {
+        var service = new GeminiLogAnalysisService(
+            "test-api-key",
+            "test-model");
+
+        Assert.Equal("test-model", service.ModelName);
+    }
+
+    [Fact]
+    public void CreateWithProvider_NullProvider_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(
+            () => GeminiLogAnalysisService.CreateWithProvider(null!));
+    }
+
+    [Fact]
     public void ResolveModelName_UsesExplicitEnvironmentOrDefaultModel()
     {
         Assert.Equal("explicit", GeminiLogAnalysisService.ResolveModelName("explicit", "environment"));
