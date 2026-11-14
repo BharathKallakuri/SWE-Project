@@ -6,6 +6,7 @@
     xmlns:local="using:UX"
     xmlns:controller="using:Controller.Views"
     xmlns:chat="using:UI.Views"
+    xmlns:whiteboard="using:Whiteboard.Views"
     xmlns:screenshare="using:ScreenShare.Views">
 
     <Grid x:Name="Root" RequestedTheme="Light" Background="#EEF3F9">
@@ -163,10 +164,7 @@
                 </Border>
 
                 <Border x:Name="BoardPanel" Background="White" CornerRadius="10" Visibility="Collapsed">
-                    <StackPanel Padding="20">
-                        <!-- WHITEBOARD TEAM: add your UI here -->
-                        <TextBlock Text="Whiteboard module goes here"/>
-                    </StackPanel>
+                    <whiteboard:WhiteBoardView x:Name="WhiteboardViewControl"/>
                 </Border>
 
                 <!-- FILE SYNC TEAM: Hosting FileSync inside meeting workspace -->
