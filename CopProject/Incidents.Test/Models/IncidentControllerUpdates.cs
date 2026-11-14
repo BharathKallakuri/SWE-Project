@@ -144,7 +144,6 @@ public sealed class IncidentControllerUpdatesTest
 
     /// <summary>
     /// Update location of incident which is valid but same location it is currently in. 
-    /// todo(@shreesh): update this test when backend changes
     /// </summary>
     /// <returns></returns>
     [TestMethod]
@@ -282,7 +281,6 @@ public sealed class IncidentControllerUpdatesTest
 
     /// <summary>
     /// Update severity of incident which is valid but same severity it is currently in. 
-    /// todo(@shreesh): update this test when backend changes
     /// </summary>
     /// <returns></returns>
     [TestMethod]
@@ -348,7 +346,6 @@ public sealed class IncidentControllerUpdatesTest
 
     /// <summary>
     /// Update status of incident which is valid but same status it is currently in. 
-    /// todo(@shreesh): update this test when backend changes
     /// </summary>
     /// <returns></returns>
     [TestMethod]
