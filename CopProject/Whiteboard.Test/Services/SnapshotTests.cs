@@ -25,6 +25,9 @@ namespace Whiteboard.Test.Services;
 /// </summary>
 public class SnapshotTests
 {
+    /// <summary>
+    /// Checks that a square copy preserves its properties and calculates its own bounds.
+    /// </summary>
     [Fact]
     public void SquareCopyPreservesProperties()
     {
@@ -60,6 +63,9 @@ public class SnapshotTests
         Assert.Equal(40, original.BoundingBox.Width);
     }
 
+    /// <summary>
+    /// Checks that a stroke copy keeps its points and style when the original points change.
+    /// </summary>
     [Fact]
     public void StrokeCopyHasIndependentPoints()
     {
@@ -80,6 +86,9 @@ public class SnapshotTests
         Assert.Equal(5, copy.StrokeWidth);
     }
 
+    /// <summary>
+    /// Checks that a text copy preserves its content, position, size, and font settings.
+    /// </summary>
     [Fact]
     public void TextCopyPreservesContentAndSize()
     {
@@ -103,6 +112,9 @@ public class SnapshotTests
         Assert.Equal(original.FontColor, copy.FontColor);
     }
 
+    /// <summary>
+    /// Checks that copying a null item is rejected.
+    /// </summary>
     [Fact]
     public void NullItemIsRejected()
     {

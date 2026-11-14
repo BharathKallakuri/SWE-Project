@@ -25,6 +25,9 @@ namespace Whiteboard.Test.Actions;
 /// </summary>
 public class ActionTests
 {
+    /// <summary>
+    /// Checks that reversing a group addition removes all added items.
+    /// </summary>
     [Fact]
     public void GroupAddCanBeReversed()
     {
@@ -43,6 +46,9 @@ public class ActionTests
         Assert.Empty(board.Items);
     }
 
+    /// <summary>
+    /// Checks that duplicate and empty additions are rejected without changing the board.
+    /// </summary>
     [Fact]
     public void InvalidAddDoesNotChangeBoard()
     {
@@ -58,6 +64,9 @@ public class ActionTests
             new AddItemAction(Array.Empty<IItem>(), "Host"));
     }
 
+    /// <summary>
+    /// Checks that a missing item prevents group deletion and creation of an inverse action.
+    /// </summary>
     [Fact]
     public void DeleteNeedsToSucceedBeforeCreatingInverse()
     {
@@ -73,6 +82,9 @@ public class ActionTests
         Assert.Throws<InvalidOperationException>(() => action.CreateInverse());
     }
 
+    /// <summary>
+    /// Checks that undoing an erase restores the saved stroke after the original changes.
+    /// </summary>
     [Fact]
     public void DrawAndEraseActionsPreserveStrokeForUndo()
     {

@@ -25,6 +25,9 @@ namespace Whiteboard.Test.Serialization;
 /// </summary>
 public class HistoryMessageTests
 {
+    /// <summary>
+    /// Checks that undo and redo requests preserve their user and message type after serialization.
+    /// </summary>
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -51,6 +54,9 @@ public class HistoryMessageTests
         }
     }
 
+    /// <summary>
+    /// Checks that a history message preserves its user, entry order, and saved item states.
+    /// </summary>
     [Fact]
     public void HistoryMessagePreservesEntriesAndOrder()
     {
