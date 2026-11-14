@@ -18,7 +18,7 @@ public static class CommunicatorFactory
     {
         if (isServer == isClient)
         {
-            Trace.WriteLine("[Networking] CommunicatorFactory.CreateCommunicator: Ambiguity in creation of Communicator, isServer == isClient");
+            Trace.TraceWarning("[Networking] CommunicatorFactory.CreateCommunicator: Ambiguity in creation of Communicator, isServer == isClient");
         }
         else if (isServer)
         {
@@ -32,7 +32,7 @@ public static class CommunicatorFactory
             }
             else
             {
-                Trace.WriteLine("[Networking] CommunicatorFactory.CreateCommunicator: Unable to start Client Communicator, Server IP is not provided");
+                Trace.TraceWarning("[Networking] CommunicatorFactory.CreateCommunicator: Unable to start Client Communicator, Server IP is not provided");
             }
         }
         return null;
@@ -40,16 +40,19 @@ public static class CommunicatorFactory
 
     public static ICommunicator CreateClientCommunicator(IPEndPoint serverIp)
     {
+        Trace.TraceInformation($"[Networking] CommunicatorFactory: Creating client communicator for server at {serverIp}");
         return new CommunicatorClient(serverIp);
     }
 
     public static ICommunicator CreateServerCommunicator()
     {
+        Trace.TraceInformation("[Networking] CommunicatorFactory: Creating server communicator with dynamic endpoint.");
         return new CommunicatorServer(null);
     }
 
     public static ICommunicator CreateServerCommunicator(IPEndPoint? serverIp)
     {
+        Trace.TraceInformation($"[Networking] CommunicatorFactory: Creating server communicator bound to {serverIp?.ToString() ?? "dynamic endpoint"}");
         return new CommunicatorServer(serverIp);
     }
 }
