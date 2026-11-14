@@ -52,6 +52,7 @@ public sealed partial class MainWindow : Window
     private ChatClientAdapter? _chatAdapter;
     private ChatPanelViewModel? _chatViewModel;
     private WhiteboardSession? _whiteboardSession;
+    private WhiteBoardViewModel? _whiteboardViewModel;
 
     public MainWindow()
     {
@@ -80,11 +81,17 @@ public sealed partial class MainWindow : Window
             });
         };
         _session.MeetingEnding += DisposeChatSession;
+        _session.MeetingEnding += DisposeWhiteboardSession;
         _session.ParticipantsChanged += participants => {
             if (_inMeeting && !_isHost && _chatViewModel is null && participants.Any(participant => participant.IsHost))
                 DispatcherQueue.TryEnqueue(() => TryInitializeChatSession(false));
+            if (_inMeeting && !_isHost && _whiteboardViewModel is null && participants.Any(participant => participant.IsHost))
+                DispatcherQueue.TryEnqueue(() => TryInitializeWhiteboardSession(false));
         };
-        Closed += (_, _) => DisposeChatSession();
+        Closed += (_, _) => {
+            DisposeChatSession();
+            DisposeWhiteboardSession();
+        };
 
         ShowScreen("login");
     }
@@ -229,23 +236,12 @@ public sealed partial class MainWindow : Window
         // CONTROLLER TEAM: call SetParticipants() with the real number
         SetParticipants(_session.ParticipantCount);
 
-        /// whiteboard temporary integration
-        if (int.TryParse(port, out int portNumber) && _meetingService.ActiveController?.Communicator != null)
-        {
-            DisposeWhiteboardSession();
-            _whiteboardSession = WhiteboardSession.Start(_userId, _meetingService.ActiveController.Communicator, id, portNumber, host);
-            var wbViewModel = new WhiteBoardViewModel(_whiteboardSession.Client);
-            _whiteboardSession.UserLeft += username => DispatcherQueue.TryEnqueue(() => wbViewModel.OnUserLeft(username));
-            WhiteboardViewControl.SetViewModel(wbViewModel);
-            _meetingService.RegisterNotificationHandler(_whiteboardSession);
-        }
-        /// End Whiteboard temporary integration
-
         ChatBtn.IsChecked = false;
         ShowChat(false);
         ShowPanel("home");
         ShowScreen("meeting");
         TryInitializeChatSession(host);
+        TryInitializeWhiteboardSession(host);
     }
 
     public void SetParticipants(int count)
@@ -369,8 +365,48 @@ public sealed partial class MainWindow : Window
         _chatServer = null;
     }
 
+    private void TryInitializeWhiteboardSession(bool isHost)
+    {
+        if (_whiteboardViewModel is not null)
+        {
+            return;
+        }
+
+        IControllerService? controller = _meetingService.ActiveController;
+
+        if (controller?.Communicator is null || controller.CurrentUser is null)
+        {
+            return;
+        }
+
+        if (! int.TryParse(_meetingPort, out int portNumber))
+        {
+            return;
+        }
+
+        try
+        {
+            _whiteboardSession = isHost
+                ? WhiteboardSession.StartHost(_userId, controller.Communicator, portNumber)
+                : WhiteboardSession.StartClient(_userId, controller.Communicator, _meetingId, portNumber);
+
+            _whiteboardViewModel = new WhiteBoardViewModel(_whiteboardSession, DispatcherQueue);
+            WhiteboardViewControl.ViewModel = _whiteboardViewModel;
+            _meetingService.RegisterNotificationHandler(_whiteboardSession);
+        }
+        catch (Exception exception)
+        {
+            DisposeWhiteboardSession();
+            System.Diagnostics.Trace.WriteLine($"[Whiteboard] Could not start the whiteboard session: {exception}");
+        }
+    }
+
     private void DisposeWhiteboardSession()
     {
+        WhiteboardViewControl.ViewModel = null;
+        _whiteboardViewModel?.Dispose();
+        _whiteboardViewModel = null;
+
         if (_whiteboardSession != null)
         {
             _meetingService.UnregisterNotificationHandler(_whiteboardSession);
