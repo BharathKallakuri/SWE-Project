@@ -3,7 +3,7 @@
 //using Insights.AI;
 //using Utils.Diagnostics;
 
-//namespace Utils.Diagnosis.Services;
+namespace Utils.Diagnosis.Services;
 
 ///// <summary>Reads this app run's log and asks Insights for a diagnosis.</summary>
 //public sealed class InsightsDiagnosisService
