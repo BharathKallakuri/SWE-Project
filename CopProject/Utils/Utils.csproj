@@ -10,4 +10,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Diagnosis\Views\**\*.cs" />
+    <Compile Remove="Diagnosis\obj\**\*.cs" />
+    <Compile Remove="Diagnosis\bin\**\*.cs" />
+  </ItemGroup>
+
 </Project>
