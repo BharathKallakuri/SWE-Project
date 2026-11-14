@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -12,6 +13,7 @@ using Controller.Models;
 using Controller.ViewModels;
 using FileSynchroniser.Models;
 using FileSynchroniser.Views;
+using FileSynchroniser.Network;
 using Incidents;
 using Incidents.Views;
 using LocationTracker.Services;
@@ -95,6 +97,18 @@ public sealed partial class MainWindow : Window
         };
         Closed += (_, _) => DisposeChatSession();
 
+
+        // the FileSync page unsubscribes from the communicator before the controller disposes it
+        _session.MeetingEnding += () => {
+            if (DispatcherQueue.HasThreadAccess)
+            {
+                FileSyncFrame.Navigate(typeof(Page));
+            }
+            else
+            {
+                DispatcherQueue.TryEnqueue(() => FileSyncFrame.Navigate(typeof(Page)));
+            }
+        };
 
         ShowScreen("login");
     }
@@ -407,7 +421,59 @@ public sealed partial class MainWindow : Window
 
     private void FileSyncBtn_Click(object sender, RoutedEventArgs e)
     {
-        FileSyncFrame.Navigate(typeof(FileSyncPage));
+        if (FileSyncFrame.Content is FileSyncPage)
+        {
+            ShowPanel("filesync");
+            return;
+        }
+
+        IControllerService? controller = _meetingService.ActiveController;
+        Networking.ICommunicator? communicator = controller?.Communicator;
+        Utils.ControllerUser? me = controller?.CurrentUser;
+
+        // CurrentUser.Port can still be 0: HostController copies it once, at construction.
+        // ListenPort is read live from the communicator.
+        int localPort = controller.ListenPort <= 0 ? me.Port : controller.ListenPort;
+
+        if (controller == null || communicator == null || me == null
+            || !IPAddress.TryParse(me.Ip, out IPAddress? myIp) || localPort <= 0)
+        {
+            string reason = controller == null ? "there is no active controller"
+                : communicator == null ? "the controller has no communicator"
+                : me == null ? "the controller has no current user"
+                : $"my endpoint is not usable: '{me.Ip}' port {localPort}";
+
+            _ = ShowErrorAsync("File Sync", "Cannot open File Sync: " + reason);
+            return;
+        }
+
+        IPEndPoint? hostEndpoint = null;
+        if (!_isHost)
+        {
+            string hostIp = _meetingId.Equals("localhost", StringComparison.OrdinalIgnoreCase) ? "127.0.0.1" : _meetingId;
+            if (!IPAddress.TryParse(hostIp, out IPAddress? hostAddress) || !int.TryParse(_meetingPort, out int hostPort))
+            {
+                _ = ShowErrorAsync("File Sync", $"Cannot open File Sync: host address '{_meetingId}:{_meetingPort}' is not valid.");
+                return;
+            }
+
+            hostEndpoint = new IPEndPoint(hostAddress, hostPort);
+        }
+
+        List<Utils.ControllerUser> peers = controller.GetActiveUsers()
+            .Where(u => u.UserKey != me.UserKey)
+            .ToList();
+
+        var session = new FileSyncSession(
+            communicator,
+            _isHost,
+            new IPEndPoint(myIp, me.Port),
+            hostEndpoint,
+            peers,
+            _meetingService.RegisterNotificationHandler,
+            _meetingService.UnregisterNotificationHandler);
+
+        FileSyncFrame.Navigate(typeof(FileSyncPage), session);
         ShowPanel("filesync");
     }
 
@@ -585,6 +651,7 @@ public sealed partial class MainWindow : Window
             var geocoding = new NominatimGeocodingService(new HttpClient());
             var map = new LocationMapView(new MapService(context.IncidentController, geocoding));
             map.IncidentSelected += LocationIncidentSelected;
+            map.LocationSelected += LocationSelectedOnMap;
             LocationHost.Content = map;
             ShowScreen("location");
         }
