@@ -278,8 +278,9 @@ public sealed partial class MainWindow : Window
             },
             "Save");
     
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary){
             return;
+        }
     
         if (newPicture != null)
         {
