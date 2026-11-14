@@ -128,3 +128,4 @@ public static class ItemSnapshot
         return points?.Select(CopyPoint).ToList();
     }
 }
+
