@@ -1,5 +1,5 @@
-﻿// Author = Vishesh Srivastava
-// Roll Number = 112301037
+﻿// Author = Vishesh Srivastava, Ankit Gupta
+// Roll Number = 112301037, 112301010
 
 using System.Reflection;
 using Incidents;
@@ -127,6 +127,68 @@ public sealed class LocationMapViewModelTests
         Assert.IsNull(_mapService.LastAddress);
     }
 
+    /// <summary>
+    /// If the search service fails the user should see an error message.
+    /// </summary>
+    [TestMethod]
+    public async Task SearchAddressServiceErrorSetsError()
+    {
+        _mapService.SearchException = new InvalidOperationException("test failure");
+        _viewModel.AddressSearchText = "Main Road";
+
+        _viewModel.SearchAddressCommand.Execute(null);
+        await Task.Delay(10);
+
+        Assert.AreEqual("Could not search for the address.", _viewModel.ErrorMessage);
+    }
+
+    /// <summary>
+    /// A valid date range should be passed to the service as it is.
+    /// </summary>
+    [TestMethod]
+    public async Task LoadAsyncWithValidDateRangePassesDates()
+    {
+        DateTimeOffset from = new(2026, 12, 1, 0, 0, 0, TimeSpan.Zero);
+        DateTimeOffset to = new(2026, 12, 10, 0, 0, 0, TimeSpan.Zero);
+        _viewModel.FromDate = from;
+        _viewModel.ToDate = to;
+
+        await _viewModel.LoadAsync();
+
+        Assert.IsNotNull(_mapService.LastFilter);
+        Assert.AreEqual(from.DateTime, _mapService.LastFilter.FromDateTime);
+        Assert.AreEqual(to.DateTime, _mapService.LastFilter.ToDateTime);
+        Assert.AreEqual(string.Empty, _viewModel.ErrorMessage);
+    }
+
+    /// <summary>
+    /// The map should be told to refresh after incidents are loaded.
+    /// </summary>
+    [TestMethod]
+    public async Task LoadAsyncRaisesIncidentsChanged()
+    {
+        bool raised = false;
+        _viewModel.IncidentsChanged += (_, _) => raised = true;
+
+        await _viewModel.LoadAsync();
+
+        Assert.IsTrue(raised);
+    }
+
+    /// <summary>
+    /// Changing a property should tell the UI which property changed.
+    /// </summary>
+    [TestMethod]
+    public void ChangingPropertyNotifiesUi()
+    {
+        string? changedProperty = null;
+        _viewModel.PropertyChanged += (_, e) => changedProperty = e.PropertyName;
+
+        _viewModel.AddressSearchText = "Main Road";
+
+        Assert.AreEqual(nameof(_viewModel.AddressSearchText), changedProperty);
+    }
+
     private static Incident CreateIncident(
         string title,
         string description,
@@ -157,6 +219,7 @@ public sealed class LocationMapViewModelTests
         public string? LastAddress { get; private set; }
         public LocationSearchResult? SearchResult { get; set; }
         public Exception? LoadException { get; set; }
+        public Exception? SearchException { get; set; }
 
         public Task<List<Incident>> GetIncidentsForMapAsync(IncidentFilter? filter = null)
         {
@@ -179,6 +242,11 @@ public sealed class LocationMapViewModelTests
         public Task<LocationSearchResult?> SearchAddressAsync(string address)
         {
             LastAddress = address;
+            if (SearchException is not null)
+            {
+                throw SearchException;
+            }
+
             return Task.FromResult(SearchResult);
         }
     }
