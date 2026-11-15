@@ -9,6 +9,9 @@ using LocationTracker.ViewModels;
 
 namespace Location.Test;
 
+/// <summary>
+/// Tests map view-model loading, filtering and address search behavior.
+/// </summary>
 [TestClass]
 public sealed class LocationMapViewModelTests
 {

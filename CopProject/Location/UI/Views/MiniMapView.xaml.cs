@@ -74,7 +74,7 @@ public sealed partial class MiniMapView : UserControl
     }
 
     /// <summary>
-    /// Puts a mini map inside the Incident Details page.
+    /// Attaches the mini-map to the incident details page.
     /// </summary>
     public static void AttachTo(IncidentDetailsPage page)
     {
@@ -154,7 +154,7 @@ public sealed partial class MiniMapView : UserControl
     }
 
     /// <summary>
-    /// Handles messages from the map when the user clicks on it.
+    /// Converts a map click into a selected incident location.
     /// </summary>
     private async void WebMessageReceived(
         CoreWebView2 sender,
@@ -199,7 +199,7 @@ public sealed partial class MiniMapView : UserControl
     }
 
     /// <summary>
-    /// Moves the pin to the current latitude and longitude if the map is ready.
+    /// Updates the marker once the map is ready.
     /// </summary>
     private async Task UpdatePinAsync()
     {

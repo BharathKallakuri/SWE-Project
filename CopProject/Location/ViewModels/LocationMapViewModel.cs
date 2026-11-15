@@ -130,6 +130,9 @@ public sealed class LocationMapViewModel : LocationViewModelBase
         }
     }
 
+    /// <summary>
+    /// Loads incidents using the current map filters.
+    /// </summary>
     public async Task LoadAsync()
     {
         if (!IsDateRangeValid())
@@ -168,6 +171,9 @@ public sealed class LocationMapViewModel : LocationViewModelBase
         IncidentsChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Resolves the entered address and sends it to the map.
+    /// </summary>
     private async Task SearchAddressAsync()
     {
         if (string.IsNullOrWhiteSpace(AddressSearchText))
@@ -196,6 +202,9 @@ public sealed class LocationMapViewModel : LocationViewModelBase
         }
     }
 
+    /// <summary>
+    /// Converts the selected UI values into a service filter.
+    /// </summary>
     private IncidentFilter BuildFilter()
     {
         string search = TitleText.Trim();
@@ -225,6 +234,9 @@ public sealed class LocationMapViewModel : LocationViewModelBase
             null);
     }
 
+    /// <summary>
+    /// Stops the reload when the selected dates are reversed.
+    /// </summary>
     private void ApplyFilter()
     {
         if (!IsDateRangeValid())
