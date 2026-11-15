@@ -1,4 +1,7 @@
-﻿namespace ScreenShare;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+namespace ScreenShare;
 
 /// <summary>
 /// the UI thread as the view model sees it: run work on it, and make timers that tick on it.

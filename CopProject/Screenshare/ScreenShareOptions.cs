@@ -1,4 +1,7 @@
-﻿namespace ScreenShare;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+namespace ScreenShare;
 
 /// <summary>
 /// tuning for capture, flow control and cleanup
