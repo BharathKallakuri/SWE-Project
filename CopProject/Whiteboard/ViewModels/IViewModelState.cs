@@ -29,4 +29,14 @@ public interface IViewModelState
     /// Called every time the captured pointer is lost
     /// </summary>
     void PointerCaptureLost(Point2D point);
+
+    /// <summary>
+    /// Called when the pointer is double tapped/clicked on the canvas
+    /// </summary>
+    void PointerDoubleTapped(Point2D point) { }
+
+    /// <summary>
+    /// Resets any in-progress drawing action and clears the preview visual.
+    /// </summary>
+    void Reset() { }
 }
