@@ -94,7 +94,7 @@ public class SelectionService : ISelectionService
         return _canvas.EditItem(resized);
     }
 
-    public bool RotateSelected(double deltaAngle, string modifiedBy = "system")
+    public bool RotateSelected(double deltaAngle)
     {
         throw new NotImplementedException("RotateSelected is not implemented yet.");
     }
