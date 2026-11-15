@@ -36,7 +36,7 @@ public interface IViewModelState
     void PointerDoubleTapped(Point2D point) { }
 
     /// <summary>
-    /// Resets any in-progress drawing action and clears the preview visual.
+    /// Resets the state machine and canvas preview
     /// </summary>
     void Reset() { }
 }
