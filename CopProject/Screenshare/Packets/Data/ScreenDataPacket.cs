@@ -1,4 +1,9 @@
-﻿namespace ScreenShare;
+﻿// Author = Sanjaysiva A
+// Roll Number = 112301030
+
+using System.Diagnostics;
+
+namespace ScreenShare;
 
 /// <summary>
 /// represents screen-sharing data that can be sent over the network
@@ -94,10 +99,15 @@ public class ScreenDataPacket : IScreenShareMessage
         IReadOnlyList<Tile>? changedTiles = null,
         int tileSize = ImageDiffer.TILE_SIZE)
     {
+        if (string.IsNullOrWhiteSpace(streamId))
+        {
+            Trace.TraceError("[Screenshare] ScreenDataPacket.constructor: Stream ID cannot be null or whitespace.");
+        }
         ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
 
         if (frameNumber < 0)
         {
+            Trace.TraceError("[Screenshare] ScreenDataPacket.constructor: Frame number cannot be negative: {0}.", frameNumber);
             throw new ArgumentException(
                 "frame number cannot be negative",
                 nameof(frameNumber));
@@ -106,6 +116,7 @@ public class ScreenDataPacket : IScreenShareMessage
         // sender and receiver are different machines, so local time cannot be compared
         if (timestamp.Kind != DateTimeKind.Utc)
         {
+            Trace.TraceError("[Screenshare] ScreenDataPacket.constructor: Timestamp must be UTC, but was {0}.", timestamp.Kind);
             throw new ArgumentException(
                 "timestamp must be in UTC",
                 nameof(timestamp));
@@ -113,6 +124,7 @@ public class ScreenDataPacket : IScreenShareMessage
 
         if (width <= 0 || height <= 0)
         {
+            Trace.TraceError("[Screenshare] ScreenDataPacket.constructor: Invalid frame dimensions {0}x{1}. Must be positive.", width, height);
             throw new ArgumentException(
                 "frame dimensions must be positive",
                 nameof(width));
@@ -120,6 +132,7 @@ public class ScreenDataPacket : IScreenShareMessage
 
         if (tileSize <= 0)
         {
+            Trace.TraceError("[Screenshare] ScreenDataPacket.constructor: Invalid tile size {0}. Must be positive.", tileSize);
             throw new ArgumentException(
                 "tile size must be positive",
                 nameof(tileSize));
@@ -127,6 +140,7 @@ public class ScreenDataPacket : IScreenShareMessage
 
         if (!Enum.IsDefined(type))
         {
+            Trace.TraceError("[Screenshare] ScreenDataPacket..ctor: Invalid data packet type {0}.", type);
             throw new ArgumentException(
                 "invalid data packet type",
                 nameof(type));
@@ -136,6 +150,7 @@ public class ScreenDataPacket : IScreenShareMessage
         {
             if (fullFrameData == null || fullFrameData.Length == 0)
             {
+                Trace.TraceError("[Screenshare] ScreenDataPacket.constructor: FullFrame packet must contain image data.");
                 throw new ArgumentException(
                     "a fullframe packet must contain image data",
                     nameof(fullFrameData));
@@ -143,6 +158,7 @@ public class ScreenDataPacket : IScreenShareMessage
 
             if (changedTiles is { Count: > 0 })
             {
+                Trace.TraceError("[Screenshare] ScreenDataPacket.constructor: FullFrame packet cannot contain changed tiles.");
                 throw new ArgumentException(
                     "a full frame packet cannot also contain changed tiles",
                     nameof(changedTiles));
@@ -155,6 +171,7 @@ public class ScreenDataPacket : IScreenShareMessage
         {
             if (changedTiles == null || changedTiles.Count == 0)
             {
+                Trace.TraceError("[Screenshare] ScreenDataPacket.constructor: Changed-tile packet must contain at least one tile.");
                 throw new ArgumentException(
                     "a changed-tile packet must contain at least one tile",
                     nameof(changedTiles));
@@ -162,6 +179,7 @@ public class ScreenDataPacket : IScreenShareMessage
 
             if (fullFrameData is { Length: > 0 })
             {
+                Trace.TraceError("[Screenshare] ScreenDataPacket.constructor: Changed-tile packet cannot also contain a full frame.");
                 throw new ArgumentException(
                     "a changed-tile packet cannot also contain a full frame",
                     nameof(fullFrameData));
@@ -179,6 +197,7 @@ public class ScreenDataPacket : IScreenShareMessage
         {
             if (fullFrameData is { Length: > 0 } || changedTiles is { Count: > 0 })
             {
+                Trace.TraceError("[Screenshare] ScreenDataPacket.constructor: Pulse packet cannot contain image data or tiles.");
                 throw new ArgumentException(
                     "a pulse packet cannot contain image data or tiles",
                     fullFrameData is { Length: > 0 } ? nameof(fullFrameData) : nameof(changedTiles));
@@ -195,6 +214,7 @@ public class ScreenDataPacket : IScreenShareMessage
         Height = height;
         TileSize = tileSize;
         Type = type;
+        Trace.TraceInformation("[Screenshare] ScreenDataPacket.constructors: Created {0} packet for stream {1}, frame {2} ({3}x{4}).", type, streamId, frameNumber, width, height);
     }
 
     /// <summary>
@@ -214,6 +234,7 @@ public class ScreenDataPacket : IScreenShareMessage
     {
         if (tile == null)
         {
+            Trace.TraceWarning("[Screenshare] ScreenDataPacket.ValidateTile: Null tile in changed tiles collection.");
             throw new ArgumentException(
                 "changed tiles cannot contain null",
                 nameof(tile));
@@ -221,6 +242,7 @@ public class ScreenDataPacket : IScreenShareMessage
 
         if (tile.X % tileSize != 0 || tile.Y % tileSize != 0)
         {
+            Trace.TraceWarning("[Screenshare] ScreenDataPacket.ValidateTile: Tile at ({0}, {1}) does not start on tile grid of size {2}.", tile.X, tile.Y, tileSize);
             throw new ArgumentException(
                 "tile must start on the tile grid",
                 nameof(tile));
@@ -228,6 +250,7 @@ public class ScreenDataPacket : IScreenShareMessage
 
         if (tile.Width > tileSize || tile.Height > tileSize)
         {
+            Trace.TraceWarning("[Screenshare] ScreenDataPacket.ValidateTile: Tile dimensions {0}x{1} exceed tile size {2}.", tile.Width, tile.Height, tileSize);
             throw new ArgumentException(
                 "tile cannot be larger than the tile size",
                 nameof(tile));
@@ -236,6 +259,7 @@ public class ScreenDataPacket : IScreenShareMessage
         // using subtraction to avoid integer overflow in X+width or Y+height
         if (tile.X > width - tile.Width || tile.Y > height - tile.Height)
         {
+            Trace.TraceWarning("[Screenshare] ScreenDataPacket.ValidateTile: Tile at ({0}, {1}) of size {2}x{3} lies outside the frame {4}x{5}.", tile.X, tile.Y, tile.Width, tile.Height, width, height);
             throw new ArgumentException(
                 "tile lies outside the frame",
                 nameof(tile));

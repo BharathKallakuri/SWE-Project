@@ -1,4 +1,8 @@
-﻿using System.Drawing;
+﻿// Author = Sanjaysiva A
+// Roll Number = 112301030
+
+using System.Diagnostics;
+using System.Drawing;
 using ScreenShare;
 
 namespace ScreenShare;
@@ -47,12 +51,17 @@ internal sealed class ScreenShareReceiver : IDisposable
         _sendToHost = sendToHost;
         _timeProvider = timeProvider;
         _thumbnailHeight = thumbnailHeight;
+        Trace.TraceInformation("[Screenshare] ScreenShareReceiver.constructor: Initialized receiver for participant {0} (thumbnailHeight: {1}).", local.Id, thumbnailHeight);
     }
 
     private Subscription CreateSubscription(string streamId)
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareReceiver.CreateSubscription: Creating subscription for stream {0}.", streamId);
         Subscription subscription = new Subscription(streamId, _timeProvider);
-        subscription.Applier.FullFrameRequested += id => _sendToHost(new RequestFullFrame(_local, id));
+        subscription.Applier.FullFrameRequested += id => {
+            Trace.TraceInformation("[Screenshare] ScreenShareReceiver.CreateSubscription: Full frame requested for stream {0}.", id);
+            _sendToHost(new RequestFullFrame(_local, id));
+        };
         return subscription;
     }
 
@@ -65,6 +74,7 @@ internal sealed class ScreenShareReceiver : IDisposable
             return false;
         }
 
+        Trace.TraceInformation("[Screenshare] ScreenShareReceiver.RemoveSubscription: Removed subscription for stream {0} (keepPicture: {1}).", streamId, keepPicture);
         subscription.Dispose();
         if (!keepPicture)
         {
@@ -84,6 +94,7 @@ internal sealed class ScreenShareReceiver : IDisposable
     {
         if (!_streamNames.ContainsKey(streamId))
         {
+            Trace.TraceWarning("[Screenshare] ScreenShareReceiver.Subscribe: Unknown stream {0} requested.", streamId);
             return;
         }
 
@@ -92,17 +103,34 @@ internal sealed class ScreenShareReceiver : IDisposable
             : streamId;
         if (_subscriptions.ContainsKey(wanted))
         {
+            Trace.TraceInformation("[Screenshare] ScreenShareReceiver.Subscribe: Already subscribed to stream {0}.", wanted);
             return;
         }
 
+        Trace.TraceInformation("[Screenshare] ScreenShareReceiver.Subscribe: Subscribing participant {0} to stream {1} (layer: {2}, maxHeight: {3}).", _local.Id, streamId, wanted, maxHeight);
         string other = wanted == streamId ? StreamLayers.ThumbnailOf(streamId) : streamId;
         if (RemoveSubscription(other, keepPicture: true))
         {
-            _sendToHost(new Unsubscribe(_local, other));
+            try
+            {
+                _sendToHost(new Unsubscribe(_local, other));
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("[Screenshare] ScreenShareReceiver.Subscribe: Failed to send Unsubscribe for stream {0}: {1}", other, ex);
+            }
         }
 
         _subscriptions[wanted] = CreateSubscription(wanted);
-        _sendToHost(new Subscribe(_local, wanted, maxHeight));
+        try
+        {
+            _sendToHost(new Subscribe(_local, wanted, maxHeight));
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError("[Screenshare] ScreenShareReceiver.Subscribe: Failed to send Subscribe for stream {0}: {1}", wanted, ex);
+            throw;
+        }
     }
 
     /// <summary>
@@ -110,11 +138,19 @@ internal sealed class ScreenShareReceiver : IDisposable
     /// </summary>
     public void Unsubscribe(string streamId)
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareReceiver.Unsubscribe: Unsubscribing participant {0} from stream {1}.", _local.Id, streamId);
         foreach (string layer in new[] { streamId, StreamLayers.ThumbnailOf(streamId) })
         {
             if (RemoveSubscription(layer))
             {
-                _sendToHost(new Unsubscribe(_local, layer));
+                try
+                {
+                    _sendToHost(new Unsubscribe(_local, layer));
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError("[Screenshare] ScreenShareReceiver.Unsubscribe: Failed to send Unsubscribe for stream {0}: {1}", layer, ex);
+                }
             }
         }
     }
@@ -124,11 +160,18 @@ internal sealed class ScreenShareReceiver : IDisposable
     /// </summary>
     public Bitmap? GetFrame(string streamId)
     {
-        return _frames.Get(streamId);
+        Bitmap? frame = _frames.Get(streamId);
+        if (frame == null)
+        {
+            Trace.TraceInformation("[Screenshare] ScreenShareReceiver.GetFrame: No cached frame available for stream {0}.", streamId);
+        }
+        return frame;
     }
 
     private void OnStreamStarted(StreamStarted started)
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareReceiver.OnStreamStarted: Stream started: {0} ({1}).", started.StreamId, started.DisplayName);
+
         // a restarted stream numbers its frames from 0 again, so start a fresh picture;
         // the host sends this subscriber the sharer's next full frame
         if (_subscriptions.Remove(started.StreamId, out Subscription? old))
@@ -155,6 +198,8 @@ internal sealed class ScreenShareReceiver : IDisposable
 
     private void OnStreamStopped(StreamStopped stopped)
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareReceiver.OnStreamStopped: Stream stopped: {0}.", stopped.StreamId);
+
         if (StreamLayers.IsThumbnail(stopped.StreamId))
         {
             _withThumbnail.Remove(StreamLayers.BaseOf(stopped.StreamId));
@@ -177,26 +222,49 @@ internal sealed class ScreenShareReceiver : IDisposable
     {
         if (!_subscriptions.TryGetValue(packet.StreamId, out Subscription? subscription))
         {
+            Trace.TraceWarning("[Screenshare] ScreenShareReceiver.OnData: Received packet for unsubscribed stream {0}, frame {1}.", packet.StreamId, packet.FrameNumber);
             return;
         }
 
         // acknowledge receipt even if the packet turns out unusable, so the host keeps pacing
-        _sendToHost(new FrameAck(_local, packet.StreamId, packet.FrameNumber));
+        try
+        {
+            _sendToHost(new FrameAck(_local, packet.StreamId, packet.FrameNumber));
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError("[Screenshare] ScreenShareReceiver.OnData: Failed to send FrameAck for stream {0}, frame {1}: {2}", packet.StreamId, packet.FrameNumber, ex);
+        }
 
         PacketApplyOutcome outcome = subscription.Applier.Apply(packet);
-        if (outcome != PacketApplyOutcome.Applied || packet.IsPulse)
+        if (outcome != PacketApplyOutcome.Applied)
         {
+            Trace.TraceWarning("[Screenshare] ScreenShareReceiver.OnData: Packet {0} for stream {1} was not applied. Outcome: {2}.", packet.FrameNumber, packet.StreamId, outcome);
+            return;
+        }
+
+        if (packet.IsPulse)
+        {
+            Trace.TraceInformation("[Screenshare] ScreenShareReceiver.OnData: Pulse received and applied for stream {0}, frame {1}.", packet.StreamId, packet.FrameNumber);
             return;
         }
 
         // either of a sharer's streams draws the same tile
         string sharer = StreamLayers.BaseOf(packet.StreamId);
-        using (Bitmap frame = subscription.Stitcher.GetCurrentFrame()!)
+        try
         {
-            _frames.Update(sharer, frame);
-        }
+            using (Bitmap frame = subscription.Stitcher.GetCurrentFrame()!)
+            {
+                _frames.Update(sharer, frame);
+            }
 
-        FrameUpdated?.Invoke(sharer);
+            FrameUpdated?.Invoke(sharer);
+            Trace.TraceInformation("[Screenshare] ScreenShareReceiver.OnData: Frame updated for sharer {0} (frame {1}).", sharer, packet.FrameNumber);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError("[Screenshare] ScreenShareReceiver.OnData: Failed to update frame for sharer {0}: {1}", sharer, ex);
+        }
     }
 
     /// <summary>
@@ -204,6 +272,8 @@ internal sealed class ScreenShareReceiver : IDisposable
     /// </summary>
     public void Handle(IScreenShareMessage message)
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareReceiver.Handle: Handling message of kind {0}.", message?.Kind);
+
         switch (message)
         {
             case StreamStarted started:
@@ -217,11 +287,16 @@ internal sealed class ScreenShareReceiver : IDisposable
             case ScreenDataPacket packet:
                 OnData(packet);
                 break;
+
+            default:
+                Trace.TraceWarning("[Screenshare] ScreenShareReceiver.Handle: Unhandled message kind {0}.", message?.Kind);
+                break;
         }
     }
 
     public void Dispose()
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareReceiver.Dispose: Disposing ScreenShareReceiver.");
         foreach (Subscription subscription in _subscriptions.Values)
         {
             subscription.Dispose();
