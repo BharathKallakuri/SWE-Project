@@ -1,8 +1,8 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 using LocationTracker.Interfaces;
 using LocationTracker.Models;
-using System.Diagnostics;
 
 namespace LocationTracker.Services;
 

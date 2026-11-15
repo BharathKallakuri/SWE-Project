@@ -854,6 +854,10 @@ public sealed partial class MainWindow : Window
         {
             MiniMapView.AttachTo(page);
         }
+        else if (e.Content is IncidentDetailsPage detailsPage)
+        {
+            MiniMapView.AttachTo(detailsPage);
+        }
     }
 
     private async Task ShowErrorAsync(string title, string message)

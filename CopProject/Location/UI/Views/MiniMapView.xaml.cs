@@ -1,11 +1,14 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using System.Globalization;
+using Incidents;
 using Incidents.ViewModels;
 using Incidents.Views;
+using LocationTracker.Interfaces;
 using LocationTracker.Models;
+using LocationTracker.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
-using System.Diagnostics;
 
 namespace LocationTracker.Views;
 
@@ -14,16 +17,18 @@ namespace LocationTracker.Views;
 /// </summary>
 public sealed partial class MiniMapView : UserControl
 {
-    public event Action<double, double>? LocationSelected;
+    public event Action<IncidentLocation>? LocationSelected;
 
+    private readonly IGeocodingService _geocoding;
     private bool _mapInitializationStarted;
     private bool _isMapReady;
     private double _latitude = double.NaN;
     private double _longitude = double.NaN;
 
-    public MiniMapView()
+    public MiniMapView(IGeocodingService geocoding)
     {
         InitializeComponent();
+        _geocoding = geocoding;
         Loaded += MiniMapView_Loaded;
     }
 
@@ -40,11 +45,13 @@ public sealed partial class MiniMapView : UserControl
                 return;
             }
 
-            MiniMapView miniMap = new();
+            MiniMapView miniMap = new(
+                new NominatimGeocodingService(new HttpClient()));
             page.MiniMapHost.Content = miniMap;
-            miniMap.LocationSelected += (latitude, longitude) => {
-                viewModel.Latitude = latitude;
-                viewModel.Longitude = longitude;
+            miniMap.LocationSelected += location => {
+                viewModel.Latitude = location.Latitude;
+                viewModel.Longitude = location.Longitude;
+                viewModel.Address = location.Address;
             };
 
             viewModel.PropertyChanged += async (s, args) => {
@@ -60,6 +67,40 @@ public sealed partial class MiniMapView : UserControl
             {
                 await miniMap.ShowLocationAsync(viewModel.Latitude, viewModel.Longitude);
             }
+        };
+    }
+
+    public static void AttachTo(IncidentDetailsPage page)
+    {
+        page.Loaded += async (sender, e) => {
+            IncidentDetailsPageViewModel? viewModel = page.ViewModel;
+            if (viewModel is null || page.MiniMapHost.Content is not null)
+            {
+                return;
+            }
+
+            MiniMapView miniMap = new(
+                new NominatimGeocodingService(new HttpClient()));
+            page.MiniMapHost.Content = miniMap;
+            miniMap.LocationSelected += location => {
+                viewModel.EditableLatitude = location.Latitude;
+                viewModel.EditableLongitude = location.Longitude;
+                viewModel.EditableAddress = location.Address;
+            };
+
+            viewModel.PropertyChanged += async (s, args) => {
+                if (args.PropertyName == nameof(viewModel.EditableLatitude) ||
+                    args.PropertyName == nameof(viewModel.EditableLongitude))
+                {
+                    await miniMap.ShowLocationAsync(
+                        viewModel.EditableLatitude,
+                        viewModel.EditableLongitude);
+                }
+            };
+
+            await miniMap.ShowLocationAsync(
+                viewModel.EditableLatitude,
+                viewModel.EditableLongitude);
         };
     }
 
@@ -106,7 +147,7 @@ public sealed partial class MiniMapView : UserControl
         MapView.NavigateToString(MapPage);
     }
 
-    private void WebMessageReceived(
+    private async void WebMessageReceived(
         CoreWebView2 sender,
         CoreWebView2WebMessageReceivedEventArgs args)
     {
@@ -120,7 +161,20 @@ public sealed partial class MiniMapView : UserControl
             return;
         }
 
-        LocationSelected?.Invoke(latitude, longitude);
+        string? address;
+        try
+        {
+            address = await _geocoding.GetAddressAsync(latitude, longitude);
+        }
+        catch (HttpRequestException ex)
+        {
+            Trace.TraceWarning(
+                $"[Location] MiniMapView.WebMessageReceived: Address lookup failed: {ex.Message}");
+            address = null;
+        }
+
+        LocationSelected?.Invoke(
+            new IncidentLocation(latitude, longitude, address));
     }
 
     private async void MapView_NavigationCompleted(

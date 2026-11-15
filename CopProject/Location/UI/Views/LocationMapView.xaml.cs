@@ -1,11 +1,11 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using Incidents;
 using LocationTracker.Interfaces;
 using LocationTracker.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
-using System.Diagnostics;
 
 namespace LocationTracker.Views;
 
@@ -83,7 +83,7 @@ public sealed partial class LocationMapView : UserControl
             Trace.TraceError($"[Location] LocationMapView.WebView_WebMessageReceived: Failed to parse message JSON: {ex.Message}");
             return;
         }
-        using var _ = message;
+        using JsonDocument _ = message;
         if (!message.RootElement.TryGetProperty("type", out JsonElement type))
         {
             return;

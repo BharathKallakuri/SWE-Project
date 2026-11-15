@@ -1,10 +1,10 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Incidents;
 using LocationTracker.Interfaces;
 using LocationTracker.Models;
 using LocationTracker.ViewModels.Utils;
-using System.Diagnostics;
 
 namespace LocationTracker.ViewModels;
 
@@ -121,7 +121,7 @@ public sealed class LocationMapViewModel : ViewModelBase
 
         ErrorMessage = string.Empty;
         List<Incident> incidents;
-        try 
+        try
         {
             incidents = await _mapService.GetIncidentsForMapAsync(BuildFilter());
         }

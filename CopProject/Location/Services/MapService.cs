@@ -1,7 +1,7 @@
-﻿using Incidents;
+﻿using System.Diagnostics;
+using Incidents;
 using LocationTracker.Interfaces;
 using LocationTracker.Models;
-using System.Diagnostics;
 
 namespace LocationTracker.Services;
 
