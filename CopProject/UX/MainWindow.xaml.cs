@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -24,6 +25,7 @@ using Incidents.Views;
 using LocationTracker.Services;
 using LocationTracker.Views;
 using Utils;
+using Utils.Diagnosis.Views;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -81,6 +83,7 @@ public sealed partial class MainWindow : Window
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1280, 800));
         RecordsList.ItemsSource = _records;
         IncidentsFrame.Navigated += IncidentsFrame_Navigated;
+        MeetingIncidentsFrame.Navigated += IncidentsFrame_Navigated;
 
         // CONTROLLER TEAM: initialize controller service and bind MeetingView
         _meetingService.Initialize(_session);
@@ -155,6 +158,7 @@ public sealed partial class MainWindow : Window
         LocationView.Visibility = Vis(screen == "location");
         CloudView.Visibility = Vis(screen == "cloud");
         CrashHandlerView.Visibility = Vis(screen == "crashhandler");
+        DiagnosisView.Visibility = Vis(screen == "diagnosis");
         UserPanel.Visibility = Vis(screen != "login");
         MeetingInfoText.Visibility = Vis(_inMeeting);
     }
@@ -172,7 +176,7 @@ public sealed partial class MainWindow : Window
 
     private byte[]? GetProfilePictureBytes()
     {
-        if (string.IsNullOrEmpty(_picture)) return null;
+        if (string.IsNullOrEmpty(_picture)) { return null; }
         try
         {
             if (File.Exists(_picture))
@@ -214,6 +218,7 @@ public sealed partial class MainWindow : Window
         LocationTopBtn.Visibility = Vis(!_inMeeting);
         CloudTopBtn.Visibility = Vis(!_inMeeting);
         CrashHandlerTopBtn.Visibility = Vis(!_inMeeting);
+        DiagnosisTopBtn.Visibility = Vis(!_inMeeting);
 
         // CONTROLLER TEAM: store current user identity into session
         _session.CurrentUserId = _userId;
@@ -361,6 +366,8 @@ public sealed partial class MainWindow : Window
         _inMeeting = false;
         LocationHost.Content = null;
         _incidentContextTask = null;
+        MeetingIncidentsFrame.Content = null;
+        MeetingIncidentsFrame.BackStack.Clear();
         _userId = string.Empty;
         _userEmail = string.Empty;
         _picture = string.Empty;
@@ -380,6 +387,10 @@ public sealed partial class MainWindow : Window
     }
     private async void ShowCrashDashboard()
     {
+        // Author = Gundamaraju Hemanth Kashyap
+
+        // Roll Number = 112301009
+
         try
         {
             ICrashReportService service = await CrashReportService.CreateAsync(CrashHandler.Current?.PendingUploader);
@@ -400,6 +411,23 @@ public sealed partial class MainWindow : Window
     }
 
     private void CrashHandlerBack_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen(_inMeeting ? "meeting" : "dash");
+    }
+
+    // Both Diagnosis buttons open the same page and preserve its current report.
+    private void Diagnosis_Click(object sender, RoutedEventArgs e)
+    {
+        if (DiagnosisFrame.Content is not DiagnosisPage)
+        {
+            DiagnosisFrame.Navigate(typeof(DiagnosisPage));
+        }
+
+        ShowScreen("diagnosis");
+    }
+
+    
+    private void DiagnosisBack_Click(object sender, RoutedEventArgs e)
     {
         ShowScreen(_inMeeting ? "meeting" : "dash");
     }
@@ -483,11 +511,13 @@ public sealed partial class MainWindow : Window
         SharePanel.Visibility = Vis(which == "share");
         BoardPanel.Visibility = Vis(which == "board");
         FileSyncView.Visibility = Vis(which == "filesync");
+        IncidentsPanel.Visibility = Vis(which == "incidents");
 
         HomeBtn.IsChecked = which == "home";
         ShareBtn.IsChecked = which == "share";
         BoardBtn.IsChecked = which == "board";
         FileSyncBtn.IsChecked = which == "filesync";
+        IncidentsBtn.IsChecked = which == "incidents";
     }
 
     private void HomeBtn_Click(object sender, RoutedEventArgs e)
@@ -529,6 +559,8 @@ public sealed partial class MainWindow : Window
                 : me == null ? "the controller has no current user"
                 : $"my endpoint is not usable: '{me.Ip}' port {localPort}";
 
+            Trace.WriteLine($"[FileSync] Cannot open File Sync: {reason}");
+
             _ = ShowErrorAsync("File Sync", "Cannot open File Sync: " + reason);
             return;
         }
@@ -539,6 +571,8 @@ public sealed partial class MainWindow : Window
             string hostIp = _meetingId.Equals("localhost", StringComparison.OrdinalIgnoreCase) ? "127.0.0.1" : _meetingId;
             if (!IPAddress.TryParse(hostIp, out IPAddress? hostAddress) || !int.TryParse(_meetingPort, out int hostPort))
             {
+
+                Trace.WriteLine($"[FileSync] Invalid host endpoint address: {_meetingId}:{_meetingPort}");
                 _ = ShowErrorAsync("File Sync", $"Cannot open File Sync: host address '{_meetingId}:{_meetingPort}' is not valid.");
                 return;
             }
@@ -802,7 +836,7 @@ public sealed partial class MainWindow : Window
     {
         IStorage storage = await StorageFactory.CreateAsync(ModuleType.IncidentManagement);
         IFileOperations fileSynchronizer = new Synchroniser();
-        IIncidentController controller = await IncidentController.CreateAsync(storage, fileSynchronizer);
+        IIncidentController controller = await IncidentController.CreateAsync(_userEmail, storage, fileSynchronizer);
 
         IntPtr windowHandle = WindowNative.GetWindowHandle(this);
         return new IncidentPageContext(controller, _userEmail, windowHandle);
@@ -818,6 +852,25 @@ public sealed partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            await ShowErrorAsync("Unable to load incidents", ex.Message);
+        }
+    }
+
+    private async void IncidentsBtn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            // Load once; keep the page so the user's place survives switching tabs.
+            if (MeetingIncidentsFrame.Content is null)
+            {
+                IncidentPageContext context = await GetIncidentContextAsync();
+                MeetingIncidentsFrame.Navigate(typeof(AllIncidentsPage), context);
+            }
+            ShowPanel("incidents");
+        }
+        catch (Exception ex)
+        {
+            IncidentsBtn.IsChecked = false;
             await ShowErrorAsync("Unable to load incidents", ex.Message);
         }
     }
@@ -885,6 +938,10 @@ public sealed partial class MainWindow : Window
         if (e.Content is CreateIncidentPage page)
         {
             MiniMapView.AttachTo(page);
+        }
+        else if (e.Content is IncidentDetailsPage detailsPage)
+        {
+            MiniMapView.AttachTo(detailsPage);
         }
     }
 

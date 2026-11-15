@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author: M Sreenath Karthick
+// Roll Number: 112301042
+
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Incidents;
@@ -28,7 +31,7 @@ public class IncidentDetailsPageViewModelUpdateTest
         IncidentCloudStorageService storageService = new();
         IncidentFileSynchroniser fileSynchroniser = new();
 
-        _controller = await IncidentController.CreateAsync(storageService, fileSynchroniser);
+        _controller = await IncidentController.CreateAsync(_currentUserId, storageService, fileSynchroniser);
 
         _viewModel = new IncidentDetailsPageViewModel(_controller, _currentUserId);
     }

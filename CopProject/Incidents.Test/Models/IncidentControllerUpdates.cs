@@ -1,9 +1,11 @@
-﻿using FileSynchroniser.Models;
-using Incidents;
+﻿// Author: Shreesh Amit Chembeti
+// Roll Number: 112301046
+
+using FileSynchroniser.Models;
 using Incidents.Test.Implementations;
 using Cloud.Persistence;
 
-namespace Incidents.Test;
+namespace Incidents.Test.Models;
 
 /// <summary>
 /// Test class for update requests to IncidentController
@@ -11,6 +13,7 @@ namespace Incidents.Test;
 [TestClass]
 public sealed class IncidentControllerUpdatesTest
 {
+    private readonly string _currentUserId = "test_user_id";
     private IncidentController _incidentController = null!;
     private readonly List<Incident> _mockIncidents = [];
 
@@ -49,7 +52,7 @@ public sealed class IncidentControllerUpdatesTest
     {
         IStorage cloudStorageService = new IncidentCloudStorageService();
         IFileOperations fileOperationsService = new IncidentFileSynchroniser();
-        _incidentController = await IncidentController.CreateAsync(cloudStorageService, fileOperationsService);
+        _incidentController = await IncidentController.CreateAsync(_currentUserId, cloudStorageService, fileOperationsService);
     }
 
     private readonly List<CreateIncidentRequest> _createIncidentRequests = [
@@ -144,7 +147,6 @@ public sealed class IncidentControllerUpdatesTest
 
     /// <summary>
     /// Update location of incident which is valid but same location it is currently in. 
-    /// todo(@shreesh): update this test when backend changes
     /// </summary>
     /// <returns></returns>
     [TestMethod]
@@ -282,7 +284,6 @@ public sealed class IncidentControllerUpdatesTest
 
     /// <summary>
     /// Update severity of incident which is valid but same severity it is currently in. 
-    /// todo(@shreesh): update this test when backend changes
     /// </summary>
     /// <returns></returns>
     [TestMethod]
@@ -348,7 +349,6 @@ public sealed class IncidentControllerUpdatesTest
 
     /// <summary>
     /// Update status of incident which is valid but same status it is currently in. 
-    /// todo(@shreesh): update this test when backend changes
     /// </summary>
     /// <returns></returns>
     [TestMethod]

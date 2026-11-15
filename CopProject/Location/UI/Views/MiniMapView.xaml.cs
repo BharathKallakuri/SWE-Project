@@ -1,7 +1,11 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using System.Globalization;
+using Incidents;
 using Incidents.ViewModels;
 using Incidents.Views;
+using LocationTracker.Interfaces;
 using LocationTracker.Models;
+using LocationTracker.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
@@ -13,16 +17,18 @@ namespace LocationTracker.Views;
 /// </summary>
 public sealed partial class MiniMapView : UserControl
 {
-    public event Action<double, double>? LocationSelected;
+    public event Action<IncidentLocation>? LocationSelected;
 
+    private readonly IGeocodingService _geocoding;
     private bool _mapInitializationStarted;
     private bool _isMapReady;
     private double _latitude = double.NaN;
     private double _longitude = double.NaN;
 
-    public MiniMapView()
+    public MiniMapView(IGeocodingService geocoding)
     {
         InitializeComponent();
+        _geocoding = geocoding;
         Loaded += MiniMapView_Loaded;
     }
 
@@ -39,11 +45,13 @@ public sealed partial class MiniMapView : UserControl
                 return;
             }
 
-            MiniMapView miniMap = new();
+            MiniMapView miniMap = new(
+                new NominatimGeocodingService(new HttpClient()));
             page.MiniMapHost.Content = miniMap;
-            miniMap.LocationSelected += (latitude, longitude) => {
-                viewModel.Latitude = latitude;
-                viewModel.Longitude = longitude;
+            miniMap.LocationSelected += location => {
+                viewModel.Latitude = location.Latitude;
+                viewModel.Longitude = location.Longitude;
+                viewModel.Address = location.Address;
             };
 
             viewModel.PropertyChanged += async (s, args) => {
@@ -62,6 +70,40 @@ public sealed partial class MiniMapView : UserControl
         };
     }
 
+    public static void AttachTo(IncidentDetailsPage page)
+    {
+        page.Loaded += async (sender, e) => {
+            IncidentDetailsPageViewModel? viewModel = page.ViewModel;
+            if (viewModel is null || page.MiniMapHost.Content is not null)
+            {
+                return;
+            }
+
+            MiniMapView miniMap = new(
+                new NominatimGeocodingService(new HttpClient()));
+            page.MiniMapHost.Content = miniMap;
+            miniMap.LocationSelected += location => {
+                viewModel.EditableLatitude = location.Latitude;
+                viewModel.EditableLongitude = location.Longitude;
+                viewModel.EditableAddress = location.Address;
+            };
+
+            viewModel.PropertyChanged += async (s, args) => {
+                if (args.PropertyName == nameof(viewModel.EditableLatitude) ||
+                    args.PropertyName == nameof(viewModel.EditableLongitude))
+                {
+                    await miniMap.ShowLocationAsync(
+                        viewModel.EditableLatitude,
+                        viewModel.EditableLongitude);
+                }
+            };
+
+            await miniMap.ShowLocationAsync(
+                viewModel.EditableLatitude,
+                viewModel.EditableLongitude);
+        };
+    }
+
     /// <summary>
     /// Moves the pin to the given location. If the map has not loaded yet
     /// the location is kept and shown once it is ready.
@@ -75,7 +117,14 @@ public sealed partial class MiniMapView : UserControl
 
     private async void MiniMapView_Loaded(object sender, RoutedEventArgs e)
     {
-        await InitializeMapAsync();
+        try
+        {
+            await InitializeMapAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"[Location] MiniMapView.MiniMapView_Loaded: Error occurred while initializing the map: {ex.Message}");
+        }
     }
 
     /// <summary>Initializes WebView2 before loading the map.</summary>
@@ -98,7 +147,7 @@ public sealed partial class MiniMapView : UserControl
         MapView.NavigateToString(MapPage);
     }
 
-    private void WebMessageReceived(
+    private async void WebMessageReceived(
         CoreWebView2 sender,
         CoreWebView2WebMessageReceivedEventArgs args)
     {
@@ -108,10 +157,24 @@ public sealed partial class MiniMapView : UserControl
             !double.TryParse(values[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double longitude) ||
             !Coordinates.IsValid(latitude, longitude))
         {
+            Trace.TraceWarning($"[Location] MiniMapView.WebMessageReceived: Invalid message '{args.TryGetWebMessageAsString()}'.");
             return;
         }
 
-        LocationSelected?.Invoke(latitude, longitude);
+        string? address;
+        try
+        {
+            address = await _geocoding.GetAddressAsync(latitude, longitude);
+        }
+        catch (HttpRequestException ex)
+        {
+            Trace.TraceWarning(
+                $"[Location] MiniMapView.WebMessageReceived: Address lookup failed: {ex.Message}");
+            address = null;
+        }
+
+        LocationSelected?.Invoke(
+            new IncidentLocation(latitude, longitude, address));
     }
 
     private async void MapView_NavigationCompleted(
@@ -119,6 +182,10 @@ public sealed partial class MiniMapView : UserControl
         CoreWebView2NavigationCompletedEventArgs args)
     {
         _isMapReady = args.IsSuccess;
+        if (!args.IsSuccess)
+        {
+            Trace.TraceError($"[Location] MiniMapView.MapView_NavigationCompleted: Map navigation failed: {args.WebErrorStatus}");
+        }
         await UpdatePinAsync();
     }
 
@@ -131,7 +198,14 @@ public sealed partial class MiniMapView : UserControl
 
         string lat = _latitude.ToString(CultureInfo.InvariantCulture);
         string lng = _longitude.ToString(CultureInfo.InvariantCulture);
-        await MapView.ExecuteScriptAsync($"showLocation({lat}, {lng});");
+        try
+        {
+            await MapView.ExecuteScriptAsync($"showLocation({lat}, {lng});");
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"[Location] MiniMapView.UpdatePinAsync: Failed to move pin: {ex.Message}");
+        }
     }
 
     private const string MapPage = """

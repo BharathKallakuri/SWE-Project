@@ -1,4 +1,6 @@
-﻿namespace Whiteboard.Interfaces;
+﻿//owner : U Sai Vignesh
+// License : MIT
+namespace Whiteboard.Interfaces;
 
 /// <summary>
 /// Provides selection and transformation operations for whiteboard items.

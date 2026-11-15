@@ -28,6 +28,7 @@
     <ProjectReference Include="..\Controller\Controller.csproj" />
     <ProjectReference Include="..\Screenshare\Screenshare.csproj" />
     <ProjectReference Include="..\Utils\Utils.csproj" />
+    <ProjectReference Include="..\Utils\Diagnosis\Diagnosis.UI.csproj" />
     <ProjectReference Include="..\Cloud\Cloud.csproj" />
     <ProjectReference Include="..\Cloud\UI\Cloud.Crash.UI.csproj" />
 

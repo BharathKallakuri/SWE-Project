@@ -1,17 +1,15 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿// Author: Shreesh Amit Chembeti
+// Roll Number: 112301046
 
 using System;
 using System.Collections.Generic;
 using System.Text;
 using FileSynchroniser.Models;
-using Incidents;
 using Incidents.Test.Implementations;
 using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.EventHandlers;
 using Cloud.Persistence;
 
-namespace Incidents.Test;
+namespace Incidents.Test.Models;
 
 
 /// <summary>
@@ -20,6 +18,7 @@ namespace Incidents.Test;
 [TestClass]
 public sealed class IncidentControllerCorrelationTest
 {
+    private readonly string _currentUserId = "test_user_id";
     private IncidentController _incidentController = null!;
 
     // Represents existing incidents persisted in the cloud
@@ -137,7 +136,7 @@ public sealed class IncidentControllerCorrelationTest
         await SetupIncidentCloudStorageService(cloudStorageService);
 
         IFileOperations fileOperationsService = new IncidentFileSynchroniser();
-        _incidentController = await IncidentController.CreateAsync(cloudStorageService, fileOperationsService);
+        _incidentController = await IncidentController.CreateAsync(_currentUserId, cloudStorageService, fileOperationsService);
     }
 
     /// <summary>

@@ -44,7 +44,9 @@ public static class ItemSnapshot
 
             Line item => new Line {
                 Begin = CopyPoint(item.Begin),
-                End = CopyPoint(item.End)
+                End = CopyPoint(item.End),
+                Color = item.Color,
+                Width = item.Width
             },
 
             Textbox item => new Textbox {

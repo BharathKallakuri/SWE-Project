@@ -1,18 +1,36 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿// Author = Simeon Kandan Sonar
+// Roll Number = 112301031
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Cloud.Networking.Mocking;
 
 /// <summary>
-/// Pass-through Proxy which forwards to <see cref="Trace.WriteLine(string)"/>
+/// Pass-through Proxy which forwards to <see cref="Trace.TraceInformation(string)"/>,
+/// <see cref="Trace.TraceWarning(string)"/> and <see cref="Trace.TraceError(string)"/>
 /// </summary>
 internal sealed class TracerProxy : ITracer
 {
-    public void WriteLine(string message)
+    private static readonly string s_projectName = "Cloud.Networking";
+
+    public void Info(string message, [CallerMemberName] string member = "")
     {
-        Trace.WriteLine(message);
+        Trace.TraceInformation(Format(message, member));
+    }
+
+    public void WriteWarn(string message, [CallerMemberName] string member = "")
+    {
+        Trace.TraceWarning(Format(message, member));
+    }
+
+    public void WriteError(string message, [CallerMemberName] string member = "")
+    {
+        Trace.TraceError(Format(message, member));
+    }
+
+    private static string Format(string message, string member)
+    {
+        return $"[{s_projectName}] {member}: {message}";
     }
 }
