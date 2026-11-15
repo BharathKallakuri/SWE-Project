@@ -277,7 +277,7 @@ them. These have been divided into thread and non-thread operations.
         - Delete message: message ID, the user attempting the deletion
         - Toggle reaction on message: message ID, reaction emoji, user
     - Threaded versions (in a particular thread):
-        - Send new message: parent message ID, `ChatMessageWithThreads` object
+        - Send new message: parent message ID, `ChatMessage` object
         - Edit message: parent message ID, message ID, new content, the user attempting the edit
         - Delete message: parent message ID, message ID, the user attempting the deletion
         - Toggle reaction on message: parent message ID, message ID, reaction emoji, user
@@ -299,7 +299,7 @@ public sealed record Reset() : ChatRequest;
 
 // General operations.
 
-public sealed record SendMessage(ChatMessageWithThreads Message, Guid? ParentMessageId) : ChatRequest;
+public sealed record SendMessage(ChatMessage Message, Guid? ParentMessageId) : ChatRequest;
 
 public sealed record EditMessage(Guid MessageId, string NewContent, string EditorName, Guid? ParentMessageId) : ChatRequest;
 
@@ -363,6 +363,14 @@ Here are some rough ideas regarding threads:
 
 - Broadcasting messages to multiple clients should be possible in parallel.
 - Make sure to lock the server's state-related data structures when required.
+
+## AI features
+
+- AI message generation happens completely server-side
+- This means that only the server requires the API keys
+- The API provided requires two arguments -- context and a question
+    - The context is a textual summary of every message in the chatroom thus far
+    - The question is decided based on whether the invocation was due to a mention or a reply to another AI message
 
 ## Design decisions
 
