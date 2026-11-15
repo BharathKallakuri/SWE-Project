@@ -65,7 +65,8 @@
 
                         <Button
                             x:Name="ButtonSelectItems"
-                            ToolTipService.ToolTip="Select items">
+                            ToolTipService.ToolTip="Select items"
+                            Click="ButtonSelectItems_Click">
                             <FontIcon Glyph="&#xE8B0;"/>
                         </Button>
 
@@ -373,7 +374,6 @@
                         Width="10000"
                         Height="10000"
                         Background="White"
-                        PointerMoved="WhiteboardCanvas_PointerMoved"
                         PointerCaptureLost="WhiteboardCanvas_PointerCaptureLost"
                         DoubleTapped="WhiteboardCanvas_DoubleTapped"/>
                 </ScrollViewer>

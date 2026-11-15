@@ -240,6 +240,34 @@ public class EraserStateTests
     }
 
     /// <summary>
+    /// Assert that the eraser receives presses landing on textboxes
+    /// </summary>
+    [Fact]
+    public void HandlesPointerOnTextbox_IsTrue()
+    {
+        Assert.True(new EraserState(_client).HandlesPointerOnTextbox);
+    }
+
+    /// <summary>
+    /// Assert that pointer pressed on a textbox erases it
+    /// </summary>
+    [Fact]
+    public void PointerPressed_WhenTextboxHit_DeletesTextbox()
+    {
+        Whiteboard.Items.Textbox textbox = new() {
+            Center = new Point2D(100, 100),
+            Content = "hello"
+        };
+        _client.Canvas.AddItem(textbox);
+
+        EraserState state = new(_client);
+        state.PointerPressed(new Point2D(100, 100));
+
+        Assert.Equal(textbox.Id, Assert.Single(_client.DeletedItemIds));
+        Assert.False(_client.Canvas.Items.ContainsKey(textbox.Id));
+    }
+
+    /// <summary>
     /// Assert that all other pointer events do nothing
     /// </summary>
     [Fact]

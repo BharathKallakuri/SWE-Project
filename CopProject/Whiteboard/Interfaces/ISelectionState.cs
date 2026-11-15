@@ -1,4 +1,6 @@
-﻿using System;
+﻿//owner : U Sai Vignesh
+// License : MIT
+using System;
 using System.Collections.Generic;
 
 namespace Whiteboard.Interfaces;

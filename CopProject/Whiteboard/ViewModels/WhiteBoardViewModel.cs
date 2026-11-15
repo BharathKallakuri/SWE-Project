@@ -24,6 +24,7 @@ public enum WhiteboardTool
     Eraser,
     Line,
     Polygon,
+    Select
 }
 
 [ExcludeFromCodeCoverage]
@@ -40,6 +41,7 @@ public partial class WhiteBoardViewModel : IDisposable
     private IViewModelState _eraserState;
     private IViewModelState _lineState;
     private IViewModelState _polygonState;
+    private SelectState _selectState;
     private readonly IWhiteboardClient _whiteboardClient;
     private readonly WhiteboardSession? _session;
     private readonly DispatcherQueue? _dispatcherQueue;
@@ -131,7 +133,8 @@ public partial class WhiteBoardViewModel : IDisposable
         _textboxState = new TextboxState(_whiteboardClient, preview, toolbarInfo);
         _lineState = new LineState(_whiteboardClient, preview, toolbarInfo);
         _polygonState = new PolygonState(_whiteboardClient, preview, toolbarInfo);
-        _renderer = new WhiteboardRenderer(_whiteboardClient.Canvas, canvas, _textboxState);
+        _selectState = new SelectState(_whiteboardClient, preview, toolbarInfo);
+        _renderer = new WhiteboardRenderer(_whiteboardClient.Canvas, canvas, _textboxState, _selectState);
         _currentState = _penState;
         _isInitialized = true;
     }
@@ -173,8 +176,15 @@ public partial class WhiteBoardViewModel : IDisposable
             WhiteboardTool.Eraser => _eraserState,
             WhiteboardTool.Line => _lineState,
             WhiteboardTool.Polygon => _polygonState,
+            WhiteboardTool.Select => _selectState,
             _ => throw new ArgumentOutOfRangeException(nameof(tool))
         };
+
+        // Leaving the select tool deselects the item
+        if (tool != WhiteboardTool.Select)
+        {
+            _selectState.ClearSelection();
+        }
 
         if (!ReferenceEquals(_currentState, selectedState))
         {
