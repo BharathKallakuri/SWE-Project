@@ -36,6 +36,7 @@ public class ImageDiffer : IImageDiffer
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(tileSize);
         _tileSize = tileSize;
+        Trace.TraceInformation("[Screenshare] ImageDiffer.ImageDiffer: Created with tile size {0}.", tileSize);
     }
 
     /// <summary>gets the width and height of a full tile in pixels</summary>
@@ -50,7 +51,7 @@ public class ImageDiffer : IImageDiffer
             previousFrame.Height != currentFrame.Height)
         {
             Trace.TraceWarning(
-            "[Screenshare] Frame dimensions changed. Previous: {0}x{1}, Current: {2}x{3}. Sending full frame.",
+            "[Screenshare] ImageDiffer.Compare: Frame dimensions changed. Previous: {0}x{1}, Current: {2}x{3}. Sending full frame.",
             previousFrame.Width,
             previousFrame.Height,
             currentFrame.Width,
@@ -149,7 +150,7 @@ public class ImageDiffer : IImageDiffer
         if (changedAreas.Count == 0)
         {
             Trace.TraceInformation(
-            "[Screenshare] No changes detected in frame ({0}x{1}).",
+            "[Screenshare] ImageDiffer.Compare: No changes detected in frame ({0}x{1}).",
             currentFrame.Width,
             currentFrame.Height);
             return ImageDiffResult.Unchanged();
@@ -164,7 +165,7 @@ public class ImageDiffer : IImageDiffer
         if (changeRatio >= FULL_FRAME_THRESHOLD)
         {
             Trace.TraceInformation(
-            "[Screenshare] Change ratio: {0:P2}. Threshold: {1:P0}. Sending full frame.",
+            "[Screenshare] ImageDiffer.Compare: Change ratio: {0:P2}. Threshold: {1:P0}. Sending full frame.",
             changeRatio,
             FULL_FRAME_THRESHOLD);
             return ImageDiffResult.CreateFullFrame(
@@ -187,10 +188,18 @@ public class ImageDiffer : IImageDiffer
 
         long totalPayloadSize = changedTiles.Sum(tile => (long)tile.Data.Length);
         Trace.TraceInformation(
-                    "[Screenshare] Delta frame created. Changed tiles: {0}, Encoded payload size: {1} bytes, Changed pixel ratio: {2:P2}.",
+                    "[Screenshare] ImageDiffer.Compare: Delta frame created. Changed tiles: {0}, Encoded payload size: {1} bytes, Changed pixel ratio: {2:P2}.",
                     changedTiles.Count,
                     totalPayloadSize,
                     changeRatio);
+
+        if (totalPayloadSize > LARGE_DELTA_BYTES)
+        {
+            Trace.TraceInformation(
+                "[Screenshare] ImageDiffer.Compare: Delta payload {0} bytes exceeds {1} bytes. Attaching whole frame.",
+                totalPayloadSize,
+                LARGE_DELTA_BYTES);
+        }
         return totalPayloadSize > LARGE_DELTA_BYTES ? ImageDiffResult.Delta(changedTiles, new Bitmap(currentFrame))
         : ImageDiffResult.Delta(changedTiles);
 
@@ -329,11 +338,24 @@ public class ImageDiffer : IImageDiffer
             height
             );
 
+        try
+        {
+            using Bitmap tileBitmap = bitmap.Clone(
+                rectangle,
+                PixelFormat.Format32bppArgb);
 
-        using Bitmap tileBitmap = bitmap.Clone(
-            rectangle,
-            PixelFormat.Format32bppArgb);
-
-        return PngEncoder.Encode(tileBitmap);
+            return PngEncoder.Encode(tileBitmap);
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceError(
+                "[Screenshare] ImageDiffer.ExtractTileData: Failed to extract tile at ({0}, {1}) of size {2}x{3}: {4}",
+                startX,
+                startY,
+                width,
+                height,
+                exception);
+            throw;
+        }
     }
 }

@@ -29,14 +29,14 @@ public static class PngEncoder
         ArgumentNullException.ThrowIfNull(bitmap);
 
         Trace.TraceInformation(
-        "[Screenshare] Starting PNG encoding for bitmap ({0}x{1}).", bitmap.Width, bitmap.Height);
+        "[Screenshare]  PngEncoder.Encode Starting PNG encoding for bitmap ({0}x{1}).", bitmap.Width, bitmap.Height);
 
         using var stream = new MemoryStream();
         bitmap.Save(stream, s_codec, null);
 
         byte[] encodedData = stream.ToArray();
 
-        Trace.TraceInformation("[Screenshare] PNG encoding completed. Output size: {0} bytes.", encodedData.Length);
+        Trace.TraceInformation("[Screenshare]  PngEncoder.Encode PNG encoding completed. Output size: {0} bytes.", encodedData.Length);
         return encodedData;
     }
 
@@ -57,13 +57,19 @@ public static class PngEncoder
 
             if (codec != null)
             {
+                Trace.TraceInformation(
+                    "[Screenshare] PngEncoder.FindPngCodec PNG encoder found on attempt {0}.", attempt);
                 return codec;
             }
 
             // another thread may still be initializing GDI+ codec list
+            Trace.TraceWarning(
+                "[Screenshare] PngEncoder.FindPngCodec: PNG encoder not found on attempt {0}. Retrying in {1} ms.",
+                attempt,
+                10 * attempt);
             sleep(10 * attempt);
         }
-        Trace.TraceError("[Screenshare] PNG encoder lookup failed after {0} attempts.", LookupAttempts);
+        Trace.TraceError("[Screenshare]  PngEncoder.FindPngCodec PNG encoder lookup failed after {0} attempts.", LookupAttempts);
 
         throw new InvalidOperationException("GDI+ has no PNG encoder");
     }

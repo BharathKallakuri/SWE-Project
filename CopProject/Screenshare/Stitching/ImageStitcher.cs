@@ -28,6 +28,10 @@ public class ImageStitcher : IImageStitcher, IDisposable
 
         if (frameNumber <= LastFrameNumber)
         {
+            Trace.TraceWarning(
+                "[Screenshare] ImageStitcher.ApplyFullFrame: Stale full frame ignored. Frame: {0}, Last frame: {1}.",
+                frameNumber,
+                LastFrameNumber);
             return false;
         }
 
@@ -38,7 +42,7 @@ public class ImageStitcher : IImageStitcher, IDisposable
         LastFrameNumber = frameNumber;
         NeedsFullFrame = false;
         Trace.TraceInformation(
-    "[Screenshare] Full frame applied successfully. Frame: {0}, Dimensions: {1}x{2}.", frameNumber, _currentFrame.Width, _currentFrame.Height);
+    "[Screenshare] ImageStitcher.ApplyFullFrame: Full frame applied successfully. Frame: {0}, Dimensions: {1}x{2}.", frameNumber, _currentFrame.Width, _currentFrame.Height);
 
         return true;
     }
@@ -58,6 +62,8 @@ public class ImageStitcher : IImageStitcher, IDisposable
 
         if (tiles.Count == 0)
         {
+            Trace.TraceWarning(
+                "[Screenshare] ImageStitcher.ApplyChangedTiles: Delta for frame {0} contains no tiles.", frameNumber);
             throw new ArgumentException("a delta must contain at least one tile", nameof(tiles));
         }
 
@@ -96,7 +102,7 @@ public class ImageStitcher : IImageStitcher, IDisposable
         catch (Exception exception)
         {
             Trace.TraceError(
-                "[Screenshare] Failed to apply changed tiles for frame {0}: {1}",
+                "[Screenshare] ImageStitcher.ApplyChangedTiles: Failed to apply changed tiles for frame {0}: {1}",
                 frameNumber,
                 exception);
 
@@ -112,7 +118,7 @@ public class ImageStitcher : IImageStitcher, IDisposable
 
         LastFrameNumber = frameNumber;
         Trace.TraceInformation(
-        "[Screenshare] Delta frame applied successfully. Frame: {0}, Tiles applied: {1}.",
+        "[Screenshare] ImageStitcher.ApplyChangedTiles: Delta frame applied successfully. Frame: {0}, Tiles applied: {1}.",
         frameNumber,
         tiles.Count);
         return true;
@@ -132,6 +138,7 @@ public class ImageStitcher : IImageStitcher, IDisposable
         }
 
         LastFrameNumber = frameNumber;
+        Trace.TraceInformation("[Screenshare] ImageStitcher.ApplyPulse: Pulse applied. Frame: {0}.", frameNumber);
         return true;
     }
 
@@ -139,7 +146,13 @@ public class ImageStitcher : IImageStitcher, IDisposable
 
     public Bitmap? GetCurrentFrame()
     {
-        return _currentFrame == null ? null : new Bitmap(_currentFrame);
+        if (_currentFrame == null)
+        {
+            Trace.TraceInformation("[Screenshare] ImageStitcher.GetCurrentFrame: No frame available yet.");
+            return null;
+        }
+
+        return new Bitmap(_currentFrame);
     }
 
     public void Reset()
@@ -148,10 +161,12 @@ public class ImageStitcher : IImageStitcher, IDisposable
         _currentFrame = null;
         LastFrameNumber = -1;
         NeedsFullFrame = true;
+        Trace.TraceInformation("[Screenshare] ImageStitcher.Reset: Stitcher reset. Waiting for a full frame.");
     }
 
     public void Dispose()
     {
+        Trace.TraceInformation("[Screenshare] ImageStitcher.Dispose: Disposing stitcher.");
         Reset();
     }
 
@@ -163,11 +178,20 @@ public class ImageStitcher : IImageStitcher, IDisposable
     {
         if (NeedsFullFrame || frameNumber <= LastFrameNumber)
         {
+            Trace.TraceInformation(
+                "[Screenshare] ImageStitcher.TryAdvance: Frame {0} not applied. Needs full frame: {1}, Last frame: {2}.",
+                frameNumber,
+                NeedsFullFrame,
+                LastFrameNumber);
             return false;
         }
 
         if (frameNumber != LastFrameNumber + 1)
         {
+            Trace.TraceWarning(
+                "[Screenshare] ImageStitcher.TryAdvance: Frame gap detected. Expected: {0}, Received: {1}. Full frame required.",
+                LastFrameNumber + 1,
+                frameNumber);
             NeedsFullFrame = true;
             return false;
         }
@@ -183,6 +207,14 @@ public class ImageStitcher : IImageStitcher, IDisposable
         if (tile.X > _currentFrame!.Width - tile.Width ||
             tile.Y > _currentFrame.Height - tile.Height)
         {
+            Trace.TraceWarning(
+                "[Screenshare] ImageStitcher.DecodeTile: Tile at ({0}, {1}) of size {2}x{3} lies outside the frame ({4}x{5}).",
+                tile.X,
+                tile.Y,
+                tile.Width,
+                tile.Height,
+                _currentFrame.Width,
+                _currentFrame.Height);
             throw new ArgumentException("tile lies outside the current frame", nameof(tile));
         }
 
@@ -201,6 +233,12 @@ public class ImageStitcher : IImageStitcher, IDisposable
         //  the encoded image dimensions should mathch the tile metadata
         if (tileBitmap.Width != tile.Width || tileBitmap.Height != tile.Height)
         {
+            Trace.TraceWarning(
+                "[Screenshare] ImageStitcher.DecodeTile: Decoded tile is {0}x{1} but metadata says {2}x{3}.",
+                tileBitmap.Width,
+                tileBitmap.Height,
+                tile.Width,
+                tile.Height);
             tileBitmap.Dispose();
             throw new ArgumentException(
                 "encoded tile dimensions do not match the tile metadata", nameof(tile));
