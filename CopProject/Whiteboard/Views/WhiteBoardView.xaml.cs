@@ -56,6 +56,7 @@ public sealed partial class WhiteBoardView : UserControl
         InitializeComponent();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+        KeyDown += OnKeyDown;
     }
 
     public WhiteBoardView(WhiteBoardViewModel viewModel) : this()
@@ -141,6 +142,16 @@ public sealed partial class WhiteBoardView : UserControl
         _viewModel?.SelectTool(WhiteboardTool.EqTriangle);
     }
 
+    private void ButtonLine_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        _viewModel?.SelectTool(WhiteboardTool.Line);
+    }
+
+    private void ButtonPolygon_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        _viewModel?.SelectTool(WhiteboardTool.Polygon);
+    }
+
     private void ButtonEraseItems_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         _viewModel?.SelectTool(WhiteboardTool.Eraser);
@@ -222,6 +233,32 @@ public sealed partial class WhiteBoardView : UserControl
 
         // Pass the pointer position to the view model for computation
         _viewModel.PointerCaptureLost(new Point2D(p.X, p.Y));
+    }
+
+    private void WhiteboardCanvas_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
+    {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
+        // Get the current pointer position
+        Point p = e.GetPosition(WhiteboardCanvas);
+
+        // Pass the pointer position to the view model for computation
+        _viewModel.PointerDoubleTapped(new Point2D(p.X, p.Y));
+    }
+
+    private void OnKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        // On pressing the Escape key, reset the state machine
+        if (e.Key == Windows.System.VirtualKey.Escape)
+        {
+            _viewModel?.ResetCurrentState();
+
+            // Mark the event as handled
+            e.Handled = true;
+        }
     }
 
     /// <summary>
