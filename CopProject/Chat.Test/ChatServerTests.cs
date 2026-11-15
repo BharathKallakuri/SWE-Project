@@ -578,6 +578,104 @@ public class ChatServerTests
     }
 
     [Fact]
+    public async Task GenerateAiReplyIgnoresEmptyInsightsResponse()
+    {
+        ChatServer server = NewAiTestServer(new TestInsightsProvider(string.Empty));
+        using (server)
+        {
+            await server.GenerateAiReplyAsync(
+                "question",
+                string.Empty,
+                new SendMessage(DateTimeOffset.UtcNow, new Mentions(), "question", null),
+                Guid.NewGuid());
+
+            Assert.Equal(0, server.Version);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAiReplyHandlesInsightsFailure()
+    {
+        ChatServer server = NewAiTestServer(new TestInsightsProvider(
+            (_, _) => Task.FromException<string>(new InvalidOperationException("test failure"))));
+        using (server)
+        {
+            await server.GenerateAiReplyAsync(
+                "question",
+                string.Empty,
+                new SendMessage(DateTimeOffset.UtcNow, new Mentions(), "question", null),
+                Guid.NewGuid());
+
+            Assert.Equal(0, server.Version);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateAiReplyDiscardsResponseAfterServerDisposal()
+    {
+        ChatServer server = NewAiTestServer(new TestInsightsProvider("answer"));
+        server.Dispose();
+
+        await server.GenerateAiReplyAsync(
+            "question",
+            string.Empty,
+            new SendMessage(DateTimeOffset.UtcNow, new Mentions(), "question", null),
+            Guid.NewGuid());
+
+        Assert.Equal(0, server.Version);
+    }
+
+    [Fact]
+    public async Task GenerateAiReplyDoesNotRecordReplyWhenThreadWasCleared()
+    {
+        Chatroom chatroom = new("room", "host");
+        Guid threadParentId = chatroom.AddMessage(new ChatMessageWithThreads
+        {
+            SenderName = "host",
+            Content = "Thread root"
+        });
+        ChatServer server = NewAiTestServer(new TestInsightsProvider("answer"), chatroom);
+        using (server)
+        {
+            chatroom.ClearMessages();
+
+            await server.GenerateAiReplyAsync(
+                "question",
+                string.Empty,
+                new SendMessage(
+                    DateTimeOffset.UtcNow,
+                    new Mentions(),
+                    "question",
+                    threadParentId),
+                Guid.NewGuid());
+
+            Assert.Equal(0, server.Version);
+            Assert.Empty(chatroom.GetMessagesSnapshot());
+        }
+    }
+
+    [Fact]
+    public void CommunicatorFailureIsRethrownWhenSynchronizingHostOperation()
+    {
+        RecordingCommunicator communicator = new();
+        RecordingController controller = new();
+        using ChatServer server = NewAiTestServer(
+            new TestInsightsProvider("unused"),
+            communicator: communicator,
+            controller: controller);
+        controller.AddEndpoint("guest", ClientAddress);
+        Assert.True(server.RegisterClient("guest"));
+        communicator.SendException = new InvalidOperationException("send failed");
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => server.SubmitHostRequest(
+                new SendMessage(DateTimeOffset.UtcNow, new Mentions(), "From host", null)));
+
+        Assert.Equal("send failed", exception.Message);
+        Assert.Equal(1, server.Version);
+    }
+
+    [Fact]
     public void ClientEditRequestUpdatesMessageAndRecordsEdit()
     {
         (ChatServer server, RecordingCommunicator communicator, Guid messageId) = NewServerWithGuestMessage();
@@ -769,8 +867,35 @@ public class ChatServerTests
         return new ChatServer(new Chatroom("room", "host"), controller);
     }
 
-    private sealed class TestInsightsProvider(string response) : IInsightsProvider
+    private static ChatServer NewAiTestServer(
+        IInsightsProvider provider,
+        Chatroom? chatroom = null,
+        RecordingCommunicator? communicator = null,
+        RecordingController? controller = null)
     {
+        communicator ??= new RecordingCommunicator();
+        controller ??= new RecordingController();
+        controller.Communicator = communicator;
+        return new ChatServer(
+            chatroom ?? new Chatroom("room", "host"),
+            controller,
+            () => Task.FromResult(new InsightsManager(provider)));
+    }
+
+    private sealed class TestInsightsProvider : IInsightsProvider
+    {
+        private readonly Func<string, string?, Task<string>> _generateChatResponse;
+
+        public TestInsightsProvider(string response)
+            : this((_, _) => Task.FromResult(response))
+        {
+        }
+
+        public TestInsightsProvider(Func<string, string?, Task<string>> generateChatResponse)
+        {
+            _generateChatResponse = generateChatResponse;
+        }
+
         public string ModelName => "test";
         public List<(string UserMessage, string? ChatContext)> Requests { get; } = new();
 
@@ -783,7 +908,7 @@ public class ChatServerTests
         public Task<string> GenerateChatResponseAsync(string userMessage, string? chatContext = null)
         {
             Requests.Add((userMessage, chatContext));
-            return Task.FromResult(response);
+            return _generateChatResponse(userMessage, chatContext);
         }
     }
 
@@ -830,6 +955,7 @@ public class ChatServerTests
         public int RemoveSubscriberCount { get; private set; }
         public int? RemovedModule { get; private set; }
         public List<SentMessage> Sent { get; } = new();
+        public Exception? SendException { get; set; }
 
         public void AddSubscriber(int module, IMessageListener subscriber)
         {
@@ -845,6 +971,11 @@ public class ChatServerTests
 
         public void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
         {
+            if (SendException is not null)
+            {
+                throw SendException;
+            }
+
             Sent.Add(new SentMessage(iPEndPoint, message, module, priority));
         }
 

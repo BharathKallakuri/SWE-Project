@@ -257,6 +257,20 @@ public class ChatClientTests
     }
 
     [Fact]
+    public void SendRequestRethrowsCommunicatorFailure()
+    {
+        RecordingCommunicator communicator = new()
+        {
+            SendException = new InvalidOperationException("send failed")
+        };
+        using ChatClient client = NewClient(communicator);
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => client.Sync());
+
+        Assert.Equal("send failed", exception.Message);
+    }
+
+    [Fact]
     public void AppliesBatchRaisesEventsAdvancesVersionAndUpdatesParticipants()
     {
         Chatroom chatroom = new("room", "host");
@@ -434,6 +448,7 @@ public class ChatClientTests
         public IPEndPoint? LastDestination { get; private set; }
         public int? LastSentModule { get; private set; }
         public int? LastPriority { get; private set; }
+        public Exception? SendException { get; init; }
 
         public void AddSubscriber(int module, IMessageListener subscriber)
         {
@@ -449,6 +464,11 @@ public class ChatClientTests
 
         public void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
         {
+            if (SendException is not null)
+            {
+                throw SendException;
+            }
+
             LastDestination = iPEndPoint;
             LastSentMessage = message;
             LastSentModule = module;
