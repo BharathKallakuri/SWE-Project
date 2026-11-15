@@ -6,8 +6,8 @@ using System.Text.Json;
 using Cloud.Persistence;
 using Microsoft.UI.Xaml;
 using Whiteboard.Interfaces;
-using Whiteboard.Services;
 using Whiteboard.Models;
+using Whiteboard.Services;
 
 namespace Whiteboard.Test.Services;
 
@@ -15,8 +15,7 @@ public class CloudExportIntegrationTests
 {
     public async Task ExportToCloudAsync_StoreExportData()
     {
-        var exportData = new CanvasExportData
-        {
+        var exportData = new CanvasExportData {
             ImageData = [1, 2, 3, 4],
             ContentType = "image/png",
             FileName = $"test-{Guid.NewGuid():N}.png",
@@ -61,13 +60,19 @@ public class CloudExportIntegrationTests
 
     private sealed class TempCanvasRender(CanvasExportData exportData) : ICanvasRender
     {
-        public Task<byte[]> RenderToPngAsync(UIElement element) =>
-            Task.FromResult(exportData.ImageData);
+        public Task<byte[]> RenderToPngAsync(UIElement element)
+        {
+            return Task.FromResult(exportData.ImageData);
+        }
 
-        public Task<byte[]> RenderToJpegAsync(UIElement element) =>
-            Task.FromResult(exportData.ImageData);
+        public Task<byte[]> RenderToJpegAsync(UIElement element)
+        {
+            return Task.FromResult(exportData.ImageData);
+        }
 
-        public Task<CanvasExportData> CreateExportDataAsync(UIElement element, string whiteboardId, bool isJpeg = false) =>
-            Task.FromResult(exportData);
+        public Task<CanvasExportData> CreateExportDataAsync(UIElement element, string whiteboardId, bool isJpeg = false)
+        {
+            return Task.FromResult(exportData);
+        }
     }
 }

@@ -26,7 +26,8 @@ public class ShapeSquareState : ViewModelStateBase
     /// </summary>
     private ISquare? _square;
 
-    public ShapeSquareState(IWhiteboardClient whiteboardClient, ICanvasPreview preview, ToolbarInfo toolbarInfo) : base(whiteboardClient, preview, toolbarInfo) {
+    public ShapeSquareState(IWhiteboardClient whiteboardClient, ICanvasPreview preview, ToolbarInfo toolbarInfo) : base(whiteboardClient, preview, toolbarInfo)
+    {
     }
 
     public override void PointerPressed(Point2D point)

@@ -3,10 +3,10 @@
 /// LICENSE : MIT
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -15,8 +15,8 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
-using Whiteboard.ViewModels;
 using Whiteboard.Models;
+using Whiteboard.ViewModels;
 using Windows.Foundation;
 using Windows.UI;
 
@@ -57,19 +57,13 @@ public sealed partial class WhiteBoardView : UserControl
                 _viewModel.InitializeViewModel(WhiteboardCanvas, _toolbarInfo);
                 _viewModel.HistoryChanged += UpdateHistoryButtons;
                 UpdateHistoryButtons();
-                if (ButtonSmartShape is not null)
-                {
-                    ButtonSmartShape.IsChecked = _viewModel.IsSmartShapeEnabled;
-                }
+                ButtonSmartShape?.IsChecked = _viewModel.IsSmartShapeEnabled;
             }
             else
             {
                 WhiteboardCanvas.Children.Clear();
                 UpdateHistoryButtons();
-                if (ButtonSmartShape is not null)
-                {
-                    ButtonSmartShape.IsChecked = false;
-                }
+                ButtonSmartShape?.IsChecked = false;
             }
         }
     }
@@ -436,7 +430,7 @@ public sealed partial class WhiteBoardView : UserControl
         }
 
         float factor = CanvasScrollViewer.ZoomFactor;
-        int zoomPercent = (int) Math.Round(factor * 100);
+        int zoomPercent = (int)Math.Round(factor * 100);
 
         _isUpdatingZoomFromScrollViewer = true;
         try
@@ -612,13 +606,11 @@ public sealed partial class WhiteBoardView : UserControl
 
             foreach (WhiteboardSnapshotSummary snapshot in snapshots)
             {
-                var menuItem = new MenuFlyoutItem
-                {
+                var menuItem = new MenuFlyoutItem {
                     Text = snapshot.ToString()
                 };
 
-                menuItem.Click += async (_, _) =>
-                {
+                menuItem.Click += async (_, _) => {
                     if (_viewModel is null)
                     {
                         return;
@@ -647,8 +639,7 @@ public sealed partial class WhiteBoardView : UserControl
 
     private async Task ShowMessageAsync(string title, string message)
     {
-        var dialog = new ContentDialog
-        {
+        var dialog = new ContentDialog {
             Title = title,
             Content = message,
             CloseButtonText = "OK",

@@ -10,9 +10,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Diagnostics;
-
+using System.Text;
 using Whiteboard.Interfaces;
 
 namespace Whiteboard.Services;

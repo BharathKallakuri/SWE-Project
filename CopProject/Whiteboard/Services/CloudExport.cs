@@ -44,8 +44,7 @@ public class CloudExport
 
         _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
 
-        var record = new
-        {
+        var record = new {
             BoardId = whiteboardId,
             OwnerId = userId,
             exportData.FileName,
