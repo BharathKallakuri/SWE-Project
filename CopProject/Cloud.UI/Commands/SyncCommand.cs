@@ -1,7 +1,6 @@
 ﻿// Author = Simeon Kandan Sonar
 // Roll Number = 112301031 
 
-using System.Diagnostics;
 using Cloud.Networking;
 using Cloud.UI.Services;
 using Cloud.UI.ViewModels;
@@ -50,7 +49,6 @@ public sealed class SyncCommand : NotificationCommand
             }
         }
 
-        Trace.TraceInformation($"Sync finished: {added} new of {missed.Count} returned.");
         ViewModel.LastSyncText = $"Last synced {DateTime.Now:t} · {added} new";
     }
 }

@@ -6,9 +6,6 @@ using Cloud.UI.ViewModels;
 
 namespace Cloud.UI.Test;
 
-/// <summary>
-/// Tests the Notification Service page logic: state, commands and notifications.
-/// </summary>
 [TestClass]
 public class NotificationServiceViewModelTests
 {
@@ -30,7 +27,6 @@ public class NotificationServiceViewModelTests
         Assert.AreEqual("Not synced yet", vm.LastSyncText);
     }
 
-    /// <summary>Initially only Connect is available.</summary>
     [TestMethod]
     public void InitialCommandAvailabilityOnlyConnectIsAvailable()
     {
@@ -43,7 +39,6 @@ public class NotificationServiceViewModelTests
         Assert.IsFalse(vm.ClearCommand.CanExecute(null));
     }
 
-    /// <summary>Changing the URL or message text raises CanExecuteChanged of the affected command.</summary>
     [TestMethod]
     public void TextChangesRaiseCanExecuteChanged()
     {
@@ -60,7 +55,6 @@ public class NotificationServiceViewModelTests
         Assert.AreEqual(1, sendRaised);
     }
 
-    /// <summary>Connecting notifies State, StateText and StateHint.</summary>
     [TestMethod]
     public async Task ConnectRaisesStatePropertyNotifications()
     {
@@ -75,7 +69,6 @@ public class NotificationServiceViewModelTests
         CollectionAssert.Contains(names, nameof(NotificationServiceViewModel.StateHint));
     }
 
-    /// <summary>A successful connect normalises the URL, shows Connected and syncs.</summary>
     [TestMethod]
     public async Task ConnectSuccessConnectsAndNormalisesUrl()
     {
@@ -92,7 +85,6 @@ public class NotificationServiceViewModelTests
         StringAssert.EndsWith(h.ViewModel.LastSyncText, "· 0 new", "connecting also syncs");
     }
 
-    /// <summary>An invalid URL shows an error and creates no messenger.</summary>
     [TestMethod]
     public async Task ConnectInvalidUrlShowsErrorAndDoesNotCreateMessenger()
     {
@@ -106,7 +98,6 @@ public class NotificationServiceViewModelTests
         Assert.AreEqual(ConnectionState.Disconnected, h.ViewModel.State);
     }
 
-    /// <summary>A failing connect shows the error, stays disconnected and can be retried.</summary>
     [TestMethod]
     public async Task ConnectFailureShowsErrorAndStaysDisconnected()
     {
@@ -122,7 +113,6 @@ public class NotificationServiceViewModelTests
         Assert.IsTrue(vm.ConnectCommand.CanExecute(null), "the user can retry");
     }
 
-    /// <summary>A new connect attempt clears the previous error.</summary>
     [TestMethod]
     public async Task ConnectClearsPreviousError()
     {
@@ -135,7 +125,6 @@ public class NotificationServiceViewModelTests
         Assert.IsNull(h.ViewModel.ErrorText);
     }
 
-    /// <summary>While connecting, the state is Connecting and all commands are unavailable.</summary>
     [TestMethod]
     public async Task ConnectWhileRunningIsBusyAndAllCommandsUnavailable()
     {
@@ -163,7 +152,6 @@ public class NotificationServiceViewModelTests
         mock!.Verify(m => m.ConnectAsync(), Times.Once);
     }
 
-    /// <summary>Reconnecting to the same server reuses the messenger and keeps the notifications.</summary>
     [TestMethod]
     public async Task ConnectAfterDisconnectToSameServerReusesMessengerAndKeepsNotifications()
     {
@@ -181,7 +169,6 @@ public class NotificationServiceViewModelTests
         Assert.AreEqual(1, h.ViewModel.Notifications.Count);
     }
 
-    /// <summary>Disconnect closes the connection and makes Connect available again.</summary>
     [TestMethod]
     public async Task DisconnectClosesConnectionAndEnablesConnect()
     {
@@ -196,7 +183,6 @@ public class NotificationServiceViewModelTests
         Assert.IsFalse(h.ViewModel.SendCommand.CanExecute(null));
     }
 
-    /// <summary>Switching server resets deduplication and the sync start point.</summary>
     [TestMethod]
     public async Task ConnectToDifferentServerResetsDeduplicationAndSyncStart()
     {
@@ -215,7 +201,6 @@ public class NotificationServiceViewModelTests
         Assert.AreEqual("same id on B", h.ViewModel.Notifications[0].Content);
     }
 
-    /// <summary>Blank text cannot be sent.</summary>
     [TestMethod]
     public async Task SendNotAvailableForBlankText()
     {
@@ -227,7 +212,6 @@ public class NotificationServiceViewModelTests
         Assert.IsFalse(h.ViewModel.SendCommand.CanExecute(null));
     }
 
-    /// <summary>Send passes the trimmed text on and clears the input.</summary>
     [TestMethod]
     public async Task SendSendsTrimmedTextAndClearsInput()
     {
@@ -243,7 +227,6 @@ public class NotificationServiceViewModelTests
         Assert.IsFalse(h.ViewModel.HasError);
     }
 
-    /// <summary>A sync adds the missed messages newest first, without alerts.</summary>
     [TestMethod]
     public async Task SyncAddsMissedMessagesNewestOnTopWithoutAlerts()
     {
@@ -267,7 +250,6 @@ public class NotificationServiceViewModelTests
         StringAssert.StartsWith(h.ViewModel.LastSyncText, "Last synced");
     }
 
-    /// <summary>The sync start point moves to the newest message received by a sync.</summary>
     [TestMethod]
     public async Task SyncFirstSyncStartsFromMinValueThenFromNewestMessage()
     {
@@ -285,7 +267,6 @@ public class NotificationServiceViewModelTests
         h.Current.Verify(m => m.SyncAsync(TestData.T0.AddMinutes(9)), Times.Once);
     }
 
-    /// <summary>A sync skips messages that are already shown.</summary>
     [TestMethod]
     public async Task SyncSkipsMessagesAlreadyShown()
     {
@@ -301,7 +282,6 @@ public class NotificationServiceViewModelTests
         StringAssert.EndsWith(h.ViewModel.LastSyncText, "· 1 new");
     }
 
-    /// <summary>A live message goes on top and raises NotificationReceived.</summary>
     [TestMethod]
     public async Task MessageReceivedAddsItemOnTopAndRaisesNotificationReceived()
     {
@@ -324,7 +304,6 @@ public class NotificationServiceViewModelTests
         Assert.AreSame(h.ViewModel.Notifications[0], alerts[1]);
     }
 
-    /// <summary>A duplicate live message is ignored.</summary>
     [TestMethod]
     public async Task MessageReceivedDuplicateIsIgnored()
     {
@@ -341,7 +320,6 @@ public class NotificationServiceViewModelTests
         Assert.AreEqual(1, alerts);
     }
 
-    /// <summary>Changes to the list update IsEmpty and the availability of Clear.</summary>
     [TestMethod]
     public async Task NotificationsChangeRaisesIsEmptyAndUpdatesClearAvailability()
     {
@@ -360,7 +338,6 @@ public class NotificationServiceViewModelTests
         Assert.IsTrue(h.ViewModel.ClearCommand.CanExecute(null));
     }
 
-    /// <summary>Clear empties the list and becomes unavailable.</summary>
     [TestMethod]
     public async Task ClearEmptiesList()
     {
@@ -375,7 +352,6 @@ public class NotificationServiceViewModelTests
         Assert.IsFalse(h.ViewModel.ClearCommand.CanExecute(null));
     }
 
-    /// <summary>While reconnecting, sending is unavailable and Disconnect still works.</summary>
     [TestMethod]
     public async Task ReconnectingUpdatesState()
     {
@@ -394,7 +370,6 @@ public class NotificationServiceViewModelTests
         Assert.IsTrue(h.ViewModel.DisconnectCommand.CanExecute(null));
     }
 
-    /// <summary>A reconnect clears the error, updates the state and syncs missed messages.</summary>
     [TestMethod]
     public async Task ReconnectedClearsErrorAndUpdatesState()
     {
@@ -413,7 +388,6 @@ public class NotificationServiceViewModelTests
         h.Current.Verify(m => m.SyncAsync(It.IsAny<DateTimeOffset>()), Times.Exactly(2));
     }
 
-    /// <summary>A close with an exception shows an error and disconnects.</summary>
     [TestMethod]
     public async Task ClosedWithExceptionShowsErrorAndDisconnects()
     {
@@ -428,7 +402,6 @@ public class NotificationServiceViewModelTests
         Assert.IsTrue(h.ViewModel.ConnectCommand.CanExecute(null));
     }
 
-    /// <summary>A close without an exception disconnects silently.</summary>
     [TestMethod]
     public async Task ClosedWithoutExceptionDisconnectsWithoutError()
     {
@@ -442,7 +415,6 @@ public class NotificationServiceViewModelTests
         Assert.AreEqual(ConnectionState.Disconnected, h.ViewModel.State);
     }
 
-    /// <summary>Disposing the view model disposes the messenger.</summary>
     [TestMethod]
     public async Task DisposeAsyncDisposesMessenger()
     {
@@ -455,7 +427,6 @@ public class NotificationServiceViewModelTests
     }
 
 
-    /// <summary>Choosing a preset fills the URL box.</summary>
     [TestMethod]
     public void SelectingPresetFillsUrlBoxAndRaisesPropertyChanged()
     {
@@ -471,7 +442,6 @@ public class NotificationServiceViewModelTests
         CollectionAssert.Contains(names, nameof(NotificationServiceViewModel.ServerUrl));
     }
 
-    /// <summary>A custom URL clears the preset; typing a preset URL selects it.</summary>
     [TestMethod]
     public void TypingCustomUrlClearsPresetAndTypingPresetUrlSelectsIt()
     {
@@ -484,7 +454,6 @@ public class NotificationServiceViewModelTests
         Assert.AreSame(vm.ServerPresets[0], vm.SelectedPreset);
     }
 
-    /// <summary>Connect is unavailable for a blank URL.</summary>
     [TestMethod]
     public void ConnectNotAvailableForBlankUrl()
     {
@@ -495,7 +464,6 @@ public class NotificationServiceViewModelTests
         Assert.IsFalse(vm.ConnectCommand.CanExecute(null));
     }
 
-    /// <summary>A failing sync after connecting shows an error but keeps the connection.</summary>
     [TestMethod]
     public async Task ConnectWhenSyncFailsShowsErrorButStaysConnected()
     {
@@ -513,7 +481,6 @@ public class NotificationServiceViewModelTests
         Assert.IsTrue(vm.DisconnectCommand.CanExecute(null));
     }
 
-    /// <summary>Connect is unavailable when already connected to the typed server.</summary>
     [TestMethod]
     public async Task ConnectNotAvailableWhenConnectedToTheTypedServer()
     {
@@ -526,7 +493,6 @@ public class NotificationServiceViewModelTests
         Assert.IsTrue(h.ViewModel.DisconnectCommand.CanExecute(null));
     }
 
-    /// <summary>Connect is unavailable while the state is Connecting.</summary>
     [TestMethod]
     public async Task ConnectNotAvailableWhileStateIsConnecting()
     {
@@ -542,7 +508,6 @@ public class NotificationServiceViewModelTests
         Assert.IsFalse(h.ViewModel.DisconnectCommand.CanExecute(null));
     }
 
-    /// <summary>Connecting to a different server while connected switches and clears the old notifications.</summary>
     [TestMethod]
     public async Task ConnectWhileConnectedSwitchesServerAndClearsOldNotifications()
     {
@@ -561,7 +526,6 @@ public class NotificationServiceViewModelTests
         Assert.IsTrue(h.ViewModel.DisconnectCommand.CanExecute(null));
     }
 
-    /// <summary>A failed switch ends disconnected and can be retried.</summary>
     [TestMethod]
     public async Task SwitchingToServerThatFailsEndsDisconnectedAndCanRetry()
     {
@@ -582,7 +546,6 @@ public class NotificationServiceViewModelTests
         Assert.IsFalse(vm.DisconnectCommand.CanExecute(null));
     }
 
-    /// <summary>An invalid URL while connected keeps the current connection.</summary>
     [TestMethod]
     public async Task ConnectWithInvalidUrlWhileConnectedKeepsCurrentConnection()
     {
@@ -599,7 +562,6 @@ public class NotificationServiceViewModelTests
     }
 
 
-    /// <summary>Without a UI dispatcher the view model cannot be created.</summary>
     [TestMethod]
     public void ConstructorWithoutUiDispatcherThrows()
     {

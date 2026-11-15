@@ -37,7 +37,6 @@ public sealed partial class NotificationServiceView : UserControl
         InitializeComponent();
 
         ViewModel.NotificationReceived += OnNotificationReceived;
-        Trace.TraceInformation("Notification Service view created; connecting automatically.");
 
         // Connect (and sync) as soon as the view exists. It cannot throw:
         // the commands report failures through the view model's error text.
@@ -102,7 +101,7 @@ public sealed partial class NotificationServiceView : UserControl
         catch (Exception ex)
         {
             // The notification is already in the list; a failed popup must never crash the app.
-            Trace.TraceError($"Notification alert failed: {ex}");
+            Debug.WriteLine($"Notification alert failed: {ex}");
         }
         finally
         {

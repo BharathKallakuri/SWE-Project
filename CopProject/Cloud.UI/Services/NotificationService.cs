@@ -1,7 +1,6 @@
 ﻿// Author = Simeon Kandan Sonar
 // Roll Number = 112301031 
 
-using System.Diagnostics;
 using Cloud.Networking;
 
 namespace Cloud.UI.Services;
@@ -64,7 +63,6 @@ public sealed class NotificationService : IAsyncDisposable
 
         if (messenger.State != ConnectionState.Disconnected)
         {
-            Trace.TraceInformation($"Closing the existing connection before connecting to {url}.");
             await messenger.DisconnectAsync();
         }
     }
@@ -72,45 +70,37 @@ public sealed class NotificationService : IAsyncDisposable
     /// <summary>Connects to the server chosen with <see cref="UseServerAsync"/>.</summary>
     public async Task ConnectAsync()
     {
-        Trace.TraceInformation($"Connecting to {_messengerUrl}.");
         await Messenger.ConnectAsync();
-        Trace.TraceInformation($"Connect finished; state is {State}.");
     }
 
     public async Task DisconnectAsync()
     {
         if (_messenger is not null)
         {
-            Trace.TraceInformation($"Disconnecting from {_messengerUrl}.");
             await _messenger.DisconnectAsync();
         }
     }
 
     public async Task SendAsync(string text)
     {
-        Trace.TraceInformation($"Sending a message ({text.Length} characters).");
         await Messenger.SendMessageAsync(text);
     }
 
     /// <summary>Messages newer than <paramref name="since"/> that the server has.</summary>
     public async Task<IReadOnlyList<Message>> SyncAsync(DateTimeOffset since)
     {
-        Trace.TraceInformation($"Syncing messages newer than {since:O}.");
         IReadOnlyList<Message> missed = await Messenger.SyncAsync(since);
-        Trace.TraceInformation($"Sync returned {missed.Count} message(s).");
         return missed;
     }
 
     public ValueTask DisposeAsync()
     {
-        Trace.TraceInformation("Disposing the notification service.");
         return new ValueTask(DisposeMessengerAsync());
     }
 
     /// <summary>Drops the current messenger (and the old server's notifications) and creates one for <paramref name="url"/>.</summary>
     private async Task<IMessenger> SwitchServerAsync(string url)
     {
-        Trace.TraceInformation($"Switching to server {url}.");
         await DisposeMessengerAsync();
         ServerChanged?.Invoke();
 
@@ -143,42 +133,29 @@ public sealed class NotificationService : IAsyncDisposable
         {
             await messenger.DisposeAsync();
         }
-        catch (Exception ex)
+        catch
         {
             // Best effort: the connection is being discarded anyway.
-            Trace.TraceWarning($"Ignoring an error while disposing the messenger: {ex.Message}");
         }
     }
 
     private void OnMessageReceived(Message message)
     {
-        Trace.TraceInformation($"Message {message.Id} received.");
         MessageReceived?.Invoke(message);
     }
 
     private void OnReconnecting(Exception? exception)
     {
-        Trace.TraceWarning($"Connection lost, trying to reconnect: {exception?.Message}");
         Reconnecting?.Invoke(exception);
     }
 
     private void OnReconnected(string? connectionId)
     {
-        Trace.TraceInformation($"Reconnected (connection id {connectionId}).");
         Reconnected?.Invoke(connectionId);
     }
 
     private void OnClosed(Exception? exception)
     {
-        if (exception is not null)
-        {
-            Trace.TraceError($"Connection closed with an error: {exception.Message}");
-        }
-        else
-        {
-            Trace.TraceInformation("Connection closed.");
-        }
-
         Closed?.Invoke(exception);
     }
 }

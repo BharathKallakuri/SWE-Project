@@ -1,5 +1,3 @@
-// Authors: Aashritha.Y, Kalyani
-// Roll numbers: 112301038, 112301016
 using System;
 using System.Buffers.Text;
 using System.Collections.Generic;

@@ -2,7 +2,6 @@
 // Roll Number = 112301031 
 
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using Cloud.Networking;
 using Cloud.UI.Commands;
 using Cloud.UI.Models;
@@ -225,7 +224,6 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
     /// <summary>The old server's notifications must not be mixed with the new server's.</summary>
     private void OnServerChanged()
     {
-        Trace.TraceInformation("Server changed: notifications and sync position reset.");
         Notifications.Clear();
         _seen.Clear();
         LastMessageTime = DateTimeOffset.MinValue;
@@ -256,7 +254,6 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
         _runOnUi(() => {
             ErrorText = null;
             State = _service.State;
-            Trace.TraceInformation("Connection restored; syncing missed messages.");
 
             // the connection came back by itself: catch up on what was missed meanwhile.
             // (does nothing if another command is running; it handles its own errors)

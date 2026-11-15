@@ -25,7 +25,6 @@ public sealed class ScreenShareMeetingIntegration : IDisposable
     private readonly object _lock = new();
 
     private ControllerMeetingSession? _meeting;
-    private ResilientMeetingSession? _resilient;
     private ScreenShareNode? _node;
     private ScreenShareFeed? _feed;
     private bool _disposed;
@@ -135,15 +134,13 @@ public sealed class ScreenShareMeetingIntegration : IDisposable
             }
 
             ControllerMeetingSession? meeting = null;
-            ResilientMeetingSession? resilient = null;
             ScreenShareNode? node = null;
             try
             {
                 IControllerService controller = _activeController()
                     ?? throw new InvalidOperationException("the meeting has no controller");
                 meeting = new ControllerMeetingSession(controller, _session, info);
-                resilient = new ResilientMeetingSession(meeting);
-                node = new ScreenShareNode(resilient, _imageSourceFactory, _options);
+                node = new ScreenShareNode(meeting, _imageSourceFactory, _options);
                 feed = new ScreenShareFeed(node);
             }
             catch (Exception e)
@@ -151,7 +148,6 @@ public sealed class ScreenShareMeetingIntegration : IDisposable
                 // ScreenShare failing must not stop the meeting; the Share panel stays empty
                 Trace.TraceError("[Screenshare] ScreenShareMeetingIntegration.OnMeetingStarted: could not start for this meeting: {0}", e.Message);
                 node?.Dispose();
-                resilient?.Dispose();
                 meeting?.Dispose();
                 return;
             }
@@ -195,17 +191,14 @@ public sealed class ScreenShareMeetingIntegration : IDisposable
     private void StopMeeting()
     {
         ControllerMeetingSession? meeting;
-        ResilientMeetingSession? resilient;
         ScreenShareNode? node;
         ScreenShareFeed? feed;
         lock (_lock)
         {
             meeting = _meeting;
-            resilient = _resilient;
             node = _node;
             feed = _feed;
             _meeting = null;
-            _resilient = null;
             _node = null;
             _feed = null;
         }
@@ -217,7 +210,6 @@ public sealed class ScreenShareMeetingIntegration : IDisposable
 
         feed?.Dispose();
         node.Dispose();
-        resilient?.Dispose();
         meeting?.Dispose();
         _runOnUi(_view.Clear);
         Trace.TraceInformation("[Screenshare] ScreenShareMeetingIntegration.StopMeeting: ScreenShare stopped and the Share panel cleared.");

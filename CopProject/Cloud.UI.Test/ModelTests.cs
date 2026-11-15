@@ -6,9 +6,6 @@ using Cloud.UI.ViewModels;
 
 namespace Cloud.UI.Test;
 
-/// <summary>
-/// Tests the display texts of a notification item.
-/// </summary>
 [TestClass]
 public class NotificationItemTests
 {
@@ -22,7 +19,6 @@ public class NotificationItemTests
         };
     }
 
-    /// <summary>TimeText is the short local time.</summary>
     [TestMethod]
     public void TimeTextIsShortLocalTime()
     {
@@ -31,7 +27,6 @@ public class NotificationItemTests
         Assert.AreEqual(item.ReceivedAt.ToLocalTime().ToString("t"), item.TimeText);
     }
 
-    /// <summary>Subtitle is the sender, a dot and the time.</summary>
     [TestMethod]
     public void SubtitleIsSenderDotTime()
     {
@@ -42,9 +37,6 @@ public class NotificationItemTests
 
 }
 
-/// <summary>
-/// Tests property-change notification of the observable base class.
-/// </summary>
 [TestClass]
 public class ObservableObjectTests
 {
@@ -59,7 +51,6 @@ public class ObservableObjectTests
         }
     }
 
-    /// <summary>A new value is stored and raises PropertyChanged with the sender and property name.</summary>
     [TestMethod]
     public void SetPropertyNewValueRaisesWithPropertyName()
     {
@@ -75,7 +66,6 @@ public class ObservableObjectTests
         Assert.AreEqual(5, sample.Value);
     }
 
-    /// <summary>Setting the same value raises nothing.</summary>
     [TestMethod]
     public void SetPropertySameValueDoesNotRaise()
     {
