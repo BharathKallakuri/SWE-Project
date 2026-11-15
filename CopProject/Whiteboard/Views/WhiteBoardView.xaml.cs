@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -20,6 +21,14 @@ public sealed partial class WhiteBoardView : UserControl
 {
     private WhiteBoardViewModel? _viewModel;
     private readonly ToolbarInfo _toolbarInfo = new(Colors.Black, 3, Colors.Black);
+
+    private bool _isPanning;
+    private bool _isSpaceKeyDown;
+    private Point _panStartPoint;
+    private double _panStartHOffset;
+    private double _panStartVOffset;
+    private bool _isUpdatingZoomFromSlider;
+    private bool _isUpdatingZoomFromScrollViewer;
 
     /// <summary>
     /// Gets or sets the view model bound to this whiteboard view.
@@ -57,6 +66,7 @@ public sealed partial class WhiteBoardView : UserControl
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         KeyDown += OnKeyDown;
+        KeyUp += OnKeyUp;
     }
 
     public WhiteBoardView(WhiteBoardViewModel viewModel) : this()
@@ -80,6 +90,19 @@ public sealed partial class WhiteBoardView : UserControl
             _viewModel.HistoryChanged += UpdateHistoryButtons;
             UpdateHistoryButtons();
         }
+
+        // Center the viewport on the large canvas initially
+        DispatcherQueue.TryEnqueue(() => {
+            if (CanvasScrollViewer is not null)
+            {
+                double initialH = (WhiteboardCanvas.Width - CanvasScrollViewer.ActualWidth) / 2.0;
+                double initialV = (WhiteboardCanvas.Height - CanvasScrollViewer.ActualHeight) / 2.0;
+                if (initialH > 0 || initialV > 0)
+                {
+                    CanvasScrollViewer.ChangeView(Math.Max(0, initialH), Math.Max(0, initialV), 1.0f, true);
+                }
+            }
+        });
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -157,14 +180,26 @@ public sealed partial class WhiteBoardView : UserControl
         _viewModel?.SelectTool(WhiteboardTool.Eraser);
     }
 
-    private void CanvasContainer_SizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e)
-    {
-        WhiteboardCanvas.Width = e.NewSize.Width;
-        WhiteboardCanvas.Height = e.NewSize.Height;
-    }
-
     private void WhiteboardCanvas_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        PointerPointProperties pointProps = e.GetCurrentPoint(WhiteboardCanvas).Properties;
+
+        // Check if panning with Middle Click or with Spacebar + Click
+        if (pointProps.IsMiddleButtonPressed || _isSpaceKeyDown)
+        {
+            if (CanvasScrollViewer is not null && WhiteboardCanvas.CapturePointer(e.Pointer))
+            {
+                _isPanning = true;
+
+                _panStartPoint = e.GetCurrentPoint(CanvasScrollViewer).Position;
+                _panStartHOffset = CanvasScrollViewer.HorizontalOffset;
+                _panStartVOffset = CanvasScrollViewer.VerticalOffset;
+
+                e.Handled = true;
+            }
+            return;
+        }
+
         if (_viewModel is null)
         {
             return;
@@ -186,6 +221,22 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void WhiteboardCanvas_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (_isPanning)
+        {
+            if (CanvasScrollViewer is not null)
+            {
+                Point currentPos = e.GetCurrentPoint(CanvasScrollViewer).Position;
+
+                double deltaX = currentPos.X - _panStartPoint.X;
+                double deltaY = currentPos.Y - _panStartPoint.Y;
+
+                CanvasScrollViewer.ChangeView(_panStartHOffset - deltaX, _panStartVOffset - deltaY, null, true);
+
+                e.Handled = true;
+            }
+            return;
+        }
+
         if (_viewModel is null)
         {
             return;
@@ -203,6 +254,14 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void WhiteboardCanvas_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (_isPanning)
+        {
+            _isPanning = false;
+            WhiteboardCanvas.ReleasePointerCapture(e.Pointer);
+            e.Handled = true;
+            return;
+        }
+
         if (_viewModel is null)
         {
             return;
@@ -223,6 +282,12 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void WhiteboardCanvas_PointerCaptureLost(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        if (_isPanning)
+        {
+            _isPanning = false;
+            return;
+        }
+
         if (_viewModel is null)
         {
             return;
@@ -259,6 +324,76 @@ public sealed partial class WhiteBoardView : UserControl
             // Mark the event as handled
             e.Handled = true;
         }
+        else if (e.Key == Windows.System.VirtualKey.Space)
+        {
+            _isSpaceKeyDown = true;
+        }
+    }
+
+    private void OnKeyUp(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Space)
+        {
+            _isSpaceKeyDown = false;
+        }
+    }
+
+    private void CanvasScrollViewer_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
+    {
+        if (_isUpdatingZoomFromSlider || CanvasScrollViewer is null)
+        {
+            return;
+        }
+
+        float factor = CanvasScrollViewer.ZoomFactor;
+        int zoomPercent = (int) Math.Round(factor * 100);
+
+        _isUpdatingZoomFromScrollViewer = true;
+        try
+        {
+            SliderZoom?.Value = zoomPercent;
+            TextZoom?.Text = $"{zoomPercent}%";
+        }
+        finally
+        {
+            _isUpdatingZoomFromScrollViewer = false;
+        }
+    }
+
+    private void SliderZoom_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_isUpdatingZoomFromScrollViewer || CanvasScrollViewer is null)
+        {
+            return;
+        }
+
+        int zoomPercent = (int)Math.Round(e.NewValue);
+        TextZoom?.Text = $"{zoomPercent}%";
+
+        _isUpdatingZoomFromSlider = true;
+        try
+        {
+            CanvasScrollViewer.ChangeView(null, null, (float)(zoomPercent / 100.0f));
+        }
+        finally
+        {
+            _isUpdatingZoomFromSlider = false;
+        }
+    }
+
+    private void ButtonZoomIn_Click(object sender, RoutedEventArgs e)
+    {
+        SliderZoom?.Value = Math.Min(SliderZoom.Maximum, SliderZoom.Value + 10);
+    }
+
+    private void ButtonZoomOut_Click(object sender, RoutedEventArgs e)
+    {
+        SliderZoom?.Value = Math.Max(SliderZoom.Minimum, SliderZoom.Value - 10);
+    }
+
+    private void ButtonResetZoom_Click(object sender, RoutedEventArgs e)
+    {
+        SliderZoom?.Value = 100;
     }
 
     /// <summary>
