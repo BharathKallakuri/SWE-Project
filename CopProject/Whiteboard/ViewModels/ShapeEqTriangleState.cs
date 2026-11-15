@@ -81,7 +81,7 @@ public class ShapeEqTriangleState : ViewModelStateBase
         if (_triangle.SideLength > 0)
         {
             IEqTriangle item = _triangle;
-            Task.Run(() => WhiteboardClient.AddItem(item));
+            DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
         }
 
         _triangle = null;

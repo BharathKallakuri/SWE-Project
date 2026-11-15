@@ -98,7 +98,7 @@ public class LineState : ViewModelStateBase
                 {
                     ILine item = _line;
                     Trace.TraceInformation($"[Whiteboard][LineState] Line completed: from ({_startPoint.X}, {_startPoint.Y}) to ({point.X}, {point.Y}).");
-                    Task.Run(() => WhiteboardClient.AddItem(item));
+                    DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
                 }
             }
 
@@ -139,7 +139,7 @@ public class LineState : ViewModelStateBase
             {
                 _line.End = point;
                 ILine item = _line;
-                Task.Run(() => WhiteboardClient.AddItem(item));
+                DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
                 Reset();
             }
         }

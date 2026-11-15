@@ -83,7 +83,7 @@ public class ShapeCircleState : ViewModelStateBase
         if (_circle.Radius > 0)
         {
             ICircle item = _circle;
-            Task.Run(() => WhiteboardClient.AddItem(item));
+            DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
         }
 
         _circle = null;

@@ -80,7 +80,7 @@ public class ShapeRectangleState : ViewModelStateBase
         if (_rectangle.Width > 0 && _rectangle.Height > 0)
         {
             IRectangle item = _rectangle;
-            Task.Run(() => WhiteboardClient.AddItem(item));
+            DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
         }
 
         _rectangle = null;
