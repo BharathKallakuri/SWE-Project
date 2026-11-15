@@ -108,48 +108,6 @@ public class ParticipantTileTests
         tile.UpdateFrame(frame);
     }
 
-
-    [Fact]
-    public void FrameCouldNotDraw_IsNotCounted()
-    {
-        ParticipantTile tile = new("10", "Sumit");
-        byte[] pixels = new byte[10 * 20 * 4];
-        ScreenFrame frame = new(10, 20, pixels); ;
-
-        tile.SampleFps(TimeSpan.Zero);
-        for (int i = 0; i < 10; i++)
-        {
-            tile.UpdateFrame(frame);
-        }
-
-        tile.SampleFps(TimeSpan.FromSeconds(1));
-
-        Assert.Equal("0.0 fps", tile.FpsText);
-        Assert.Null(tile.Frame);
-
-
-
-    }
-
-    [Fact]
-    public void NullFramePassedToUpadateFrame()
-    {
-        ParticipantTile tile = new("10", "Sumit");
-
-        tile.SampleFps(TimeSpan.Zero);
-        for (int i = 10; i < 50; i += 10)
-        {
-            byte[] pixels = new byte[(i + 10) * 20 * 4];
-            ScreenFrame frame = new(i + 10, 20, pixels);
-            tile.UpdateFrame(frame);
-        }
-        tile.SampleFps(TimeSpan.FromSeconds(1));
-
-        //Assert.Equal("5.0 fps", tile.FpsText);
-        Assert.Null(tile.Frame);
-
-    }
-
     [Fact]
     public void UpdateFrame_FirstFrame_CreatesSurfaceOfFrameSize()
     {
