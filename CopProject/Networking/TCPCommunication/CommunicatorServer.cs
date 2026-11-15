@@ -185,6 +185,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
             serverSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);
             serverSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 10);
             serverSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 3);
+            serverSocket.NoDelay = true;
             _clientToTcpListenerMap[clientIp] = tcpClient;
             _clientToSocketListenerMap[clientIp] = new SocketListener(_receivingQueue, tcpClient);
             Trace.TraceInformation($"[Networking] CommunicatorServer.AddClient: Successfully connected client {clientIp}");
