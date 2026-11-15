@@ -30,7 +30,7 @@ public sealed partial class ScreenShareNode : IDisposable
     private readonly ScreenShareHost? _host;
     private readonly ITimer? _maintenanceTimer;
     private readonly object _sharingLock = new();
-    private ScreenShareSender? _sender;
+    private Sharing? _sharing;
     private bool _disposed;
 
     /// <summary>raised with the stream id and display name when someone starts sharing</summary>
@@ -49,12 +49,12 @@ public sealed partial class ScreenShareNode : IDisposable
     public bool IsHost => _host != null;
 
     /// <summary>gets whether this participant is sharing their screen</summary>
-    public bool IsSharing => Volatile.Read(ref _sender) != null;
+    public bool IsSharing => Volatile.Read(ref _sharing) != null;
 
     /// <param name="session">the meeting, provided by the controller</param>
     /// <param name="imageSourceFactory">creates the capture source when sharing starts;
     /// defaults to the primary display scaled to MaxHeight</param>
-    /// <param name="options">tuning; defaults to 24 FPS at 720p</param>
+    /// <param name="options">tuning; see ScreenShareOptions for the defaults</param>
     /// <param name="timeProvider">clock for timeouts; defaults to the system clock</param>
     /// <exception cref="ArgumentNullException">the session is null</exception>
     /// <exception cref="ArgumentOutOfRangeException">an option is invalid</exception>
@@ -81,7 +81,7 @@ public sealed partial class ScreenShareNode : IDisposable
             new IPEndPoint(ToPlainAddress(_communicator.ListenIpAddress), _communicator.ListenPort));
 
         _dispatcher = new SerialDispatcher($"ScreenShare {session.LocalUser.Id}");
-        _receiver = new ScreenShareReceiver(LocalParticipant, SendToHost, _timeProvider);
+        _receiver = new ScreenShareReceiver(LocalParticipant, SendToHost, _timeProvider, HasThumbnails ? _options.ThumbnailHeight : 0);
         _receiver.StreamAdded += (id, name) => StreamAdded?.Invoke(id, name);
         _receiver.StreamRemoved += id => StreamRemoved?.Invoke(id);
         _receiver.FrameUpdated += id => FrameUpdated?.Invoke(id);
@@ -98,7 +98,11 @@ public sealed partial class ScreenShareNode : IDisposable
 
         _session.ParticipantLeft += OnParticipantLeft;
         _session.MeetingEnded += OnMeetingEnded;
-        _communicator.AddSubscriber(ScreenShareModule.ModuleId, new ScreenShareMessageListener(OnNetworkMessage));
+        // control messages arrive reliably, screen data arrives lossy (UDP); Networking hands
+        // each kind only to listeners registered for it, so one listener is registered for both
+        var listener = new ScreenShareMessageListener(OnNetworkMessage);
+        _communicator.AddSubscriber(ScreenShareModule.ModuleId, listener);
+        _communicator.AddLossySubscriber(ScreenShareModule.ModuleId, listener);
 
         if (_host == null)
         {
@@ -108,13 +112,24 @@ public sealed partial class ScreenShareNode : IDisposable
     }
 
     /// <summary>
-    /// starts receiving a stream, e.g. when its tile scrolls into view
+    /// starts receiving a stream at full size, e.g. when its tile is zoomed
     /// </summary>
     public void Subscribe(string streamId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
+        Subscribe(streamId, _options.MaxHeight);
+    }
 
-        _dispatcher.Post(() => _receiver.Subscribe(streamId, _options.MaxHeight));
+    /// <summary>
+    /// starts receiving a stream, or changes its size: at or below ThumbnailHeight the small
+    /// grid stream is sent (when the sharer offers one), above it the full stream
+    /// </summary>
+    /// <param name="maxHeight">the tallest picture the tile can show</param>
+    public void Subscribe(string streamId, int maxHeight)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxHeight);
+
+        _dispatcher.Post(() => _receiver.Subscribe(streamId, maxHeight));
     }
 
     /// <summary>
@@ -155,6 +170,7 @@ public sealed partial class ScreenShareNode : IDisposable
         {
             StopSharing();
             _communicator.RemoveSubscriber(ScreenShareModule.ModuleId);
+            _communicator.RemoveLossySubscriber(ScreenShareModule.ModuleId);
         }
         catch (Exception e)
         {
@@ -172,6 +188,9 @@ public sealed partial class ScreenShareNode : IDisposable
 
     /// <summary>gets the relay, on the host; for tests</summary>
     internal ScreenShareHost? Host => _host;
+
+    /// <summary>true when a smaller grid stream is worth sending next to the full one</summary>
+    private bool HasThumbnails => _options.ThumbnailHeight < _options.MaxHeight;
 
     /// <summary>true when no ScreenShare work is queued or running; for tests</summary>
     internal bool IsIdle => _dispatcher.IsIdle;

@@ -72,9 +72,10 @@ internal sealed partial class ScreenShareHost : IDisposable
                 break;
 
             case Unsubscribe unsubscribe:
-                if (_streams.TryGetValue(unsubscribe.StreamId, out HostedStream? unsubscribed))
+                if (_streams.TryGetValue(unsubscribe.StreamId, out HostedStream? unsubscribed) &&
+                    unsubscribed.Viewers.Remove(unsubscribe.Viewer.Endpoint))
                 {
-                    unsubscribed.Viewers.Remove(unsubscribe.Viewer.Endpoint);
+                    TellSharerWhoWatches(unsubscribed);
                 }
                 break;
 
@@ -109,20 +110,21 @@ internal sealed partial class ScreenShareHost : IDisposable
                 continue;
             }
 
-            foreach (ViewerState viewer in stream.Viewers.Values.Where(v => v.Viewer.Id == participantId).ToList())
+            List<ViewerState> leaving = stream.Viewers.Values.Where(v => v.Viewer.Id == participantId).ToList();
+            foreach (ViewerState viewer in leaving)
             {
                 stream.Viewers.Remove(viewer.Viewer.Endpoint);
+            }
+
+            if (leaving.Count > 0)
+            {
+                TellSharerWhoWatches(stream);
             }
         }
     }
 
     public void Dispose()
     {
-        foreach (HostedStream stream in _streams.Values)
-        {
-            stream.Dispose();
-        }
-
         _streams.Clear();
     }
 
@@ -135,9 +137,8 @@ internal sealed partial class ScreenShareHost : IDisposable
             : new List<Participant>();
         RemoveStream(started.StreamId);
 
-        var stream = new HostedStream(started, _timeProvider);
-        stream.Applier.FullFrameRequested += _ =>
-            Send(stream.Sharer.Endpoint, new RequestFullFrame(_self, started.StreamId));
+        // the sharer's first frame is always a full frame, so carried viewers need no request
+        var stream = new HostedStream(started);
 
         foreach (Participant viewer in carriedViewers)
         {
@@ -146,6 +147,9 @@ internal sealed partial class ScreenShareHost : IDisposable
 
         _streams[started.StreamId] = stream;
         _output.Broadcast(started, bytes);
+
+        // a new stream usually has no viewers yet, so the sharer pauses it after this first frame
+        TellSharerWhoWatches(stream);
     }
 
     private void OnSubscribe(Subscribe subscribe)
@@ -155,22 +159,16 @@ internal sealed partial class ScreenShareHost : IDisposable
             return;
         }
 
-        // a (re)subscribing viewer starts with a fresh stitcher, so treat it as new
-        var viewer = new ViewerState(subscribe.Viewer);
-        stream.Viewers[subscribe.Viewer.Endpoint] = viewer;
-
-        TrySendFullFrameFromCache(stream, viewer);
+        // a (re)subscribing viewer starts with a fresh stitcher, so treat it as new;
+        // it gets the sharer's next full frame
+        stream.Viewers[subscribe.Viewer.Endpoint] = new ViewerState(subscribe.Viewer);
+        TellSharerWhoWatches(stream);
+        RequestFullFrame(stream);
     }
 
     private bool RemoveStream(string streamId)
     {
-        if (!_streams.Remove(streamId, out HostedStream? stream))
-        {
-            return false;
-        }
-
-        stream.Dispose();
-        return true;
+        return _streams.Remove(streamId);
     }
 
     private void Send(IPEndPoint to, IScreenShareMessage message)

@@ -83,7 +83,7 @@ public sealed class ControllerMeetingSession : IMeetingSession, IUserNotificatio
     {
         string key = user.UserKey;
         byte[] bytes = Encoding.UTF8.GetBytes(key);
-        if (bytes.Length <= ScreenShareCodec.MaxIdBytes)
+        if (bytes.Length <= StreamLayers.MaxParticipantIdBytes)
         {
             return key;
         }

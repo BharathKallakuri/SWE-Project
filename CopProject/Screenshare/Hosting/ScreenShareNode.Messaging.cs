@@ -1,10 +1,9 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 using Screenshare;
 
 namespace ScreenShare;
 
-// sharing and message routing.
-// the other half, setup, public API and shutdown, is in ScreenShareNode.cs.
 public sealed partial class ScreenShareNode
 {
     /// <summary>
@@ -21,14 +20,14 @@ public sealed partial class ScreenShareNode
     /// </summary>
     public void StopSharing()
     {
-        ScreenShareSender? sender;
+        Sharing? sharing;
         lock (_sharingLock)
         {
-            sender = _sender;
-            Volatile.Write(ref _sender, null);
+            sharing = _sharing;
+            Volatile.Write(ref _sharing, null);
         }
 
-        sender?.Dispose();
+        sharing?.Dispose();
     }
 
     /// <param name="runCaptureLoop">false lets tests drive captures with CaptureOnce</param>
@@ -38,31 +37,55 @@ public sealed partial class ScreenShareNode
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
 
-            if (_sender != null)
+            if (_sharing != null)
             {
                 return;
             }
 
-            var sender = new ScreenShareSender(
-                LocalParticipant,
-                _session.LocalUser.DisplayName,
-                _imageSourceFactory(),
-                SendToHost,
-                _options,
-                _timeProvider);
-            Volatile.Write(ref _sender, sender);
+            // one screen capture feeds both streams; the full stream may reuse it for one frame
+            var capture = new SharedScreenCapture(
+                _imageSourceFactory(), TimeSpan.FromSeconds(1.0 / _options.FramesPerSecond), _timeProvider);
+            string name = _session.LocalUser.DisplayName;
+
+            var full = new ScreenShareSender(
+                LocalParticipant, name, capture.View(), SendToHost, _options, _timeProvider);
+
+            ScreenShareSender? thumbnail = HasThumbnails
+                ? new ScreenShareSender(
+                    LocalParticipant,
+                    name,
+                    new ScalingImageSource(capture.View(), _options.ThumbnailHeight),
+                    SendToHost,
+                    _options with { FramesPerSecond = _options.ThumbnailFramesPerSecond, TileSize = _options.ThumbnailTileSize },
+                    _timeProvider,
+                    StreamLayers.ThumbnailOf(LocalParticipant.Id))
+                : null;
+
+            var sharing = new Sharing(full, thumbnail, capture);
+            Volatile.Write(ref _sharing, sharing);
 
             if (runCaptureLoop)
             {
-                sender.StartLoop();
+                full.StartLoop();
+                thumbnail?.StartLoop();
             }
         }
     }
 
-    /// <summary>captures and sends one frame now; for tests</summary>
+    /// <summary>
+    /// captures and sends one frame of each stream that has viewers
+    /// </summary>
     internal bool CaptureOnce()
     {
-        return Volatile.Read(ref _sender)?.CaptureOnce() ?? false;
+        Sharing? sharing = Volatile.Read(ref _sharing);
+        if (sharing == null)
+        {
+            return false;
+        }
+
+        bool sentFull = sharing.Full.CaptureOnce();
+        bool sentThumbnail = sharing.Thumbnail?.CaptureOnce() ?? false;
+        return sentFull || sentThumbnail;
     }
 
     /// <summary>runs the host's timeout check now; for tests</summary>
@@ -84,8 +107,11 @@ public sealed partial class ScreenShareNode
 
         if (_host != null)
         {
-            // queued rather than called directly, so the relay is never re-entered
             _dispatcher.Post(() => _host.Handle(message, bytes));
+        }
+        else if (message.Kind == ScreenShareMessageKind.Data && _options.SendDataLossy)
+        {
+            _communicator.SendMessageLossy(_session.HostEndpoint, bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
         }
         else
         {
@@ -98,6 +124,11 @@ public sealed partial class ScreenShareNode
     /// </summary>
     private void OnNetworkMessage(IScreenShareMessage message, byte[] bytes)
     {
+        if (message is ScreenDataPacket packet && packet.StreamId == LocalParticipant.Id)
+        {
+            return;
+        }
+
         if (_host != null)
         {
             _dispatcher.Post(() => _host.Handle(message, bytes));
@@ -116,24 +147,43 @@ public sealed partial class ScreenShareNode
         switch (message)
         {
             case FrameAck ack:
-                ScreenShareSender? acked = Volatile.Read(ref _sender);
-                if (acked != null && acked.StreamId == ack.StreamId)
-                {
-                    acked.OnFrameAck(ack.FrameNumber);
-                }
+                Volatile.Read(ref _sharing)?.SenderOf(ack.StreamId)?.OnFrameAck(ack.FrameNumber);
                 break;
 
             case RequestFullFrame request:
-                ScreenShareSender? requested = Volatile.Read(ref _sender);
-                if (requested != null && requested.StreamId == request.StreamId)
-                {
-                    requested.OnFullFrameRequested();
-                }
+                Volatile.Read(ref _sharing)?.SenderOf(request.StreamId)?.OnFullFrameRequested();
+                break;
+
+            case UpdateSendToList update:
+                // the host says who watches one of our streams; nobody: stop sending its frames
+                ScreenShareSender? sender = Volatile.Read(ref _sharing)?.SenderOf(update.StreamId);
+                sender?.Paused = update.SendTo.Count == 0;
                 break;
 
             default:
                 _receiver.Handle(message);
                 break;
+        }
+    }
+
+    private sealed class Sharing(ScreenShareSender full, ScreenShareSender? thumbnail, SharedScreenCapture capture) : IDisposable
+    {
+        public ScreenShareSender Full { get; } = full;
+
+        public ScreenShareSender? Thumbnail { get; } = thumbnail;
+
+        public ScreenShareSender? SenderOf(string streamId)
+        {
+            return streamId == Full.StreamId ? Full
+                : streamId == Thumbnail?.StreamId ? Thumbnail
+                : null;
+        }
+
+        public void Dispose()
+        {
+            Full.Dispose();
+            Thumbnail?.Dispose();
+            capture.Dispose();
         }
     }
 
@@ -156,6 +206,10 @@ public sealed partial class ScreenShareNode
             {
                 _node._dispatcher.Post(() => _node.HandleFromHost(message));
             }
+            else if (message.Kind == ScreenShareMessageKind.Data && _node._options.SendDataLossy)
+            {
+                _node._communicator.SendMessageLossy(to, bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
+            }
             else
             {
                 _node._communicator.SendMessage(to, bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
@@ -164,8 +218,8 @@ public sealed partial class ScreenShareNode
 
         public void Broadcast(IScreenShareMessage message, byte[] bytes)
         {
-            // Networking's broadcast reaches every connected client but not the host itself
             _node._communicator.BroadcastMessage(bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
+
             _node._dispatcher.Post(() => _node.HandleFromHost(message));
         }
     }
