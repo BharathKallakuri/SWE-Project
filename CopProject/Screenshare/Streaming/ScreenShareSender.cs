@@ -21,17 +21,32 @@ internal sealed class ScreenShareSender : IDisposable
     private volatile bool _fullFrameRequested;
     private bool _announced;
     private volatile bool _stopped;
+    private volatile bool _paused;
     private CancellationTokenSource? _loopCancellation;
     private Thread? _loopThread;
-    public string StreamId => _local.Id;
 
+    /// <summary>gets the id of the stream this sender sends; the sharer's id unless given</summary>
+    public string StreamId { get; }
+
+    /// <summary>
+    /// gets or sets whether frames are held back because nobody watches the stream. the first
+    /// frame is always sent, since it announces the stream.
+    /// </summary>
+    public bool Paused
+    {
+        get => _paused;
+        set => _paused = value;
+    }
+
+    /// <param name="streamId">the stream's id; defaults to the sharer's id</param>
     public ScreenShareSender(
         Participant local,
         string displayName,
         IImageSource source,
         Action<IScreenShareMessage> send,
         ScreenShareOptions options,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        string? streamId = null)
     {
         ArgumentNullException.ThrowIfNull(local);
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
@@ -41,10 +56,11 @@ internal sealed class ScreenShareSender : IDisposable
         ArgumentNullException.ThrowIfNull(timeProvider);
 
         _local = local;
+        StreamId = streamId ?? local.Id;
         _displayName = displayName;
         _source = source;
-        _service = new ScreenSharingService(source, new ImageDiffer());
-        _packetizer = new ScreenPacketizer(local.Id);
+        _service = new ScreenSharingService(source, new ImageDiffer(options.TileSize));
+        _packetizer = new ScreenPacketizer(StreamId, options.FullFrameJpegQuality, options.TileSize);
         _send = send;
         _options = options;
         _timeProvider = timeProvider;
@@ -53,7 +69,7 @@ internal sealed class ScreenShareSender : IDisposable
 
     public bool CaptureOnce()
     {
-        if (_stopped || !MaySendFrame())
+        if (_stopped || (_announced && _paused) || !MaySendFrame())
         {
             return false;
         }
