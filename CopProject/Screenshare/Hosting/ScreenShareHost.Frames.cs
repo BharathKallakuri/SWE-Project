@@ -2,6 +2,7 @@
 // Roll Number = 112301032
 
 using System.Net;
+using System.Diagnostics;
 
 namespace ScreenShare;
 
@@ -9,8 +10,8 @@ namespace ScreenShare;
 // the other half, streams and viewers, is in ScreenShareHost.cs.
 //
 // the host only forwards: it never decodes a frame, so relaying stays cheap with many streams.
-// a viewer that needs a full frame (it just subscribed, fell behind, or lost a packet) gets the
-// sharer's next one; the host asks the sharer for it, at most once per interval per stream.
+// a viewer that needs a full frame gets the sharer's next one;
+// the host asks the sharer for it, at most once per interval per stream.
 internal sealed partial class ScreenShareHost
 {
     /// <summary>the least time between two full-frame requests to the same sharer</summary>
@@ -18,7 +19,6 @@ internal sealed partial class ScreenShareHost
 
     /// <summary>
     /// drops viewers that have left frames unacknowledged for longer than the viewer timeout,
-    /// e.g. a client that crashed without leaving the meeting
     /// </summary>
     public void RemoveTimedOutViewers()
     {
@@ -33,6 +33,8 @@ internal sealed partial class ScreenShareHost
             foreach (ViewerState viewer in timedOut)
             {
                 stream.Viewers.Remove(viewer.Viewer.Endpoint);
+                Trace.TraceInformation("[ScreenShare] Removed the Timedout userendpoint {0} for" +
+                    " user {1}", viewer.Viewer.Endpoint, viewer.Viewer.Id);
             }
 
             if (timedOut.Count > 0)
@@ -48,6 +50,10 @@ internal sealed partial class ScreenShareHost
     /// </summary>
     private void TellSharerWhoWatches(HostedStream stream)
     {
+        Trace.TraceInformation(
+            "[Screenshare] ScreenShareHost.TellSharerWhoWatches: {0} has {1} viewer(s).",
+            stream.Started.StreamId,
+            stream.Viewers.Count);
         Send(stream.Sharer.Endpoint, new UpdateSendToList(stream.Started.StreamId, stream.Viewers.Keys.ToList()));
     }
 
@@ -81,6 +87,11 @@ internal sealed partial class ScreenShareHost
                 {
                     SendToViewer(viewer, packet, bytes);
                     viewer.NeedsFullFrame = false;
+                    Trace.TraceInformation(
+                        "[Screenshare] ScreenShareHost.OnData: {0} got full frame {1} of {2}.",
+                        viewer.Viewer.Id,
+                        packet.FrameNumber,
+                        packet.StreamId);
                 }
                 else
                 {
@@ -94,6 +105,11 @@ internal sealed partial class ScreenShareHost
             {
                 // stop sending deltas; once it catches up it gets one full frame instead
                 viewer.NeedsFullFrame = true;
+                Trace.TraceWarning(
+                    "[Screenshare] ScreenShareHost.OnData: {0} is {1} frames behind on {2}; pausing it until it catches up.",
+                    viewer.Viewer.Id,
+                    viewer.LastSent - viewer.LastAcked,
+                    packet.StreamId);
                 continue;
             }
 
@@ -136,6 +152,10 @@ internal sealed partial class ScreenShareHost
         }
 
         // the viewer lost its picture; it gets the sharer's next full frame
+        Trace.TraceInformation(
+            "[Screenshare] ScreenShareHost.OnFullFrameRequest: {0} asked for a full frame of {1}.",
+            viewer.Viewer.Id,
+            request.StreamId);
         viewer.NeedsFullFrame = true;
         RequestFullFrame(stream);
     }
@@ -153,6 +173,9 @@ internal sealed partial class ScreenShareHost
         }
 
         stream.FullFrameRequestedAt = now;
+        Trace.TraceInformation(
+            "[Screenshare] ScreenShareHost.RequestFullFrame: asking the sharer of {0} for a full frame.",
+            stream.Started.StreamId);
         Send(stream.Sharer.Endpoint, new RequestFullFrame(_self, stream.Started.StreamId));
     }
 
