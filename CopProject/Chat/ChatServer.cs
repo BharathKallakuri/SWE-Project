@@ -55,6 +55,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
         Chatroom = chatroom;
         _communicator = communicator;
         _controller = controller;
+        Trace.TraceInformation("[Chat] Initializing chat server for room '{0}'.", chatroom.RoomName);
         _insightsManager = insightsManagerFactory().GetAwaiter().GetResult();
         _communicator.AddSubscriber(ChatConstants.ModuleId, this);
         _controller.UserJoined += OnControllerUserJoined;
@@ -68,6 +69,11 @@ public sealed class ChatServer : IMessageListener, IDisposable
                 RegisterClient(user.Username);
             }
         }
+
+        Trace.TraceInformation(
+            "[Chat] Chat server initialized for room '{0}' with {1} connected clients.",
+            Chatroom.RoomName,
+            _clientVersions.Count);
     }
 
     /// <summary>
@@ -112,6 +118,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
         {
             if (_clientVersions.ContainsKey(username))
             {
+                Trace.TraceWarning("[Chat] Client '{0}' is already registered.", username);
                 return false;
             }
 
@@ -119,6 +126,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
             _clientVersions.Add(username, 0);
             SendBatch(username, 0);
             BroadcastParticipants();
+            Trace.TraceInformation("[Chat] Registered client '{0}'.", username);
             return true;
         }
     }
@@ -136,6 +144,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
         {
             if (!_clientVersions.Remove(username))
             {
+                Trace.TraceWarning("[Chat] Cannot unregister unknown client '{0}'.", username);
                 return false;
             }
 
@@ -145,6 +154,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
             }
 
             BroadcastParticipants();
+            Trace.TraceInformation("[Chat] Unregistered client '{0}'.", username);
             return true;
         }
     }
@@ -160,10 +170,16 @@ public sealed class ChatServer : IMessageListener, IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(request.Username);
 
         string username = request.Username;
+        Trace.TraceInformation(
+            "[Chat] Received {0} request {1} from '{2}'.",
+            request.Request.GetType().Name,
+            request.RequestId,
+            username);
         lock (_syncRoot)
         {
             if (!_clientVersions.TryGetValue(username, out int clientVersion))
             {
+                Trace.TraceWarning("[Chat] Rejected request from unregistered client '{0}'.", username);
                 Send(username, new ChatServerRequestResult(request.RequestId, RoomResult.Forbidden));
                 return;
             }
@@ -175,6 +191,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
                     break;
 
                 case Reset:
+                    Trace.TraceInformation("[Chat] Resetting synchronization state for '{0}'.", username);
                     SendUpdate(username, new ChatServerReset());
                     _clientVersions[username] = 0;
                     SendBatch(username, 0);
@@ -185,6 +202,10 @@ public sealed class ChatServer : IMessageListener, IDisposable
                     break;
 
                 default:
+                    Trace.TraceWarning(
+                        "[Chat] Rejected unsupported request type '{0}' from '{1}'.",
+                        request.Request.GetType().Name,
+                        username);
                     Send(username, new ChatServerRequestResult(request.RequestId, RoomResult.Forbidden));
                     break;
             }
@@ -206,6 +227,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
         _controller.UserLeft -= OnControllerUserLeft;
 
         _disposed = true;
+        Trace.TraceInformation("[Chat] Chat server for room '{0}' was disposed.", Chatroom.RoomName);
     }
 
     /// <summary>
@@ -225,6 +247,13 @@ public sealed class ChatServer : IMessageListener, IDisposable
                 RecordOperation(operation!);
                 MaybeGenerateAiReply(Chatroom.HostName, request, operation!);
             }
+            else
+            {
+                Trace.TraceWarning(
+                    "[Chat] Host operation {0} was rejected with result {1}.",
+                    request.GetType().Name,
+                    result);
+            }
 
             return result;
         }
@@ -235,9 +264,20 @@ public sealed class ChatServer : IMessageListener, IDisposable
     {
         ArgumentNullException.ThrowIfNull(message);
 
-        ChatClientRequestEnvelope? request = JsonSerializer.Deserialize<ChatClientRequestEnvelope>(message);
+        ChatClientRequestEnvelope? request;
+        try
+        {
+            request = JsonSerializer.Deserialize<ChatClientRequestEnvelope>(message);
+        }
+        catch (JsonException exception)
+        {
+            Trace.TraceError("[Chat] Failed to deserialize a client request: {0}", exception);
+            throw;
+        }
+
         if (request is null)
         {
+            Trace.TraceWarning("[Chat] Received an empty client request.");
             throw new InvalidDataException("The received chat request was empty.");
         }
 
@@ -251,6 +291,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
     /// <param name="e">The participant who joined.</param>
     private void OnControllerUserJoined(object? sender, UserJoinedEventArgs e)
     {
+        Trace.TraceInformation("[Chat] Controller reported client '{0}' joined.", e.User.Username);
         lock (_syncRoot)
         {
             _controllerUsers[e.User.Username] = e.User;
@@ -266,6 +307,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
     /// <param name="e">The participant who left.</param>
     private void OnControllerUserLeft(object? sender, UserLeftEventArgs e)
     {
+        Trace.TraceInformation("[Chat] Controller reported client '{0}' left.", e.User.Username);
         lock (_syncRoot)
         {
             _controllerUsers.Remove(e.User.Username);
@@ -286,9 +328,15 @@ public sealed class ChatServer : IMessageListener, IDisposable
         Send(username, new ChatServerRequestResult(requestId, result));
         if (result != RoomResult.Ok)
         {
+            Trace.TraceWarning(
+                "[Chat] Operation {0} from '{1}' was rejected with result {2}.",
+                request.GetType().Name,
+                username,
+                result);
             return;
         }
 
+        Trace.TraceInformation("[Chat] Accepted operation {0} from '{1}'.", request.GetType().Name, username);
         RecordOperation(operation!);
         MaybeGenerateAiReply(username, request, operation!);
     }
@@ -307,6 +355,11 @@ public sealed class ChatServer : IMessageListener, IDisposable
         {
             string chatContext = BuildChatContext();
             string userMessage = BuildAiQuestion(username, send, repliedToAi);
+            Trace.TraceInformation(
+                "[Chat] Starting AI response for message {0} from '{1}' (context: {2} characters).",
+                addedMessage.MessageId,
+                username,
+                chatContext.Length);
             _ = GenerateAiReplyAsync(userMessage, chatContext, send, addedMessage.MessageId);
         }
     }
@@ -497,6 +550,9 @@ public sealed class ChatServer : IMessageListener, IDisposable
             string response = await _insightsManager.GenerateChatResponseAsync(userMessage, chatContext);
             if (string.IsNullOrWhiteSpace(response))
             {
+                Trace.TraceWarning(
+                    "[Chat] Insights returned an empty response for triggering message {0}.",
+                    sourceMessageId);
                 throw new InvalidOperationException("Insights returned an empty chat response.");
             }
 
@@ -504,6 +560,9 @@ public sealed class ChatServer : IMessageListener, IDisposable
             {
                 if (_disposed)
                 {
+                    Trace.TraceWarning(
+                        "[Chat] Discarded AI response for message {0} because the server is disposed.",
+                        sourceMessageId);
                     return;
                 }
 
@@ -524,6 +583,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
                 }
 
                 RecordOperation(operation!);
+                Trace.TraceInformation("[Chat] AI response added for triggering message {0}.", sourceMessageId);
             }
         }
         catch (Exception exception)
@@ -538,8 +598,11 @@ public sealed class ChatServer : IMessageListener, IDisposable
     /// <returns>The initialized Insights manager.</returns>
     private static async Task<InsightsManager> CreateInsightsManagerAsync()
     {
+        Trace.TraceInformation("[Chat] Initializing Gemini-backed Insights manager.");
         GeminiProvider provider = await GeminiProvider.CreateAsync(new CloudCredentialService());
-        return new InsightsManager(provider);
+        InsightsManager insightsManager = new(provider);
+        Trace.TraceInformation("[Chat] Gemini-backed Insights manager initialized.");
+        return insightsManager;
     }
 
     /// <summary>
@@ -574,6 +637,10 @@ public sealed class ChatServer : IMessageListener, IDisposable
     private void RecordOperation(ChatOperation operation)
     {
         _operations.Add(operation);
+        Trace.TraceInformation(
+            "[Chat] Recorded {0}; chat version is now {1}.",
+            operation.GetType().Name,
+            _operations.Count);
         OperationApplied?.Invoke(operation);
         foreach ((string recipient, int version) in _clientVersions.ToArray())
         {
@@ -593,6 +660,12 @@ public sealed class ChatServer : IMessageListener, IDisposable
     {
         ChatOperation[] operations = _operations.Skip(fromVersion).ToArray();
         ChatServerOperationBatch batch = new(fromVersion, _operations.Count, operations);
+        Trace.TraceInformation(
+            "[Chat] Sending synchronization batch to '{0}' ({1} operations, version {2} to {3}).",
+            username,
+            operations.Length,
+            fromVersion,
+            _operations.Count);
         if (SendUpdate(username, batch))
         {
             _clientVersions[username] = _operations.Count;
@@ -623,6 +696,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
     {
         if (!_clientVersions.ContainsKey(username))
         {
+            Trace.TraceWarning("[Chat] Cannot deliver a message to unregistered client '{0}'.", username);
             DeliveryFailed?.Invoke(username);
             return false;
         }
@@ -648,12 +722,22 @@ public sealed class ChatServer : IMessageListener, IDisposable
         }
         else
         {
+            Trace.TraceWarning("[Chat] No valid network endpoint is available for client '{0}'.", username);
             DeliveryFailed?.Invoke(username);
             return false;
         }
 
         byte[] payload = JsonSerializer.SerializeToUtf8Bytes(message);
-        _communicator.SendMessage(endPoint, payload, ChatConstants.ModuleId, priority: 1);
+        try
+        {
+            _communicator.SendMessage(endPoint, payload, ChatConstants.ModuleId, priority: 1);
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceError("[Chat] Failed to send a message to client '{0}': {1}", username, exception);
+            throw;
+        }
+
         return true;
     }
 
@@ -663,6 +747,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
     private void BroadcastParticipants()
     {
         IReadOnlyList<string> participants = Chatroom.Participants.Order(StringComparer.Ordinal).ToArray();
+        Trace.TraceInformation("[Chat] Broadcasting participant list ({0} participants).", participants.Count);
         foreach ((string username, int version) in _clientVersions)
         {
             ChatServerOperationBatch update = new(version, version, Array.Empty<ChatOperation>());
