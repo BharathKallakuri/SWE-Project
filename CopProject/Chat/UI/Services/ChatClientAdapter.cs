@@ -1,6 +1,7 @@
 using Chat;
 using Controller;
 using Microsoft.UI.Dispatching;
+using Utils;
 
 namespace UI.Services;
 
@@ -19,12 +20,14 @@ public sealed class ChatClientAdapter : IDisposable
 
     public ChatClientAdapter(
         ChatClient client,
-        DispatcherQueue dispatcherQueue)
+        DispatcherQueue dispatcherQueue,
+        IControllerService? controller = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(dispatcherQueue);
 
         _client = client;
+        _controller = controller;
         _dispatcherQueue = dispatcherQueue;
 
         // Subscribe to backend events.
@@ -32,6 +35,12 @@ public sealed class ChatClientAdapter : IDisposable
         _client.RequestCompleted += OnRequestCompleted;
         _client.RoomReset += OnRoomReset;
         _client.ParticipantsChanged += OnParticipantsChanged;
+
+        if (_controller is not null)
+        {
+            _controller.UserJoined += OnControllerUserJoined;
+            _controller.UserLeft += OnControllerUserLeft;
+        }
     }
 
     /// <summary>
@@ -67,6 +76,9 @@ public sealed class ChatClientAdapter : IDisposable
     public IReadOnlySet<string> Participants =>
         _client?.Chatroom.Participants ?? _server!.Chatroom.Participants;
 
+    /// <summary>Returns the meeting's user list as the controller knows it (includes profile pictures and emails). Empty when no controller is attached.</summary>
+    public IReadOnlyList<ControllerUser> GetMeetingUsers() => _controller?.GetActiveUsers() ?? new List<ControllerUser>();
+
     // Events exposed to the ViewModels.
     // These events are always raised on the UI thread.
 
@@ -77,6 +89,9 @@ public sealed class ChatClientAdapter : IDisposable
     public event Action? RoomReset;
 
     public event Action<IReadOnlySet<string>>? ParticipantsChanged;
+
+    /// <summary>Raised on the UI thread when the meeting's user list may have changed (join/leave).</summary>
+    public event Action? UserInfoChanged;
 
     // Backend event handlers.
 
@@ -111,9 +126,19 @@ public sealed class ChatClientAdapter : IDisposable
         });
     }
 
-    private void OnControllerUserJoined(object? sender, UserJoinedEventArgs e) => RaiseHostParticipantsChanged();
+    private void OnControllerUserJoined(object? sender, UserJoinedEventArgs e)
+    {
+        RaiseHostParticipantsChanged();
+        RaiseUserInfoChanged();
+    }
 
-    private void OnControllerUserLeft(object? sender, UserLeftEventArgs e) => RaiseHostParticipantsChanged();
+    private void OnControllerUserLeft(object? sender, UserLeftEventArgs e)
+    {
+        RaiseHostParticipantsChanged();
+        RaiseUserInfoChanged();
+    }
+
+    private void RaiseUserInfoChanged() => DispatchToUI(() => UserInfoChanged?.Invoke());
 
     private void RaiseHostParticipantsChanged()
     {

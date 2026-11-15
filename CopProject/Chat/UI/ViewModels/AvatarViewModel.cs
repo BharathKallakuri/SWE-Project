@@ -24,6 +24,7 @@ public abstract class AvatarViewModel : ObservableObject
 
     private ImageSource? _avatarImageSource;
     private Brush _avatarBrush;
+    private string? _avatarToolTip;
 
     protected AvatarViewModel(string displayName)
     {
@@ -39,6 +40,9 @@ public abstract class AvatarViewModel : ObservableObject
     public string Initials { get; }
 
     public ImageSource? AvatarImageSource => _avatarImageSource;
+
+    /// <summary>Tooltip shown when hovering the avatar; typically the person's name and email. Null when unknown.</summary>
+    public string? AvatarToolTip => _avatarToolTip;
 
     /// <summary>
     /// Brush used by the circular avatar. It is an ImageBrush when a profile image
@@ -71,6 +75,17 @@ public abstract class AvatarViewModel : ObservableObject
 
         OnPropertyChanged(nameof(AvatarImageSource));
         OnPropertyChanged(nameof(InitialsVisibility));
+    }
+
+    /// <summary>
+    /// Sets or clears the tooltip shown when hovering this avatar.
+    /// </summary>
+    public void SetAvatarToolTip(string? toolTip)
+    {
+        toolTip = string.IsNullOrWhiteSpace(toolTip) ? null : toolTip;
+        if (_avatarToolTip == toolTip) return;
+        _avatarToolTip = toolTip;
+        OnPropertyChanged(nameof(AvatarToolTip));
     }
 
     private static string GetInitials(string name)

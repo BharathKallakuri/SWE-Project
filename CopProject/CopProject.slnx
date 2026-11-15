@@ -9,6 +9,7 @@
     </Folder>
     <Project Path="Authentication/Auth.csproj" />
     <Project Path="Chat.Test/Chat.Test.csproj" />
+    <Project Path="Chat.UI.Test/Chat.UI.Test.csproj" />
     <Project Path="Chat.Console/Chat.Console.csproj" />
     <Project Path="Chat/Chat.csproj" />
     <Project Path="Chat/UI/UI.csproj" />
