@@ -1,3 +1,5 @@
+// Author : Saideep.
+// Roll no : 112301018.
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
@@ -6,8 +8,10 @@ using Utils;
 
 namespace Controller;
 
-// Receives messages from the Networking module and updates the SessionManager accordingly.
-// Single Responsibility: Only translates network messages into SessionManager calls.
+/// <summary> 
+/// Receives messages from the Networking module and updates the SessionManager accordingly.
+/// </summary>
+
 public class SessionMessageListener : IMessageListener
 {
     private readonly SessionManager _sessionManager;
@@ -17,6 +21,10 @@ public class SessionMessageListener : IMessageListener
         _sessionManager = sessionManager ?? throw new ArgumentNullException(nameof(sessionManager));
     }
 
+    /// <summary>
+    /// It processes the raw message bytes received from the network transport layer.
+    /// </summary>
+    /// <param name = "message">The raw encoded message payload.</param>
     public void OnMessageReceived(byte[] message)
     {
         if (message == null || message.Length == 0)
@@ -56,7 +64,11 @@ public class SessionMessageListener : IMessageListener
         }
     }
 
-    // Handles JOIN: deserializes the ControllerUser from JSON and joins session
+    /// <summary>
+    /// Handles JOIN: deserializes the ControllerUser from JSON.
+    /// Later, It sends the message to SessionManager to check whether join is successful or not.
+    /// </summary>
+    /// <param name = "userJson"> It is the JSON payload representing the user.</param>
     private void HandleJoin(string userJson)
     {
         if (!_sessionManager.HasActiveSession())
@@ -75,9 +87,13 @@ public class SessionMessageListener : IMessageListener
             user.IsHost = false; // Joined users are clients/participants
             bool joined = _sessionManager.JoinSession(user);
             if (joined)
+            {
                 Trace.TraceInformation($"{user.Username} joined session from {user.Ip}:{user.Port}");
+            }
             else
+            {
                 Trace.TraceWarning($"Join failed for {user.Username} (could not add to session)");
+            }
         }
         catch (Exception ex)
         {
@@ -85,7 +101,10 @@ public class SessionMessageListener : IMessageListener
         }
     }
 
-    // Handles LEAVE messages.Format: "LEAVE:userId"
+    /// <summary>
+    /// Handles LEAVE messages.Format: "LEAVE:userId"
+    /// </summary> 
+    ///<param name = "userKey"> It is the key representing the user leaving the session.</param>
     private void HandleLeave(string userKey)
     {
         if (!_sessionManager.HasActiveSession())
@@ -97,8 +116,12 @@ public class SessionMessageListener : IMessageListener
         bool left = _sessionManager.LeaveSession(userKey);
 
         if (left)
+        {
             Trace.TraceInformation($"{userKey} left session");
+        }
         else
+        {
             Trace.TraceWarning($"Leave failed for {userKey}");
+        }
     }
 }
