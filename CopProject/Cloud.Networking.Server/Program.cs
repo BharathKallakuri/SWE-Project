@@ -21,8 +21,37 @@ public class Program
     /// <param name="args">arguments needed for creation</param>
     public static void Main(string[] args)
     {
-        WebApplication app = CreateApplication(args);
-        app.Run();
+        WebApplication? app = null;
+
+        try
+        {
+            app = CreateApplication(args);
+            ILogger logger = app.Logger;
+            logger.LogInformation("Starting the server in the {Environment} environment", app.Environment.EnvironmentName);
+
+            /* last chance logging for exceptions nobody handled (other threads, fire and forget tasks) */
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+                logger.LogCritical(e.ExceptionObject as Exception, "Unhandled exception {ExceptionObject} (process terminating: {IsTerminating})", e.ExceptionObject, e.IsTerminating);
+            TaskScheduler.UnobservedTaskException += (_, e) =>
+                logger.LogError(e.Exception, "Unobserved task exception");
+
+            app.Run();
+            logger.LogInformation("The server has stopped");
+        }
+        catch (Exception ex)
+        {
+            if (app is not null)
+            {
+                app.Logger.LogCritical(ex, "The server terminated unexpectedly");
+            }
+            else
+            {
+                /* the host (and its logging) could not even be built */
+                Console.Error.WriteLine($"The server failed to start: {ex}");
+            }
+
+            throw;
+        }
     }
 
     /// <summary>

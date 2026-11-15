@@ -1,6 +1,8 @@
 ﻿// Author = Simeon Kandan Sonar
 // Roll Number = 112301031
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Cloud.Networking.Server.Models;
 
 /// <summary>
@@ -11,6 +13,7 @@ public sealed class ServerMonitor : IServerMonitor
     private readonly object _gate = new();
     private readonly Dictionary<string, DateTimeOffset> _connections = [];
     private readonly IMessageStore _store;
+    private readonly ILogger<ServerMonitor> _logger;
 
     /// <summary>
     /// invoked on addition of messages or addition or removal of connections
@@ -18,18 +21,21 @@ public sealed class ServerMonitor : IServerMonitor
     public event Action? Changed;
 
     /// <summary>Any message added to the store notifies listeners.</summary>
-    private void OnMessageAdded(Message _)
+    private void OnMessageAdded(Message message)
     {
+        _logger.LogDebug("Message {MessageId} was added to the store, notifying listeners", message.Id);
         Changed?.Invoke();
     }
 
     /// <summary>Initializes the monitor and starts listening to the store for new messages.</summary>
     /// <param name="store">The store that owns the messages.</param>
-    public ServerMonitor(IMessageStore store)
+    /// <param name="logger">Where connection changes are logged (optional)</param>
+    public ServerMonitor(IMessageStore store, ILogger<ServerMonitor>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(store);
 
         _store = store;
+        _logger = logger ?? NullLogger<ServerMonitor>.Instance;
         _store.MessageAdded += OnMessageAdded;
     }
 
@@ -70,11 +76,14 @@ public sealed class ServerMonitor : IServerMonitor
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
+        int active;
         lock (_gate)
         {
             _connections[connectionId] = DateTimeOffset.UtcNow;
+            active = _connections.Count;
         }
 
+        _logger.LogInformation("Connection {ConnectionId} is now tracked, {Active} active connection(s)", connectionId, active);
         Changed?.Invoke();
     }
 
@@ -83,9 +92,21 @@ public sealed class ServerMonitor : IServerMonitor
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
+        bool removed;
+        int active;
         lock (_gate)
         {
-            _connections.Remove(connectionId);
+            removed = _connections.Remove(connectionId);
+            active = _connections.Count;
+        }
+
+        if (removed)
+        {
+            _logger.LogInformation("Connection {ConnectionId} is no longer tracked, {Active} active connection(s)", connectionId, active);
+        }
+        else
+        {
+            _logger.LogWarning("Connection {ConnectionId} disconnected but was not being tracked", connectionId);
         }
 
         Changed?.Invoke();
