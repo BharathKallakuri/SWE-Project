@@ -1,4 +1,5 @@
 ﻿//owner : U Sai Vignesh
+//roll number : 112301034
 // License : MIT
 namespace Whiteboard.Interfaces;
 
@@ -19,9 +20,8 @@ public interface ISelectionService
     /// </summary>
     /// <param name="dx">Horizontal offset.</param>
     /// <param name="dy">Vertical offset.</param>
-    /// <param name="modifiedBy">User performing the modification.</param>
     /// <returns><see langword="true"/> when the selection was moved; otherwise, <see langword="false"/>.</returns>
-    bool MoveSelected(double dx, double dy, string modifiedBy = "system");
+    bool MoveSelected(double dx, double dy);
 
     /// <summary>
     /// Resizes the selected item from its top-left anchor to the supplied pointer position.
@@ -36,7 +36,6 @@ public interface ISelectionService
     /// Rotates the selected item or items by the specified angle.
     /// </summary>
     /// <param name="deltaAngle">Angle, in degrees, to add to the selected items.</param>
-    /// <param name="modifiedBy">User performing the modification.</param>
     /// <returns><see langword="true"/> when the selection was rotated; otherwise, <see langword="false"/>.</returns>
-    bool RotateSelected(double deltaAngle, string modifiedBy = "system");
+    bool RotateSelected(double deltaAngle);
 }

@@ -1,4 +1,5 @@
-﻿//owner : U Sai Vignesh
+//owner : U Sai Vignesh
+//roll number : 112301034
 // License : MIT
 
 using System;
@@ -160,7 +161,7 @@ public sealed class SelectState : ViewModelStateBase
         }
 
         // Local only; the final position is sent once on release
-        if (_selectionService.MoveSelected(dx, dy, WhiteboardClient.UserId))
+        if (_selectionService.MoveSelected(dx, dy))
         {
             _hasMoved = true;
         }
