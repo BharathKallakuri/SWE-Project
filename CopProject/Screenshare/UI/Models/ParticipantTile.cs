@@ -63,6 +63,7 @@ public class ParticipantTile : INotifyPropertyChanged
             if (_surface == null || _surface.PixelWidth != frame.Width || _surface.PixelHeight != frame.Height)
             {
                 _surface = _createSurface(frame.Width, frame.Height);
+                Trace.TraceInformation("[Screenshare] ParticipantTile.UpdateFrame: {0} now shows {1}x{2} pictures.", Name, frame.Width, frame.Height);
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Frame)));
             }
 
@@ -72,7 +73,7 @@ public class ParticipantTile : INotifyPropertyChanged
         catch (Exception e)
         {
             // one bad frame should not take down the meeting window; the next frame replaces it
-            Trace.WriteLine($"[ScreenShare] could not show a frame for {Id}: {e.Message}");
+            Trace.TraceError("[Screenshare] ParticipantTile.UpdateFrame: could not show a frame for {0}: {1}", Name, e.Message);
         }
     }
 }
