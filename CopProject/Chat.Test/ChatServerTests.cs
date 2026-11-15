@@ -220,6 +220,28 @@ public class ChatServerTests
     }
 
     [Fact]
+    public void HandleRequestRejectsUnsupportedRequestType()
+    {
+        RecordingCommunicator communicator = new();
+        RecordingController controller = new();
+        using ChatServer server = NewServer(communicator, controller);
+        controller.AddEndpoint("guest", ClientAddress);
+        Assert.True(server.RegisterClient("guest"));
+        communicator.Sent.Clear();
+        Guid requestId = Guid.NewGuid();
+
+        server.HandleRequest(new ChatClientRequestEnvelope(
+            requestId,
+            new UnsupportedClientRequest(),
+            "guest"));
+
+        ChatServerRequestResult result = ReadRequestResult(Assert.Single(communicator.Sent));
+        Assert.Equal(requestId, result.RequestId);
+        Assert.Equal(RoomResult.Forbidden, result.Result);
+        Assert.Equal(0, server.Version);
+    }
+
+    [Fact]
     public void SyncSendsOperationsAfterClientsCurrentVersion()
     {
         RecordingCommunicator communicator = new();
@@ -793,6 +815,17 @@ public class ChatServerTests
     }
 
     [Fact]
+    public void SubmitHostRequestRejectsUnsupportedChangeType()
+    {
+        using ChatServer server = NewServer(new RecordingCommunicator(), new RecordingController());
+
+        RoomResult result = server.SubmitHostRequest(new UnsupportedRoomChangeRequest());
+
+        Assert.Equal(RoomResult.Forbidden, result);
+        Assert.Equal(0, server.Version);
+    }
+
+    [Fact]
     public void DeliveryFailureDoesNotAdvanceClientVersionAndRaisesEvent()
     {
         RecordingCommunicator communicator = new();
@@ -864,7 +897,10 @@ public class ChatServerTests
     private static ChatServer NewServer(RecordingCommunicator communicator, RecordingController controller)
     {
         controller.Communicator = communicator;
-        return new ChatServer(new Chatroom("room", "host"), controller);
+        return new ChatServer(
+            new Chatroom("room", "host"),
+            controller,
+            () => Task.FromResult(new InsightsManager(new TestInsightsProvider("unused"))));
     }
 
     private static ChatServer NewAiTestServer(
@@ -926,7 +962,10 @@ public class ChatServerTests
         RecordingController controller = new();
         controller.AddEndpoint("guest", ClientAddress);
         controller.Communicator = communicator;
-        ChatServer server = new(chatroom, controller);
+        ChatServer server = new(
+            chatroom,
+            controller,
+            () => Task.FromResult(new InsightsManager(new TestInsightsProvider("unused"))));
         server.RegisterClient("guest");
         communicator.Sent.Clear();
         return (server, communicator, messageId);
@@ -945,6 +984,10 @@ public class ChatServerTests
     }
 
     private sealed record SentMessage(IPEndPoint Destination, byte[] Payload, int Module, int Priority);
+
+    private sealed record UnsupportedClientRequest : ChatClientRequest;
+
+    private sealed record UnsupportedRoomChangeRequest : ChatRoomChangeRequest;
 
     private sealed class RecordingCommunicator : ICommunicator
     {
