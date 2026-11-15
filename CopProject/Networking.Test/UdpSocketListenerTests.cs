@@ -112,7 +112,7 @@ public class UdpSocketListenerTests
         // Send a valid packet so it triggers Enqueue on the listener thread
         using UdpClient sender = new();
         Packet packet = new(Encoding.UTF8.GetBytes("trigger-enqueue-throw"), new IPEndPoint(IPAddress.Loopback, port), 1, 1);
-        byte[] data = new PacketSerializer().PacketToBytes(packet);
+        byte[] data = new BinarySerialization().Serialize(packet);
         sender.Send(data, data.Length, new IPEndPoint(IPAddress.Loopback, port));
 
         Thread.Sleep(200);
@@ -132,7 +132,7 @@ public class UdpSocketListenerTests
 
         using UdpClient sender = new();
         Packet originalPacket = new(Encoding.UTF8.GetBytes("hello-udp"), new IPEndPoint(IPAddress.Loopback, port), 42, 1);
-        byte[] data = new PacketSerializer().PacketToBytes(originalPacket);
+        byte[] data = new BinarySerialization().Serialize(originalPacket);
         sender.Send(data, data.Length, new IPEndPoint(IPAddress.Loopback, port));
 
         Assert.IsTrue(queue.WaitForItem(2000));
@@ -207,7 +207,7 @@ public class UdpSocketListenerTests
         ReceivingQueue queue = new();
 
         using UdpSocketListener listener = new(queue, udpClient);
-        typeof(UdpSocketListener).GetField("_packetSerializer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(listener, null);
+        typeof(UdpSocketListener).GetField("_binarySerializer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(listener, null);
 
         using UdpClient sender = new();
         sender.Send(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05 }, 5, new IPEndPoint(IPAddress.Loopback, port));
