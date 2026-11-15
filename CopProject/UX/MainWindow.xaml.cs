@@ -25,6 +25,7 @@ using Incidents.Views;
 using LocationTracker.Services;
 using LocationTracker.Views;
 using Utils;
+using Utils.Diagnosis.Views;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -157,6 +158,7 @@ public sealed partial class MainWindow : Window
         LocationView.Visibility = Vis(screen == "location");
         CloudView.Visibility = Vis(screen == "cloud");
         CrashHandlerView.Visibility = Vis(screen == "crashhandler");
+        DiagnosisView.Visibility = Vis(screen == "diagnosis");
         UserPanel.Visibility = Vis(screen != "login");
         MeetingInfoText.Visibility = Vis(_inMeeting);
     }
@@ -216,6 +218,7 @@ public sealed partial class MainWindow : Window
         LocationTopBtn.Visibility = Vis(!_inMeeting);
         CloudTopBtn.Visibility = Vis(!_inMeeting);
         CrashHandlerTopBtn.Visibility = Vis(!_inMeeting);
+        DiagnosisTopBtn.Visibility = Vis(!_inMeeting);
 
         // CONTROLLER TEAM: store current user identity into session
         _session.CurrentUserId = _userId;
@@ -408,6 +411,23 @@ public sealed partial class MainWindow : Window
     }
 
     private void CrashHandlerBack_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen(_inMeeting ? "meeting" : "dash");
+    }
+
+    // Both Diagnosis buttons open the same page and preserve its current report.
+    private void Diagnosis_Click(object sender, RoutedEventArgs e)
+    {
+        if (DiagnosisFrame.Content is not DiagnosisPage)
+        {
+            DiagnosisFrame.Navigate(typeof(DiagnosisPage));
+        }
+
+        ShowScreen("diagnosis");
+    }
+
+    
+    private void DiagnosisBack_Click(object sender, RoutedEventArgs e)
     {
         ShowScreen(_inMeeting ? "meeting" : "dash");
     }
