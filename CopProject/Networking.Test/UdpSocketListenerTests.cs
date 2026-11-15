@@ -17,18 +17,9 @@ namespace Networking.Test;
 [TestClass]
 public class UdpSocketListenerTests
 {
-    private static int GetAvailablePort()
-    {
-        using TcpListener listener = new(IPAddress.Loopback, 0);
-        listener.Start();
-        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
-        return port;
-    }
-
     private sealed class ThrowingUdpClient : UdpClient
     {
-        public ThrowingUdpClient(int port) : base(port)
+        public ThrowingUdpClient() : base(new IPEndPoint(IPAddress.Loopback, 0))
         {
             GC.SuppressFinalize(this);
         }
@@ -65,8 +56,7 @@ public class UdpSocketListenerTests
     [TestMethod]
     public void UdpSocketListener_PreDisposedClient_ExitsLoopCleanlyViaObjectDisposedException()
     {
-        int port = GetAvailablePort();
-        UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, port));
+        UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, 0));
         udpClient.Dispose();
 
         ReceivingQueue queue = new();
@@ -83,8 +73,7 @@ public class UdpSocketListenerTests
     [TestMethod]
     public void UdpSocketListener_Dispose_WhenClientCloseThrows_CatchesAndLogs()
     {
-        int port = GetAvailablePort();
-        ThrowingUdpClient throwingClient = new(port);
+        ThrowingUdpClient throwingClient = new();
         ReceivingQueue queue = new();
 
         using UdpSocketListener listener = new(queue, throwingClient);
@@ -98,8 +87,8 @@ public class UdpSocketListenerTests
     [TestMethod]
     public void UdpSocketListener_EnqueueThrowsWhenStopped_BreaksLoop()
     {
-        int port = GetAvailablePort();
-        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, port));
+        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, 0));
+        int port = ((IPEndPoint)udpClient.Client.LocalEndPoint!).Port;
 
         UdpSocketListener? listener = null;
         ThrowingReceivingQueue throwingQueue = new(() => {
@@ -125,8 +114,8 @@ public class UdpSocketListenerTests
     [TestMethod]
     public void UdpSocketListener_ValidPacket_EnqueuesSuccessfully()
     {
-        int port = GetAvailablePort();
-        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, port));
+        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, 0));
+        int port = ((IPEndPoint)udpClient.Client.LocalEndPoint!).Port;
         ReceivingQueue queue = new();
         using UdpSocketListener listener = new(queue, udpClient);
 
@@ -148,8 +137,8 @@ public class UdpSocketListenerTests
     [TestMethod]
     public void UdpSocketListener_ZeroByteDatagram_ContinuesListening()
     {
-        int port = GetAvailablePort();
-        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, port));
+        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, 0));
+        int port = ((IPEndPoint)udpClient.Client.LocalEndPoint!).Port;
         ReceivingQueue queue = new();
         using UdpSocketListener listener = new(queue, udpClient);
 
@@ -166,8 +155,8 @@ public class UdpSocketListenerTests
     [TestMethod]
     public void UdpSocketListener_SmallPayload_ContinuesListening()
     {
-        int port = GetAvailablePort();
-        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, port));
+        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, 0));
+        int port = ((IPEndPoint)udpClient.Client.LocalEndPoint!).Port;
         ReceivingQueue queue = new();
         using UdpSocketListener listener = new(queue, udpClient);
 
@@ -184,8 +173,8 @@ public class UdpSocketListenerTests
     [TestMethod]
     public void UdpSocketListener_CorruptPacketBytes_ContinuesListening()
     {
-        int port = GetAvailablePort();
-        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, port));
+        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, 0));
+        int port = ((IPEndPoint)udpClient.Client.LocalEndPoint!).Port;
         ReceivingQueue queue = new();
         using UdpSocketListener listener = new(queue, udpClient);
 
@@ -202,8 +191,8 @@ public class UdpSocketListenerTests
     [TestMethod]
     public void UdpSocketListener_PacketProcessingThrows_CatchesAndContinues()
     {
-        int port = GetAvailablePort();
-        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, port));
+        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, 0));
+        int port = ((IPEndPoint)udpClient.Client.LocalEndPoint!).Port;
         ReceivingQueue queue = new();
 
         using UdpSocketListener listener = new(queue, udpClient);
@@ -220,8 +209,7 @@ public class UdpSocketListenerTests
     [TestMethod]
     public void UdpSocketListener_DoubleDispose_IsIdempotent()
     {
-        int port = GetAvailablePort();
-        using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, port));
+        UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, 0));
         ReceivingQueue queue = new();
 
         UdpSocketListener listener = new(queue, udpClient);
