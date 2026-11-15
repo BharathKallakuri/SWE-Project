@@ -58,9 +58,13 @@ public sealed class ReactionViewModel : ObservableObject
         int index = Users.IndexOf(username);
 
         if (index >= 0)
+        {
             Users.RemoveAt(index);
+        }
         else
+        {
             Users.Add(username);
+        }
 
         OnPropertyChanged(nameof(Count));
         OnPropertyChanged(nameof(Label));

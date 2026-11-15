@@ -68,8 +68,7 @@ public class ChatMessageWithThreads : ChatMessage, IChatMessageWithThreads
 
     internal ChatMessageWithThreads DeepCloneWithoutThreadMessages()
     {
-        ChatMessageWithThreads clone = new()
-        {
+        ChatMessageWithThreads clone = new() {
             Timestamp = Timestamp,
             SenderName = SenderName,
             Mentions = Mentions.Clone(),

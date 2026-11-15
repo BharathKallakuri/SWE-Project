@@ -17,7 +17,9 @@ public abstract class ObservableObject : INotifyPropertyChanged
         [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(storage, value))
+        {
             return false;
+        }
 
         storage = value;
 

@@ -10,7 +10,9 @@ namespace Chat;
 /// Base type for actions and synchronization requests sent by a client.
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$request")]
-[JsonDerivedType(typeof(Sync), "sync")] [JsonDerivedType(typeof(Reset), "reset")] [JsonDerivedType(typeof(SendMessage), "send")]
+[JsonDerivedType(typeof(Sync), "sync")]
+[JsonDerivedType(typeof(Reset), "reset")]
+[JsonDerivedType(typeof(SendMessage), "send")]
 [JsonDerivedType(typeof(EditMessage), "edit")]
 [JsonDerivedType(typeof(DeleteMessage), "delete")]
 [JsonDerivedType(typeof(ToggleReaction), "toggleReaction")]

@@ -24,8 +24,7 @@ public sealed class Mentions : IMentions
     /// <returns>A new mentions object with the same values.</returns>
     public Mentions Clone()
     {
-        return new Mentions
-        {
+        return new Mentions {
             All = All,
             Usernames = new HashSet<string>(Usernames, Usernames.Comparer)
         };
