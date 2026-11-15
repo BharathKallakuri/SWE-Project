@@ -14,6 +14,7 @@ namespace Chat.Test;
 public class ChatClientTests
 {
     private static readonly IPEndPoint s_serverAddress = new(IPAddress.Loopback, 12345);
+    private static IPEndPoint ServerAddress => s_serverAddress;
 
     [Fact]
     public void ConstructorRejectsInvalidUsername()
