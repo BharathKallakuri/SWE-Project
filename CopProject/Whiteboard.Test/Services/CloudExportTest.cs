@@ -13,7 +13,6 @@ namespace Whiteboard.Test.Services;
 
 public class CloudExportIntegrationTests
 {
-    [Fact(Skip = "Skipping test because COSMOS_KEY is not set.")]
     public async Task ExportToCloudAsync_StoreExportData()
     {
         var exportData = new CanvasExportData
