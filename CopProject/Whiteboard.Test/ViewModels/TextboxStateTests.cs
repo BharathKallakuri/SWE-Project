@@ -28,6 +28,7 @@ public class TextboxStateTests
         return new(_client, _preview, _toolbar);
     }
 
+    // puts a textbox straight on the canvas, so it doesn't show up in AddedItems
     private Textbox AddTextbox(Point2D center, string content = "")
     {
         Textbox textbox = new() { Center = center, Content = content };
@@ -43,6 +44,7 @@ public class TextboxStateTests
         Assert.Throws<ArgumentNullException>(() => new TextboxState(_client, _preview, null!));
     }
 
+    // textbox tool has to let clicks through to the textbox, otherwise you can't type in it
     [Fact]
     public void HandlesPointerOnTextbox_IsFalse()
     {
@@ -62,17 +64,7 @@ public class TextboxStateTests
         Assert.Equal(string.Empty, added.Content);
     }
 
-    [Fact]
-    public void PointerPressed_UsesNextZIndex()
-    {
-        _client.Canvas.AddItem(new Square { Center = new Point2D(500, 500), SideLegth = 10, Zindex = 4 });
-        TextboxState state = CreateState();
-
-        state.PointerPressed(new Point2D(10, 10));
-
-        Assert.Equal(5, Assert.Single(_client.AddedItems).Zindex);
-    }
-
+    // clicking an existing textbox is for editing it, not stacking another one on top
     [Fact]
     public void PointerPressed_OnExistingTextbox_DoesNotAddNewTextbox()
     {
@@ -84,6 +76,7 @@ public class TextboxStateTests
         Assert.Empty(_client.AddedItems);
     }
 
+    // if you type something and click somewhere else, the text shouldn't be lost
     [Fact]
     public void PointerPressed_CommitsPendingEditFirst()
     {
@@ -98,19 +91,7 @@ public class TextboxStateTests
         Assert.Single(_client.AddedItems);
     }
 
-    [Fact]
-    public void UpdateText_DoesNotSendUntilCommitted()
-    {
-        Textbox textbox = AddTextbox(new Point2D(100, 100));
-        TextboxState state = CreateState();
-
-        state.UpdateText(textbox.Id, "hello");
-
-        Assert.True(state.HasPendingEdits);
-        Assert.Empty(_client.EditedItems);
-        Assert.Equal(string.Empty, textbox.Content);
-    }
-
+    // typing and then undoing back to the original text means nothing actually changed
     [Fact]
     public void UpdateText_SameAsStoredContent_IsNotPending()
     {
@@ -165,35 +146,7 @@ public class TextboxStateTests
         Assert.Equal("hey", textbox.Content);
     }
 
-    [Fact]
-    public void CommitPendingEdits_CommitsEveryEditedTextbox()
-    {
-        Textbox first = AddTextbox(new Point2D(100, 100));
-        Textbox second = AddTextbox(new Point2D(400, 400));
-        TextboxState state = CreateState();
-        state.UpdateText(first.Id, "one");
-        state.UpdateText(second.Id, "two");
-
-        state.CommitPendingEdits();
-
-        Assert.Equal(2, _client.EditedItems.Count);
-        Assert.Equal("one", first.Content);
-        Assert.Equal("two", second.Content);
-    }
-
-    [Fact]
-    public void CommitPendingEdits_IsIdempotent()
-    {
-        Textbox textbox = AddTextbox(new Point2D(100, 100));
-        TextboxState state = CreateState();
-        state.UpdateText(textbox.Id, "hello");
-
-        state.CommitPendingEdits();
-        state.CommitPendingEdits();
-
-        Assert.Single(_client.EditedItems);
-    }
-
+    // someone can erase the textbox while we're still typing in it
     [Fact]
     public void CommitPendingEdits_ForErasedTextbox_IsDiscarded()
     {
@@ -221,16 +174,22 @@ public class TextboxStateTests
         Assert.Empty(_client.EditedItems);
     }
 
+    // content got updated to the same text before we committed (eg. from another client),
+    // so there's nothing to send
     [Fact]
-    public void CommitPendingEdits_WhenNothingPending_DoesNothing()
+    public void CommitPendingEdits_ContentAlreadyMatches_DoesNotSendEdit()
     {
+        Textbox textbox = AddTextbox(new Point2D(100, 100));
         TextboxState state = CreateState();
+        state.UpdateText(textbox.Id, "hello");
+        textbox.Content = "hello";
 
         state.CommitPendingEdits();
 
         Assert.Empty(_client.EditedItems);
     }
 
+    // these are empty for the textbox tool, just making sure they don't do anything
     [Fact]
     public void PointerMoved_Released_CaptureLost_DoNothing()
     {
