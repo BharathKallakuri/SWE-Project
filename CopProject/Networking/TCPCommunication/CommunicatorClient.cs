@@ -62,7 +62,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
             clientSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);
             clientSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 10);
             clientSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 3);
-            clientSocket.NoDelay = true
+            clientSocket.NoDelay = true;
             _socketListener = new SocketListener(_receivingQueue, _tcpClient);
             _sendingQueueListenerClient = new SendingQueueListenerClient(_sendingQueue, _tcpClient);
 
