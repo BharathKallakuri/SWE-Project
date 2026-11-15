@@ -45,7 +45,9 @@ public class ItemMapper
 
             ILine line => new ItemPayload.Line(
                 line.Begin,
-                line.End
+                line.End,
+                ColorToHex(line.Color),
+                line.Width
             ),
 
             ITextbox textbox => new ItemPayload.Textbox(
@@ -113,7 +115,9 @@ public class ItemMapper
 
             ItemPayload.Line line => new Line {
                 Begin = line.Begin,
-                End = line.End
+                End = line.End,
+                Color = HexToColor(line.Color),
+                Width = line.Width
             },
 
             ItemPayload.Textbox textbox => new Textbox {

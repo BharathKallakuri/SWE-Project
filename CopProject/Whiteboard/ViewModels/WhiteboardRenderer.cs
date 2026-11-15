@@ -1,4 +1,7 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+﻿//owner : U Sai Vignesh
+// License : MIT
+
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -13,6 +16,7 @@ using XamlPolyline = Microsoft.UI.Xaml.Shapes.Polyline;
 using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
 using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
+using XamlLine = Microsoft.UI.Xaml.Shapes.Line;
 using Windows.Foundation;
 
 namespace Whiteboard.ViewModels;
@@ -22,15 +26,41 @@ internal sealed class WhiteboardRenderer : IDisposable
 {
     private readonly IWhiteboard _board;
     private readonly Canvas _canvas;
+    private readonly TextboxState _textboxState;
+    private readonly SelectState _selectState;
     private readonly Dictionary<Guid, Microsoft.UI.Xaml.UIElement> _visuals = [];
 
-    public WhiteboardRenderer(IWhiteboard board, Canvas canvas)
+    /// <summary>
+    /// Gap between the selected item and its dashed outline
+    /// </summary>
+    private const double SelectionPadding = 4;
+
+    /// <summary>
+    /// Z-index for the selection outline so it sits above every item.
+    /// WinUI only accepts Canvas.ZIndex values within ±1,000,000.
+    /// </summary>
+    private const int SelectionOutlineZIndex = 1_000_000;
+
+    /// <summary>
+    /// Dashed outline drawn around the selected item; null when nothing is selected
+    /// </summary>
+    private XamlRectangle? _selectionOutline;
+
+    public WhiteboardRenderer(IWhiteboard board, Canvas canvas, TextboxState textboxState, SelectState selectState)
     {
+        ArgumentNullException.ThrowIfNull(board);
+        ArgumentNullException.ThrowIfNull(canvas);
+        ArgumentNullException.ThrowIfNull(textboxState);
+        ArgumentNullException.ThrowIfNull(selectState);
+
         _board = board;
         _canvas = canvas;
+        _textboxState = textboxState;
+        _selectState = selectState;
         _board.ItemAdded += RenderAdded;
         _board.ItemUpdated += RenderUpdated;
         _board.ItemDeleted += RemoveDeleted;
+        _selectState.SelectionChanged += RefreshSelectionOutline;
 
         foreach (IItem item in _board.Items.Values)
         {
@@ -43,22 +73,132 @@ internal sealed class WhiteboardRenderer : IDisposable
         _board.ItemAdded -= RenderAdded;
         _board.ItemUpdated -= RenderUpdated;
         _board.ItemDeleted -= RemoveDeleted;
+        _selectState.SelectionChanged -= RefreshSelectionOutline;
     }
 
     private void RenderAdded(IItem item)
     {
-        RunOnUIThread(() => {
-            RemoveDeletedInternal(item.Id);
-            Microsoft.UI.Xaml.UIElement visual = CreateVisual(item);
-            Canvas.SetZIndex(visual, (int)item.Zindex);
-            _visuals[item.Id] = visual;
-            _canvas.Children.Add(visual);
-        });
+        RunOnUIThread(() => RenderAddedInternal(item));
+    }
+
+    private void RenderAddedInternal(IItem item)
+    {
+        RemoveDeletedInternal(item.Id);
+        Microsoft.UI.Xaml.UIElement visual = CreateVisual(item);
+        Canvas.SetZIndex(visual, (int)item.Zindex);
+        _visuals[item.Id] = visual;
+        _canvas.Children.Add(visual);
+
+        // A freshly created empty textbox gets focus so the user can start typing
+        if (visual is TextBox textBox && item is ITextbox { Content: "" })
+        {
+            textBox.Focus(FocusState.Programmatic);
+        }
     }
 
     private void RenderUpdated(IItem item)
     {
-        RenderAdded(item);
+        RunOnUIThread(() => {
+            if (item is not ITextbox textbox)
+            {
+                RenderAddedInternal(item);
+            }
+
+            // Rebuilding a TextBox would drop focus and whatever the user is typing,
+            // so update the existing control in place instead.
+            else if (_visuals.TryGetValue(textbox.Id, out Microsoft.UI.Xaml.UIElement? visual)
+                && visual is TextBox textBox)
+            {
+                UpdateTextbox(textBox, textbox);
+            }
+            else
+            {
+                RenderAddedInternal(textbox);
+            }
+
+            // Keep the outline on the item if the selected item changed
+            if (item.Id == _selectState.SelectedItemId)
+            {
+                RefreshSelectionOutlineInternal();
+            }
+        });
+    }
+
+    /// <summary>
+    /// Redraws or removes the selection outline to match the select tool's state
+    /// </summary>
+    private void RefreshSelectionOutline()
+    {
+        RunOnUIThread(RefreshSelectionOutlineInternal);
+    }
+
+    private void RefreshSelectionOutlineInternal()
+    {
+        IItem? selected = _selectState.SelectedItem;
+
+        if (selected is null)
+        {
+            if (_selectionOutline is not null)
+            {
+                _canvas.Children.Remove(_selectionOutline);
+                _selectionOutline = null;
+            }
+
+            return;
+        }
+
+        if (_selectionOutline is null)
+        {
+            _selectionOutline = new XamlRectangle {
+                Stroke = new SolidColorBrush(Microsoft.UI.Colors.DodgerBlue),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 4, 3 },
+                Fill = null,
+
+                // The outline must never steal clicks from the items under it
+                IsHitTestVisible = false
+            };
+            Canvas.SetZIndex(_selectionOutline, SelectionOutlineZIndex);
+            _canvas.Children.Add(_selectionOutline);
+        }
+
+        Rect2D box = selected.BoundingBox;
+        double height = box.Height;
+
+        // A textbox grows with its text, so its on-screen height can exceed the model height
+        if (_visuals.TryGetValue(selected.Id, out Microsoft.UI.Xaml.UIElement? visual)
+            && visual is TextBox textBox
+            && textBox.ActualHeight > height)
+        {
+            height = textBox.ActualHeight;
+        }
+
+        _selectionOutline.Width = box.Width + (2 * SelectionPadding);
+        _selectionOutline.Height = height + (2 * SelectionPadding);
+        Canvas.SetLeft(_selectionOutline, box.Left - SelectionPadding);
+        Canvas.SetTop(_selectionOutline, box.Top - SelectionPadding);
+    }
+
+    /// <summary>
+    /// Applies model changes to an existing TextBox without recreating it.
+    /// The text is left alone while the user is editing it, so remote or
+    /// echoed updates never overwrite unsaved typing.
+    /// </summary>
+    private static void UpdateTextbox(TextBox visual, ITextbox item)
+    {
+        if (visual.FocusState == FocusState.Unfocused && visual.Text != item.Content)
+        {
+            visual.Text = item.Content;
+        }
+
+        visual.Width = item.Width;
+        visual.MinHeight = item.Height;
+        visual.FontFamily = new FontFamily(item.FontFamily);
+        visual.FontSize = item.FontSize;
+        visual.Foreground = new SolidColorBrush(item.FontColor);
+        Canvas.SetLeft(visual, item.BoundingBox.Left);
+        Canvas.SetTop(visual, item.BoundingBox.Top);
+        Canvas.SetZIndex(visual, (int)item.Zindex);
     }
 
     private void RemoveDeleted(Guid id)
@@ -91,15 +231,55 @@ internal sealed class WhiteboardRenderer : IDisposable
         _canvas.DispatcherQueue.TryEnqueue(() => action());
     }
 
-    private static Microsoft.UI.Xaml.UIElement CreateVisual(IItem item)
+    private Microsoft.UI.Xaml.UIElement CreateVisual(IItem item)
     {
         return item switch {
             IFreehand freehand => CreateFreehand(freehand),
+            ITextbox textbox => CreateTextbox(textbox),
             Whiteboard.Items.Shapes.Square square => CreateSquare(square),
+            Whiteboard.Items.Shapes.Rectangle rectangle => CreateRectangle(rectangle),
             Whiteboard.Items.Shapes.Circle circle => CreateCircle(circle),
+            Whiteboard.Items.Shapes.Ellipse ellipse => CreateEllipse(ellipse),
             Whiteboard.Items.Shapes.EqTriangle triangle => CreateEqTriangle(triangle),
+            Whiteboard.Interfaces.Shapes.IPolygon polygon => CreatePolygon(polygon),
+            ILine line => CreateLine(line),
             _ => new Border()
         };
+    }
+
+    private TextBox CreateTextbox(ITextbox item)
+    {
+        TextBox visual = new() {
+            Width = item.Width,
+
+            // No fixed Height: the box grows with its content so every line is visible
+            // without scrolling. The model height is only the starting (minimum) size.
+            MinHeight = item.Height,
+            Text = item.Content,
+            FontFamily = new FontFamily(item.FontFamily),
+            FontSize = item.FontSize,
+            Foreground = new SolidColorBrush(item.FontColor),
+            TextWrapping = TextWrapping.Wrap,
+            AcceptsReturn = true,
+            IsHitTestVisible = true,
+            Tag = item.Id
+        };
+
+        // Never show scrollbars; the box resizes to fit all lines instead
+        ScrollViewer.SetVerticalScrollBarVisibility(visual, ScrollBarVisibility.Disabled);
+        ScrollViewer.SetVerticalScrollMode(visual, ScrollMode.Disabled);
+
+        Canvas.SetLeft(visual, item.BoundingBox.Left);
+        Canvas.SetTop(visual, item.BoundingBox.Top);
+        ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
+
+        // Track every keystroke locally; the view model decides when to send it
+        // (on focus loss, tool switch or canvas press) through the whiteboard client.
+        Guid itemId = item.Id;
+        visual.TextChanged += (_, _) => _textboxState.UpdateText(itemId, visual.Text);
+        visual.LostFocus += (_, _) => _textboxState.CommitPendingEdits();
+
+        return visual;
     }
 
     private static XamlPolyline CreateFreehand(IFreehand item)
@@ -147,6 +327,45 @@ internal sealed class WhiteboardRenderer : IDisposable
         return visual;
     }
 
+    private static XamlPolygon CreatePolygon(Whiteboard.Interfaces.Shapes.IPolygon item)
+    {
+        XamlPolygon visual = new() {
+            Fill = new SolidColorBrush(ToColor(item.FillColor)),
+            Stroke = new SolidColorBrush(ToColor(item.BorderColor)),
+            StrokeThickness = item.BorderWidth,
+            StrokeLineJoin = PenLineJoin.Round,
+            IsHitTestVisible = true,
+            Tag = item.Id
+        };
+
+        foreach (Point2D point in item.Vertices)
+        {
+            visual.Points.Add(new Point(point.X, point.Y));
+        }
+
+        ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
+        return visual;
+    }
+
+    private static XamlLine CreateLine(ILine item)
+    {
+        XamlLine visual = new() {
+            X1 = item.Begin.X,
+            Y1 = item.Begin.Y,
+            X2 = item.End.X,
+            Y2 = item.End.Y,
+            Stroke = new SolidColorBrush(item.Color),
+            StrokeThickness = item.Width,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            IsHitTestVisible = true,
+            Tag = item.Id
+        };
+
+        ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
+        return visual;
+    }
+
     private static XamlEllipse CreateCircle(Whiteboard.Items.Shapes.Circle item)
     {
         double diameter = item.Radius * 2;
@@ -162,6 +381,24 @@ internal sealed class WhiteboardRenderer : IDisposable
 
         Canvas.SetLeft(visual, item.Center.X - item.Radius); 
         Canvas.SetTop(visual, item.Center.Y - item.Radius);
+        ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
+        return visual;
+    }
+
+    private static XamlEllipse CreateEllipse(Whiteboard.Items.Shapes.Ellipse item)
+    {
+        XamlEllipse visual = new() {
+            Width = item.Width,
+            Height = item.Height,
+            Fill = new SolidColorBrush(ToColor(item.FillColor)),
+            Stroke = new SolidColorBrush(ToColor(item.BorderColor)),
+            StrokeThickness = item.BorderWidth,
+            IsHitTestVisible = true,
+            Tag = item.Id
+        };
+
+        Canvas.SetLeft(visual, item.BoundingBox.Left);
+        Canvas.SetTop(visual, item.BoundingBox.Top);
         ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
         return visual;
     }
@@ -188,6 +425,24 @@ internal sealed class WhiteboardRenderer : IDisposable
 
         Canvas.SetLeft(visual, left);
         Canvas.SetTop(visual, top);
+        ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
+        return visual;
+    }
+
+    private static XamlRectangle CreateRectangle(Whiteboard.Items.Shapes.Rectangle item)
+    {
+        XamlRectangle visual = new() {
+            Width = item.Width,
+            Height = item.Height,
+            Fill = new SolidColorBrush(ToColor(item.FillColor)),
+            Stroke = new SolidColorBrush(ToColor(item.BorderColor)),
+            StrokeThickness = item.BorderWidth,
+            IsHitTestVisible = true,
+            Tag = item.Id
+        };
+
+        Canvas.SetLeft(visual, item.BoundingBox.Left);
+        Canvas.SetTop(visual, item.BoundingBox.Top);
         ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
         return visual;
     }

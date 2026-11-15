@@ -1,3 +1,5 @@
+// Author = Balabadra Lepakshi Kalyan
+// Roll Number = 112301003
 using System.IO;
 using Controller.ViewModels;
 using Microsoft.UI.Xaml.Media;
@@ -5,7 +7,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage.Streams;
 
 namespace Controller.Models;
-
+// Represents a meeting participant and stores their details, role, and profile picture.
 public sealed class ParticipantInfo : ObservableObject
 {
     public string Username { get; set; } = string.Empty;
@@ -16,6 +18,7 @@ public sealed class ParticipantInfo : ObservableObject
     public string RoleDisplay => IsHost ? "Host" : "Client";
     public string DisplayName => IsHost ? $"{Username} (Host)" : Username;
 
+// Converts the stored profile picture bytes into an ImageSource for display in the UI.
     public ImageSource? AvatarImage
     {
         get

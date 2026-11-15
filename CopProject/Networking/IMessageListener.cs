@@ -1,13 +1,16 @@
-﻿namespace Networking;
+﻿// Author = Bharath
+// Roll Number = 112301013
+
+namespace Networking;
 
 /// <summary>
-/// Declares a listener for messages from the communicator.
+/// Listener interface for receiving reliable messages.
 /// </summary>
 public interface IMessageListener
 {
     /// <summary>
-    /// Handles reception of a message.
+    /// Handles a received reliable message.
     /// </summary>
-    /// <param name="message">Message that is received</param>
+    /// <param name="message">The received message payload.</param>
     void OnMessageReceived(byte[] message);
 }

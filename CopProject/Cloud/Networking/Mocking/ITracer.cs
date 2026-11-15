@@ -1,15 +1,20 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿// Author = Simeon Kandan Sonar
+// Roll Number = 112301031
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Cloud.Networking.Mocking;
 
 /// <summary>
-/// Abstraction over <see cref="Trace.WriteLine(string)"/> to be able to mock it.
+/// Abstraction over <see cref="Trace"/> (information, warning and error output) to be able to mock it.
+/// The calling member name is captured automatically and added to every message.
 /// </summary>
 internal interface ITracer
 {
-    void WriteLine(string message);
+    void Info(string message, [CallerMemberName] string member = "");
+
+    void WriteWarn(string message, [CallerMemberName] string member = "");
+
+    void WriteError(string message, [CallerMemberName] string member = "");
 }

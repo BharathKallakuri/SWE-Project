@@ -1,4 +1,6 @@
-﻿namespace Chat;
+﻿using System.Diagnostics;
+
+namespace Chat;
 
 /// <summary>
 /// Stores the participants and messages for one chatroom.
@@ -56,7 +58,13 @@ public class Chatroom : IChatroom
 
         lock (_syncRoot)
         {
-            return _participants.Add(name);
+            bool added = _participants.Add(name);
+            Trace.TraceInformation(
+                "[Chat] Participant '{0}' {1} in room '{2}'.",
+                name,
+                added ? "joined" : "was already present",
+                RoomName);
+            return added;
         }
     }
 
@@ -67,7 +75,13 @@ public class Chatroom : IChatroom
 
         lock (_syncRoot)
         {
-            return _participants.Remove(name);
+            bool removed = _participants.Remove(name);
+            Trace.TraceInformation(
+                "[Chat] Participant '{0}' {1} from room '{2}'.",
+                name,
+                removed ? "left" : "was not present",
+                RoomName);
+            return removed;
         }
     }
 
@@ -104,6 +118,38 @@ public class Chatroom : IChatroom
         }
     }
 
+    /// <summary>
+    /// Gets an immutable snapshot of room messages and their thread replies.
+    /// </summary>
+    /// <returns>Messages ordered by timestamp and ID, with each reply's thread root ID.</returns>
+    internal IReadOnlyList<(Guid Id, ChatMessage Message, Guid? ThreadParentMessageId)> GetMessagesSnapshot()
+    {
+        lock (_syncRoot)
+        {
+            List<(Guid Id, ChatMessage Message, Guid? ThreadParentMessageId)> messages = new();
+
+            foreach (((DateTimeOffset _, Guid id), ChatMessageWithThreads root) in _byTime)
+            {
+                messages.Add((id, root.DeepCloneWithoutThreadMessages(), null));
+
+                foreach (((DateTimeOffset _, Guid replyId), ChatMessage reply) in root.ThreadByTime)
+                {
+                    messages.Add((replyId, reply.DeepClone(), id));
+                }
+            }
+
+            IReadOnlyList<(Guid Id, ChatMessage Message, Guid? ThreadParentMessageId)> snapshot = messages
+                .OrderBy(item => item.Message.Timestamp)
+                .ThenBy(item => item.Id)
+                .ToArray();
+            Trace.TraceInformation(
+                "[Chat] Created a conversation snapshot for room '{0}' containing {1} messages.",
+                RoomName,
+                snapshot.Count);
+            return snapshot;
+        }
+    }
+
     /// <inheritdoc />
     public RoomResult EditMessage(Guid id, string newContent, string editor, Guid? parentMessageId = null)
     {
@@ -114,15 +160,18 @@ public class Chatroom : IChatroom
         {
             if (!TryGetTarget(id, parentMessageId, out ChatMessage? message))
             {
+                Trace.TraceWarning("[Chat] Cannot edit missing message {0}.", id);
                 return RoomResult.NotFound;
             }
 
             if (message.IsDeleted || !string.Equals(message.SenderName, editor, StringComparison.Ordinal))
             {
+                Trace.TraceWarning("[Chat] User '{0}' is not permitted to edit message {1}.", editor, id);
                 return RoomResult.Forbidden;
             }
 
             message.Edit(newContent);
+            Trace.TraceInformation("[Chat] User '{0}' edited message {1}.", editor, id);
             return RoomResult.Ok;
         }
     }
@@ -136,6 +185,7 @@ public class Chatroom : IChatroom
         {
             if (!TryGetTarget(id, parentMessageId, out ChatMessage? message))
             {
+                Trace.TraceWarning("[Chat] Cannot delete missing message {0}.", id);
                 return RoomResult.NotFound;
             }
 
@@ -143,10 +193,12 @@ public class Chatroom : IChatroom
             if ((!isHost && !string.Equals(message.SenderName, deleter, StringComparison.Ordinal))
                 || message.IsDeleted)
             {
+                Trace.TraceWarning("[Chat] User '{0}' is not permitted to delete message {1}.", deleter, id);
                 return RoomResult.Forbidden;
             }
 
             message.Delete(deleter);
+            Trace.TraceInformation("[Chat] User '{0}' deleted message {1}.", deleter, id);
             return RoomResult.Ok;
         }
     }
@@ -161,15 +213,18 @@ public class Chatroom : IChatroom
         {
             if (!TryGetTarget(id, parentMessageId, out ChatMessage? message))
             {
+                Trace.TraceWarning("[Chat] Cannot react to missing message {0}.", id);
                 return RoomResult.NotFound;
             }
 
             if (message.IsDeleted)
             {
+                Trace.TraceWarning("[Chat] User '{0}' cannot react to deleted message {1}.", user, id);
                 return RoomResult.Forbidden;
             }
 
             message.ToggleReaction(emoji, user);
+            Trace.TraceInformation("[Chat] User '{0}' toggled a reaction on message {1}.", user, id);
             return RoomResult.Ok;
         }
     }
@@ -188,11 +243,15 @@ public class Chatroom : IChatroom
         {
             if (!_byId.TryGetValue(parentMessageId, out ChatMessageWithThreads? parent))
             {
+                Trace.TraceWarning(
+                    "[Chat] Cannot add a thread reply because root message {0} was not found.",
+                    parentMessageId);
                 throw new KeyNotFoundException("The parent message was not found.");
             }
 
             Guid id = Guid.NewGuid();
             parent.AddMessageToThread(id, reply);
+            Trace.TraceInformation("[Chat] Added thread reply {0} under root message {1}.", id, parentMessageId);
             return id;
         }
     }
@@ -210,11 +269,13 @@ public class Chatroom : IChatroom
         {
             if (_byId.ContainsKey(id))
             {
+                Trace.TraceError("[Chat] Cannot add duplicate message ID {0}.", id);
                 throw new ArgumentException("A message with this ID already exists.", nameof(id));
             }
 
             _byId.Add(id, message);
             _byTime.Add((message.Timestamp, id), message);
+            Trace.TraceInformation("[Chat] Added room message {0}.", id);
         }
     }
 
@@ -242,6 +303,7 @@ public class Chatroom : IChatroom
         {
             _byId.Clear();
             _byTime.Clear();
+            Trace.TraceInformation("[Chat] Cleared messages from room '{0}'.", RoomName);
         }
     }
 
@@ -258,10 +320,18 @@ public class Chatroom : IChatroom
         {
             if (!_byId.TryGetValue(parentMessageId, out ChatMessageWithThreads? parent))
             {
+                Trace.TraceWarning(
+                    "[Chat] Cannot apply thread reply {0}; root message {1} was not found.",
+                    messageId,
+                    parentMessageId);
                 return RoomResult.NotFound;
             }
 
             parent.AddMessageToThread(messageId, reply);
+            Trace.TraceInformation(
+                "[Chat] Applied thread reply {0} under root message {1}.",
+                messageId,
+                parentMessageId);
             return RoomResult.Ok;
         }
     }

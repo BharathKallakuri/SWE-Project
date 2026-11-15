@@ -1,3 +1,5 @@
+// Author = Balabadra Lepakshi Kalyan
+// Roll Number = 112301003
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -5,23 +7,29 @@ using Microsoft.UI.Xaml;
 using Controller.Models;
 
 namespace Controller.ViewModels;
-
+// Manages meeting-related UI data, participant information, graphs, and security audit logs.
 public sealed class MeetingViewModel : ObservableObject
 {
     readonly MeetingSession session;
     readonly DispatcherTimer timer;
     private DateTime? _meetingStartedTime;
     private readonly HashSet<string> _activeUsernames = new(StringComparer.OrdinalIgnoreCase);
-
+    
+    // Initializes meeting event handlers and updates the dashboard when meeting activities occur.
     public MeetingViewModel(MeetingSession session)
     {
         this.session = session;
 
-        timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        timer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1) 
+        };
+
         timer.Tick += (s, e) =>
         {
             DateTime start = session.MeetingStartTime ?? _meetingStartedTime ?? DateTime.Now;
             var elapsed = DateTime.Now - start;
+
             DurationText = $"{(int)elapsed.TotalMinutes:D2}:{elapsed.Seconds:D2}";
             OnPropertyChanged(nameof(DurationText));
             ChartUpdated?.Invoke();
@@ -31,13 +39,32 @@ public sealed class MeetingViewModel : ObservableObject
         {
             _activeUsernames.Clear();
             _meetingStartedTime = session.MeetingStartTime ?? DateTime.Now;
+            
             string user = !string.IsNullOrWhiteSpace(session.CurrentUserId) ? session.CurrentUserId : "Host";
-            AuditLogs.Insert(0, new SecurityAuditEvent { User = user, Activity = "Meeting created & started", Status = "Success" });
-            AuditLogs.Insert(0, new SecurityAuditEvent { User = user, Activity = "User logged in", Status = "Success" });
+            AuditLogs.Insert(0, new SecurityAuditEvent 
+            { 
+                User = user,
+                Activity = "Meeting created & started", 
+                Status = "Success"
+            });
+
+            AuditLogs.Insert(0, new SecurityAuditEvent 
+            {
+                User = user, 
+                Activity = "User logged in", 
+                Status = "Success" 
+            });
+
             _activeUsernames.Add(user);
 
             GraphPoints.Clear();
-            GraphPoints.Add(new ParticipantDataPoint { Seconds = 0, TimeLabel = "00:00", Count = Math.Max(1, session.ParticipantCount) });
+            GraphPoints.Add(new ParticipantDataPoint 
+            { 
+                Seconds = 0, 
+                TimeLabel = "00:00", 
+                Count = Math.Max(1, session.ParticipantCount) 
+            });
+
             timer.Start();
             Refresh();
             ChartUpdated?.Invoke();
@@ -46,7 +73,13 @@ public sealed class MeetingViewModel : ObservableObject
         session.MeetingEnded += () =>
         {
             string user = !string.IsNullOrWhiteSpace(session.CurrentUserId) ? session.CurrentUserId : "Host";
-            AuditLogs.Insert(0, new SecurityAuditEvent { User = user, Activity = "Meeting ended", Status = "Info" });
+            AuditLogs.Insert(0, new SecurityAuditEvent 
+            {
+                User = user, 
+                Activity = "Meeting ended", 
+                Status = "Info" 
+            });
+
             timer.Stop();
             _meetingStartedTime = null;
             _activeUsernames.Clear();
@@ -79,7 +112,7 @@ public sealed class MeetingViewModel : ObservableObject
                 }
             }
 
-            // Detect newly joined participants
+            // detecting newly joined participants
             foreach (var username in newUsers)
             {
                 if (!_activeUsernames.Contains(username))
@@ -89,7 +122,7 @@ public sealed class MeetingViewModel : ObservableObject
                 }
             }
 
-            // Detect participants who left
+            // detecting participants who left
             var leftUsers = _activeUsernames.Where(u => !newUsers.Contains(u)).ToList();
             foreach (var username in leftUsers)
             {
@@ -125,6 +158,7 @@ public sealed class MeetingViewModel : ObservableObject
         }
     }
 
+// Calculates the total elapsed meeting time for duration tracking.
     public double ElapsedSeconds
     {
         get
@@ -144,6 +178,7 @@ public sealed class MeetingViewModel : ObservableObject
     public string Role => session.Meeting?.IsHost == true ? "Host" : "Participant";
     public ObservableCollection<ParticipantInfo> ParticipantList { get; } = new();
 
+    // Maintains the currently selected participant and notifies the UI when the selection changes.
     private ParticipantInfo? _selectedParticipant;
     public ParticipantInfo? SelectedParticipant
     {
@@ -178,7 +213,7 @@ public sealed class MeetingViewModel : ObservableObject
     }
     public bool HasAlert => !string.IsNullOrEmpty(_alertMessage);
 
-    // View mode: 0 = Normal, 1 = Graph Maximized, 2 = Audit Maximized
+    // View Flag => 0 -> normal, 1 -> Graph maximized, 2->audit maximized
     private int _maximizedView = 0;
     public int MaximizedView
     {
@@ -204,6 +239,7 @@ public sealed class MeetingViewModel : ObservableObject
     public void MaximizeGraph() => MaximizedView = 1;
     public void MaximizeAudit() => MaximizedView = 2;
 
+// Adds a security audit entry for testing or demonstrating dashboard activity.
     public void AddTestLog(string action, string status = "Info")
     {
         string user = !string.IsNullOrWhiteSpace(session.CurrentUserId) ? session.CurrentUserId : "User";

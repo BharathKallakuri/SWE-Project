@@ -31,6 +31,8 @@
        Foreground="White" Background="#1F4A78"/>
                 <Button x:Name="CrashHandlerTopBtn" Content="CrashHandler" Click="CrashHandler_Click"
        Foreground="White" Background="#1F4A78"/>
+                <Button x:Name="DiagnosisTopBtn" Content="Diagnosis" Click="Diagnosis_Click"
+                        Foreground="White" Background="#1F4A78"/>
                 <PersonPicture x:Name="ProfilePic" Width="30" Height="30"/>
                 <TextBlock x:Name="ProfileName" Foreground="White" VerticalAlignment="Center"/>
                 <Button Content="Edit profile" Click="EditProfile_Click" Foreground="White"
@@ -163,6 +165,16 @@
             </Border>
         </Grid>
 
+        <!-- Diagnosis screen -->
+        <Grid x:Name="DiagnosisView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Button Content="Back" Click="DiagnosisBack_Click" Background="White" HorizontalAlignment="Left"/>
+            <Frame x:Name="DiagnosisFrame" Grid.Row="1"/>
+        </Grid>
+
         <!-- Meeting screen -->
         <Grid x:Name="MeetingView" Grid.Row="1" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
@@ -226,6 +238,8 @@
                               Width="90" Height="50"/>
                 <Button Content="Location" Click="Location_Click" Width="90" Height="50"/>
                 <Button Content="Cloud" Click="Cloud_Click" Width="90" Height="50"/>
+                <!-- DIAGNOSIS : Run diagnosis inside the meeting -->
+                <Button Content="Diagnosis" Click="Diagnosis_Click" Width="90" Height="50"/>
                 <Button x:Name="EndBtn" Content="End Meeting" Click="End_Click" Width="110" Height="50"
                         Background="#D13438" Foreground="White"/>
             </StackPanel>

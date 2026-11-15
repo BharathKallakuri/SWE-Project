@@ -1,3 +1,5 @@
+// Author = Balabadra Lepakshi Kalyan
+// Roll Number = 112301003
 using System;
 using System.Linq;
 using Windows.Foundation;
@@ -10,7 +12,7 @@ using Microsoft.UI.Xaml.Shapes;
 using Controller.ViewModels;
 
 namespace Controller.Views;
-
+// Connects the ViewModel to the view and subscribes to chart update notifications.
 public sealed partial class MeetingView : UserControl
 {
     private MeetingViewModel? _viewModel;
@@ -56,7 +58,7 @@ public sealed partial class MeetingView : UserControl
 
     private void MiniChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => DrawCharts();
     private void BigChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => DrawCharts();
-
+// Draws the participant activity graph, including axes, time labels, data points, and live updates.
     private void DrawGraph(Canvas canvas, bool isBig)
     {
         if (ViewModel == null) return;
