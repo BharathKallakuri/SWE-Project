@@ -185,11 +185,34 @@ public class HitTests : BaseGenerator
         // Midpoint on line should hit
         Assert.True(line.HitTest(new Point2D(60, 10)));
 
+        // Endpoints should hit
+        Assert.True(line.HitTest(new Point2D(10, 10)));
+        Assert.True(line.HitTest(new Point2D(110, 10)));
+
         // Within default threshold (5.0 - TestTolerance) should hit
         Assert.True(line.HitTest(new Point2D(60, 10 + Whiteboard.Items.Line.DefaultHitThreshold - TestTolerance)));
 
         // Beyond default threshold should miss
         Assert.False(line.HitTest(new Point2D(60, 10 + Whiteboard.Items.Line.DefaultHitThreshold + 1.0)));
+
+        // Diagonal line test
+        var diagLine = new Line() {
+            Begin = new Point2D(0, 0),
+            End = new Point2D(100, 100),
+            Width = 2.0
+        };
+        Assert.True(diagLine.HitTest(new Point2D(50, 50)));
+        Assert.True(diagLine.HitTest(new Point2D(52, 50)));
+        Assert.False(diagLine.HitTest(new Point2D(80, 20)));
+
+        // Thick line test where Width / 2.0 > DefaultHitThreshold (e.g. Width = 20 -> threshold = 10)
+        var thickLine = new Line() {
+            Begin = new Point2D(0, 50),
+            End = new Point2D(100, 50),
+            Width = 20.0
+        };
+        Assert.True(thickLine.HitTest(new Point2D(50, 58)));
+        Assert.False(thickLine.HitTest(new Point2D(50, 62)));
     }
 
     /// <summary>
