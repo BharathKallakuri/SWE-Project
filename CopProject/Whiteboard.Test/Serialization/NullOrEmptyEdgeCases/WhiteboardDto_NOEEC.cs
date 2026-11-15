@@ -20,7 +20,7 @@ public class WhiteboardDtoSerializer_NOEEC
     public void TestString()
     {
         // 1. Act
-        string serialized = WhiteboardDtoStringSerializer.Serialize(null);
+        string serialized = WhiteboardDtoStringSerializer.Serialize(null!);
 
         // 2. Assert
         Assert.Equivalent(serialized, "");
@@ -33,7 +33,7 @@ public class WhiteboardDtoSerializer_NOEEC
     public void TestByte()
     {
         // 1. Act
-        byte[] serialized = new WhiteboardDtoByteSerializer().Serialize(null);
+        byte[] serialized = new WhiteboardDtoByteSerializer().Serialize(null!);
 
         // 2. Assert
         Assert.Empty(serialized);

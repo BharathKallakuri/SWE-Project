@@ -12,7 +12,6 @@ namespace Whiteboard.ViewModels;
 /// </summary>
 /// <param name="CreatedBy">Name of the user who created the object</param>
 /// <param name="CreatedDateTime">Time of creation</param>
-[ExcludeFromCodeCoverage]
 public record ToolTip(
     string CreatedBy,
     DateTime CreatedDateTime

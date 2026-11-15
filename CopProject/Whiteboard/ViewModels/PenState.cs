@@ -89,7 +89,7 @@ public class PenState : ViewModelStateBase
         if (_freehand.Points.Count >= 2)
         {
             IFreehand item = _freehand;
-            Task.Run(async () => {
+            DrawingTask = Task.Run(async () => {
                 WhiteboardClient.AddItem(item);
 
                 if (_shapeRecognitionService?.IsEnabled == true)

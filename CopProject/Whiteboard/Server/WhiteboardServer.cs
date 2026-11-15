@@ -3,6 +3,7 @@
 /// LICENSE : MIT
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using Networking;
 using Whiteboard.Interfaces;
@@ -38,6 +39,7 @@ public class WhiteboardServer : IWhiteboardServer
         _history = new SharedWhiteboardHistoryService(Canvas);
 
         _communicator.AddSubscriber(Constants.WhiteboardModuleId, this);
+        Trace.TraceInformation("[Whiteboard][WhiteboardServer] Initialized WhiteboardServer and subscribed to communicator.");
     }
 
     /// <summary>
@@ -53,8 +55,11 @@ public class WhiteboardServer : IWhiteboardServer
         if (request is null ||
             string.IsNullOrWhiteSpace(request.UserId))
         {
+            Trace.TraceWarning("[Whiteboard][WhiteboardServer][Warning] Ignored null or unauthenticated client request.");
             return;
         }
+
+        Trace.TraceInformation($"[Whiteboard][WhiteboardServer] Processing request {request.GetType().Name} from User={request.UserId}.");
 
         // Keep requests and their broadcasts in the same order.
         lock (_gate)
@@ -64,6 +69,7 @@ public class WhiteboardServer : IWhiteboardServer
             switch (request)
             {
                 case ClientMessage.ReqUpdate:
+                    Trace.TraceInformation($"[Whiteboard][WhiteboardServer] Canvas update requested by User={request.UserId}.");
                     // No mutation: send the current state below.
                     break;
 
@@ -71,32 +77,38 @@ public class WhiteboardServer : IWhiteboardServer
                 case ClientMessage.ReqAddItem(var id, var item)
                     when id == item.Metadata.Id:
 
+                    Trace.TraceInformation($"[Whiteboard][WhiteboardServer] Item addition requested: Item={id}, User={request.UserId}.");
                     _history.AddItem(
                         request.UserId,
                         ItemMapper.FromDto(item));
                     break;
 
                 case ClientMessage.ReqDeleteItem(var id):
+                    Trace.TraceInformation($"[Whiteboard][WhiteboardServer] Item deletion requested: Item={id}, User={request.UserId}.");
                     _history.DeleteItem(request.UserId, id);
                     break;
 
                 case ClientMessage.ReqUpdateItem(var id, var item)
                     when id == item.Metadata.Id:
 
+                    Trace.TraceInformation($"[Whiteboard][WhiteboardServer] Item modification requested: Item={id}, User={request.UserId}.");
                     _history.EditItem(
                         request.UserId,
                         ItemMapper.FromDto(item));
                     break;
 
                 case ClientMessage.ReqUndo:
+                    Trace.TraceInformation($"[Whiteboard][WhiteboardServer] Undo requested by User={request.UserId}.");
                     _history.Undo(request.UserId);
                     break;
 
                 case ClientMessage.ReqRedo:
+                    Trace.TraceInformation($"[Whiteboard][WhiteboardServer] Redo requested by User={request.UserId}.");
                     _history.Redo(request.UserId);
                     break;
 
                 case ClientMessage.ReqRestoreSnapshot(var whiteboard):
+                    Trace.TraceInformation($"[Whiteboard][WhiteboardServer] Snapshot restoration requested with {whiteboard.Items.Count} items by User={request.UserId}.");
                     _history.RestoreState(request.UserId, whiteboard.Items.Select(ItemMapper.FromDto));
                     break;
             }
@@ -117,6 +129,7 @@ public class WhiteboardServer : IWhiteboardServer
                 .Select(ItemMapper.ToDto)
                 .ToList());
 
+        Trace.TraceInformation($"[Whiteboard][WhiteboardServer] Broadcasting canvas update ({state.Items.Count} items).");
         Broadcast(new ServerMessage.ResUpdate(state));
     }
 

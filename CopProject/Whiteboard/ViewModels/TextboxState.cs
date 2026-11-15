@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
@@ -54,6 +55,7 @@ public sealed class TextboxState : ViewModelStateBase
             Zindex = GetNextZIndex()
         };
 
+        Trace.TraceInformation($"[Whiteboard][TextboxState] Created textbox {textbox.Id} at ({point.X}, {point.Y}).");
         WhiteboardClient.AddItem(textbox);
     }
 
@@ -104,6 +106,7 @@ public sealed class TextboxState : ViewModelStateBase
         // LostFocus and call back into this method.
         KeyValuePair<Guid, string>[] edits = [.. _pendingEdits];
         _pendingEdits.Clear();
+        Trace.TraceInformation($"[Whiteboard][TextboxState] Committing {edits.Length} pending textbox edits.");
 
         foreach ((Guid itemId, string text) in edits)
         {

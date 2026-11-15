@@ -18,7 +18,6 @@ using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
 namespace Whiteboard.Views;
 
 /// <inheritdoc/>
-[ExcludeFromCodeCoverage]
 public class CanvasPreview : ICanvasPreview
 {
     /// <summary>

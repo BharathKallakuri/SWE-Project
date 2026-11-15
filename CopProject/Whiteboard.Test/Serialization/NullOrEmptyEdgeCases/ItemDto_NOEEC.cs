@@ -20,7 +20,7 @@ public class ItemDtoSerializer_NOEEC
     public void TestString()
     {
         // 1. Act
-        string serialized = ItemDtoStringSerializer.Serialize(null);
+        string serialized = ItemDtoStringSerializer.Serialize(null!);
 
         // 2. Assert
         Assert.Equivalent(serialized, "");
@@ -33,7 +33,7 @@ public class ItemDtoSerializer_NOEEC
     public void TestByte()
     {
         // 1. Act
-        byte[] serialized = new ItemDtoByteSerializer().Serialize(null);
+        byte[] serialized = new ItemDtoByteSerializer().Serialize(null!);
 
         // 2. Assert
         Assert.Empty(serialized);

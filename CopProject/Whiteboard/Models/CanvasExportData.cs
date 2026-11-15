@@ -7,12 +7,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Whiteboard.Models;
 
-[ExcludeFromCodeCoverage]
 public class CanvasExportData
 {
-    public byte[] ImageData { get; set; }
-    public string ContentType { get; set; }
-    public string FileName { get; set; }
+    public byte[] ImageData { get; set; } = [];
+    public string ContentType { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
     public int PixelWidth { get; set; }
     public int PixelHeight { get; set; }
     public DateTime ExportDateTime { get; set; }

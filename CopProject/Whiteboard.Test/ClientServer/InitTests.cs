@@ -21,7 +21,7 @@ public class InitTests
     public void NullClientCommunicatorThrows()
     {
         Assert.Throws<ArgumentNullException>(
-            () => WhiteboardFactory.CreateClientWhiteboard(null, _endPoint, _userId)
+            () => WhiteboardFactory.CreateClientWhiteboard(null!, _endPoint, _userId)
         );
     }
 
@@ -32,7 +32,7 @@ public class InitTests
         ICommunicator communicator = new MockCommunicatorFactory().CreateClientCommunicator();
 
         Assert.Throws<ArgumentNullException>(
-            () => WhiteboardFactory.CreateClientWhiteboard(communicator, null, _userId)
+            () => WhiteboardFactory.CreateClientWhiteboard(communicator, null!, _userId)
         );
     }
 
@@ -46,7 +46,7 @@ public class InitTests
         );
 
         Assert.Throws<ArgumentNullException>(
-            () => WhiteboardFactory.CreateClientWhiteboard(communicator, _endPoint, null)
+            () => WhiteboardFactory.CreateClientWhiteboard(communicator, _endPoint, null!)
         );
     }
 
@@ -54,7 +54,7 @@ public class InitTests
     public void NullServerCommunicatorThrows()
     {
         Assert.Throws<ArgumentNullException>(
-            () => WhiteboardFactory.GetServerWhiteboard(null)
+            () => WhiteboardFactory.GetServerWhiteboard(null!)
         );
     }
 }
