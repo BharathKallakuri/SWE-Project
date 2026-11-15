@@ -51,6 +51,7 @@
     <Project Path="Networking/Networking.csproj" />
     <Project Path="Screenshare.Test/Screenshare.Test.csproj" />
     <Project Path="Screenshare/Screenshare.csproj" />
+    <Project Path="Utils/Diagnosis/Diagnosis.UI.csproj" />
     <Project Path="Utils/Utils.csproj" />
     <Project Path="UX/UX.csproj">
         <Platform Project="x64" />
