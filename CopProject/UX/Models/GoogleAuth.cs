@@ -17,8 +17,8 @@ namespace UX.Models;
 public record GoogleUser(string Name, string Email, string Picture);
 public static class GoogleAuth
 {
-    const string ClientId = "474271673658-9m47i1unkejgq0e9opirjeupk78ofn4o.apps.googleusercontent.com";
-    const string ClientSecret = "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";
+    const string ClientId = "575590038834-64p0s206s48c9igjgs8uirhtm9h96rob.apps.googleusercontent.com";
+    const string ClientSecret = "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";
     private static readonly HttpClient s_http = new();
     public static async Task<GoogleUser> SignInAsync()
     {
