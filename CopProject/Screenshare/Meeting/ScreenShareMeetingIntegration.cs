@@ -66,17 +66,6 @@ public sealed class ScreenShareMeetingIntegration : IDisposable
         _session.MeetingEnding += OnMeetingEnding;
     }
 
-    /// <summary>gets the running meeting's ScreenShare, or null between meetings</summary>
-    internal ScreenShareNode? Node
-    {
-        get {
-            lock (_lock)
-            {
-                return _node;
-            }
-        }
-    }
-
     public void Dispose()
     {
         lock (_lock)
