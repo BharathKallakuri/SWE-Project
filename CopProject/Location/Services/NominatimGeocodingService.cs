@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿// Author = Ankit Gupta
+// Roll Number = 112301010
+
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using LocationTracker.Interfaces;
@@ -15,6 +18,10 @@ public class NominatimGeocodingService : IGeocodingService
         _http.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
         _http.DefaultRequestHeaders.UserAgent.ParseAdd("CopProject-LocationTracker/1.0");
     }
+
+    /// <summary>
+    /// Gets the address for the given coordinates using the Nominatim API.
+    /// </summary>
     public async Task<string?> GetAddressAsync(double latitude, double longitude)
     {
         if (!Coordinates.IsValid(latitude, longitude))
@@ -45,6 +52,9 @@ public class NominatimGeocodingService : IGeocodingService
         return null;
     }
 
+    /// <summary>
+    /// Finds the coordinates for the given address using the Nominatim API.
+    /// </summary>
     public async Task<(double Latitude, double Longitude)?> FindCoordinatesAsync(string address)
     {
         if (string.IsNullOrWhiteSpace(address))

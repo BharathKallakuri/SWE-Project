@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿// Author = Ankit Gupta
+// Roll Number = 112301010
+
+using System.Diagnostics;
 using Incidents;
 using LocationTracker.Interfaces;
 using LocationTracker.Models;
@@ -16,11 +19,17 @@ public class MapService : IMapService
         _geocoding = geocoding;
     }
 
+    /// <summary>
+    /// Gets the incidents for the map and optionally filtered by the given filter
+    /// </summary>
     public Task<List<Incident>> GetIncidentsForMapAsync(IncidentFilter? filter = null)
     {
         return _incidents.GetAllIncidents(filter);
     }
 
+    /// <summary>
+    /// Gets the location for a map click.
+    /// </summary>
     public async Task<IncidentLocation?> GetLocationForClickAsync(double latitude, double longitude)
     {
         if (!Coordinates.IsValid(latitude, longitude))
@@ -33,6 +42,9 @@ public class MapService : IMapService
         return new IncidentLocation(latitude, longitude, address);
     }
 
+    /// <summary>
+    /// Searches for a location by address.
+    /// </summary>
     public async Task<LocationSearchResult?> SearchAddressAsync(string address)
     {
         (double Latitude, double Longitude)? coordinates = await _geocoding.FindCoordinatesAsync(address);
