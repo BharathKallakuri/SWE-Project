@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Chat.Test" />
+    <InternalsVisibleTo Include="Chat.UI.Test" />
   </ItemGroup>
 
   <ItemGroup>

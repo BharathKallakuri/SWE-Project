@@ -138,14 +138,7 @@ public sealed class ChatClientAdapter : IDisposable
         RaiseUserInfoChanged();
     }
 
-    private void RaiseUserInfoChanged()
-    {
-        _dispatcherQueue.TryEnqueue(() =>
-        {
-            if (Volatile.Read(ref _disposed) == 0)
-                UserInfoChanged?.Invoke();
-        });
-    }
+    private void RaiseUserInfoChanged() => DispatchToUI(() => UserInfoChanged?.Invoke());
 
     private void RaiseHostParticipantsChanged()
     {
