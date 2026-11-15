@@ -9,14 +9,18 @@ namespace ScreenShare.ViewModels;
 
 public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
 {
-    // every stream is sent at 720p (spec), so grid and zoom ask for the same quality
-    private const int StreamQuality = 720;
+    // grid tiles are 320x180, so they get the sharer's small stream; a zoomed tile asks for
+    // more than any stream offers, so it gets the full one (ScreenShareOptions.MaxHeight)
+    internal const int GridTileHeight = 180;
+    internal const int ZoomedHeight = 1080;
 
     private readonly IScreenShareFeed _feed;
-    private readonly DispatcherQueue _ui;
-    private readonly DispatcherQueueTimer _feedTimer;
-    private readonly DispatcherQueueTimer _fpsTimer;
-    private readonly Stopwatch _clock = Stopwatch.StartNew();
+    private readonly IUiScheduler _ui;
+    private readonly IUiTimer _feedTimer;
+    private readonly IUiTimer _fpsTimer;
+    private readonly TimeProvider _time;
+    private readonly long _startedAt;
+    private readonly Func<int, int, ITileSurface>? _createSurface;
     private readonly Dictionary<string, ParticipantTile> _byId = new();
     private readonly HashSet<string> _onScreen = new();   // tiles currently in the viewport
     private string? _zoomedId;
@@ -39,22 +43,34 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    // not covered by unit tests: a DispatcherQueue only exists inside a running WinUI app
     public ScreenShareViewModel(IScreenShareFeed feed, DispatcherQueue ui)
+        : this(feed, new DispatcherQueueScheduler(ui), TimeProvider.System, createSurface: null)
     {
+    }
+
+    /// <param name="ui">runs work and timers on the UI thread</param>
+    /// <param name="timeProvider">clock for the fps counter</param>
+    /// <param name="createSurface">makes each tile's picture; null for a WinUI bitmap</param>
+    /// <exception cref="ArgumentNullException">feed, ui or timeProvider is null</exception>
+    internal ScreenShareViewModel(IScreenShareFeed feed, IUiScheduler ui, TimeProvider timeProvider,
+        Func<int, int, ITileSurface>? createSurface)
+    {
+        ArgumentNullException.ThrowIfNull(feed);
+        ArgumentNullException.ThrowIfNull(ui);
+        ArgumentNullException.ThrowIfNull(timeProvider);
+
         _feed = feed;
         _ui = ui;
+        _time = timeProvider;
+        _startedAt = timeProvider.GetTimestamp();
+        _createSurface = createSurface;
 
         // Collects bursts of scroll events into one RequestFeeds call
-        _feedTimer = _ui.CreateTimer();
-        _feedTimer.Interval = TimeSpan.FromMilliseconds(150);
-        _feedTimer.IsRepeating = false;
-        _feedTimer.Tick += OnFeedTimerTick;
+        _feedTimer = _ui.CreateTimer(TimeSpan.FromMilliseconds(150), isRepeating: false, SendFeedRequests);
 
         // refreshes the zoomed tile's fps once a second
-        _fpsTimer = _ui.CreateTimer();
-        _fpsTimer.Interval = TimeSpan.FromSeconds(1);
-        _fpsTimer.IsRepeating = true;
-        _fpsTimer.Tick += OnFpsTimerTick;
+        _fpsTimer = _ui.CreateTimer(TimeSpan.FromSeconds(1), isRepeating: true, OnFpsTimerTick);
         _fpsTimer.Start();
 
         // Feed events can arrive on any thread, so hop to the UI thread first.
@@ -78,10 +94,8 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
         _feed.ParticipantJoined -= OnParticipantJoined;
         _feed.ParticipantLeft -= OnParticipantLeft;
         _feed.FrameReady -= QueueFrame;
-        _feedTimer.Stop();
-        _feedTimer.Tick -= OnFeedTimerTick;
-        _fpsTimer.Stop();
-        _fpsTimer.Tick -= OnFpsTimerTick;
+        _feedTimer.Dispose();
+        _fpsTimer.Dispose();
 
         lock (_pendingLock)
         {
@@ -98,24 +112,21 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
         Raise(nameof(IsSharingScreen), nameof(ShareButtonText));
     }
 
-    private void OnFeedTimerTick(DispatcherQueueTimer sender, object args)
-    {
-        SendFeedRequests();
-    }
+    private TimeSpan Elapsed => _time.GetElapsedTime(_startedAt);
 
-    private void OnFpsTimerTick(DispatcherQueueTimer sender, object args)
+    private void OnFpsTimerTick()
     {
-        ZoomedTile?.SampleFps(_clock.Elapsed);
+        ZoomedTile?.SampleFps(Elapsed);
     }
 
     private void OnParticipantJoined(string id, string name)
     {
-        _ui.TryEnqueue(() => AddParticipant(id, name));
+        _ui.Post(() => AddParticipant(id, name));
     }
 
     private void OnParticipantLeft(string id)
     {
-        _ui.TryEnqueue(() => RemoveParticipant(id));
+        _ui.Post(() => RemoveParticipant(id));
     }
 
     // ----- Called by the View -----
@@ -127,7 +138,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
         }
 
         _zoomedId = id;
-        _byId[id].ResetFps(_clock.Elapsed);   // count only frames drawn while zoomed
+        _byId[id].ResetFps(Elapsed);   // count only frames drawn while zoomed
         Mode = ViewMode.Zoomed;
         RaiseModeChanged();
         SendFeedRequests();
@@ -165,7 +176,9 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        var tile = new ParticipantTile(id, name);
+        var tile = _createSurface == null
+            ? new ParticipantTile(id, name)
+            : new ParticipantTile(id, name, _createSurface);
         _byId[id] = tile;
         Tiles.Add(tile);             // if it lands in view, ElementPrepared fires -> TileEnteredView
     }
@@ -202,7 +215,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
 
         if (!alreadyScheduled)
         {
-            _ui.TryEnqueue(() => OnFrame(id));
+            _ui.Post(() => OnFrame(id));
         }
     }
 
@@ -279,8 +292,8 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
         }
 
         Dictionary<string, int> wanted = IsZoomedMode && _zoomedId != null
-            ? new() { [_zoomedId] = StreamQuality }
-            : _onScreen.ToDictionary(id => id, _ => StreamQuality);
+            ? new() { [_zoomedId] = ZoomedHeight }
+            : _onScreen.ToDictionary(id => id, _ => GridTileHeight);
         _feed.RequestFeeds(wanted);
     }
 

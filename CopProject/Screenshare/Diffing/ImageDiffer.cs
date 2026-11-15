@@ -23,8 +23,6 @@ public class ImageDiffer : IImageDiffer
     hover highlight), the change is held back instead of sent. ScreenSharingService applies it.*/
     public const double MIN_CHANGE_THRESHOLD = 0.01;
 
-    /*a delta whose tiles add up to more than this many bytes also carries the whole picture, so the
-    sender can send one JPEG instead when that is smaller (a scrolled document, for example).*/
     public const int LARGE_DELTA_BYTES = 16 * 1024;
 
     private readonly int _tileSize;
@@ -58,7 +56,7 @@ public class ImageDiffer : IImageDiffer
             return ImageDiffResult.CreateFullFrame(new Bitmap(currentFrame));
         }
 
-        // read each frame's pixels once, instead of locking the bitmap twice for every tile
+        // read each frame pixels once, instead of locking the bitmap twice for every tile
         int stride = currentFrame.Width * 4;
         byte[] previousPixels = ReadPixels(previousFrame);
         byte[] currentPixels = ReadPixels(currentFrame);
@@ -74,8 +72,7 @@ public class ImageDiffer : IImageDiffer
         long changedPixels = 0;
 
         // first find which tiles changed, without encoding anything: when most of the picture
-        // changed (a video, a new window) the tiles are not sent at all, so encoding them first
-        // would be wasted
+        // changed the tiles are not sent at all, so encoding them first would be wasted
         List<Rectangle> changedAreas = new();
 
 
@@ -96,43 +93,6 @@ public class ImageDiffer : IImageDiffer
                     _tileSize,
                     currentFrame.Height - y
                 );
-
-                //ulong previousHash = CalculateTileHash(
-                //    previousFrame,
-                //    x,
-                //    y,
-                //    width,
-                //    height
-                //);
-
-                //ulong currentHash = CalculateTileHash(
-                //    currentFrame,
-                //    x,
-                //    y,
-                //    width,
-                //    height
-                //);
-
-                //if (previousHash != currentHash)
-                //{
-                //    byte[] tileData = ExtractTileData(
-                //        currentFrame,
-                //        x,
-                //        y,
-                //        width,
-                //        height
-                //    );
-
-                //    changedTiles.Add(
-                //        new Tile(
-                //            x,
-                //            y,
-                //            width,
-                //            height,
-                //            currentHash,
-                //            tileData
-                //        )
-                //);
 
                 // compare the bytes directly (vectorised, stops at the first difference)
                 if (!TileEquals(previousPixels, currentPixels, stride, x, y, width, height))

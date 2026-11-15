@@ -17,7 +17,7 @@ public class ImageStitcher : IImageStitcher, IDisposable
     public bool NeedsFullFrame { get; private set; } = true;
 
     /// <summary>
-    /// replaces the current frame when the given frame is newer than the last accepted packet.
+    /// replaces the current frame when the given frame is newer than the last accepted packet
     /// </summary>
     /// <exception cref="ArgumentNullException">The frame is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">The frame number is negative.</exception>
@@ -122,7 +122,7 @@ public class ImageStitcher : IImageStitcher, IDisposable
     }
 
     /// <summary>
-    /// records an unchanged frame; the current frame is kept as it is.
+    /// records an unchanged frame; the current frame is kept as it is
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">The frame number is negative.</exception>
     public bool ApplyPulse(long frameNumber)
@@ -167,7 +167,7 @@ public class ImageStitcher : IImageStitcher, IDisposable
     }
 
     /// <summary>
-    /// check whether a delta or pulse with this frame number can be applied.
+    /// check whether a delta or pulse with this frame number can be applied
     /// a gap means a frame was missed, so every later delta would be relative to a frame we did not saw
     /// </summary>
     private bool TryAdvance(long frameNumber)
@@ -213,7 +213,7 @@ public class ImageStitcher : IImageStitcher, IDisposable
         byte[] data = tile.Data;
 
         // ImageDiffer stores the changed tile as PNG bytes. decode the bytes back to a bitmap
-        // Bitmap keeps reading from its stream, so copy it into a standalone bitmap.
+        // Bitmap keeps reading from its stream, so copy it into a standalone bitmap
         Bitmap tileBitmap;
         using (MemoryStream stream = new(data))
         using (Bitmap streamBitmap = new(stream))
