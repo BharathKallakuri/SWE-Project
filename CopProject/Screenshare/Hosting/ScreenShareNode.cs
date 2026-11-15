@@ -54,13 +54,7 @@ public sealed partial class ScreenShareNode : IDisposable
     /// <summary>gets whether this participant is sharing their screen</summary>
     public bool IsSharing => Volatile.Read(ref _sharing) != null;
 
-    /// <param name="session">the meeting, provided by the controller</param>
-    /// <param name="imageSourceFactory">creates the capture source when sharing starts;
     /// defaults to the primary display scaled to MaxHeight</param>
-    /// <param name="options">tuning; see ScreenShareOptions for the defaults</param>
-    /// <param name="timeProvider">clock for timeouts; defaults to the system clock</param>
-    /// <exception cref="ArgumentNullException">the session is null</exception>
-    /// <exception cref="ArgumentOutOfRangeException">an option is invalid</exception>
     public ScreenShareNode(
         IMeetingSession session,
         Func<IImageSource>? imageSourceFactory = null,
@@ -132,7 +126,6 @@ public sealed partial class ScreenShareNode : IDisposable
     /// starts receiving a stream, or changes its size: at or below ThumbnailHeight the small
     /// grid stream is sent (when the sharer offers one), above it the full stream
     /// </summary>
-    /// <param name="maxHeight">the tallest picture the tile can show</param>
     public void Subscribe(string streamId, int maxHeight)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
@@ -210,13 +203,7 @@ public sealed partial class ScreenShareNode : IDisposable
     /// <summary>true when no ScreenShare work is queued or running; for tests</summary>
     internal bool IsIdle => _dispatcher.IsIdle;
 
-    /// <summary>
-    /// a Networking client's socket is dual-mode, so it reports its IPv4 address in IPv6 form
-    /// (::ffff:10.0.0.2), while the host's Networking stores clients by plain IPv4 (10.0.0.2).
-    /// IPEndPoint treats those as different, and every send to us would fail with
-    /// "client not found", so report the plain form. newer Networking also normalises
-    /// these addresses itself; this stays so ScreenShare does not depend on that.
-    /// </summary>
+
     private static IPAddress ToPlainAddress(IPAddress address)
     {
         return address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address;
