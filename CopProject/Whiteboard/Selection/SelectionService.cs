@@ -1,11 +1,10 @@
 ﻿//owner : U Sai Vignesh
+//roll number : 112301034
 // License : MIT
 
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-
-#nullable enable
 
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -48,7 +47,7 @@ public class SelectionService : ISelectionService
     /// Sending the result to the server is left to the caller, so a drag
     /// can update the screen on every pointer move but be sent just once.
     /// </summary>
-    public bool MoveSelected(double dx, double dy, string modifiedBy = "system")
+    public bool MoveSelected(double dx, double dy)
     {
         bool moved = false;
 
@@ -69,7 +68,7 @@ public class SelectionService : ISelectionService
         return moved;
     }
 
-    public bool RotateSelected(double deltaAngle, string modifiedBy = "system")
+    public bool RotateSelected(double deltaAngle)
     {
         throw new NotImplementedException("RotateSelected is not implemented yet.");
     }
