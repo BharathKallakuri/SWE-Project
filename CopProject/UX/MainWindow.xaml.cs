@@ -543,7 +543,7 @@ public sealed partial class MainWindow : Window
     {
         ShowPanel("board");
     }
-    private void CloudBtn_Click(object sender, RoutedEventArgs e)
+    private async void CloudBtn_Click(object sender, RoutedEventArgs e)
     {
         try
         {
