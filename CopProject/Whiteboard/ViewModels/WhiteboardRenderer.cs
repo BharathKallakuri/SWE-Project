@@ -13,6 +13,7 @@ using XamlPolyline = Microsoft.UI.Xaml.Shapes.Polyline;
 using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
 using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
+using XamlLine = Microsoft.UI.Xaml.Shapes.Line;
 using Windows.Foundation;
 
 namespace Whiteboard.ViewModels;
@@ -98,6 +99,8 @@ internal sealed class WhiteboardRenderer : IDisposable
             Whiteboard.Items.Shapes.Square square => CreateSquare(square),
             Whiteboard.Items.Shapes.Circle circle => CreateCircle(circle),
             Whiteboard.Items.Shapes.EqTriangle triangle => CreateEqTriangle(triangle),
+            Whiteboard.Interfaces.Shapes.IPolygon polygon => CreatePolygon(polygon),
+            ILine line => CreateLine(line),
             _ => new Border()
         };
     }
@@ -143,6 +146,43 @@ internal sealed class WhiteboardRenderer : IDisposable
         Canvas.SetLeft(visual, item.BoundingBox.Left);
         Canvas.SetTop(visual, item.BoundingBox.Top);
         Canvas.SetZIndex(visual, (int)item.Zindex);
+        ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
+        return visual;
+    }
+
+    private static XamlPolygon CreatePolygon(Whiteboard.Interfaces.Shapes.IPolygon item)
+    {
+        XamlPolygon visual = new() {
+            Fill = new SolidColorBrush(ToColor(item.FillColor)),
+            Stroke = new SolidColorBrush(ToColor(item.BorderColor)),
+            StrokeThickness = item.BorderWidth,
+            StrokeLineJoin = PenLineJoin.Round,
+            IsHitTestVisible = true,
+            Tag = item.Id
+        };
+
+        foreach (Point2D point in item.Vertices)
+        {
+            visual.Points.Add(new Point(point.X, point.Y));
+        }
+
+        ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
+        return visual;
+    }
+
+    private static XamlLine CreateLine(ILine item)
+    {
+        XamlLine visual = new() {
+            X1 = item.Begin.X,
+            Y1 = item.Begin.Y,
+            X2 = item.End.X,
+            Y2 = item.End.Y,
+            Stroke = new SolidColorBrush(Microsoft.UI.Colors.Black),
+            StrokeThickness = 2,
+            IsHitTestVisible = true,
+            Tag = item.Id
+        };
+
         ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
         return visual;
     }
