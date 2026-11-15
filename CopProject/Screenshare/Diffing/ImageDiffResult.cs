@@ -45,6 +45,7 @@ public sealed class ImageDiffResult : IDisposable
 
     public static ImageDiffResult Unchanged()
     {
+        Trace.TraceInformation("[Screenshare] ImageDiffResult.Unchanged: Unchanged result created.");
         return new ImageDiffResult(
             isUnchanged: true,
             isFullFrame: false,
@@ -55,7 +56,7 @@ public sealed class ImageDiffResult : IDisposable
     /// <param name="wholeFrame">the whole new picture, for a big delta; owned by the result</param>
     public static ImageDiffResult Delta(List<Tile> changedTiles, Bitmap? wholeFrame = null)
     {
-        Trace.TraceInformation("[Screenshare] Delta result created. Changed tiles: {0}.", changedTiles.Count);
+        Trace.TraceInformation("[Screenshare] ImageDiffResult.Delta: Delta result created. Changed tiles: {0}.", changedTiles.Count);
         return new ImageDiffResult(
             isUnchanged: false,
             isFullFrame: false,
@@ -66,7 +67,7 @@ public sealed class ImageDiffResult : IDisposable
 
     public static ImageDiffResult CreateFullFrame(Bitmap frame)
     {
-        Trace.TraceInformation("[Screenshare] Full-frame result created. Dimensions: {0}x{1}.", frame.Width, frame.Height);
+        Trace.TraceInformation("[Screenshare] ImageDiffResult.CreateFullFrame: Full-frame result created. Dimensions: {0}x{1}.", frame.Width, frame.Height);
         return new ImageDiffResult(
             isUnchanged: false,
             isFullFrame: true,
