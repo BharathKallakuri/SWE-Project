@@ -1,4 +1,10 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿<!--
+Owner   : Raagam Hitesh Parmar, Sasi Kiran, Sangam,    Karthik Krishna M, Vignesh
+Roll No : 112301024,            112301033,  112201006, 112301014,         112301034
+LICENSE : MIT
+-->
+
+<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Name="foo"
     x:Class="Whiteboard.Views.WhiteBoardView"
