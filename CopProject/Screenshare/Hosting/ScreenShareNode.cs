@@ -107,10 +107,16 @@ public sealed partial class ScreenShareNode : IDisposable
         _communicator.AddSubscriber(ScreenShareModule.ModuleId, listener);
         _communicator.AddLossySubscriber(ScreenShareModule.ModuleId, listener);
 
+        Trace.TraceInformation(
+            "[Screenshare] ScreenShareNode: started as the {0} ({1}).",
+            IsHost ? "host" : "client",
+            LocalParticipant.Id);
+
         if (_host == null)
         {
             // ask the host for the streams that are already running
             SendToHost(new Hello(LocalParticipant));
+            Trace.TraceInformation("[Screenshare] ScreenShareNode: asked the host for the streams already running.");
         }
     }
 
@@ -132,6 +138,10 @@ public sealed partial class ScreenShareNode : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxHeight);
 
+        Trace.TraceInformation(
+            "[Screenshare] ScreenShareNode.Subscribe: {0} at up to {1}p.",
+            streamId,
+            maxHeight);
         _dispatcher.Post(() => _receiver.Subscribe(streamId, maxHeight));
     }
 
@@ -142,6 +152,7 @@ public sealed partial class ScreenShareNode : IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
 
+        Trace.TraceInformation("[Screenshare] ScreenShareNode.Unsubscribe: {0}.", streamId);
         _dispatcher.Post(() => _receiver.Unsubscribe(streamId));
     }
 
@@ -166,6 +177,7 @@ public sealed partial class ScreenShareNode : IDisposable
             _disposed = true;
         }
 
+        Trace.TraceInformation("[Screenshare] ScreenShareNode.Dispose: shutting down.");
         _session.ParticipantLeft -= OnParticipantLeft;
         _session.MeetingEnded -= OnMeetingEnded;
 
@@ -178,7 +190,7 @@ public sealed partial class ScreenShareNode : IDisposable
         catch (Exception e)
         {
             // the meeting's connection may already be closed
-            Trace.WriteLine($"[ScreenShare] error while shutting down: {e.Message}");
+            Trace.TraceError("[Screenshare] ScreenShareNode.Dispose: error while shutting down: {0}", e.Message);
         }
 
         _maintenanceTimer?.Dispose();
@@ -214,12 +226,14 @@ public sealed partial class ScreenShareNode : IDisposable
     {
         if (_host != null)
         {
+            Trace.TraceInformation("[Screenshare] ScreenShareNode: {0} left; removing their streams.", participant.Id);
             _dispatcher.Post(() => _host.OnParticipantLeft(participant.Id));
         }
     }
 
     private void OnMeetingEnded()
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareNode: the meeting ended.");
         Dispose();
     }
 }
