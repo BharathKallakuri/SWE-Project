@@ -58,6 +58,13 @@ public sealed class ControllerMeetingSession : IMeetingSession, IUserNotificatio
         _session = session;
         _session.MeetingEnding += OnMeetingEnding;
         _controller.RegisterNotificationHandler(this);
+
+        Trace.TraceInformation(
+            "[Screenshare] ControllerMeetingSession: started for {0} ({1}) as the {2}; host at {3}.",
+            LocalUser.DisplayName,
+            LocalUser.Id,
+            LocalUser.IsHost ? "host" : "client",
+            HostEndpoint);
     }
 
     public MeetingParticipant LocalUser { get; }
@@ -153,6 +160,7 @@ public sealed class ControllerMeetingSession : IMeetingSession, IUserNotificatio
     /// <summary>ScreenShare learns who shares from its own messages, so joins are not needed</summary>
     public void OnUserJoined(ControllerUser user)
     {
+        Trace.TraceInformation("[Screenshare] ControllerMeetingSession.OnUserJoined: a participant joined; nothing to do until they share.");
     }
 
     /// <summary>called by the Controller on its own thread</summary>
@@ -165,12 +173,17 @@ public sealed class ControllerMeetingSession : IMeetingSession, IUserNotificatio
 
         try
         {
-            ParticipantLeft?.Invoke(ToParticipant(user));
+            MeetingParticipant participant = ToParticipant(user);
+            Trace.TraceInformation(
+                "[Screenshare] ControllerMeetingSession.OnUserLeft: {0} ({1}) left.",
+                participant.DisplayName,
+                participant.Id);
+            ParticipantLeft?.Invoke(participant);
         }
         catch (Exception e)
         {
             // never throw into the Controller's thread
-            Trace.WriteLine($"[ScreenShare] could not handle a participant leaving: {e.Message}");
+            Trace.TraceError("[Screenshare] ControllerMeetingSession.OnUserLeft: could not handle a participant leaving: {0}", e.Message);
         }
     }
 
@@ -192,6 +205,9 @@ public sealed class ControllerMeetingSession : IMeetingSession, IUserNotificatio
             return;
         }
 
+        Trace.TraceInformation(
+            "[Screenshare] ControllerMeetingSession.End: {0}.",
+            raiseMeetingEnded ? "the meeting is ending" : "disposed");
         _session.MeetingEnding -= OnMeetingEnding;
         try
         {
@@ -200,7 +216,7 @@ public sealed class ControllerMeetingSession : IMeetingSession, IUserNotificatio
         catch (Exception e)
         {
             // the controller may already be disposed
-            Trace.WriteLine($"[ScreenShare] could not unregister from the controller: {e.Message}");
+            Trace.TraceWarning("[Screenshare] ControllerMeetingSession.End: could not unregister from the controller: {0}", e.Message);
         }
 
         if (raiseMeetingEnded)
