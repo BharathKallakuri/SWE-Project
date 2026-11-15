@@ -1,4 +1,4 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+/// Owner   : Raagam Hitesh Parmar
 /// Roll No : 112301024
 /// LICENSE : MIT
 
@@ -68,6 +68,9 @@ public class LineState : ViewModelStateBase
             // Create a new line item
             _line = new Line {
                 CreatedBy = WhiteboardClient.UserId,
+
+                Color = ToolbarInfo.BorderColor,
+                Width = ToolbarInfo.BorderWidth,
 
                 Begin = _startPoint,
                 End = _startPoint,
