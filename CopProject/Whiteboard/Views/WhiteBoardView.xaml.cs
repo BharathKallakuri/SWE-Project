@@ -567,6 +567,11 @@ public sealed partial class WhiteBoardView : UserControl
 
     private async void ButtonSaveSnapshot_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
         try
         {
             await _viewModel.SaveSnapshotAsync();
@@ -580,6 +585,11 @@ public sealed partial class WhiteBoardView : UserControl
 
     private async void ButtonRestoreSnapshot_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
         try
         {
             List<WhiteboardSnapshotSummary> snapshots = await _viewModel.ListSnapshotsAsync();
@@ -601,6 +611,11 @@ public sealed partial class WhiteBoardView : UserControl
 
                 menuItem.Click += async (_, _) =>
                 {
+                    if (_viewModel is null)
+                    {
+                        return;
+                    }
+
                     try
                     {
                         await _viewModel.RestoreSnapshotAsync(snapshot.SnapshotId);

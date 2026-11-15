@@ -38,24 +38,24 @@ public enum WhiteboardTool
 // Temporary exclusion from code coverage
 public partial class WhiteBoardViewModel : IDisposable
 {
-    private IViewModelState _penState;
-    private IViewModelState _squareState;
-    private IViewModelState _rectangleState;
-    private IViewModelState _circleState;
-    private IViewModelState _ellipseState;
-    private IViewModelState _eqTriangleState;
-    private TextboxState _textboxState;
-    private IViewModelState _eraserState;
-    private IViewModelState _lineState;
-    private IViewModelState _polygonState;
-    private SelectState _selectState;
+    private IViewModelState _penState = null!;
+    private IViewModelState _squareState = null!;
+    private IViewModelState _rectangleState = null!;
+    private IViewModelState _circleState = null!;
+    private IViewModelState _ellipseState = null!;
+    private IViewModelState _eqTriangleState = null!;
+    private TextboxState _textboxState = null!;
+    private IViewModelState _eraserState = null!;
+    private IViewModelState _lineState = null!;
+    private IViewModelState _polygonState = null!;
+    private SelectState _selectState = null!;
     private readonly IWhiteboardClient _whiteboardClient;
     private readonly WhiteboardSession? _session;
     private readonly DispatcherQueue? _dispatcherQueue;
     private readonly IShapeRecognitionService _shapeRecognitionService;
-    private WhiteboardRenderer _renderer;
+    private WhiteboardRenderer _renderer = null!;
 
-    private IViewModelState _currentState;
+    private IViewModelState _currentState = null!;
     private bool _isInitialized;
 
     public WhiteboardTool SelectedTool { get; private set; } = WhiteboardTool.Pen;
@@ -126,6 +126,7 @@ public partial class WhiteBoardViewModel : IDisposable
         _session = session;
         _dispatcherQueue = dispatcherQueue;
         _whiteboardClient = session.Client;
+        _sessionId = string.Empty;
         _shapeRecognitionService = shapeRecognitionService ?? new ShapeRecognitionService();
 
         _session.UserLeft += OnSessionUserLeft;

@@ -81,7 +81,7 @@ public class DeleteItemsAction : IWhiteboardAction
         // Find and copy every item before deleting any of them.
         foreach (Guid id in _itemIds)
         {
-            if (!whiteboard.Items.TryGetValue(id, out IItem item))
+            if (!whiteboard.Items.TryGetValue(id, out IItem? item) || item is null)
             {
                 Trace.TraceError($"[Whiteboard][DeleteItemsAction][Error] Deletion rejected: item does not exist. User={UserId}, Action={ActionId}, Item={id}");
                 throw new InvalidOperationException(

@@ -236,7 +236,7 @@ internal sealed class WhiteboardRenderer : IDisposable
         {
             _selectState.EndResize(commit: true);
             _isResizing = false;
-            _resizeHandle.ReleasePointerCapture(e.Pointer);
+            _resizeHandle?.ReleasePointerCapture(e.Pointer);
             e.Handled = true;
         }
     }

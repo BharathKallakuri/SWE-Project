@@ -10,6 +10,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Linq;
 using Whiteboard.Interfaces;
@@ -112,7 +113,8 @@ public static class ItemSnapshot
     /// <summary>
     /// Copies a point, or returns null if it is missing.
     /// </summary>
-    private static Point2D CopyPoint(Point2D point)
+    [return: NotNullIfNotNull(nameof(point))]
+    private static Point2D? CopyPoint(Point2D? point)
     {
         return point is null
             ? null
@@ -122,9 +124,10 @@ public static class ItemSnapshot
     /// <summary>
     /// Copies the list and its points so later edits do not affect history.
     /// </summary>
-    private static List<Point2D> CopyPoints(List<Point2D> points)
+    [return: NotNullIfNotNull(nameof(points))]
+    private static List<Point2D>? CopyPoints(List<Point2D>? points)
     {
-        return points?.Select(CopyPoint).ToList();
+        return points?.Select(p => new Point2D(p.X, p.Y)).ToList();
     }
 }
 
