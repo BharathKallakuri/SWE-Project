@@ -15,8 +15,6 @@ using Whiteboard.Services;
 
 namespace Whiteboard.Selection;
 
-[ExcludeFromCodeCoverage]
-// Temporary exclusion from code coverage
 public class SelectionService : ISelectionService
 {
     private readonly IWhiteboard _canvas;

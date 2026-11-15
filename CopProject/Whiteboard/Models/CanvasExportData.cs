@@ -7,7 +7,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Whiteboard.Models;
 
-[ExcludeFromCodeCoverage]
 public class CanvasExportData
 {
     public byte[] ImageData { get; set; } = [];

@@ -11,8 +11,6 @@ using Whiteboard.Interfaces;
 
 namespace Whiteboard.Models;
 
-[ExcludeFromCodeCoverage]
-// Temporary exclusion from code coverage
 public class WhiteboardCanvas : IWhiteboard
 {
     public IDictionary<Guid, IItem> Items { get; set; } = new ConcurrentDictionary<Guid, IItem>();

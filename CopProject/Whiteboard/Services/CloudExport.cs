@@ -13,7 +13,6 @@ using Whiteboard.Models;
 
 namespace Whiteboard.Services;
 
-[ExcludeFromCodeCoverage]
 public class CloudExport
 {
     private readonly ICanvasRender _canvasRender;

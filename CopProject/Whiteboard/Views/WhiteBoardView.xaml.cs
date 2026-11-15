@@ -21,7 +21,6 @@ using Windows.UI;
 
 namespace Whiteboard.Views;
 
-[ExcludeFromCodeCoverage]
 public sealed partial class WhiteBoardView : UserControl
 {
     private WhiteBoardViewModel? _viewModel;

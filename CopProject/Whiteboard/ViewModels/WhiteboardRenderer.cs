@@ -23,7 +23,6 @@ using Windows.Foundation;
 
 namespace Whiteboard.ViewModels;
 
-[ExcludeFromCodeCoverage]
 internal sealed class WhiteboardRenderer : IDisposable
 {
     private readonly IWhiteboard _board;

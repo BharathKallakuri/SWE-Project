@@ -34,8 +34,6 @@ public enum WhiteboardTool
     Select
 }
 
-[ExcludeFromCodeCoverage]
-// Temporary exclusion from code coverage
 public partial class WhiteBoardViewModel : IDisposable
 {
     private IViewModelState _penState = null!;
