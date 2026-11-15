@@ -11,10 +11,11 @@ using System.Threading.Tasks;
 using Networking.Packets;
 using Networking.Queues;
 using Networking.Sockets;
+using Utils;
 
 namespace Networking.TCPCommunication;
 
-public class CommunicatorServer : ICommunicator, IDisposable
+public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisposable
 {
     public const int NetworkingModuleId = 13;
     public const int NetworkModuleId = 13;
@@ -64,6 +65,10 @@ public class CommunicatorServer : ICommunicator, IDisposable
             }
             _thisIpEndPoint = ipEndPoint;
             _tcpClientRequestListener = new TcpListener(ipEndPoint.Address, ipEndPoint.Port);
+            if (ipEndPoint.Address.Equals(IPAddress.IPv6Any))
+            {
+                _tcpClientRequestListener.Server.DualMode = true;
+            }
             _tcpClientRequestListener.Start();
 
             _sendingQueueListenerServer = new SendingQueueListenerServer(_sendingQueue, _clientToTcpListenerMap);
@@ -130,30 +135,14 @@ public class CommunicatorServer : ICommunicator, IDisposable
                 Trace.WriteLine($"[Networking] CommunicatorServer: TCP Listener Socket stopped or closed: {e.Message}");
                 break;
             }
-            catch (Exception e)
-            {
-                Trace.WriteLine($"[Networking] CommunicatorServer.AcceptClientConnections unexpected exception: {e.Message}");
-                if (!IsRunning)
-                {
-                    break;
-                }
-            }
         }
 
     }
 
     public IPEndPoint GetFreeIPEndPoint()
     {
-        IPAddress ipAddress = IPAddress.Loopback;
-        try
-        {
-            IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
-            ipAddress = hostEntry.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork) ?? IPAddress.Loopback;
-        }
-        catch
-        {
-            ipAddress = IPAddress.Loopback;
-        }
+        IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
+        IPAddress ipAddress = hostEntry.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork) ?? IPAddress.Loopback;
         using TcpListener dummyListener = new TcpListener(IPAddress.Loopback, 0);
         dummyListener.Start();
         int port = ((IPEndPoint)dummyListener.LocalEndpoint).Port;
@@ -165,6 +154,11 @@ public class CommunicatorServer : ICommunicator, IDisposable
     {
         try
         {
+            if (clientIp.Address.IsIPv4MappedToIPv6)
+            {
+                clientIp = new IPEndPoint(clientIp.Address.MapToIPv4(), clientIp.Port);
+            }
+
             _clientToTcpListenerMap[clientIp] = tcpClient;
             _clientToSocketListenerMap[clientIp] = new SocketListener(_receivingQueue, tcpClient);
         }
@@ -178,18 +172,59 @@ public class CommunicatorServer : ICommunicator, IDisposable
     {
         try
         {
-            SocketListener socketListener = _clientToSocketListenerMap[clientIp];
-            _clientToSocketListenerMap.TryRemove(clientIp, out _);
-            _clientToTcpListenerMap.TryRemove(clientIp, out _);
+            if (clientIp.Address.IsIPv4MappedToIPv6)
+            {
+                clientIp = new IPEndPoint(clientIp.Address.MapToIPv4(), clientIp.Port);
+            }
+
+            if (_clientToSocketListenerMap.TryRemove(clientIp, out SocketListener? socketListener))
+            {
+                socketListener.Dispose();
+            }
+
+            if (_clientToTcpListenerMap.TryRemove(clientIp, out TcpClient? tcpClient))
+            {
+                tcpClient.Close();
+                tcpClient.Dispose();
+            }
+
             foreach (ConcurrentDictionary<IPEndPoint, byte> group in _multicastGroupMap.Values)
             {
                 group.TryRemove(clientIp, out _);
             }
-            socketListener.Dispose();
         }
         catch (Exception e)
         {
             Trace.WriteLine($"[Networking] CommunicatorServer.RemoveClient: Failed to remove client {clientIp}. Exception: {e.Message}");
+        }
+    }
+
+    public void OnUserJoined(ControllerUser user)
+    {
+        if (user == null)
+        {
+            return;
+        }
+
+        Trace.WriteLine($"[Networking] CommunicatorServer.OnUserJoined: User '{user.Username}' ({user.Gmail}) joined at {user.Ip}:{user.Port}");
+    }
+
+    public void OnUserLeft(ControllerUser user)
+    {
+        if (user == null)
+        {
+            return;
+        }
+
+        if (IPAddress.TryParse(user.Ip, out IPAddress? ip) && user.Port > 0)
+        {
+            IPEndPoint clientEp = new IPEndPoint(ip, user.Port);
+            RemoveClient(clientEp);
+            Trace.WriteLine($"[Networking] CommunicatorServer.OnUserLeft: Cleaned up client {clientEp} for user '{user.Username}'");
+        }
+        else
+        {
+            Trace.WriteLine($"[Networking] CommunicatorServer.OnUserLeft: Invalid endpoint '{user.Ip}:{user.Port}' for user '{user.Username}'");
         }
     }
 

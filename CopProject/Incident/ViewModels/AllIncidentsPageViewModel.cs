@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author: M Sreenath Karthick
+// Roll Number: 112301042
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -27,7 +30,7 @@ public sealed class AllIncidentsPageViewModel : ViewModelBase
 
     // Date filters
     private DateTimeOffset? _fromDate;
-    private DateTimeOffset? _toDate;
+    private DateTimeOffset? _toDate = DateTimeOffset.Now;
 
     // User filter
     private string _createdByInput = string.Empty;
@@ -186,6 +189,7 @@ public sealed class AllIncidentsPageViewModel : ViewModelBase
     /// </summary>
     public async Task LoadAsync()
     {
+        await _incidentController.Refresh();
         _allIncidents = await _incidentController.GetAllIncidents();
         ApplyFilter();
     }
