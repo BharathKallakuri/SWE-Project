@@ -269,8 +269,10 @@ public class CanvasPreview : ICanvasPreview
             Y1 = item.Begin.Y,
             X2 = item.End.X,
             Y2 = item.End.Y,
-            Stroke = new SolidColorBrush(Microsoft.UI.Colors.Black),
-            StrokeThickness = 2,
+            Stroke = new SolidColorBrush(item.Color),
+            StrokeThickness = item.Width,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
             IsHitTestVisible = false
         };
 
