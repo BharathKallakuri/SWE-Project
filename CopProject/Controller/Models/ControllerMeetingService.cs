@@ -73,7 +73,7 @@ public sealed class ControllerMeetingService
         bool started = host.StartMeeting();
         if (!started)
         {
-            Trace.TraceWarning("HostController failed to start meeting.");
+            Trace.TraceWarning("[Controller]: HostController failed to start meeting.");
         }
 
         string id = localIp;

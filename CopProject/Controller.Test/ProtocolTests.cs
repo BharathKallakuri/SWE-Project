@@ -1,4 +1,4 @@
-//Author : Bala Krishna.
+﻿//Author : Bala Krishna.
 // Roll No : 112301015.
 using System;
 using Controller;
@@ -12,7 +12,7 @@ public class ProtocolTests
     [Fact]
     public void FormatJoinRequest()
     {
-        var user = new ControllerUser("Bala", "bala@xyz.com", null, "10.10.10.10", 9999, isHost:true);
+        var user = new ControllerUser("Bala", "bala@xyz.com", null, "10.10.10.10", 9999, isHost: true);
         string message = Protocol.FormatJoinRequest(user);
         Assert.StartsWith("JOIN|", message);
         Assert.Contains("bala@xyz.com", message);
@@ -32,14 +32,14 @@ public class ProtocolTests
     public void ParseValidMessage()
     {
         string raw = "JOIN|user123|extraInfo";
-        var result = Protocol.Parse(raw);
+        ParsedMessage? result = Protocol.Parse(raw);
         Assert.NotNull(result);
         Assert.Equal("JOIN", result.Type);
         Assert.Equal("user123", result.UserId);
         Assert.Equal("user123", result.Payload);
         Assert.Single(result.Extra);
         Assert.Equal("extraInfo", result.Extra[0]);
-        var res = Protocol.Parse("JOIN|user123");
+        ParsedMessage? res = Protocol.Parse("JOIN|user123");
         Assert.NotNull(res);
         Assert.Equal("JOIN", res.Type);
         Assert.Equal("user123", res.UserId);
