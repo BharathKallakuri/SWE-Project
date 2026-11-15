@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author: Shreesh Amit Chembeti
+// Roll Number: 112301046
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,6 +11,9 @@ namespace Incidents.Test.Implementations;
 
 using FileSynchroniser.Models;
 
+/// <summary>
+/// Mock File Syncroniser
+/// </summary>
 public class IncidentFileSynchroniser : IFileOperations
 {
     private readonly Dictionary<string, byte[]> _memory = new();

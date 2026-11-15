@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author: M Sreenath Karthick
+// Roll Number: 112301042
+
+using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Policy;
@@ -81,7 +84,7 @@ public sealed partial class IncidentDetailsPage : Page
             DataContext = dialogViewModel
         };
 
-        Trace.TraceInformation($"[Incidents]: Showing Add Evidence dialog for incident with ID {ViewModel?.Incident?.Id}.");
+        Trace.TraceInformation($"[Incidents] AddEvidence_Click: Showing Add Evidence dialog for incident with ID {ViewModel?.Incident?.Id}.");
         ContentDialogResult result = await dialog.ShowAsync();
 
         if (result == ContentDialogResult.Primary && dialogViewModel.IsValid && ViewModel != null)
