@@ -59,6 +59,7 @@ public sealed class ChatPanelViewModel : ObservableObject, IDisposable
 
     public string CurrentUsername => _chat.Username;
     public bool IsHost => _chat.IsHost;
+    public Visibility RefreshVisibility => IsHost ? Visibility.Collapsed : Visibility.Visible;
     public int ParticipantCount => Participants.Count;
     public string ParticipantCountLabel => ParticipantCount == 1 ? "1 participant" : $"{ParticipantCount} participants";
     public event Action<Guid>? ScrollToMessageRequested;
@@ -463,6 +464,7 @@ public sealed class ChatPanelViewModel : ObservableObject, IDisposable
         RebuildParticipants(participants);
         UpdateMentionTargets();
         OnPropertyChanged(nameof(IsHost));
+        OnPropertyChanged(nameof(RefreshVisibility));
         if (StatusMessage.StartsWith("Synchronizing", StringComparison.OrdinalIgnoreCase)
             || StatusMessage.StartsWith("Connected", StringComparison.OrdinalIgnoreCase))
             StatusMessage = $"Connected · {ParticipantCount} {(ParticipantCount == 1 ? "participant" : "participants")}";
