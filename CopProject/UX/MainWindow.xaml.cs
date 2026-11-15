@@ -985,15 +985,6 @@ public sealed partial class MainWindow : Window
             XamlRoot = Root.XamlRoot
         }.ShowAsync();
     }
-    private void Diagnosis_Click(object sender, RoutedEventArgs e)
-    {
-        ShowScreen("diagnosis");
-    }
-
-    private void DiagnosisBack_Click(object sender, RoutedEventArgs e)
-    {
-        ShowScreen(_inMeeting ? "meeting" : "dash");
-    }
 
     private void IncidentsBack_Click(object sender, RoutedEventArgs e)
     {
