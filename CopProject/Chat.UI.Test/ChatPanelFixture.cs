@@ -5,8 +5,8 @@ using System.Net;
 using Chat;
 using Controller;
 using Insights.AI;
-using GlobalAdapter = global::UI.Services.ChatClientAdapter;
 using UI.ViewModels;
+using GlobalAdapter = global::UI.Services.ChatClientAdapter;
 
 namespace Chat.UI.Test;
 
@@ -42,8 +42,9 @@ internal sealed class ClientPanel : IDisposable
     {
         Chatroom room = new("meeting", HostName);
         RecordingCommunicator communicator = new();
-        RecordingController controller = new(CurrentUser, currentUserPicture);
-        controller.Communicator = communicator;
+        RecordingController controller = new(CurrentUser, currentUserPicture) {
+            Communicator = communicator
+        };
         ChatClient client = new(
             CurrentUser,
             room,
@@ -55,7 +56,10 @@ internal sealed class ClientPanel : IDisposable
         return new ClientPanel(communicator, controller, client, adapter, viewModel);
     }
 
-    public void Dispose() => Dispose(ViewModel, Adapter, Client);
+    public void Dispose()
+    {
+        Dispose(ViewModel, Adapter, Client);
+    }
 
     private static void Dispose(ChatPanelViewModel viewModel, GlobalAdapter adapter, ChatClient client)
     {
@@ -94,8 +98,9 @@ internal sealed class HostPanel : IDisposable
     {
         Chatroom room = new("meeting", HostName);
         RecordingCommunicator communicator = new();
-        RecordingController controller = new(HostName);
-        controller.Communicator = communicator;
+        RecordingController controller = new(HostName) {
+            Communicator = communicator
+        };
         ChatServer server = new(
             room,
             controller,

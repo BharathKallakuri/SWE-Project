@@ -18,15 +18,16 @@ namespace Chat.Test;
 
 public class ChatServerTests
 {
-    private static readonly IPEndPoint ClientAddress = new(IPAddress.Loopback, 23456);
+    private static readonly IPEndPoint s_clientAddress = new(IPAddress.Loopback, 23456);
+    private static IPEndPoint ClientAddress => s_clientAddress;
 
     [Fact]
     public void ConstructorRejectsNullChatroom()
     {
         RecordingCommunicator communicator = new();
-        RecordingController controller = new();
-
-        controller.Communicator = communicator;
+        RecordingController controller = new() {
+            Communicator = communicator
+        };
         Assert.Throws<ArgumentNullException>(() => new ChatServer(null!, controller));
     }
 
@@ -387,8 +388,9 @@ public class ChatServerTests
         Assert.Equal(RoomResult.Ok, chatroom.ToggleReaction(threadRootId, "reaction-marker", "guest"));
 
         RecordingCommunicator communicator = new();
-        RecordingController controller = new();
-        controller.Communicator = communicator;
+        RecordingController controller = new() {
+            Communicator = communicator
+        };
         controller.AddEndpoint("guest", ClientAddress);
         TestInsightsProvider provider = new("Rajdeep's brother is Rajnotdeep.");
         using ChatServer server = new(
@@ -440,8 +442,9 @@ public class ChatServerTests
             Content = "Question thread"
         });
         RecordingCommunicator communicator = new();
-        RecordingController controller = new();
-        controller.Communicator = communicator;
+        RecordingController controller = new() {
+            Communicator = communicator
+        };
         controller.AddEndpoint("guest", ClientAddress);
         TestInsightsProvider provider = new("AI answer.");
         using ChatServer server = new(
@@ -491,8 +494,9 @@ public class ChatServerTests
             Content = "Rajdeep's brother is Rajnotdeep."
         });
         RecordingCommunicator communicator = new();
-        RecordingController controller = new();
-        controller.Communicator = communicator;
+        RecordingController controller = new() {
+            Communicator = communicator
+        };
         controller.AddEndpoint("guest", ClientAddress);
         TestInsightsProvider provider = new("He said it earlier in the chat.");
         using ChatServer server = new(
@@ -543,8 +547,9 @@ public class ChatServerTests
     public async Task HostMentioningChAiGeneratesReply()
     {
         RecordingCommunicator communicator = new();
-        RecordingController controller = new();
-        controller.Communicator = communicator;
+        RecordingController controller = new() {
+            Communicator = communicator
+        };
         TestInsightsProvider provider = new("Host answer.");
         using ChatServer server = new(
             new Chatroom("room", "host"),
@@ -920,11 +925,15 @@ public class ChatServerTests
         public string ModelName => "test";
         public List<(string UserMessage, string? ChatContext)> Requests { get; } = new();
 
-        public Task<string> AnalyzeTrafficIncidentAsync(string textDescription) =>
+        public Task<string> AnalyzeTrafficIncidentAsync(string textDescription)
+        {
             throw new NotSupportedException();
+        }
 
-        public Task<string> AnalyzeImageAsync(byte[] imageData, string prompt) =>
+        public Task<string> AnalyzeImageAsync(byte[] imageData, string prompt)
+        {
             throw new NotSupportedException();
+        }
 
         public Task<string> GenerateChatResponseAsync(string userMessage, string? chatContext = null)
         {
@@ -1102,15 +1111,35 @@ public class ChatServerTests
             UserLeft?.Invoke(this, new UserLeftEventArgs(user, _users.Count - 1));
         }
 
-        public bool StartMeeting() => true;
-        public bool EndMeeting() => true;
-        public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user) => true;
+        public bool StartMeeting()
+        {
+            return true;
+        }
+
+        public bool EndMeeting()
+        {
+            return true;
+        }
+
+        public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user)
+        {
+            return true;
+        }
+
         public void LeaveMeeting(ControllerUser user)
         {
         }
 
-        public int GetActiveUserCount() => _users.Count;
-        public List<ControllerUser> GetActiveUsers() => _users.Values.ToList();
+        public int GetActiveUserCount()
+        {
+            return _users.Count;
+        }
+
+        public List<ControllerUser> GetActiveUsers()
+        {
+            return _users.Values.ToList();
+        }
+
         public void RegisterNotificationHandler(IUserNotificationHandler handler)
         {
         }

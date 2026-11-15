@@ -11,7 +11,10 @@ namespace Chat.UI.Test;
 public class AvatarViewModelTests
 {
     // AvatarViewModel is abstract, so exercise it through ParticipantViewModel.
-    private static ParticipantViewModel CreateAvatar(string displayName) => new(displayName, "alice", "hostuser");
+    private static ParticipantViewModel CreateAvatar(string displayName)
+    {
+        return new(displayName, "alice", "hostuser");
+    }
 
     [Theory]
     [InlineData("madonna", "M")]

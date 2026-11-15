@@ -1,11 +1,11 @@
 ﻿// Author: Rajat
 // Roll no.: 112301044
 
+using Chat;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using Windows.UI.Text;
-using Chat;
 using UI.ViewModels;
+using Windows.UI.Text;
 
 namespace Chat.UI.Test;
 

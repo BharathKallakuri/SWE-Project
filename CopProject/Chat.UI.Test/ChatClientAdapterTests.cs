@@ -36,7 +36,7 @@ public class ChatClientAdapterTests
         out Chatroom room)
     {
         room = new("meeting", "hostuser");
-        CommunicatorSetup(room, controller, out RecordingCommunicator communicator);
+        CommunicatorSetup(controller, out RecordingCommunicator communicator);
         server = new(
             room,
             controller,
@@ -44,7 +44,7 @@ public class ChatClientAdapterTests
         return new ChatClientAdapter(server, controller, DispatcherThread.Queue);
     }
 
-    private static void CommunicatorSetup(Chatroom room, RecordingController controller, out RecordingCommunicator communicator)
+    private static void CommunicatorSetup(RecordingController controller, out RecordingCommunicator communicator)
     {
         communicator = new RecordingCommunicator();
         controller.Communicator = communicator;
@@ -68,8 +68,9 @@ public class ChatClientAdapterTests
     [Fact]
     public void HostConstructor_NullServerControllerOrDispatcher_Throws()
     {
-        RecordingController controller = new("hostuser");
-        controller.Communicator = new RecordingCommunicator();
+        RecordingController controller = new("hostuser") {
+            Communicator = new RecordingCommunicator()
+        };
         ChatServer server = new(
             new Chatroom("meeting", "hostuser"),
             controller,
@@ -465,8 +466,9 @@ public class ChatClientAdapterTests
         });
     }
 
-    private static ChatServerUpdateEnvelope MakeBatch() =>
-        new ChatServerUpdateEnvelope(
+    private static ChatServerUpdateEnvelope MakeBatch()
+    {
+        return new ChatServerUpdateEnvelope(
             new ChatServerOperationBatch(0, 1, new ChatOperation[]
             {
                 new MessageAdded(
@@ -479,9 +481,12 @@ public class ChatClientAdapterTests
                     })
             }),
             new[] { "hostuser", "alice" });
+    }
 
     private static void SendToClient(RecordingCommunicator communicator, ChatServerMessage message)
-        => communicator.SendToSubscriber(message);
+    {
+        communicator.SendToSubscriber(message);
+    }
 
     [Fact]
     public void ParticipantsChanged_ReceivesIndependentSnapshot()

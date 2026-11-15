@@ -1,8 +1,8 @@
 ﻿// Author: Rajat
 // Roll no.: 112301044
 
-using Microsoft.UI.Xaml;
 using Chat;
+using Microsoft.UI.Xaml;
 using UI.ViewModels;
 
 namespace Chat.UI.Test;

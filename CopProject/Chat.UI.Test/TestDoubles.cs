@@ -3,10 +3,10 @@
 
 using System.Net;
 using System.Text.Json;
-using Microsoft.UI.Dispatching;
 using Chat;
 using Controller;
 using Insights.AI;
+using Microsoft.UI.Dispatching;
 using Networking;
 using Utils;
 
@@ -19,13 +19,15 @@ namespace Chat.UI.Test;
 /// </summary>
 internal static class DispatcherThread
 {
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
-    private static readonly DispatcherQueueController Controller;
+    private static readonly TimeSpan s_timeout = TimeSpan.FromSeconds(30);
+    private static readonly DispatcherQueueController s_controller;
+    private static TimeSpan Timeout => s_timeout;
+    private static DispatcherQueueController Controller => s_controller;
 
     static DispatcherThread()
     {
         WinRtActivationContext.EnsureActivated();
-        Controller = DispatcherQueueController.CreateOnDedicatedThread();
+        s_controller = DispatcherQueueController.CreateOnDedicatedThread();
         using ManualResetEventSlim initialized = new(false);
         Exception? error = null;
         Controller.DispatcherQueue.TryEnqueue(() => {
@@ -58,10 +60,13 @@ internal static class DispatcherThread
 
     public static DispatcherQueue Queue => Controller.DispatcherQueue;
 
-    public static void Run(Action action) => Run(() => {
-        action();
-        return true;
-    });
+    public static void Run(Action action)
+    {
+        Run(() => {
+            action();
+            return true;
+        });
+    }
 
     /// <summary>
     /// Drains everything queued on the dispatcher. Only call this from the
@@ -131,10 +136,14 @@ internal sealed class RecordingCommunicator : ICommunicator
     }
 
     public void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
-        => Sent.Add(new SentMessage(iPEndPoint, message, module, priority));
+    {
+        Sent.Add(new SentMessage(iPEndPoint, message, module, priority));
+    }
 
     public void BroadcastMessage(byte[] message, int module, int priority)
-        => Sent.Add(new SentMessage(null, message, module, priority));
+    {
+        Sent.Add(new SentMessage(null, message, module, priority));
+    }
 
     public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
@@ -169,15 +178,22 @@ internal sealed class RecordingCommunicator : ICommunicator
     }
 
     public List<ChatClientRequestBody> ReadRequests()
-        => Sent.Select(sent => {
+    {
+        return Sent.Select(sent => {
             ChatClientRequestEnvelope envelope = JsonSerializer.Deserialize<ChatClientRequestEnvelope>(sent.Payload)!;
             return new ChatClientRequestBody(envelope.RequestId, envelope.Request, envelope.Username);
         }).ToList();
+    }
 
-    public void ClearSent() => Sent.Clear();
+    public void ClearSent()
+    {
+        Sent.Clear();
+    }
 
     public void SendToSubscriber(ChatServerMessage message)
-        => Subscriber?.OnMessageReceived(JsonSerializer.SerializeToUtf8Bytes(message));
+    {
+        Subscriber?.OnMessageReceived(JsonSerializer.SerializeToUtf8Bytes(message));
+    }
 
     public sealed record SentMessage(IPEndPoint? Destination, byte[] Payload, int Module, int Priority);
 }
@@ -246,15 +262,35 @@ internal sealed class RecordingController : IControllerService
         UserLeft?.Invoke(this, new UserLeftEventArgs(user, _users.Count));
     }
 
-    public bool StartMeeting() => true;
-    public bool EndMeeting() => true;
-    public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user) => true;
+    public bool StartMeeting()
+    {
+        return true;
+    }
+
+    public bool EndMeeting()
+    {
+        return true;
+    }
+
+    public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user)
+    {
+        return true;
+    }
+
     public void LeaveMeeting(ControllerUser user)
     {
     }
 
-    public int GetActiveUserCount() => _users.Count;
-    public List<ControllerUser> GetActiveUsers() => _users.Values.ToList();
+    public int GetActiveUserCount()
+    {
+        return _users.Count;
+    }
+
+    public List<ControllerUser> GetActiveUsers()
+    {
+        return _users.Values.ToList();
+    }
+
     public void RegisterNotificationHandler(IUserNotificationHandler handler)
     {
     }
@@ -311,13 +347,19 @@ internal sealed class FakeServer
     }
 
     public void EditMessage(Guid messageId, string newContent, string actor, Guid? threadParentMessageId = null)
-        => SendOperations(new ChatOperation[] { new MessageEdited(messageId, newContent, actor, threadParentMessageId) });
+    {
+        SendOperations(new ChatOperation[] { new MessageEdited(messageId, newContent, actor, threadParentMessageId) });
+    }
 
     public void DeleteMessage(Guid messageId, string actor, Guid? threadParentMessageId = null)
-        => SendOperations(new ChatOperation[] { new MessageDeleted(messageId, actor, threadParentMessageId) });
+    {
+        SendOperations(new ChatOperation[] { new MessageDeleted(messageId, actor, threadParentMessageId) });
+    }
 
     public void ToggleReaction(Guid messageId, string emoji, string actor, Guid? threadParentMessageId = null)
-        => SendOperations(new ChatOperation[] { new ReactionToggled(messageId, emoji, actor, threadParentMessageId) });
+    {
+        SendOperations(new ChatOperation[] { new ReactionToggled(messageId, emoji, actor, threadParentMessageId) });
+    }
 
     public void SendReset()
     {
@@ -326,12 +368,16 @@ internal sealed class FakeServer
     }
 
     public void SendRequestResult(Guid requestId, RoomResult result)
-        => _communicator.SendToSubscriber(new ChatServerRequestResult(requestId, result));
+    {
+        _communicator.SendToSubscriber(new ChatServerRequestResult(requestId, result));
+    }
 
     public void SendBatchWithWrongBaseVersion()
-        => _communicator.SendToSubscriber(new ChatServerUpdateEnvelope(
-            new ChatServerOperationBatch(99, 100, Array.Empty<ChatOperation>()),
-            Participants));
+    {
+        _communicator.SendToSubscriber(new ChatServerUpdateEnvelope(
+                new ChatServerOperationBatch(99, 100, Array.Empty<ChatOperation>()),
+                Participants));
+    }
 
     public void SendOperations(IReadOnlyList<ChatOperation> operations)
     {
@@ -341,7 +387,9 @@ internal sealed class FakeServer
     }
 
     private void SendUpdate(ChatServerUpdate update)
-        => _communicator.SendToSubscriber(new ChatServerUpdateEnvelope(update, Participants));
+    {
+        _communicator.SendToSubscriber(new ChatServerUpdateEnvelope(update, Participants));
+    }
 }
 
 /// <summary>An insights provider that always returns the same string.</summary>
@@ -349,15 +397,27 @@ internal sealed class InsightsTestProvider : IInsightsProvider
 {
     private readonly string _response;
 
-    public InsightsTestProvider(string response) => _response = response;
+    public InsightsTestProvider(string response)
+    {
+        _response = response;
+    }
 
     public string ModelName => "test";
 
-    public Task<string> AnalyzeTrafficIncidentAsync(string textDescription) => Task.FromResult(_response);
+    public Task<string> AnalyzeTrafficIncidentAsync(string textDescription)
+    {
+        return Task.FromResult(_response);
+    }
 
-    public Task<string> AnalyzeImageAsync(byte[] imageBytes, string prompt) => Task.FromResult(_response);
+    public Task<string> AnalyzeImageAsync(byte[] imageBytes, string prompt)
+    {
+        return Task.FromResult(_response);
+    }
 
-    public Task<string> GenerateChatResponseAsync(string userMessage, string? chatContext = null) => Task.FromResult(_response);
+    public Task<string> GenerateChatResponseAsync(string userMessage, string? chatContext = null)
+    {
+        return Task.FromResult(_response);
+    }
 }
 
 /// <summary>A 1x1 transparent PNG, small enough to inline in tests.</summary>
