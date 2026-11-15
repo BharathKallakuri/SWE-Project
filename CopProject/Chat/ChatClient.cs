@@ -301,7 +301,7 @@ public sealed class ChatClient : IMessageListener, IDisposable
 
                     Chatroom.SetParticipants(updateEnvelope.Participants);
                     ParticipantsChanged?.Invoke(Chatroom.Participants);
-                    break;
+                    return;
 
                 case ChatServerRequestResult result:
                     if (result.Result != RoomResult.Ok)
