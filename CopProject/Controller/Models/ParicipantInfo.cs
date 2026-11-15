@@ -35,7 +35,7 @@ public sealed class ParticipantInfo : ObservableObject
             }
             catch (Exception ex)
             {
-                Trace.TraceWarning($"[ParticipantInfo] Failed to decode avatar image for user '{Username}': {ex.Message}");
+                Trace.TraceWarning($"[Controller]: Failed to decode avatar image for user '{Username}': {ex.Message}");
                 return null;
             }
         }

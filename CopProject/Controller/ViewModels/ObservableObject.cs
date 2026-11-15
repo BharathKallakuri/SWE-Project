@@ -14,14 +14,14 @@ public abstract class ObservableObject : INotifyPropertyChanged
     // updating everything on the screen that is bound to this ViewModel
     protected void Refresh()
     {
-        Trace.WriteLine("[ObservableObject] Refreshing all properties.");
+        Trace.TraceInformation("[Controller]: Refreshing all properties.");
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
 
     // updating just one property
     protected void OnPropertyChanged([CallerMemberName] string? name = null)
     {
-        Trace.WriteLine($"[ObservableObject] Property changed: {name}");
+        Trace.TraceInformation($"[Controller]: Property changed: {name}");
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 

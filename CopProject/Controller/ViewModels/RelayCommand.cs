@@ -19,7 +19,7 @@ public sealed class RelayCommand : ICommand
 
     public void Execute(object? parameter)
     {
-        Trace.TraceInformation("[RelayCommand] Executing command.");
+        Trace.TraceInformation("[Controller]: Executing command.");
         action();
     }
 }

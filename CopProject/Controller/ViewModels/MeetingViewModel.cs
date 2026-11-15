@@ -19,7 +19,7 @@ public sealed class MeetingViewModel : ObservableObject
     // Initializes meeting event handlers and updates the dashboard when meeting activities occur.
     public MeetingViewModel(MeetingSession session)
     {
-        Trace.TraceInformation("[MeetingViewModel] Initializing MeetingViewModel.");
+        Trace.TraceInformation("[Controller]: Initializing MeetingViewModel.");
         this.session = session;
 
         try
@@ -41,12 +41,12 @@ public sealed class MeetingViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Trace.TraceWarning($"[MeetingViewModel] DispatcherTimer initialization bypassed: {ex.Message}");
+            Trace.TraceWarning($"[Controller]: DispatcherTimer initialization bypassed: {ex.Message}");
         }
 
         session.MeetingStarted += info =>
         {
-            Trace.TraceInformation($"[MeetingViewModel] MeetingStarted event received for meeting {info.Id}.");
+            Trace.TraceInformation($"[Controller]: MeetingStarted event received for meeting {info.Id}.");
             _activeUsernames.Clear();
             _meetingStartedTime = session.MeetingStartTime ?? DateTime.Now;
             
@@ -82,7 +82,7 @@ public sealed class MeetingViewModel : ObservableObject
 
         session.MeetingEnded += () =>
         {
-            Trace.TraceInformation("[MeetingViewModel] MeetingEnded event received.");
+            Trace.TraceInformation("[Controller]: MeetingEnded event received.");
             string user = !string.IsNullOrWhiteSpace(session.CurrentUserId) ? session.CurrentUserId : "Host";
             AuditLogs.Insert(0, new SecurityAuditEvent 
             {
@@ -100,7 +100,7 @@ public sealed class MeetingViewModel : ObservableObject
 
         session.ParticipantCountChanged += count =>
         {
-            Trace.TraceInformation($"[MeetingViewModel] ParticipantCountChanged event received: count = {count}.");
+            Trace.TraceInformation($"[Controller]: ParticipantCountChanged event received: count = {count}.");
             DateTime start = session.MeetingStartTime ?? _meetingStartedTime ?? DateTime.Now;
             double sec = Math.Max(0, (DateTime.Now - start).TotalSeconds);
             int mins = (int)(sec / 60);
@@ -112,7 +112,7 @@ public sealed class MeetingViewModel : ObservableObject
 
         session.ParticipantsChanged += list =>
         {
-            Trace.TraceInformation($"[MeetingViewModel] ParticipantsChanged event received: {list.Count} participant(s).");
+            Trace.TraceInformation($"[Controller]: ParticipantsChanged event received: {list.Count} participant(s).");
             ParticipantList.Clear();
             var newUsers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -131,7 +131,7 @@ public sealed class MeetingViewModel : ObservableObject
                 if (!_activeUsernames.Contains(username))
                 {
                     _activeUsernames.Add(username);
-                    Trace.TraceInformation($"[MeetingViewModel] Detected participant join: {username}.");
+                    Trace.TraceInformation($"[Controller]: Detected participant join: {username}.");
                     AuditLogs.Insert(0, new SecurityAuditEvent { User = username, Activity = "Joined meeting", Status = "Success" });
                 }
             }
@@ -141,7 +141,7 @@ public sealed class MeetingViewModel : ObservableObject
             foreach (var username in leftUsers)
             {
                 _activeUsernames.Remove(username);
-                Trace.TraceInformation($"[MeetingViewModel] Detected participant departure: {username}.");
+                Trace.TraceInformation($"[Controller]: Detected participant departure: {username}.");
                 AuditLogs.Insert(0, new SecurityAuditEvent { User = username, Activity = "Left meeting", Status = "Info" });
             }
 
@@ -154,7 +154,7 @@ public sealed class MeetingViewModel : ObservableObject
 
         if (session.InMeeting)
         {
-            Trace.TraceInformation("[MeetingViewModel] Restoring state for active session.");
+            Trace.TraceInformation("[Controller]: Restoring state for active session.");
             _meetingStartedTime = session.MeetingStartTime ?? DateTime.Now;
             string user = !string.IsNullOrWhiteSpace(session.CurrentUserId) ? session.CurrentUserId : "Host";
             _activeUsernames.Add(user);
@@ -203,7 +203,7 @@ public sealed class MeetingViewModel : ObservableObject
         {
             if (_selectedParticipant == value) return;
             _selectedParticipant = value;
-            Trace.TraceInformation($"[MeetingViewModel] Selected participant changed to '{_selectedParticipant?.DisplayName ?? "None"}'.");
+            Trace.TraceInformation($"[Controller]: Selected participant changed to '{_selectedParticipant?.DisplayName ?? "None"}'.");
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasSelectedParticipant));
         }
@@ -224,7 +224,7 @@ public sealed class MeetingViewModel : ObservableObject
         set
         {
             _alertMessage = value;
-            Trace.TraceWarning($"[MeetingViewModel] Alert banner updated: '{_alertMessage}'.");
+            Trace.TraceWarning($"[Controller]: Alert banner updated: '{_alertMessage}'.");
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasAlert));
         }
@@ -239,7 +239,7 @@ public sealed class MeetingViewModel : ObservableObject
         set
         {
             _maximizedView = value;
-            Trace.TraceInformation($"[MeetingViewModel] MaximizedView changed to {_maximizedView}.");
+            Trace.TraceInformation($"[Controller]: MaximizedView changed to {_maximizedView}.");
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsNormalVisible));
             OnPropertyChanged(nameof(IsGraphMaximized));
@@ -256,19 +256,19 @@ public sealed class MeetingViewModel : ObservableObject
 
     public void ShowNormal()
     {
-        Trace.TraceInformation("[MeetingViewModel] ShowNormal requested.");
+        Trace.TraceInformation("[Controller]: ShowNormal requested.");
         MaximizedView = 0;
     }
 
     public void MaximizeGraph()
     {
-        Trace.TraceInformation("[MeetingViewModel] MaximizeGraph requested.");
+        Trace.TraceInformation("[Controller]: MaximizeGraph requested.");
         MaximizedView = 1;
     }
 
     public void MaximizeAudit()
     {
-        Trace.TraceInformation("[MeetingViewModel] MaximizeAudit requested.");
+        Trace.TraceInformation("[Controller]: MaximizeAudit requested.");
         MaximizedView = 2;
     }
 
@@ -276,7 +276,7 @@ public sealed class MeetingViewModel : ObservableObject
     public void AddTestLog(string action, string status = "Info")
     {
         string user = !string.IsNullOrWhiteSpace(session.CurrentUserId) ? session.CurrentUserId : "User";
-        Trace.TraceInformation($"[MeetingViewModel] Adding test log: action='{action}', status='{status}', user='{user}'.");
+        Trace.TraceInformation($"[Controller]: Adding test log: action='{action}', status='{status}', user='{user}'.");
         AuditLogs.Insert(0, new SecurityAuditEvent { User = user, Activity = action, Status = status });
     }
 }
