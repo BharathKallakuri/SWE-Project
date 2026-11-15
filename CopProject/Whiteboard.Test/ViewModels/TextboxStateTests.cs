@@ -1,4 +1,4 @@
-//owner : U Sai Vignesh
+﻿//owner : U Sai Vignesh
 // License : MIT
 
 // Licensed to the .NET Foundation under one or more agreements.
@@ -23,7 +23,10 @@ public class TextboxStateTests
     private readonly MockCanvasPreview _preview = new();
     private readonly ToolbarInfo _toolbar = new(Color.FromArgb(255, 1, 2, 3), 2.0, Color.FromArgb(255, 4, 5, 6));
 
-    private TextboxState CreateState() => new(_client, _preview, _toolbar);
+    private TextboxState CreateState()
+    {
+        return new(_client, _preview, _toolbar);
+    }
 
     private Textbox AddTextbox(Point2D center, string content = "")
     {
