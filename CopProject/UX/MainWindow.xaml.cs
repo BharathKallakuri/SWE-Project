@@ -82,6 +82,7 @@ public sealed partial class MainWindow : Window
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1280, 800));
         RecordsList.ItemsSource = _records;
         IncidentsFrame.Navigated += IncidentsFrame_Navigated;
+        MeetingIncidentsFrame.Navigated += IncidentsFrame_Navigated;
 
         // CONTROLLER TEAM: initialize controller service and bind MeetingView
         _meetingService.Initialize(_session);
@@ -362,6 +363,8 @@ public sealed partial class MainWindow : Window
         _inMeeting = false;
         LocationHost.Content = null;
         _incidentContextTask = null;
+        MeetingIncidentsFrame.Content = null;
+        MeetingIncidentsFrame.BackStack.Clear();
         _userId = string.Empty;
         _userEmail = string.Empty;
         _picture = string.Empty;
