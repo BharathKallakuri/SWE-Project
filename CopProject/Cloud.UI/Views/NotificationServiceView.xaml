@@ -50,10 +50,23 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- typed at runtime -->
-                <TextBox Grid.Row="1" Header="Server URL" PlaceholderText="https://host:port/hub"
-                         Text="{x:Bind ViewModel.ServerUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                         KeyDown="ServerUrlBox_KeyDown"/>
+                <!-- typed at runtime, or filled from the saved servers dropdown -->
+                <Grid Grid.Row="1" ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="230"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Header="Server URL" PlaceholderText="https://host:port/hub"
+                             Text="{x:Bind ViewModel.ServerUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             KeyDown="ServerUrlBox_KeyDown"/>
+
+                    <ComboBox Grid.Column="1" Header="Saved servers" PlaceholderText="Pick a server"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{x:Bind ViewModel.ServerPresets}"
+                              DisplayMemberPath="Name"
+                              SelectedItem="{x:Bind ViewModel.SelectedPreset, Mode=TwoWay}"/>
+                </Grid>
 
                 <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
                     <Button Command="{x:Bind ViewModel.ConnectCommand, Mode=OneWay}"

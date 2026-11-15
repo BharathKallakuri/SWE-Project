@@ -22,6 +22,7 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
     private ConnectionState _state = ConnectionState.Disconnected;
     private bool _isBusy;
     private string _serverUrl;
+    private ServerPreset? _selectedPreset;
     private string _messageText = string.Empty;
     private string? _errorText;
     private string _lastSyncText = "Not synced yet";
@@ -72,6 +73,24 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
     /// <summary>Notifications, newest first.</summary>
     public ObservableCollection<NotificationItem> Notifications { get; } = new();
 
+    /// <summary>Hardcoded servers offered in the dropdown. A custom URL can still be typed in the URL box.</summary>
+    public IReadOnlyList<ServerPreset> ServerPresets { get; } = [
+        new("Less powerful server", "https://cloudnetworkingserver20261030224421-f0cwbvhng6g3htd8.indiasouthcentral-01.azurewebsites.net/hub"),
+        new("More powerful server", "https://cop-networking-server-cxc4fjgwg4h2hmc6.indiasouthcentral-01.azurewebsites.net/hub")
+    ];
+
+    /// <summary>The preset chosen in the dropdown; null when the URL box holds a custom URL.</summary>
+    public ServerPreset? SelectedPreset
+    {
+        get => _selectedPreset;
+        set {
+            if (SetProperty(ref _selectedPreset, value) && value is not null)
+            {
+                ServerUrl = value.Url;
+            }
+        }
+    }
+
     /// <summary>Text of the server URL box.</summary>
     public string ServerUrl
     {
@@ -79,6 +98,8 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
         set {
             if (SetProperty(ref _serverUrl, value))
             {
+                // keep the dropdown in step: it shows a preset only while the box holds exactly that URL
+                SelectedPreset = ServerPresets.FirstOrDefault(p => p.Url == value);
                 ConnectCommand.RaiseCanExecuteChanged();
             }
         }
