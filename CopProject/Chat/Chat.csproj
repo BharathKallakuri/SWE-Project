@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Controller\Controller.csproj" />
     <ProjectReference Include="..\Networking\Networking.csproj" />
+    <ProjectReference Include="..\Insights\Insights.csproj" />
     <Compile Remove="UI/**/*.cs" />
     <Page Remove="UI/**/*.xaml" />
 

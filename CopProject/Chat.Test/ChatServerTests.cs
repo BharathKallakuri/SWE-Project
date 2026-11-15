@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Chat;
 using Controller;
+using Insights.AI;
 using Networking;
 using Utils;
 
@@ -352,6 +354,230 @@ public class ChatServerTests
     }
 
     [Fact]
+    public async Task ChAiMentionBuildsContextFromRoomAndThreadMessages()
+    {
+        Chatroom chatroom = new("room", "host");
+        DateTimeOffset historyTimestamp = new(2026, 11, 15, 8, 0, 0, TimeSpan.Zero);
+        Guid threadRootId = chatroom.AddMessage(new ChatMessageWithThreads
+        {
+            Timestamp = historyTimestamp,
+            SenderName = "host",
+            Content = "Rajdeep said my brother's name is Rajnotdeep."
+        });
+        chatroom.AddThreadMessage(threadRootId, new ChatMessage
+        {
+            Timestamp = historyTimestamp.AddMinutes(1),
+            SenderName = "guest",
+            Content = "That was in the family discussion."
+        });
+        Assert.Equal(RoomResult.Ok, chatroom.ToggleReaction(threadRootId, "reaction-marker", "guest"));
+
+        RecordingCommunicator communicator = new();
+        RecordingController controller = new();
+        controller.Communicator = communicator;
+        controller.AddEndpoint("guest", ClientAddress);
+        TestInsightsProvider provider = new("Rajdeep's brother is Rajnotdeep.");
+        using ChatServer server = new(
+            chatroom,
+            controller,
+            () => Task.FromResult(new InsightsManager(provider)));
+        server.RegisterClient("guest");
+
+        TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        server.OperationApplied += operation =>
+        {
+            if (operation is MessageAdded added
+                && added.Message.SenderName == ChatConstants.AiAssistantUsername)
+            {
+                aiReplySource.TrySetResult(added);
+            }
+        };
+
+        Mentions mentions = new();
+        mentions.Usernames.Add(ChatConstants.AiAssistantUsername);
+        server.HandleRequest(new ChatClientRequestEnvelope(
+            Guid.NewGuid(),
+            new SendMessage(
+                historyTimestamp.AddMinutes(2),
+                mentions,
+                "Who is Rajdeep's brother?",
+                threadRootId),
+            "guest"));
+
+        MessageAdded aiReply = await aiReplySource.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        (string UserMessage, string? ChatContext) request = Assert.Single(provider.Requests);
+        Assert.Equal("guest asks this: Who is Rajdeep's brother?", request.UserMessage);
+        Assert.Contains("host said this at 2026-11-15T08:00:00.0000000+00:00", request.ChatContext);
+        Assert.Contains("Rajdeep said my brother's name is Rajnotdeep.", request.ChatContext);
+        Assert.Contains(
+            "guest said this at 2026-11-15T08:01:00.0000000+00:00 in reply to \"Rajdeep said my brother's name is Rajnotdeep.\": That was in the family discussion.",
+            request.ChatContext);
+        Assert.Contains("Who is Rajdeep's brother?", request.ChatContext);
+        Assert.DoesNotContain("reaction-marker", request.ChatContext);
+        Assert.Equal(ChatConstants.AiAssistantUsername, aiReply.Message.SenderName);
+    }
+
+    [Fact]
+    public async Task ChAiMentionReplyReferencesQuestionInSameThread()
+    {
+        Chatroom chatroom = new("room", "host");
+        Guid threadRootId = chatroom.AddMessage(new ChatMessageWithThreads
+        {
+            Timestamp = DateTimeOffset.UtcNow,
+            SenderName = "host",
+            Content = "Question thread"
+        });
+        RecordingCommunicator communicator = new();
+        RecordingController controller = new();
+        controller.Communicator = communicator;
+        controller.AddEndpoint("guest", ClientAddress);
+        TestInsightsProvider provider = new("AI answer.");
+        using ChatServer server = new(
+            chatroom,
+            controller,
+            () => Task.FromResult(new InsightsManager(provider)));
+        server.RegisterClient("guest");
+
+        TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        Guid? questionMessageId = null;
+        server.OperationApplied += operation =>
+        {
+            if (operation is not MessageAdded added)
+            {
+                return;
+            }
+
+            if (added.Message.SenderName == "guest")
+            {
+                questionMessageId = added.MessageId;
+            }
+            else if (added.Message.SenderName == ChatConstants.AiAssistantUsername)
+            {
+                aiReplySource.TrySetResult(added);
+            }
+        };
+
+        Mentions mentions = new();
+        mentions.Usernames.Add(ChatConstants.AiAssistantUsername);
+        server.HandleRequest(new ChatClientRequestEnvelope(
+            Guid.NewGuid(),
+            new SendMessage(DateTimeOffset.UtcNow, mentions, "What is the answer?", threadRootId),
+            "guest"));
+
+        MessageAdded aiReply = await aiReplySource.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(questionMessageId, aiReply.Message.ParentMessageId);
+        Assert.Equal(threadRootId, aiReply.ThreadParentMessageId);
+        Assert.Equal("AI answer.", aiReply.Message.Content);
+    }
+
+    [Fact]
+    public async Task ReplyToChAiMessageGeneratesQuestionWithReferencedMessage()
+    {
+        Chatroom chatroom = new("room", "host");
+        Guid aiMessageId = chatroom.AddMessage(new ChatMessageWithThreads
+        {
+            Timestamp = new DateTimeOffset(2026, 11, 15, 8, 0, 0, TimeSpan.Zero),
+            SenderName = ChatConstants.AiAssistantUsername,
+            Content = "Rajdeep's brother is Rajnotdeep."
+        });
+        RecordingCommunicator communicator = new();
+        RecordingController controller = new();
+        controller.Communicator = communicator;
+        controller.AddEndpoint("guest", ClientAddress);
+        TestInsightsProvider provider = new("He said it earlier in the chat.");
+        using ChatServer server = new(
+            chatroom,
+            controller,
+            () => Task.FromResult(new InsightsManager(provider)));
+        server.RegisterClient("guest");
+
+        TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        Guid? questionMessageId = null;
+        server.OperationApplied += operation =>
+        {
+            if (operation is not MessageAdded added)
+            {
+                return;
+            }
+
+            if (added.Message.SenderName == "guest")
+            {
+                questionMessageId = added.MessageId;
+            }
+            else if (added.Message.SenderName == ChatConstants.AiAssistantUsername)
+            {
+                aiReplySource.TrySetResult(added);
+            }
+        };
+
+        server.HandleRequest(new ChatClientRequestEnvelope(
+            Guid.NewGuid(),
+            new SendMessage(
+                new DateTimeOffset(2026, 11, 15, 8, 2, 0, TimeSpan.Zero),
+                new Mentions(),
+                "When did Rajdeep say this?",
+                null,
+                aiMessageId),
+            "guest"));
+
+        MessageAdded aiReply = await aiReplySource.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        (string UserMessage, string? ChatContext) request = Assert.Single(provider.Requests);
+        Assert.Equal(
+            "guest asks this: When did Rajdeep say this? in regards to a reply of \"Rajdeep's brother is Rajnotdeep.\".",
+            request.UserMessage);
+        Assert.Contains("ChAI said this at 2026-11-15T08:00:00.0000000+00:00", request.ChatContext);
+        Assert.Equal(questionMessageId, aiReply.Message.ParentMessageId);
+        Assert.Equal("He said it earlier in the chat.", aiReply.Message.Content);
+    }
+
+    [Fact]
+    public async Task HostMentioningChAiGeneratesReply()
+    {
+        RecordingCommunicator communicator = new();
+        RecordingController controller = new();
+        controller.Communicator = communicator;
+        TestInsightsProvider provider = new("Host answer.");
+        using ChatServer server = new(
+            new Chatroom("room", "host"),
+            controller,
+            () => Task.FromResult(new InsightsManager(provider)));
+
+        TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        Guid? questionMessageId = null;
+        server.OperationApplied += operation =>
+        {
+            if (operation is not MessageAdded added)
+            {
+                return;
+            }
+
+            if (added.Message.SenderName == "host")
+            {
+                questionMessageId = added.MessageId;
+            }
+            else if (added.Message.SenderName == ChatConstants.AiAssistantUsername)
+            {
+                aiReplySource.TrySetResult(added);
+            }
+        };
+
+        Mentions mentions = new();
+        mentions.Usernames.Add(ChatConstants.AiAssistantUsername);
+        Assert.Equal(
+            RoomResult.Ok,
+            server.SubmitHostRequest(new SendMessage(
+                DateTimeOffset.UtcNow,
+                mentions,
+                "Can you help?",
+                null)));
+
+        MessageAdded aiReply = await aiReplySource.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal("host asks this: Can you help?", Assert.Single(provider.Requests).UserMessage);
+        Assert.Equal(questionMessageId, aiReply.Message.ParentMessageId);
+        Assert.Equal("Host answer.", aiReply.Message.Content);
+    }
+
+    [Fact]
     public void ClientEditRequestUpdatesMessageAndRecordsEdit()
     {
         (ChatServer server, RecordingCommunicator communicator, Guid messageId) = NewServerWithGuestMessage();
@@ -541,6 +767,24 @@ public class ChatServerTests
     {
         controller.Communicator = communicator;
         return new ChatServer(new Chatroom("room", "host"), controller);
+    }
+
+    private sealed class TestInsightsProvider(string response) : IInsightsProvider
+    {
+        public string ModelName => "test";
+        public List<(string UserMessage, string? ChatContext)> Requests { get; } = new();
+
+        public Task<string> AnalyzeTrafficIncidentAsync(string textDescription) =>
+            throw new NotSupportedException();
+
+        public Task<string> AnalyzeImageAsync(byte[] imageData, string prompt) =>
+            throw new NotSupportedException();
+
+        public Task<string> GenerateChatResponseAsync(string userMessage, string? chatContext = null)
+        {
+            Requests.Add((userMessage, chatContext));
+            return Task.FromResult(response);
+        }
     }
 
     private static (ChatServer Server, RecordingCommunicator Communicator, Guid MessageId)

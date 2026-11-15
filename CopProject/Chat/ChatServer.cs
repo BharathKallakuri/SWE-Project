@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
+using Insights.AI;
 using System.Text.Json;
 using Controller;
 using Networking;
@@ -17,6 +19,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
     private readonly Dictionary<string, int> _clientVersions = new(StringComparer.Ordinal);
     private readonly IControllerService _controller;
     private readonly Dictionary<string, ControllerUser> _controllerUsers = new(StringComparer.Ordinal);
+    private readonly InsightsManager _insightsManager;
     private bool _disposed;
 
     /// <summary>
@@ -25,9 +28,24 @@ public sealed class ChatServer : IMessageListener, IDisposable
     /// <param name="chatroom">The server's chatroom copy.</param>
     /// <param name="controller">The controller.</param>
     public ChatServer(Chatroom chatroom, IControllerService controller)
+        : this(chatroom, controller, CreateInsightsManagerAsync)
+    {
+    }
+
+    /// <summary>
+    /// Creates a chat server using the supplied Insights manager factory.
+    /// </summary>
+    /// <param name="chatroom">The server's chatroom copy.</param>
+    /// <param name="controller">The controller.</param>
+    /// <param name="insightsManagerFactory">Creates the server's Insights manager.</param>
+    internal ChatServer(
+        Chatroom chatroom,
+        IControllerService controller,
+        Func<Task<InsightsManager>> insightsManagerFactory)
     {
         ArgumentNullException.ThrowIfNull(chatroom);
         ArgumentNullException.ThrowIfNull(controller);
+        ArgumentNullException.ThrowIfNull(insightsManagerFactory);
 
         ICommunicator communicator = controller.Communicator
             ?? throw new InvalidOperationException("The controller does not have an active communicator.");
@@ -37,6 +55,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
         Chatroom = chatroom;
         _communicator = communicator;
         _controller = controller;
+        _insightsManager = insightsManagerFactory().GetAwaiter().GetResult();
         _communicator.AddSubscriber(ChatConstants.ModuleId, this);
         _controller.UserJoined += OnControllerUserJoined;
         _controller.UserLeft += OnControllerUserLeft;
@@ -204,6 +223,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
             if (result == RoomResult.Ok)
             {
                 RecordOperation(operation!);
+                MaybeGenerateAiReply(Chatroom.HostName, request, operation!);
             }
 
             return result;
@@ -270,6 +290,25 @@ public sealed class ChatServer : IMessageListener, IDisposable
         }
 
         RecordOperation(operation!);
+        MaybeGenerateAiReply(username, request, operation!);
+    }
+
+    /// <summary>
+    /// Starts AI response generation when an accepted message addresses ChAI.
+    /// </summary>
+    /// <param name="username">The participant who sent the message.</param>
+    /// <param name="request">The accepted room-change request.</param>
+    /// <param name="operation">The operation created for the request.</param>
+    private void MaybeGenerateAiReply(string username, ChatRoomChangeRequest request, ChatOperation operation)
+    {
+        if (request is SendMessage send
+            && operation is MessageAdded addedMessage
+            && IsAiRequest(send, out ChatMessage? repliedToAi))
+        {
+            string chatContext = BuildChatContext();
+            string userMessage = BuildAiQuestion(username, send, repliedToAi);
+            _ = GenerateAiReplyAsync(userMessage, chatContext, send, addedMessage.MessageId);
+        }
     }
 
     /// <summary>
@@ -368,6 +407,164 @@ public sealed class ChatServer : IMessageListener, IDisposable
             default:
                 return RoomResult.Forbidden;
         }
+    }
+
+    /// <summary>
+    /// Determines whether a message addresses ChAI and resolves any ChAI message it replies to.
+    /// </summary>
+    /// <param name="send">The submitted message.</param>
+    /// <param name="repliedToAi">The referenced ChAI message, when the message replies to one.</param>
+    /// <returns><see langword="true"/> if the message mentions ChAI or replies to ChAI.</returns>
+    private bool IsAiRequest(SendMessage send, out ChatMessage? repliedToAi)
+    {
+        bool mentionsAi = send.Mentions.Usernames.Any(username =>
+            string.Equals(username, ChatConstants.AiAssistantUsername, StringComparison.OrdinalIgnoreCase));
+
+        repliedToAi = null;
+        if (send.ReplyToMessageId is Guid replyToMessageId
+            && Chatroom.TryGetMessage(replyToMessageId, out ChatMessage repliedTo)
+            && string.Equals(
+                repliedTo.SenderName,
+                ChatConstants.AiAssistantUsername,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            repliedToAi = repliedTo;
+        }
+
+        return mentionsAi || repliedToAi is not null;
+    }
+
+    /// <summary>
+    /// Formats the latest user request for the Insights chat-response API.
+    /// </summary>
+    /// <param name="username">The participant who asked the question.</param>
+    /// <param name="send">The submitted message.</param>
+    /// <param name="repliedToAi">The referenced ChAI message, if any.</param>
+    /// <returns>The formatted question.</returns>
+    private string BuildAiQuestion(string username, SendMessage send, ChatMessage? repliedToAi)
+    {
+        string question = $"{username} asks this: {send.Content}";
+        if (repliedToAi is not null)
+        {
+            return $"{question} in regards to a reply of \"{FirstWords(repliedToAi.Content, 10)}\".";
+        }
+
+        return question;
+    }
+
+    /// <summary>
+    /// Formats the room and thread history for the Insights chat-response API.
+    /// </summary>
+    /// <returns>The chronological conversation context.</returns>
+    private string BuildChatContext()
+    {
+        IReadOnlyList<(Guid Id, ChatMessage Message, Guid? ThreadParentMessageId)> messages =
+            Chatroom.GetMessagesSnapshot();
+        Dictionary<Guid, ChatMessage> messagesById = messages.ToDictionary(item => item.Id, item => item.Message);
+
+        return string.Join(
+            Environment.NewLine,
+            messages.Select(item =>
+            {
+                ChatMessage message = item.Message;
+                string relation = string.Empty;
+                Guid? replyToId = message.ParentMessageId ?? item.ThreadParentMessageId;
+                if (replyToId is Guid parentId && messagesById.TryGetValue(parentId, out ChatMessage? parent))
+                {
+                    relation = $" in reply to \"{FirstWords(parent.Content, 10)}\"";
+                }
+
+                string content = message.IsDeleted ? "[message deleted]" : NormalizeWhitespace(message.Content);
+                return $"{message.SenderName} said this at {message.Timestamp:O}{relation}: {content}";
+            }));
+    }
+
+    /// <summary>
+    /// Generates a response with Insights and records it as a reply to the triggering message.
+    /// </summary>
+    /// <param name="userMessage">The formatted question sent to Insights.</param>
+    /// <param name="chatContext">The formatted room history sent to Insights.</param>
+    /// <param name="sourceMessage">The user message that triggered the response.</param>
+    /// <param name="sourceMessageId">The ID of the triggering message.</param>
+    private async Task GenerateAiReplyAsync(
+        string userMessage,
+        string chatContext,
+        SendMessage sourceMessage,
+        Guid sourceMessageId)
+    {
+        try
+        {
+            string response = await _insightsManager.GenerateChatResponseAsync(userMessage, chatContext);
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                throw new InvalidOperationException("Insights returned an empty chat response.");
+            }
+
+            lock (_syncRoot)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                SendMessage aiResponse = new(
+                    DateTimeOffset.UtcNow,
+                    new Mentions(),
+                    response,
+                    sourceMessage.ThreadParentMessageId,
+                    sourceMessageId);
+                RoomResult result = ApplyRoomChange(
+                    ChatConstants.AiAssistantUsername,
+                    aiResponse,
+                    out ChatOperation? operation);
+                if (result != RoomResult.Ok)
+                {
+                    throw new InvalidOperationException(
+                        $"The AI response could not be added to the chat room: {result}.");
+                }
+
+                RecordOperation(operation!);
+            }
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceError("[Chat] AI response generation failed: {0}", exception);
+        }
+    }
+
+    /// <summary>
+    /// Creates an Insights manager configured with the Gemini provider.
+    /// </summary>
+    /// <returns>The initialized Insights manager.</returns>
+    private static async Task<InsightsManager> CreateInsightsManagerAsync()
+    {
+        GeminiProvider provider = await GeminiProvider.CreateAsync(new CloudCredentialService());
+        return new InsightsManager(provider);
+    }
+
+    /// <summary>
+    /// Returns at most the specified number of leading words from a string.
+    /// </summary>
+    /// <param name="text">The source text.</param>
+    /// <param name="wordLimit">The maximum number of words to return.</param>
+    /// <returns>The selected words joined by single spaces.</returns>
+    private static string FirstWords(string text, int wordLimit)
+    {
+        string[] words = NormalizeWhitespace(text)
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(' ', words.Take(wordLimit));
+    }
+
+    /// <summary>
+    /// Replaces runs of whitespace with single spaces and trims surrounding whitespace.
+    /// </summary>
+    /// <param name="text">The source text.</param>
+    /// <returns>The normalized text.</returns>
+    private static string NormalizeWhitespace(string text)
+    {
+        return string.Join(
+            ' ',
+            text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
     }
 
     /// <summary>

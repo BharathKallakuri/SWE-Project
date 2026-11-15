@@ -104,6 +104,33 @@ public class Chatroom : IChatroom
         }
     }
 
+    /// <summary>
+    /// Gets an immutable snapshot of room messages and their thread replies.
+    /// </summary>
+    /// <returns>Messages ordered by timestamp and ID, with each reply's thread root ID.</returns>
+    internal IReadOnlyList<(Guid Id, ChatMessage Message, Guid? ThreadParentMessageId)> GetMessagesSnapshot()
+    {
+        lock (_syncRoot)
+        {
+            List<(Guid Id, ChatMessage Message, Guid? ThreadParentMessageId)> messages = new();
+
+            foreach (((DateTimeOffset _, Guid id), ChatMessageWithThreads root) in _byTime)
+            {
+                messages.Add((id, root.DeepCloneWithoutThreadMessages(), null));
+
+                foreach (((DateTimeOffset _, Guid replyId), ChatMessage reply) in root.ThreadByTime)
+                {
+                    messages.Add((replyId, reply.DeepClone(), id));
+                }
+            }
+
+            return messages
+                .OrderBy(item => item.Message.Timestamp)
+                .ThenBy(item => item.Id)
+                .ToArray();
+        }
+    }
+
     /// <inheritdoc />
     public RoomResult EditMessage(Guid id, string newContent, string editor, Guid? parentMessageId = null)
     {
