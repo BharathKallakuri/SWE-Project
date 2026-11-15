@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
+using Chat;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -69,6 +70,22 @@ public sealed partial class ChatPanel : UserControl
         InitializeComponent();
     }
 
+    public async void ShowChatServerStartupError()
+    {
+        if (XamlRoot is null)
+        {
+            return;
+        }
+
+        ContentDialog dialog = new() {
+            Title = "Chat unavailable",
+            Content = ChatServer.StartupFailureMessage,
+            CloseButtonText = "OK",
+            XamlRoot = XamlRoot
+        };
+        await dialog.ShowAsync();
+    }
+
     public ChatPanelViewModel? ViewModel
     {
         get => _viewModel;
@@ -78,10 +95,7 @@ public sealed partial class ChatPanel : UserControl
                 return;
             }
 
-            if (_viewModel is not null)
-            {
-                _viewModel.ScrollToMessageRequested -= OnScrollToMessageRequested;
-            }
+            _viewModel?.ScrollToMessageRequested -= OnScrollToMessageRequested;
 
             _viewModel = value;
             DataContext = value;
@@ -112,10 +126,7 @@ public sealed partial class ChatPanel : UserControl
         _ = sender;
         _ = e;
         _mainScrollViewer = FindChild<ScrollViewer>(MessagesList);
-        if (_mainScrollViewer is not null)
-        {
-            _mainScrollViewer.ViewChanged += MainScrollViewer_ViewChanged;
-        }
+        _mainScrollViewer?.ViewChanged += MainScrollViewer_ViewChanged;
 
         ScrollMainConversationToLatest();
     }
@@ -125,10 +136,7 @@ public sealed partial class ChatPanel : UserControl
         _ = sender;
         _ = e;
         _threadScrollViewer = FindChild<ScrollViewer>(ThreadMessagesList);
-        if (_threadScrollViewer is not null)
-        {
-            _threadScrollViewer.ViewChanged += ThreadScrollViewer_ViewChanged;
-        }
+        _threadScrollViewer?.ViewChanged += ThreadScrollViewer_ViewChanged;
 
         ScrollThreadToLatest();
     }
@@ -266,7 +274,7 @@ public sealed partial class ChatPanel : UserControl
         };
     }
 
-    private async void NativeEmojiInput_TextChanged(object sender, TextChangedEventArgs e)
+    private async void NativeEmojiInput_TextChanged(object _, TextChangedEventArgs __)
     {
         if (_pendingReactionMessage is null || string.IsNullOrWhiteSpace(NativeEmojiInput.Text))
         {

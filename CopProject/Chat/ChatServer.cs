@@ -16,6 +16,9 @@ namespace Chat;
 /// </summary>
 public sealed class ChatServer : IMessageListener, IDisposable
 {
+    public const string StartupFailureMessage =
+        "Could not start chat server. Please ensure GEMINI_API_KEY is defined.";
+
     private readonly object _syncRoot = new();
     private readonly ICommunicator _communicator;
     private readonly List<ChatOperation> _operations = new();
@@ -59,7 +62,15 @@ public sealed class ChatServer : IMessageListener, IDisposable
         _communicator = communicator;
         _controller = controller;
         Trace.TraceInformation("[Chat] Initializing chat server for room '{0}'.", chatroom.RoomName);
-        _insightsManager = insightsManagerFactory().GetAwaiter().GetResult();
+        try
+        {
+            _insightsManager = insightsManagerFactory().GetAwaiter().GetResult();
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceError("[Chat] Chat server startup failed: {0}", exception);
+            throw new InvalidOperationException(StartupFailureMessage, exception);
+        }
         _communicator.AddSubscriber(ChatConstants.ModuleId, this);
         _controller.UserJoined += OnControllerUserJoined;
         _controller.UserLeft += OnControllerUserLeft;

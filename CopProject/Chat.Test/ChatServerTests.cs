@@ -1,4 +1,4 @@
-// Author: Rajdeep
+﻿// Author: Rajdeep
 // Roll no.: 112301045
 
 using System;
@@ -18,15 +18,16 @@ namespace Chat.Test;
 
 public class ChatServerTests
 {
-    private static readonly IPEndPoint ClientAddress = new(IPAddress.Loopback, 23456);
+    private static readonly IPEndPoint s_clientAddress = new(IPAddress.Loopback, 23456);
+    private static IPEndPoint ClientAddress => s_clientAddress;
 
     [Fact]
     public void ConstructorRejectsNullChatroom()
     {
         RecordingCommunicator communicator = new();
-        RecordingController controller = new();
-
-        controller.Communicator = communicator;
+        RecordingController controller = new() {
+            Communicator = communicator
+        };
         Assert.Throws<ArgumentNullException>(() => new ChatServer(null!, controller));
     }
 
@@ -374,14 +375,12 @@ public class ChatServerTests
     {
         Chatroom chatroom = new("room", "host");
         DateTimeOffset historyTimestamp = new(2026, 11, 15, 8, 0, 0, TimeSpan.Zero);
-        Guid threadRootId = chatroom.AddMessage(new ChatMessageWithThreads
-        {
+        Guid threadRootId = chatroom.AddMessage(new ChatMessageWithThreads {
             Timestamp = historyTimestamp,
             SenderName = "host",
             Content = "Rajdeep said my brother's name is Rajnotdeep."
         });
-        chatroom.AddThreadMessage(threadRootId, new ChatMessage
-        {
+        chatroom.AddThreadMessage(threadRootId, new ChatMessage {
             Timestamp = historyTimestamp.AddMinutes(1),
             SenderName = "guest",
             Content = "That was in the family discussion."
@@ -389,8 +388,9 @@ public class ChatServerTests
         Assert.Equal(RoomResult.Ok, chatroom.ToggleReaction(threadRootId, "reaction-marker", "guest"));
 
         RecordingCommunicator communicator = new();
-        RecordingController controller = new();
-        controller.Communicator = communicator;
+        RecordingController controller = new() {
+            Communicator = communicator
+        };
         controller.AddEndpoint("guest", ClientAddress);
         TestInsightsProvider provider = new("Rajdeep's brother is Rajnotdeep.");
         using ChatServer server = new(
@@ -400,8 +400,7 @@ public class ChatServerTests
         server.RegisterClient("guest");
 
         TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        server.OperationApplied += operation =>
-        {
+        server.OperationApplied += operation => {
             if (operation is MessageAdded added
                 && added.Message.SenderName == ChatConstants.AiAssistantUsername)
             {
@@ -437,15 +436,15 @@ public class ChatServerTests
     public async Task ChAiMentionReplyReferencesQuestionInSameThread()
     {
         Chatroom chatroom = new("room", "host");
-        Guid threadRootId = chatroom.AddMessage(new ChatMessageWithThreads
-        {
+        Guid threadRootId = chatroom.AddMessage(new ChatMessageWithThreads {
             Timestamp = DateTimeOffset.UtcNow,
             SenderName = "host",
             Content = "Question thread"
         });
         RecordingCommunicator communicator = new();
-        RecordingController controller = new();
-        controller.Communicator = communicator;
+        RecordingController controller = new() {
+            Communicator = communicator
+        };
         controller.AddEndpoint("guest", ClientAddress);
         TestInsightsProvider provider = new("AI answer.");
         using ChatServer server = new(
@@ -456,8 +455,7 @@ public class ChatServerTests
 
         TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
         Guid? questionMessageId = null;
-        server.OperationApplied += operation =>
-        {
+        server.OperationApplied += operation => {
             if (operation is not MessageAdded added)
             {
                 return;
@@ -490,15 +488,15 @@ public class ChatServerTests
     public async Task ReplyToChAiMessageGeneratesQuestionWithReferencedMessage()
     {
         Chatroom chatroom = new("room", "host");
-        Guid aiMessageId = chatroom.AddMessage(new ChatMessageWithThreads
-        {
+        Guid aiMessageId = chatroom.AddMessage(new ChatMessageWithThreads {
             Timestamp = new DateTimeOffset(2026, 11, 15, 8, 0, 0, TimeSpan.Zero),
             SenderName = ChatConstants.AiAssistantUsername,
             Content = "Rajdeep's brother is Rajnotdeep."
         });
         RecordingCommunicator communicator = new();
-        RecordingController controller = new();
-        controller.Communicator = communicator;
+        RecordingController controller = new() {
+            Communicator = communicator
+        };
         controller.AddEndpoint("guest", ClientAddress);
         TestInsightsProvider provider = new("He said it earlier in the chat.");
         using ChatServer server = new(
@@ -509,8 +507,7 @@ public class ChatServerTests
 
         TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
         Guid? questionMessageId = null;
-        server.OperationApplied += operation =>
-        {
+        server.OperationApplied += operation => {
             if (operation is not MessageAdded added)
             {
                 return;
@@ -550,8 +547,9 @@ public class ChatServerTests
     public async Task HostMentioningChAiGeneratesReply()
     {
         RecordingCommunicator communicator = new();
-        RecordingController controller = new();
-        controller.Communicator = communicator;
+        RecordingController controller = new() {
+            Communicator = communicator
+        };
         TestInsightsProvider provider = new("Host answer.");
         using ChatServer server = new(
             new Chatroom("room", "host"),
@@ -560,8 +558,7 @@ public class ChatServerTests
 
         TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
         Guid? questionMessageId = null;
-        server.OperationApplied += operation =>
-        {
+        server.OperationApplied += operation => {
             if (operation is not MessageAdded added)
             {
                 return;
@@ -645,8 +642,7 @@ public class ChatServerTests
     public async Task GenerateAiReplyDoesNotRecordReplyWhenThreadWasCleared()
     {
         Chatroom chatroom = new("room", "host");
-        Guid threadParentId = chatroom.AddMessage(new ChatMessageWithThreads
-        {
+        Guid threadParentId = chatroom.AddMessage(new ChatMessageWithThreads {
             SenderName = "host",
             Content = "Thread root"
         });
@@ -929,11 +925,15 @@ public class ChatServerTests
         public string ModelName => "test";
         public List<(string UserMessage, string? ChatContext)> Requests { get; } = new();
 
-        public Task<string> AnalyzeTrafficIncidentAsync(string textDescription) =>
+        public Task<string> AnalyzeTrafficIncidentAsync(string textDescription)
+        {
             throw new NotSupportedException();
+        }
 
-        public Task<string> AnalyzeImageAsync(byte[] imageData, string prompt) =>
+        public Task<string> AnalyzeImageAsync(byte[] imageData, string prompt)
+        {
             throw new NotSupportedException();
+        }
 
         public Task<string> GenerateChatResponseAsync(string userMessage, string? chatContext = null)
         {
@@ -946,8 +946,7 @@ public class ChatServerTests
         NewServerWithGuestMessage()
     {
         Chatroom chatroom = new("room", "host");
-        Guid messageId = chatroom.AddMessage(new ChatMessageWithThreads
-        {
+        Guid messageId = chatroom.AddMessage(new ChatMessageWithThreads {
             Timestamp = DateTimeOffset.UtcNow,
             SenderName = "guest",
             Content = "Original"
@@ -1112,15 +1111,35 @@ public class ChatServerTests
             UserLeft?.Invoke(this, new UserLeftEventArgs(user, _users.Count - 1));
         }
 
-        public bool StartMeeting() => true;
-        public bool EndMeeting() => true;
-        public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user) => true;
+        public bool StartMeeting()
+        {
+            return true;
+        }
+
+        public bool EndMeeting()
+        {
+            return true;
+        }
+
+        public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user)
+        {
+            return true;
+        }
+
         public void LeaveMeeting(ControllerUser user)
         {
         }
 
-        public int GetActiveUserCount() => _users.Count;
-        public List<ControllerUser> GetActiveUsers() => _users.Values.ToList();
+        public int GetActiveUserCount()
+        {
+            return _users.Count;
+        }
+
+        public List<ControllerUser> GetActiveUsers()
+        {
+            return _users.Values.ToList();
+        }
+
         public void RegisterNotificationHandler(IUserNotificationHandler handler)
         {
         }
