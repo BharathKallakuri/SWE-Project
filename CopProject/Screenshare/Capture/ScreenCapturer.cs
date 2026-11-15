@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿// Author = Aryan
+// Roll Number = 112301041
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 
@@ -45,6 +47,11 @@ public class ScreenCapturer : IImageSource
     {
         IntPtr previousContext = _platform.SetThreadDpiAwarenessContext(s_dpiAwarenessContextPerMonitorAwareV2);
 
+        if (previousContext == IntPtr.Zero)
+        {
+            Trace.TraceWarning(
+                "[Screenshare] ScreenCapturer.Capture: Could not set per-monitor DPI awareness. Capture may be scaled");
+        }
         try
         {
             return CaptureScreen();
@@ -65,7 +72,7 @@ public class ScreenCapturer : IImageSource
 
         if (width <= 0 || height <= 0)
         {
-            Trace.TraceWarning("[Screenshare] Invalid screen dimensions received: {0}x{1}.", width, height);    
+            Trace.TraceWarning("[Screenshare]  ScreenCapturer.CaptureScreen Invalid screen dimensions received: {0}x{1}.", width, height);
             throw new InvalidOperationException(
                 $"Invalid screen dimensions: {width}x{height}");
         }
@@ -76,12 +83,13 @@ public class ScreenCapturer : IImageSource
         try
         {
             _platform.CopyFromScreen(screenshot, bounds);
+            Trace.TraceInformation("[Screenshare] ScreenCapturer.CaptureScreen: Screen captured ({0}x{1}).", width, height);
             return screenshot;
         }
         catch (Exception exception)
         {
             Trace.TraceError(
-            "[Screenshare] Failed to capture screen ({0}x{1}): {2}", width, height, exception);
+            "[Screenshare] ScreenCapturer.CaptureScreen: Failed to capture screen ({0}x{1}): {2}", width, height, exception);
             screenshot.Dispose();
             throw;
         }

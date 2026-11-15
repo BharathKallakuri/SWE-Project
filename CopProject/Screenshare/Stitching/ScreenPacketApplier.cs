@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿// Author = Aryan
+// Roll Number = 112301041
+
+using System.Diagnostics;
 using System.Drawing;
 
 namespace ScreenShare;
@@ -41,6 +44,8 @@ public sealed class ScreenPacketApplier
         StreamId = streamId;
         _stitcher = stitcher;
         _timeProvider = timeProvider ?? TimeProvider.System;
+        Trace.TraceInformation(
+            "[Screenshare] ScreenPacketApplier.ScreenPacketApplier: Created packet applier for stream {0}.", streamId);
     }
 
     /// <summary>
@@ -56,7 +61,7 @@ public sealed class ScreenPacketApplier
         if (packet.StreamId != StreamId)
         {
             Trace.TraceWarning(
-            "[Screenshare] Packet belongs to an unexpected stream. Expected: {0}, Received: {1}.",
+            "[Screenshare] ScreenPacketApplier.Apply: Packet belongs to an unexpected stream. Expected: {0}, Received: {1}.",
             StreamId,
             packet.StreamId);
             throw new ArgumentException(
@@ -77,7 +82,7 @@ public sealed class ScreenPacketApplier
         if (_stitcher.NeedsFullFrame)
         {
             Trace.TraceWarning(
-            "[Screenshare] Packet could not be applied. Stream: {0}, Frame: {1}. Full frame required.",
+            "[Screenshare] ScreenPacketApplier.Apply: Packet could not be applied. Stream: {0}, Frame: {1}. Full frame required.",
             StreamId,
             packet.FrameNumber);
             RequestFullFrameIfDue();
@@ -85,7 +90,7 @@ public sealed class ScreenPacketApplier
         }
 
         Trace.TraceWarning(
-        "[Screenshare] Packet ignored. Stream: {0}, Frame: {1}, Type: {2}.",
+        "[Screenshare] ScreenPacketApplier.Apply: Packet ignored. Stream: {0}, Frame: {1}, Type: {2}.",
         StreamId,
         packet.FrameNumber,
         packet.Type);
@@ -100,7 +105,7 @@ public sealed class ScreenPacketApplier
         if (frame == null || frame.Width != packet.Width || frame.Height != packet.Height)
         {
             Trace.TraceWarning(
-            "[Screenshare] Full-frame packet rejected. Stream: {0}, Frame: {1}, Payload size: {2} bytes.",
+            "[Screenshare] ScreenPacketApplier.ApplyFullFrame: Full-frame packet rejected. Stream: {0}, Frame: {1}, Payload size: {2} bytes.",
             StreamId,
             packet.FrameNumber,
             data.Length);
@@ -108,7 +113,7 @@ public sealed class ScreenPacketApplier
         }
 
         Trace.TraceInformation(
-        "[Screenshare] Full-frame packet decoded. Stream: {0}, Frame: {1}, Payload size: {2} bytes.",
+        "[Screenshare] ScreenPacketApplier.ApplyFullFrame: Full-frame packet decoded. Stream: {0}, Frame: {1}, Payload size: {2} bytes.",
         StreamId,
         packet.FrameNumber,
         data.Length);
@@ -122,7 +127,7 @@ public sealed class ScreenPacketApplier
             long totalPayloadSize = packet.ChangedTiles.Sum(tile => (long)tile.Data.Length);
 
             Trace.TraceInformation(
-                "[Screenshare] Processing delta packet. Stream: {0}, Frame: {1}, Tiles: {2}, Encoded payload size: {3} bytes.",
+                "[Screenshare] ScreenPacketApplier.ApplyChangedTiles: Processing delta packet. Stream: {0}, Frame: {1}, Tiles: {2}, Encoded payload size: {3} bytes.",
                 StreamId,
                 packet.FrameNumber,
                 packet.ChangedTiles.Count,
@@ -134,7 +139,7 @@ public sealed class ScreenPacketApplier
             // a tile did not decode or did not fit the frame; the stitcher left the frame unchanged
 
             Trace.TraceWarning(
-            "[Screenshare] Delta packet rejected. Stream: {0}, Frame: {1}. Reason: {2}",
+            "[Screenshare] ScreenPacketApplier.ApplyChangedTiles: Delta packet rejected. Stream: {0}, Frame: {1}. Reason: {2}",
             StreamId,
             packet.FrameNumber,
             exception.Message);
@@ -148,12 +153,15 @@ public sealed class ScreenPacketApplier
 
         if (_lastFullFrameRequest is DateTimeOffset last && now - last < FullFrameRequestInterval)
         {
+            Trace.TraceInformation(
+                "[Screenshare] ScreenPacketApplier.RequestFullFrameIfDue: Full frame request skipped (rate limited). Stream: {0}.",
+                StreamId);
             return;
         }
 
         _lastFullFrameRequest = now;
         Trace.TraceInformation(
-        "[Screenshare] Requesting full frame. Stream: {0}.",
+        "[Screenshare] ScreenPacketApplier.RequestFullFrameIfDue: Requesting full frame. Stream: {0}.",
         StreamId);
         FullFrameRequested?.Invoke(StreamId);
     }
@@ -172,7 +180,7 @@ public sealed class ScreenPacketApplier
         {
             // not a valid image
             Trace.TraceWarning(
-            "[Screenshare] Failed to decode image payload. Payload size: {0} bytes. Reason: {1}",
+            "[Screenshare] ScreenPacketApplier.TryDecodeImage: Failed to decode image payload. Payload size: {0} bytes. Reason: {1}",
             data.Length,
             exception.Message);
             return null;

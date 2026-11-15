@@ -1,4 +1,6 @@
-﻿using System.Drawing;
+﻿// Author = Aryan
+// Roll Number = 112301041
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Diagnostics;
@@ -30,13 +32,13 @@ public sealed class ScalingImageSource : IImageSource, IDisposable
 
     public Bitmap Capture()
     {
-        Trace.TraceInformation("[Screenshare] Starting image capture and scaling. Maximum height: {0}.", MaxHeight);
+        Trace.TraceInformation("[Screenshare] ScalingImageSource.Capture Starting image capture and scaling. Maximum height: {0}.", MaxHeight);
 
         Bitmap frame = _inner.Capture();
 
         if (frame.Height <= MaxHeight)
         {
-            Trace.TraceInformation("[Screenshare] Scaling skipped. Captured image dimensions: {0}x{1}.", frame.Width, frame.Height);
+            Trace.TraceInformation("[Screenshare] ScalingImageSource.Capture Scaling skipped. Captured image dimensions: {0}x{1}.", frame.Width, frame.Height);
             return frame;
         }
 
@@ -54,8 +56,8 @@ public sealed class ScalingImageSource : IImageSource, IDisposable
                 attributes.SetWrapMode(WrapMode.TileFlipXY);
 
                 graphics.CompositingMode = CompositingMode.SourceCopy;
-                graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
-                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                graphics.InterpolationMode = InterpolationMode.Bilinear;
+                graphics.PixelOffsetMode = PixelOffsetMode.Half;
                 graphics.DrawImage(
                     frame,
                     new Rectangle(0, 0, width, MaxHeight),
@@ -66,13 +68,13 @@ public sealed class ScalingImageSource : IImageSource, IDisposable
                     GraphicsUnit.Pixel,
                     attributes);
 
-                Trace.TraceInformation("[Screenshare] Image scaling completed. Original: {0}x{1}, Scaled: {2}x{3}.", frame.Width, frame.Height, width, MaxHeight);
+                Trace.TraceInformation("[Screenshare] ScalingImageSource.Capture: Image scaling completed. Original: {0}x{1}, Scaled: {2}x{3}.", frame.Width, frame.Height, width, MaxHeight);
 
                 return scaled;
             }
             catch (Exception exception)
             {
-                Trace.TraceError("[Screenshare] Image scaling failed: {0}", exception);
+                Trace.TraceError("[Screenshare] ScalingImageSource.Capture: Image scaling failed: {0}", exception);
                 scaled.Dispose();
                 throw;
             }

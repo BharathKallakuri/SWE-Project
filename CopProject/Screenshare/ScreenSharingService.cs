@@ -1,4 +1,7 @@
-﻿using System.Drawing;
+﻿// Author = Aryan
+// Roll Number = 112301041
+
+using System.Drawing;
 using System.Diagnostics;
 
 namespace ScreenShare;
@@ -52,7 +55,7 @@ public class ScreenSharingService : IDisposable
         if (_previousFrame == null)
         {
             Trace.TraceInformation(
-            "[Screenshare] First frame captured. Dimensions: {0}x{1}. Sending full frame.",
+            "[Screenshare] ScreenSharingService.ProcessFrame: First frame captured. Dimensions: {0}x{1}. Sending full frame.",
             currentFrame.Width,
             currentFrame.Height);
 
@@ -115,7 +118,7 @@ public class ScreenSharingService : IDisposable
         _previousFrame = null;
         _heldFrames = 0;
 
-        Trace.TraceInformation("[Screenshare] Screen sharing service reset. Previous frame cleared.");
+        Trace.TraceInformation("[Screenshare] ScreenSharingSerivice.Reset Screen sharing service reset. Previous frame cleared.");
     }
 
     /// <summary>
@@ -132,6 +135,6 @@ public class ScreenSharingService : IDisposable
         _previousFrame = null;
 
         _disposed = true;
-        Trace.TraceInformation("[Screenshare] Screen sharing service disposed.");
+        Trace.TraceInformation("[Screenshare] ScreenSharingService.Dispose Screen sharing service disposed.");
     }
 }

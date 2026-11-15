@@ -1,4 +1,7 @@
-﻿using System.Drawing;
+﻿// Author = Aryan
+// Roll Number = 112301041
+
+using System.Drawing;
 using System.Diagnostics;
 
 namespace ScreenShare;
@@ -40,7 +43,7 @@ public class StreamFrameCache : IDisposable
             }
         }
         Trace.TraceInformation(
-        "[Screenshare] Frame cache updated. Stream: {0}, Dimensions: {1}x{2}.",
+        "[Screenshare] StreamFrameCache.Update: Frame cache updated. Stream: {0}, Dimensions: {1}x{2}.",
         streamId,
         width,
         height);
@@ -54,10 +57,18 @@ public class StreamFrameCache : IDisposable
         {
             if (_disposed)
             {
+                Trace.TraceWarning(
+                    "[Screenshare] StreamFrameCache.Get: Cache already disposed. Stream: {0}.", streamId);
                 throw new ObjectDisposedException(nameof(StreamFrameCache));
             }
 
-            return _frames.TryGetValue(streamId, out Bitmap? frame) ? new Bitmap(frame) : null;
+            if (!_frames.TryGetValue(streamId, out Bitmap? frame))
+            {
+                Trace.TraceInformation("[Screenshare] StreamFrameCache.Get: No cached frame. Stream: {0}.", streamId);
+                return null;
+            }
+
+            return new Bitmap(frame);
         }
     }
 
@@ -69,6 +80,8 @@ public class StreamFrameCache : IDisposable
         {
             if (_disposed)
             {
+                Trace.TraceWarning(
+                    "[Screenshare] StreamFrameCache.Remove: Cache already disposed. Stream: {0}.", streamId);
                 throw new ObjectDisposedException(nameof(StreamFrameCache));
             }
 
@@ -76,7 +89,7 @@ public class StreamFrameCache : IDisposable
             {
                 frame.Dispose();
                 Trace.TraceInformation(
-                "[Screenshare] Frame removed from cache. Stream: {0}.",
+                "[Screenshare] StreamFrameCache.Remove: Frame removed from cache. Stream: {0}.",
                 streamId);
             }
         }
@@ -100,7 +113,7 @@ public class StreamFrameCache : IDisposable
 
             _frames.Clear();
             Trace.TraceInformation(
-                "[Screenshare] Frame cache disposed. All cached frames released.");
+                "[Screenshare] StreamFrameCache.Dispose: Frame cache disposed. All cached frames released.");
         }
     }
 }

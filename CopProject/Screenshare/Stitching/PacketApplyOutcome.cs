@@ -1,4 +1,7 @@
-﻿namespace ScreenShare;
+﻿// Author = Aryan
+// Roll Number = 112301041
+
+namespace ScreenShare;
 
 /// <summary>
 /// what happened when a received data packet was applied to a stream

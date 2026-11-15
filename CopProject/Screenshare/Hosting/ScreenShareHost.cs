@@ -3,6 +3,7 @@ using System.Net;
 using Screenshare;
 
 namespace ScreenShare;
+
 internal sealed partial class ScreenShareHost : IDisposable
 {
     private readonly Participant _self;
