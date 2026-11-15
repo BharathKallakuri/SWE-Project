@@ -1,5 +1,7 @@
 // Author = Balabadra Lepakshi Kalyan
 // Roll Number = 112301003
+using System;
+using System.Diagnostics;
 using System.IO;
 using Controller.ViewModels;
 using Microsoft.UI.Xaml.Media;
@@ -18,7 +20,7 @@ public sealed class ParticipantInfo : ObservableObject
     public string RoleDisplay => IsHost ? "Host" : "Client";
     public string DisplayName => IsHost ? $"{Username} (Host)" : Username;
 
-// Converts the stored profile picture bytes into an ImageSource for display in the UI.
+    // Converts the stored profile picture bytes into an ImageSource for display in the UI.
     public ImageSource? AvatarImage
     {
         get
@@ -31,8 +33,9 @@ public sealed class ParticipantInfo : ObservableObject
                 bitmap.SetSource(ms.AsRandomAccessStream());
                 return bitmap;
             }
-            catch
+            catch (Exception ex)
             {
+                Trace.TraceWarning($"[ParticipantInfo] Failed to decode avatar image for user '{Username}': {ex.Message}");
                 return null;
             }
         }

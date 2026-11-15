@@ -1,6 +1,7 @@
 // Author = Balabadra Lepakshi Kalyan
 // Roll Number = 112301003
 using System;
+using System.Diagnostics;
 using System.Linq;
 using Windows.Foundation;
 using Microsoft.UI;
@@ -31,6 +32,7 @@ public sealed partial class MeetingView : UserControl
             {
                 _viewModel.ChartUpdated += DrawCharts;
             }
+            Trace.TraceInformation("[MeetingView] ViewModel assigned.");
             this.Bindings.Update();
             DrawCharts();
         }
@@ -38,6 +40,7 @@ public sealed partial class MeetingView : UserControl
 
     public MeetingView()
     {
+        Trace.TraceInformation("[MeetingView] Initializing MeetingView component.");
         InitializeComponent();
     }
 
@@ -58,7 +61,8 @@ public sealed partial class MeetingView : UserControl
 
     private void MiniChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => DrawCharts();
     private void BigChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => DrawCharts();
-// Draws the participant activity graph, including axes, time labels, data points, and live updates.
+
+    // Draws the participant activity graph, including axes, time labels, data points, and live updates.
     private void DrawGraph(Canvas canvas, bool isBig)
     {
         if (ViewModel == null) return;
@@ -81,6 +85,8 @@ public sealed partial class MeetingView : UserControl
         {
             points.Add(new Models.ParticipantDataPoint { Seconds = 0, TimeLabel = "00:00", Count = Math.Max(1, ViewModel.Participants) });
         }
+
+        Trace.TraceInformation($"[MeetingView] DrawGraph rendering {(isBig ? "big" : "mini")} chart with {points.Count} point(s).");
 
         double maxSec = Math.Max(60, Math.Max(currentSec, points.Max(p => p.Seconds)));
         if (maxSec <= 120) maxSec = 120;
@@ -175,9 +181,33 @@ public sealed partial class MeetingView : UserControl
         canvas.Children.Add(currentDot);
     }
 
-    private void GraphCard_Tapped(object sender, TappedRoutedEventArgs e) => ViewModel?.MaximizeGraph();
-    private void MaximizeGraph_Click(object sender, RoutedEventArgs e) => ViewModel?.MaximizeGraph();
-    private void AuditCard_Tapped(object sender, TappedRoutedEventArgs e) => ViewModel?.MaximizeAudit();
-    private void MaximizeAudit_Click(object sender, RoutedEventArgs e) => ViewModel?.MaximizeAudit();
-    private void CloseMaximized_Click(object sender, RoutedEventArgs e) => ViewModel?.ShowNormal();
+    private void GraphCard_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        Trace.TraceInformation("[MeetingView] GraphCard tapped.");
+        ViewModel?.MaximizeGraph();
+    }
+
+    private void MaximizeGraph_Click(object sender, RoutedEventArgs e)
+    {
+        Trace.TraceInformation("[MeetingView] MaximizeGraph button clicked.");
+        ViewModel?.MaximizeGraph();
+    }
+
+    private void AuditCard_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        Trace.TraceInformation("[MeetingView] AuditCard tapped.");
+        ViewModel?.MaximizeAudit();
+    }
+
+    private void MaximizeAudit_Click(object sender, RoutedEventArgs e)
+    {
+        Trace.TraceInformation("[MeetingView] MaximizeAudit button clicked.");
+        ViewModel?.MaximizeAudit();
+    }
+
+    private void CloseMaximized_Click(object sender, RoutedEventArgs e)
+    {
+        Trace.TraceInformation("[MeetingView] CloseMaximized button clicked.");
+        ViewModel?.ShowNormal();
+    }
 }

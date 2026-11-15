@@ -1,4 +1,4 @@
-// Author : Saideep
+﻿// Author : Saideep
 // Roll No : 112301018.
 using Controller;
 using Utils;
@@ -13,12 +13,12 @@ public class SessionManagerTests
     {
         var manager = new SessionManager();
         var host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
-        var nonHost = new ControllerUser("nonHost","nonhost@test.com",null,"10.10.10.11",9991, isHost: false);
-        var session = manager.CreateSession(host);
+        var nonHost = new ControllerUser("nonHost", "nonhost@test.com", null, "10.10.10.11", 9991, isHost: false);
+        SessionInfo? session = manager.CreateSession(host);
         bool nonHostStart = manager.StartSession(nonHost);
         Assert.False(nonHostStart);
-        bool eventFired = false ;
-        manager.UserJoined += (s,e) => {eventFired = true;};
+        bool eventFired = false;
+        manager.UserJoined += (s, e) => { eventFired = true; };
         bool started = manager.StartSession(host);
         Assert.True(started);
         Assert.True(eventFired);
@@ -31,13 +31,13 @@ public class SessionManagerTests
     public void JoinAndLeaveSession()
     {
         var manager = new SessionManager();
-        var host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990,isHost: true);
+        var host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
         manager.CreateSession(host);
         manager.StartSession(host);
-        bool duplicateDetected = false ;
-        manager.DuplicateUserDetected += (s,e) => {duplicateDetected = true;};
-        bool userLeftFired = false ;
-        manager.UserLeft += (s,e) => {userLeftFired = true;};
+        bool duplicateDetected = false;
+        manager.DuplicateUserDetected += (s, e) => { duplicateDetected = true; };
+        bool userLeftFired = false;
+        manager.UserLeft += (s, e) => { userLeftFired = true; };
         var client = new ControllerUser("ClientUser", "client@test.com", null, "10.10.10.10", 9991, isHost: false);
         bool joined = manager.JoinSession(client);
         Assert.True(joined);
@@ -59,17 +59,17 @@ public class SessionManagerTests
     {
         var manager = new SessionManager();
         var host = new ControllerUser("HostUser", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
-        var session = manager.CreateSession(host);
+        SessionInfo? session = manager.CreateSession(host);
         manager.StartSession(host);
         bool nonHostEnd = manager.EndSession("non-host-key");
         Assert.False(nonHostEnd);
-        bool meetingEndedFired = false ;
-        manager.MeetingEnded += (s,e) => {meetingEndedFired = true;};
+        bool meetingEndedFired = false;
+        manager.MeetingEnded += (s, e) => { meetingEndedFired = true; };
         bool ended = manager.EndSession(host.UserKey);
         Assert.True(ended);
         Assert.True(meetingEndedFired);
         Assert.False(manager.HasActiveSession());
-        var session2 = manager.CreateSession(host);
+        SessionInfo? session2 = manager.CreateSession(host);
         session2!.End();
         bool endedAgain = manager.EndSession(host.UserKey);
         Assert.False(endedAgain);
@@ -124,7 +124,7 @@ public class SessionManagerTests
     public void GetSessionAndClearSession()
     {
         var manager = new SessionManager();
-        var host = new ControllerUser("Host","host@test.com",null,"10.10.10.10",9990,isHost:true);
+        var host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
         Assert.Null(manager.GetSession());
         manager.CreateSession(host);
         Assert.NotNull(manager.GetSession());
@@ -134,15 +134,16 @@ public class SessionManagerTests
     }
 
     [Fact]
-    public void SessionInfoEdgeCases(){
+    public void SessionInfoEdgeCases()
+    {
         Assert.Throws<ArgumentNullException>(() => new SessionInfo(null!));
-        var host = new ControllerUser("Host","host@test.com",null,"10.10.10.10",9990,isHost:true);
+        var host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
         var session = new SessionInfo(host);
-        var client1 = new ControllerUser("Client1","client1@test.com",null,"10.10.10.10",9991,isHost:false);
+        var client1 = new ControllerUser("Client1", "client1@test.com", null, "10.10.10.10", 9991, isHost: false);
         Assert.True(session.AddUser(client1));
         Assert.False(session.AddUser(client1));
         Assert.True(session.End());
-        var client2 = new ControllerUser("Client2","client2@test.com",null,"10.10.10.10",9992,isHost:false);
+        var client2 = new ControllerUser("Client2", "client2@test.com", null, "10.10.10.10", 9992, isHost: false);
         Assert.False(session.AddUser(client2));
         Assert.False(session.End());
     }
