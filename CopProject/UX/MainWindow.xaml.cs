@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -23,6 +24,7 @@ using Incidents;
 using Incidents.Views;
 using LocationTracker.Services;
 using LocationTracker.Views;
+using Utils;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -90,8 +92,10 @@ public sealed partial class MainWindow : Window
         _session.ParticipantCountChanged += count => {
             DispatcherQueue.TryEnqueue(() => SetParticipants(count));
         };
-        _session.MeetingEnded += () => {
-            DispatcherQueue.TryEnqueue(() => {
+        _session.MeetingEnded += () =>
+        {
+            DispatcherQueue.TryEnqueue(async () =>
+            {
                 if (_inMeeting)
                 {
                     _inMeeting = false;
@@ -167,6 +171,28 @@ public sealed partial class MainWindow : Window
         pic.ProfilePicture = string.IsNullOrEmpty(source) ? null : new BitmapImage(new Uri(source));
     }
 
+    private byte[]? GetProfilePictureBytes()
+    {
+        if (string.IsNullOrEmpty(_picture)) return null;
+        try
+        {
+            if (File.Exists(_picture))
+            {
+                return File.ReadAllBytes(_picture);
+            }
+            if (Uri.TryCreate(_picture, UriKind.Absolute, out Uri? uri) &&
+                (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+            {
+                using var client = new HttpClient();
+                return client.GetByteArrayAsync(uri).GetAwaiter().GetResult();
+            }
+        }
+        catch
+        {
+            // fallback if image cannot be read
+        }
+        return null;
+    }
     // lets the person choose a picture file and returns its path (null if they cancel)
     private async Task<string?> PickPictureAsync()
     {
@@ -247,7 +273,7 @@ public sealed partial class MainWindow : Window
             // CONTROLLER TEAM: store current user identity into session
             _session.CurrentUserId = _userId;
             _session.CurrentUserEmail = mail;
-
+            _session.CurrentUserProfilePicture = GetProfilePictureBytes();
             ShowProfile();
             ShowScreen("dash");
         }
@@ -315,6 +341,13 @@ public sealed partial class MainWindow : Window
                 _userEmail,
                 _userId,
                 _picture);
+
+            byte[]? picBytes = GetProfilePictureBytes();
+            _session.CurrentUserProfilePicture = picBytes;
+            if (_inMeeting)
+            {
+                _meetingService.UpdateProfilePicture(picBytes);
+            }    
         }
     
         ShowProfile();
@@ -408,7 +441,7 @@ public sealed partial class MainWindow : Window
             bool joined = _meetingService.JoinMeeting(id, number);
             if (!joined)
             {
-                error.Text = "Could not connect to meeting at " + id + ":" + port;
+                error.Text = _meetingService.LastErrorMessage ?? ("Could not connect to meeting at " + id + ":" + port);
                 continue;
             }
 
@@ -497,6 +530,8 @@ public sealed partial class MainWindow : Window
                 : me == null ? "the controller has no current user"
                 : $"my endpoint is not usable: '{me.Ip}' port {localPort}";
 
+            Trace.WriteLine($"[FileSync] Cannot open File Sync: {reason}");
+
             _ = ShowErrorAsync("File Sync", "Cannot open File Sync: " + reason);
             return;
         }
@@ -507,6 +542,8 @@ public sealed partial class MainWindow : Window
             string hostIp = _meetingId.Equals("localhost", StringComparison.OrdinalIgnoreCase) ? "127.0.0.1" : _meetingId;
             if (!IPAddress.TryParse(hostIp, out IPAddress? hostAddress) || !int.TryParse(_meetingPort, out int hostPort))
             {
+
+                Trace.WriteLine($"[FileSync] Invalid host endpoint address: {_meetingId}:{_meetingPort}");
                 _ = ShowErrorAsync("File Sync", $"Cannot open File Sync: host address '{_meetingId}:{_meetingPort}' is not valid.");
                 return;
             }
@@ -770,7 +807,7 @@ public sealed partial class MainWindow : Window
     {
         IStorage storage = await StorageFactory.CreateAsync(ModuleType.IncidentManagement);
         IFileOperations fileSynchronizer = new Synchroniser();
-        IIncidentController controller = await IncidentController.CreateAsync(storage, fileSynchronizer);
+        IIncidentController controller = await IncidentController.CreateAsync(_userEmail, storage, fileSynchronizer);
 
         IntPtr windowHandle = WindowNative.GetWindowHandle(this);
         return new IncidentPageContext(controller, _userEmail, windowHandle);
