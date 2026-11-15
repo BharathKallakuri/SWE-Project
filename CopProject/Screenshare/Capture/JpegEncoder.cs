@@ -24,11 +24,6 @@ public static class JpegEncoder
         ArgumentOutOfRangeException.ThrowIfLessThan(quality, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(quality, 100);
 
-        Trace.TraceInformation(
-            "[Screenshare] JpegEncoder.Encode: Starting JPEG encoding for bitmap ({0}x{1}). Quality: {2}.",
-            bitmap.Width,
-            bitmap.Height,
-            quality);
 
         using var parameters = new EncoderParameters(1);
         parameters.Param[0] = new EncoderParameter(Encoder.Quality, (long)quality);
@@ -38,9 +33,6 @@ public static class JpegEncoder
 
         byte[] encodedData = stream.ToArray();
 
-        Trace.TraceInformation(
-            "[Screenshare] JpegEncoder.Encode: JPEG encoding completed. Output size: {0} bytes.",
-            encodedData.Length);
         return encodedData;
     }
 }

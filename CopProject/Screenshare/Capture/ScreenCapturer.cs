@@ -83,7 +83,6 @@ public class ScreenCapturer : IImageSource
         try
         {
             _platform.CopyFromScreen(screenshot, bounds);
-            Trace.TraceInformation("[Screenshare] ScreenCapturer.CaptureScreen: Screen captured ({0}x{1}).", width, height);
             return screenshot;
         }
         catch (Exception exception)

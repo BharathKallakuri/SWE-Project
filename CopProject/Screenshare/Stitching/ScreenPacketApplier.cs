@@ -44,8 +44,6 @@ public sealed class ScreenPacketApplier
         StreamId = streamId;
         _stitcher = stitcher;
         _timeProvider = timeProvider ?? TimeProvider.System;
-        Trace.TraceInformation(
-            "[Screenshare] ScreenPacketApplier.ScreenPacketApplier: Created packet applier for stream {0}.", streamId);
     }
 
     /// <summary>
@@ -112,11 +110,6 @@ public sealed class ScreenPacketApplier
             return false;
         }
 
-        Trace.TraceInformation(
-        "[Screenshare] ScreenPacketApplier.ApplyFullFrame: Full-frame packet decoded. Stream: {0}, Frame: {1}, Payload size: {2} bytes.",
-        StreamId,
-        packet.FrameNumber,
-        data.Length);
         return _stitcher.ApplyFullFrame(packet.FrameNumber, frame);
     }
 
@@ -126,12 +119,6 @@ public sealed class ScreenPacketApplier
         {
             long totalPayloadSize = packet.ChangedTiles.Sum(tile => (long)tile.Data.Length);
 
-            Trace.TraceInformation(
-                "[Screenshare] ScreenPacketApplier.ApplyChangedTiles: Processing delta packet. Stream: {0}, Frame: {1}, Tiles: {2}, Encoded payload size: {3} bytes.",
-                StreamId,
-                packet.FrameNumber,
-                packet.ChangedTiles.Count,
-                totalPayloadSize);
             return _stitcher.ApplyChangedTiles(packet.FrameNumber, packet.ChangedTiles);
         }
         catch (ArgumentException exception)
@@ -153,9 +140,6 @@ public sealed class ScreenPacketApplier
 
         if (_lastFullFrameRequest is DateTimeOffset last && now - last < FullFrameRequestInterval)
         {
-            Trace.TraceInformation(
-                "[Screenshare] ScreenPacketApplier.RequestFullFrameIfDue: Full frame request skipped (rate limited). Stream: {0}.",
-                StreamId);
             return;
         }
 

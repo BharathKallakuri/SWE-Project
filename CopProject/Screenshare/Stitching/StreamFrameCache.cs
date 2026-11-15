@@ -42,11 +42,6 @@ public class StreamFrameCache : IDisposable
                 _frames.Add(streamId, copy);
             }
         }
-        Trace.TraceInformation(
-        "[Screenshare] StreamFrameCache.Update: Frame cache updated. Stream: {0}, Dimensions: {1}x{2}.",
-        streamId,
-        width,
-        height);
     }
 
     public Bitmap? Get(string streamId)
@@ -64,7 +59,6 @@ public class StreamFrameCache : IDisposable
 
             if (!_frames.TryGetValue(streamId, out Bitmap? frame))
             {
-                Trace.TraceInformation("[Screenshare] StreamFrameCache.Get: No cached frame. Stream: {0}.", streamId);
                 return null;
             }
 
@@ -88,9 +82,6 @@ public class StreamFrameCache : IDisposable
             if (_frames.Remove(streamId, out Bitmap? frame))
             {
                 frame.Dispose();
-                Trace.TraceInformation(
-                "[Screenshare] StreamFrameCache.Remove: Frame removed from cache. Stream: {0}.",
-                streamId);
             }
         }
     }
@@ -112,8 +103,6 @@ public class StreamFrameCache : IDisposable
             }
 
             _frames.Clear();
-            Trace.TraceInformation(
-                "[Screenshare] StreamFrameCache.Dispose: Frame cache disposed. All cached frames released.");
         }
     }
 }

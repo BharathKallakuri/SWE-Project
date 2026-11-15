@@ -37,6 +37,8 @@ public class ScreenSharingService : IDisposable
 
         _imageSource = imageSource;
         _imageDiffer = imageDiffer;
+        Trace.TraceInformation(
+            "[Screenshare] ScreenSharingService.ScreenSharingService: Screen sharing service initialized.");
     }
 
     /// <summary>
@@ -76,6 +78,20 @@ public class ScreenSharingService : IDisposable
         }
 
         _heldFrames = 0;
+
+        if (result.IsFullFrame)
+        {
+            Trace.TraceInformation(
+                "[Screenshare] ScreenSharingService.ProcessFrame: Full frame ready. Dimensions: {0}x{1}.",
+                currentFrame.Width,
+                currentFrame.Height);
+        }
+        else if (!result.IsUnchanged)
+        {
+            Trace.TraceInformation(
+                "[Screenshare] ScreenSharingService.ProcessFrame: Delta frame ready. Changed tiles: {0}.",
+                result.ChangedTiles.Count);
+        }
 
         // Current frame becomes the base frame for the next comparison.
         Bitmap newPreviousFrame = new Bitmap(currentFrame);
@@ -118,7 +134,7 @@ public class ScreenSharingService : IDisposable
         _previousFrame = null;
         _heldFrames = 0;
 
-        Trace.TraceInformation("[Screenshare] ScreenSharingSerivice.Reset Screen sharing service reset. Previous frame cleared.");
+        Trace.TraceInformation("[Screenshare] ScreenSharingService.Reset Screen sharing service reset. Previous frame cleared.");
     }
 
     /// <summary>

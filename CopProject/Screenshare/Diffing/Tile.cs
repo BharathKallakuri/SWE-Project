@@ -65,12 +65,5 @@ public sealed class Tile
         Height = height;
         Hash = hash;
         _data = (byte[])data.Clone();
-        Trace.TraceInformation(
-            "[Screenshare] Tile.Tile: Tile created at ({0}, {1}). Dimensions: {2}x{3}, Encoded payload size: {4} bytes.",
-            X,
-            Y,
-            Width,
-            Height,
-            _data.Length);
     }
 }

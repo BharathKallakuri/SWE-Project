@@ -32,13 +32,11 @@ public sealed class ScalingImageSource : IImageSource, IDisposable
 
     public Bitmap Capture()
     {
-        Trace.TraceInformation("[Screenshare] ScalingImageSource.Capture Starting image capture and scaling. Maximum height: {0}.", MaxHeight);
 
         Bitmap frame = _inner.Capture();
 
         if (frame.Height <= MaxHeight)
         {
-            Trace.TraceInformation("[Screenshare] ScalingImageSource.Capture Scaling skipped. Captured image dimensions: {0}x{1}.", frame.Width, frame.Height);
             return frame;
         }
 
@@ -68,7 +66,6 @@ public sealed class ScalingImageSource : IImageSource, IDisposable
                     GraphicsUnit.Pixel,
                     attributes);
 
-                Trace.TraceInformation("[Screenshare] ScalingImageSource.Capture: Image scaling completed. Original: {0}x{1}, Scaled: {2}x{3}.", frame.Width, frame.Height, width, MaxHeight);
 
                 return scaled;
             }

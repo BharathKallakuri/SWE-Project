@@ -36,7 +36,6 @@ public class ImageDiffer : IImageDiffer
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(tileSize);
         _tileSize = tileSize;
-        Trace.TraceInformation("[Screenshare] ImageDiffer.ImageDiffer: Created with tile size {0}.", tileSize);
     }
 
     /// <summary>gets the width and height of a full tile in pixels</summary>
@@ -149,10 +148,6 @@ public class ImageDiffer : IImageDiffer
 
         if (changedAreas.Count == 0)
         {
-            Trace.TraceInformation(
-            "[Screenshare] ImageDiffer.Compare: No changes detected in frame ({0}x{1}).",
-            currentFrame.Width,
-            currentFrame.Height);
             return ImageDiffResult.Unchanged();
         }
 
@@ -187,19 +182,7 @@ public class ImageDiffer : IImageDiffer
         }
 
         long totalPayloadSize = changedTiles.Sum(tile => (long)tile.Data.Length);
-        Trace.TraceInformation(
-                    "[Screenshare] ImageDiffer.Compare: Delta frame created. Changed tiles: {0}, Encoded payload size: {1} bytes, Changed pixel ratio: {2:P2}.",
-                    changedTiles.Count,
-                    totalPayloadSize,
-                    changeRatio);
 
-        if (totalPayloadSize > LARGE_DELTA_BYTES)
-        {
-            Trace.TraceInformation(
-                "[Screenshare] ImageDiffer.Compare: Delta payload {0} bytes exceeds {1} bytes. Attaching whole frame.",
-                totalPayloadSize,
-                LARGE_DELTA_BYTES);
-        }
         return totalPayloadSize > LARGE_DELTA_BYTES ? ImageDiffResult.Delta(changedTiles, new Bitmap(currentFrame))
         : ImageDiffResult.Delta(changedTiles);
 
@@ -248,7 +231,7 @@ public class ImageDiffer : IImageDiffer
         return true;
     }
 
-    /// <summary>FNV-1a over the tile's rows, top to bottom; the same value the old per-tile lock gave</summary>
+    /// <summary>FNV over the tile rows, top to bottom; the same value the old per-tile lock gave</summary>
     private static ulong CalculateTileHash(byte[] pixels, int stride, int startX, int startY, int width, int height)
     {
         ulong hash = FNV_OFFSET_BASIS;
@@ -266,62 +249,6 @@ public class ImageDiffer : IImageDiffer
 
         return hash;
     }
-    //private ulong CalculateTileHash(
-    //    Bitmap bitmap,
-    //    int startX,
-    //    int startY,
-    //    int width,
-    //    int height)
-    //{
-
-    //    Rectangle rectangle = new(
-    //        startX,
-    //        startY,
-    //        width,
-    //        height
-    //        );
-
-    //    /// bitmap represents image while bitmapData represents locked pixel memory including Scan0 and Stride
-    //    BitmapData data = bitmap.LockBits(
-    //        rectangle,
-    //        ImageLockMode.ReadOnly,
-    //        PixelFormat.Format32bppArgb
-    //        );
-
-
-    //    try
-    //    {
-    //        ulong hash = FNV_OFFSET_BASIS;
-    //        int bytesPerPixel = 4;
-    //        int rowBytes = width * bytesPerPixel;
-    //        byte[] buffer = new byte[rowBytes];
-
-    //        for (int y = 0; y < height; y++)
-    //        {
-    //            IntPtr rowPointer = IntPtr.Add(
-    //                data.Scan0,
-    //                y * data.Stride
-    //                );
-
-    //            Marshal.Copy(
-    //                rowPointer,
-    //                buffer,
-    //                0,
-    //                rowBytes
-    //                );
-    //            for (int i = 0; i < rowBytes; i++)
-    //            {
-    //                hash ^= buffer[i];
-    //                hash *= FNV_PRIME;
-    //            }
-    //        }
-    //        return hash;
-    //    }
-    //    finally
-    //    {
-    //        bitmap.UnlockBits(data);
-    //    }
-    //}
 
     private byte[] ExtractTileData(
         Bitmap bitmap,

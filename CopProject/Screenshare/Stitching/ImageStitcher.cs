@@ -41,9 +41,6 @@ public class ImageStitcher : IImageStitcher, IDisposable
 
         LastFrameNumber = frameNumber;
         NeedsFullFrame = false;
-        Trace.TraceInformation(
-    "[Screenshare] ImageStitcher.ApplyFullFrame: Full frame applied successfully. Frame: {0}, Dimensions: {1}x{2}.", frameNumber, _currentFrame.Width, _currentFrame.Height);
-
         return true;
     }
 
@@ -138,7 +135,6 @@ public class ImageStitcher : IImageStitcher, IDisposable
         }
 
         LastFrameNumber = frameNumber;
-        Trace.TraceInformation("[Screenshare] ImageStitcher.ApplyPulse: Pulse applied. Frame: {0}.", frameNumber);
         return true;
     }
 
@@ -178,11 +174,6 @@ public class ImageStitcher : IImageStitcher, IDisposable
     {
         if (NeedsFullFrame || frameNumber <= LastFrameNumber)
         {
-            Trace.TraceInformation(
-                "[Screenshare] ImageStitcher.TryAdvance: Frame {0} not applied. Needs full frame: {1}, Last frame: {2}.",
-                frameNumber,
-                NeedsFullFrame,
-                LastFrameNumber);
             return false;
         }
 
