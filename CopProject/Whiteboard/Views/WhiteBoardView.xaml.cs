@@ -4,6 +4,8 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -12,6 +14,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
 using Whiteboard.ViewModels;
+using Whiteboard.Models;
 using Windows.Foundation;
 using Windows.UI;
 
@@ -543,5 +546,75 @@ public sealed partial class WhiteBoardView : UserControl
         }
 
         return false;
+    }
+
+    private async void ButtonSaveSnapshot_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _viewModel.SaveSnapshotAsync();
+            await ShowMessageAsync("Saved", "Whiteboard snapshot saved to Cloud");
+        }
+        catch (Exception ex)
+        {
+            await ShowMessageAsync("Save failed", ex.Message);
+        }
+    }
+
+    private async void ButtonRestoreSnapshot_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            List<WhiteboardSnapshotSummary> snapshots = await _viewModel.ListSnapshotsAsync();
+
+            if (snapshots.Count == 0)
+            {
+                await ShowMessageAsync("No snapshots", "No saved snapshots for this session");
+                return;
+            }
+
+            var flyout = new MenuFlyout();
+
+            foreach (WhiteboardSnapshotSummary snapshot in snapshots)
+            {
+                var menuItem = new MenuFlyoutItem
+                {
+                    Text = snapshot.ToString()
+                };
+
+                menuItem.Click += async (_, _) =>
+                {
+                    try
+                    {
+                        await _viewModel.RestoreSnapshotAsync(snapshot.SnapshotId);
+                    }
+                    catch (Exception ex)
+                    {
+                        await ShowMessageAsync("Restore failed", ex.Message);
+                    }
+                };
+
+                flyout.Items.Add(menuItem);
+            }
+
+            flyout.ShowAt(ButtonRestoreSnapshot);
+        }
+        catch (Exception ex)
+        {
+            await ShowMessageAsync("Could not load snapshots", ex.Message);
+        }
+    }
+
+    private async Task ShowMessageAsync(string title, string message)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = title,
+            Content = message,
+            CloseButtonText = "OK",
+            XamlRoot = XamlRoot
+        };
+
+        await dialog.ShowAsync();
     }
 }
