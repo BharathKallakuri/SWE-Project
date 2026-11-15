@@ -39,6 +39,8 @@ public class LineStateTests
         Assert.Equal(start.Y, line.Begin.Y);
         Assert.Equal(start.X, line.End.X);
         Assert.Equal(start.Y, line.End.Y);
+        Assert.Equal(_toolbar.BorderColor, line.Color);
+        Assert.Equal(_toolbar.BorderWidth, line.Width);
     }
 
     [Fact]
@@ -81,6 +83,8 @@ public class LineStateTests
         Assert.Equal(start.Y, submitted.Begin.Y);
         Assert.Equal(end.X, submitted.End.X);
         Assert.Equal(end.Y, submitted.End.Y);
+        Assert.Equal(_toolbar.BorderColor, submitted.Color);
+        Assert.Equal(_toolbar.BorderWidth, submitted.Width);
     }
 
     [Fact]
@@ -118,6 +122,8 @@ public class LineStateTests
         Assert.Equal(start.Y, submitted.Begin.Y);
         Assert.Equal(end.X, submitted.End.X);
         Assert.Equal(end.Y, submitted.End.Y);
+        Assert.Equal(_toolbar.BorderColor, submitted.Color);
+        Assert.Equal(_toolbar.BorderWidth, submitted.Width);
     }
 
     [Fact]
