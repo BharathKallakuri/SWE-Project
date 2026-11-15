@@ -1,4 +1,8 @@
-﻿namespace Cloud.Crash;
+﻿// Author = Gundamaraju Hemanth Kashyap
+
+// Roll Number = 112301009
+
+namespace Cloud.Crash;
 
 /// <summary>
 /// What happened to a crash report handed to <see cref="CrashHandler"/>.

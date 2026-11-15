@@ -1,6 +1,5 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿// Author = Simeon Kandan Sonar
+// Roll Number = 112301031 
 
 using Cloud.Networking;
 using Cloud.Networking.Decorators;
@@ -20,6 +19,8 @@ public class TestDiagnosticMessenger
 
     /* every line written to the tracer, in order */
     private List<string> _lines = null!;
+    private List<string> _levels = null!;
+    private List<string> _members = null!;
 
     [TestInitialize]
     public void Init()
@@ -27,12 +28,26 @@ public class TestDiagnosticMessenger
         _inner = new Mock<IMessenger>();
         _tracer = new Mock<ITracer>();
         _lines = new List<string>();
+        _levels = new List<string>();
+        _members = new List<string>();
 
-        _tracer.Setup(t => t.WriteLine(It.IsAny<string>()))
-            .Callback<string>(line => _lines.Add(line));
+        _tracer.Setup(t => t.Info(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<string, string>((line, member) => Record("Info", line, member));
+        _tracer.Setup(t => t.WriteWarn(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<string, string>((line, member) => Record("Warn", line, member));
+        _tracer.Setup(t => t.WriteError(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<string, string>((line, member) => Record("Error", line, member));
 
         IReadOnlyList<Message> none = Array.Empty<Message>();
         _inner.Setup(m => m.SyncAsync(It.IsAny<DateTimeOffset>())).ReturnsAsync(none);
+    }
+
+    /// <summary>Records a traced line together with its level and caller member name.</summary>
+    private void Record(string level, string line, string member)
+    {
+        _levels.Add(level);
+        _lines.Add(line);
+        _members.Add(member);
     }
 
     /// <summary>Creates a DiagnosticMessenger over the mocked messenger and tracer.</summary>
@@ -77,6 +92,8 @@ public class TestDiagnosticMessenger
 
         _inner.Verify(m => m.ConnectAsync(), Times.Once);
         CollectionAssert.AreEqual(new[] { "-- connecting", "-- connected" }, _lines);
+        CollectionAssert.AreEqual(new[] { "Info", "Info" }, _levels);
+        CollectionAssert.AreEqual(new[] { "ConnectAsync", "ConnectAsync" }, _members);
     }
 
     /// <summary>Tests that ConnectAsync traces a failure and rethrows the same exception.</summary>
@@ -93,6 +110,7 @@ public class TestDiagnosticMessenger
         Assert.AreEqual("-- connecting", _lines[0]);
         Assert.IsTrue(_lines[1].StartsWith("-- connection failed: "));
         Assert.IsTrue(_lines[1].Contains("boom"));
+        CollectionAssert.AreEqual(new[] { "Info", "Error" }, _levels);
     }
 
     /* SendMessageAsync */
@@ -104,6 +122,7 @@ public class TestDiagnosticMessenger
 
         _inner.Verify(m => m.SendMessageAsync("hello"), Times.Once);
         CollectionAssert.AreEqual(new[] { "-- message sent" }, _lines);
+        CollectionAssert.AreEqual(new[] { "Info" }, _levels);
     }
 
     /// <summary>Tests that SendMessageAsync traces a failure and rethrows the same exception.</summary>
@@ -118,6 +137,8 @@ public class TestDiagnosticMessenger
         Assert.AreSame(error, thrown);
         Assert.AreEqual(1, _lines.Count);
         Assert.IsTrue(_lines[0].StartsWith("-- message sending failed: "));
+        Assert.AreEqual("Error", _levels[0]);
+        Assert.AreEqual("SendMessageAsync", _members[0]);
     }
 
     /* SyncAsync */
@@ -133,6 +154,7 @@ public class TestDiagnosticMessenger
 
         Assert.AreSame(missed, result);
         CollectionAssert.AreEqual(new[] { "-- synced 2 message(s)" }, _lines);
+        CollectionAssert.AreEqual(new[] { "Info" }, _levels);
     }
 
     /// <summary>Tests that SyncAsync traces a failure and rethrows the same exception.</summary>
@@ -147,6 +169,8 @@ public class TestDiagnosticMessenger
         Assert.AreSame(error, thrown);
         Assert.AreEqual(1, _lines.Count);
         Assert.IsTrue(_lines[0].StartsWith("-- sync failed: "));
+        Assert.AreEqual("Error", _levels[0]);
+        Assert.AreEqual("SyncAsync", _members[0]);
     }
 
     /* DisconnectAsync */
@@ -158,6 +182,7 @@ public class TestDiagnosticMessenger
 
         _inner.Verify(m => m.DisconnectAsync(), Times.Once);
         CollectionAssert.AreEqual(new[] { "-- disconnected" }, _lines);
+        CollectionAssert.AreEqual(new[] { "Info" }, _levels);
     }
 
     /// <summary>Tests that DisconnectAsync traces a failure and rethrows the same exception.</summary>
@@ -172,6 +197,8 @@ public class TestDiagnosticMessenger
         Assert.AreSame(error, thrown);
         Assert.AreEqual(1, _lines.Count);
         Assert.IsTrue(_lines[0].StartsWith("-- disconnection failed: "));
+        Assert.AreEqual("Error", _levels[0]);
+        Assert.AreEqual("DisconnectAsync", _members[0]);
     }
 
     /* events */
@@ -208,6 +235,10 @@ public class TestDiagnosticMessenger
                 "-- connection closed: boom"
             },
             _lines);
+        CollectionAssert.AreEqual(new[] { "Info", "Warn", "Info", "Warn" }, _levels);
+        CollectionAssert.AreEqual(
+            new[] { "OnMessageReceived", "OnReconnecting", "OnReconnected", "OnClosed" },
+            _members);
     }
 
     /// <summary>Tests that events with no subscribers and no exception are still traced and do not throw.</summary>
@@ -267,5 +298,7 @@ public class TestDiagnosticMessenger
         Assert.AreSame(error, thrown);
         Assert.AreEqual(1, _lines.Count);
         Assert.IsTrue(_lines[0].StartsWith("-- disposal failed: "));
+        Assert.AreEqual("Error", _levels[0]);
+        Assert.AreEqual("DisposeAsync", _members[0]);
     }
 }

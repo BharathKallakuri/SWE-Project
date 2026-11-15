@@ -1,13 +1,16 @@
-﻿namespace Networking;
+﻿// Author = Srikar
+// Roll Number = 142301013
+
+namespace Networking;
 
 /// <summary>
-/// Declares a listener for lossy (UDP) messages from the communicator.
+/// Listener interface for receiving lossy (UDP) messages.
 /// </summary>
 public interface IMessageListenerLossy
 {
     /// <summary>
-    /// Handles reception of a lossy message.
+    /// Handles a received lossy message.
     /// </summary>
-    /// <param name="message">Message data that is received</param>
+    /// <param name="message">The received message payload.</param>
     void OnMessageReceivedLossy(byte[] message);
 }

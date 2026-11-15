@@ -1,4 +1,7 @@
-﻿namespace Utils;
+﻿// K.Bala Krishna
+// 112301015
+
+namespace Utils;
 
 // Stores user identity and networking information for a participant.
 public class ControllerUser
@@ -13,10 +16,10 @@ public class ControllerUser
     public bool IsHost { get; set; }
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
-    // Parameterless constructor 
+    // Parameterless constructor. Initializes a new instance of the ControllerUser class with default values.
     public ControllerUser() { }
 
-    // Parameterized constructor
+    // Parameterized constructor. Initializes a new instance of the ControllerUser class with specified identity and connection details.
     public ControllerUser(string username, string gmail, byte[]? profilePicture, string ip, int port, bool isHost = false)
     {
         Username = username ?? throw new ArgumentNullException(nameof(username));
@@ -24,7 +27,7 @@ public class ControllerUser
         ProfilePicture = profilePicture;
         Ip = ip ?? throw new ArgumentNullException(nameof(ip));
         Port = port;
-        IsHost=isHost;
+        IsHost = isHost;
     }
     public string UserKey => Gmail;
     public override string ToString() => $"[{(IsHost ? "Host" : "Participant")}]{Username} ({Gmail}) @ {Ip}:{Port}";

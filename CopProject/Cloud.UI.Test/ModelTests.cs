@@ -1,4 +1,7 @@
-﻿using Cloud.UI.Models;
+﻿// Author = Simeon Kandan Sonar
+// Roll Number = 112301031 
+
+using Cloud.UI.Models;
 using Cloud.UI.ViewModels;
 
 namespace Cloud.UI.Test;
@@ -17,7 +20,7 @@ public class NotificationItemTests
     }
 
     [TestMethod]
-    public void TimeText_IsShortLocalTime()
+    public void TimeTextIsShortLocalTime()
     {
         NotificationItem item = Create();
 
@@ -25,7 +28,7 @@ public class NotificationItemTests
     }
 
     [TestMethod]
-    public void Subtitle_IsSenderDotTime()
+    public void SubtitleIsSenderDotTime()
     {
         NotificationItem item = Create("bob");
 
@@ -46,28 +49,25 @@ public class ObservableObjectTests
             get => _value;
             set => SetProperty(ref _value, value);
         }
-
-        public void Raise(string? name)
-        {
-            OnPropertyChanged(name);
-        }
     }
 
     [TestMethod]
-    public void SetProperty_NewValue_RaisesWithPropertyName()
+    public void SetPropertyNewValueRaisesWithPropertyName()
     {
         Sample sample = new();
         List<string?> names = new();
-        sample.PropertyChanged += (_, e) => names.Add(e.PropertyName);
+        object? sender = null;
+        sample.PropertyChanged += (s, e) => { sender = s; names.Add(e.PropertyName); };
 
         sample.Value = 5;
 
         CollectionAssert.AreEqual(new[] { nameof(Sample.Value) }, names);
+        Assert.AreSame(sample, sender);
         Assert.AreEqual(5, sample.Value);
     }
 
     [TestMethod]
-    public void SetProperty_SameValue_DoesNotRaise()
+    public void SetPropertySameValueDoesNotRaise()
     {
         Sample sample = new() { Value = 5 };
         int raised = 0;
@@ -76,20 +76,6 @@ public class ObservableObjectTests
         sample.Value = 5;
 
         Assert.AreEqual(0, raised);
-    }
-
-    [TestMethod]
-    public void OnPropertyChanged_PassesSenderAndName()
-    {
-        Sample sample = new();
-        object? sender = null;
-        string? name = null;
-        sample.PropertyChanged += (s, e) => { sender = s; name = e.PropertyName; };
-
-        sample.Raise("Other");
-
-        Assert.AreSame(sample, sender);
-        Assert.AreEqual("Other", name);
     }
 
 }

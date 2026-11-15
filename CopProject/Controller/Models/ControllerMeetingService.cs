@@ -1,3 +1,6 @@
+// K.Bala Krishna,K.Saideep
+// 112301015,112301018
+
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -9,6 +12,10 @@ using Utils;
 
 namespace Controller.Models;
 
+/// <summary>
+/// Manages the lifecycle of meetings, handling host creation, client connections, 
+/// participant list updates, and forwarding events between the network layer and the UI.
+/// </summary>
 public sealed class ControllerMeetingService
 {
     private MeetingSession? _session;
@@ -19,6 +26,7 @@ public sealed class ControllerMeetingService
     private readonly List<IUserNotificationHandler> _registeredHandlers = new();
     public string? LastErrorMessage { get; private set; }
 
+    // Manages external listeners wanting participant updates.
     public void RegisterNotificationHandler(IUserNotificationHandler handler)
     {
         if (handler != null && !_registeredHandlers.Contains(handler))
@@ -44,6 +52,7 @@ public sealed class ControllerMeetingService
         _session.MeetingEnded += OnMeetingEnded;
     }
 
+    // Sets up a new meeting session acting as the host.
     public (string Id, string Port) CreateMeeting()
     {
         CleanupController();
@@ -73,6 +82,7 @@ public sealed class ControllerMeetingService
         return (id, port);
     }
 
+    // Connects to a remote host meeting session as a participant.
     public bool JoinMeeting(string hostIp, int hostPort)
     {
         CleanupController();
@@ -109,6 +119,7 @@ public sealed class ControllerMeetingService
         return true;
     }
 
+    // Updates the local user's profile picture
     public void UpdateProfilePicture(byte[]? picture)
     {
         if (_activeController != null)
@@ -120,6 +131,8 @@ public sealed class ControllerMeetingService
             UpdateActiveParticipants();
         }
     }
+
+    // Triggered when a meeting officially starts, hooks up events and counts.
     private void OnMeetingStarted(MeetingInfo info)
     {
         if (_session == null) return;
@@ -143,6 +156,7 @@ public sealed class ControllerMeetingService
         }
     }
 
+    // Wires up internal event handlers for controller updates.
     private void HookControllerEvents(IControllerService controller)
     {
         controller.UserJoined += OnUserJoined;
@@ -187,6 +201,7 @@ public sealed class ControllerMeetingService
         UpdateActiveParticipants();
     }
 
+    // Cleans up active controllers when the meeting is ended locally.
     private void OnRemoteMeetingEnded(object? sender, MeetingEndedEventArgs e)
     {
         if (_session != null && _session.InMeeting)
@@ -228,7 +243,8 @@ public sealed class ControllerMeetingService
             PostToUI(() => _session.ParticipantCount = count);
         }
     }
-
+    
+    // Pulls the latest active participant details and updates the UI session model.
     private void UpdateActiveParticipants()
     {
         if (_activeController == null || _session == null) return;
@@ -248,6 +264,7 @@ public sealed class ControllerMeetingService
         });
     }
 
+    // Ensures UI-bound state changes post back to the main thread safely.
     private void PostToUI(Action action)
     {
         if (_uiThread != null)

@@ -1,4 +1,8 @@
-﻿using Incidents;
+﻿// Author = Ankit Gupta
+// Roll Number = 112301010
+
+using System.Diagnostics;
+using Incidents;
 using LocationTracker.Interfaces;
 using LocationTracker.Models;
 
@@ -15,43 +19,22 @@ public class MapService : IMapService
         _geocoding = geocoding;
     }
 
+    /// <summary>
+    /// Gets the incidents for the map and optionally filtered by the given filter
+    /// </summary>
     public Task<List<Incident>> GetIncidentsForMapAsync(IncidentFilter? filter = null)
     {
         return _incidents.GetAllIncidents(filter);
     }
 
-    public Task<Incident> GetIncidentByIdAsync(Guid id)
-    {
-        return _incidents.GetIncidentById(id);
-    }
-
-    public Task<List<Incident>> GetRecentIncidentsAsync(TimeSpan window)
-    {
-        var filter = new IncidentFilter(null, null, null, null, DateTime.Now - window, null, null, null);
-        return _incidents.GetAllIncidents(filter);
-    }
-
-    public Task<List<Incident>> GetNearbyIncidentsAsync(double latitude, double longitude, double radius)
-    {
-        if (!Coordinates.IsValid(latitude, longitude))
-        {
-            throw new ArgumentOutOfRangeException(nameof(latitude), "The coordinates are outside the valid range.");
-        }
-
-        if (double.IsNaN(radius) || double.IsInfinity(radius) || radius < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(radius), "The radius must be a non-negative finite value.");
-        }
-
-        var location = new IncidentLocationFilter(latitude, longitude, Radius: radius);
-        var filter = new IncidentFilter(null, null, null, null, null, null, null, location);
-        return _incidents.GetAllIncidents(filter);
-    }
-
+    /// <summary>
+    /// Gets the location for a map click.
+    /// </summary>
     public async Task<IncidentLocation?> GetLocationForClickAsync(double latitude, double longitude)
     {
         if (!Coordinates.IsValid(latitude, longitude))
         {
+            Trace.TraceWarning($"[Location] MapService.GetLocationForClickAsync: Invalid coordinates ({latitude}, {longitude}).");
             return null;
         }
 
@@ -59,11 +42,15 @@ public class MapService : IMapService
         return new IncidentLocation(latitude, longitude, address);
     }
 
+    /// <summary>
+    /// Searches for a location by address.
+    /// </summary>
     public async Task<LocationSearchResult?> SearchAddressAsync(string address)
     {
         (double Latitude, double Longitude)? coordinates = await _geocoding.FindCoordinatesAsync(address);
         if (coordinates == null)
         {
+            Trace.TraceInformation($"[Location] MapService.SearchAddressAsync: Could not find coordinates for address {address}.");
             return null;
         }
 

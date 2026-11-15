@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Bharath
+// Roll Number = 112301013
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,6 +17,9 @@ using Networking.Sockets;
 
 namespace Networking.TCPCommunication;
 
+/// <summary>
+/// Client-side communicator managing reliable (TCP) and lossy (UDP) communications.
+/// </summary>
 public class CommunicatorClient : ICommunicator, IDisposable
 {
     private readonly SendingQueue _sendingQueue = new SendingQueue();
@@ -36,6 +42,10 @@ public class CommunicatorClient : ICommunicator, IDisposable
     private readonly UdpSocketListener? _multicastSocketListener;
     private readonly ConcurrentDictionary<int, IMessageListenerLossy> _moduleToLossyMessageListenerMap = new ConcurrentDictionary<int, IMessageListenerLossy>();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CommunicatorClient"/> class and connects to the server.
+    /// </summary>
+    /// <param name="serverIp">The server endpoint to connect to.</param>
     public CommunicatorClient(IPEndPoint serverIp)
     {
         _serverIp = serverIp;
@@ -73,18 +83,20 @@ public class CommunicatorClient : ICommunicator, IDisposable
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"[Networking] CommunicatorClient: Failed to initialize multicast UDP listener on port {_serverIp.Port}: {ex.Message}");
+                Trace.TraceWarning($"[Networking] CommunicatorClient: Failed to initialize multicast UDP listener on port {_serverIp.Port}: {ex.Message}");
             }
 
             _sendingQueueListenerLossy = new SendingQueueListenerLossy(_sendingQueueLossy, _udpClient);
             _udpSocketListener = new UdpSocketListener(_receivingQueueLossy, _udpClient);
+            Trace.TraceInformation($"[Networking] CommunicatorClient: Connected to server at {_serverIp}. Local port: {ListenPort}");
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorClient.CommunicatorClient: Failed to connect to server at {serverIp}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorClient.CommunicatorClient: Failed to connect to server at {serverIp}. Exception: {e.Message}");
         }
     }
 
+    /// <inheritdoc/>
     public void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
     {
         try
@@ -94,10 +106,11 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorClient.SendMessage: Failed to enqueue message for destination {iPEndPoint}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorClient.SendMessage: Failed to enqueue message for destination {iPEndPoint}. Exception: {e.Message}");
         }
     }
 
+    /// <inheritdoc/>
     public void SendMessageLossy(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
     {
         try
@@ -107,30 +120,39 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorClient.SendMessageLossy: Failed to enqueue lossy message for destination {iPEndPoint}. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorClient.SendMessageLossy: Failed to enqueue lossy message for destination {iPEndPoint}. Exception: {e.Message}");
         }
     }
 
+    /// <inheritdoc/>
     public void AddSubscriber(int module, IMessageListener subscriber)
     {
         _moduleToMessageListenerMap[module] = subscriber;
+        Trace.TraceInformation($"[Networking] CommunicatorClient.AddSubscriber: Subscribed listener for module {module}");
     }
 
+    /// <inheritdoc/>
     public void RemoveSubscriber(int module)
     {
         _moduleToMessageListenerMap.TryRemove(module, out _);
+        Trace.TraceInformation($"[Networking] CommunicatorClient.RemoveSubscriber: Removed subscriber for module {module}");
     }
 
+    /// <inheritdoc/>
     public void AddLossySubscriber(int module, IMessageListenerLossy subscriber)
     {
         _moduleToLossyMessageListenerMap[module] = subscriber;
+        Trace.TraceInformation($"[Networking] CommunicatorClient.AddLossySubscriber: Subscribed lossy listener for module {module}");
     }
 
+    /// <inheritdoc/>
     public void RemoveLossySubscriber(int module)
     {
         _moduleToLossyMessageListenerMap.TryRemove(module, out _);
+        Trace.TraceInformation($"[Networking] CommunicatorClient.RemoveLossySubscriber: Removed lossy subscriber for module {module}");
     }
 
+    /// <inheritdoc/>
     public void BroadcastMessage(byte[] message, int module, int priority)
     {
         try
@@ -142,10 +164,11 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorClient.BroadcastMessage: Failed to broadcast message. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorClient.BroadcastMessage: Failed to broadcast message. Exception: {e.Message}");
         }
     }
 
+    /// <inheritdoc/>
     public void BroadcastMessageLossy(byte[] message, int module, int priority)
     {
         try
@@ -155,10 +178,11 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorClient.BroadcastMessageLossy: Failed to broadcast lossy message. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorClient.BroadcastMessageLossy: Failed to broadcast lossy message. Exception: {e.Message}");
         }
     }
 
+    /// <inheritdoc/>
     public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
         try
@@ -170,7 +194,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
             }
             catch (Exception mEx)
             {
-                Trace.WriteLine($"[Networking] CommunicatorClient.JoinMulticastGroup: Native join failed: {mEx.Message}");
+                Trace.TraceWarning($"[Networking] CommunicatorClient.JoinMulticastGroup: Native join failed: {mEx.Message}");
             }
 
             JoinGroupPacket packet = new JoinGroupPacket(multicastGroup, clientIp);
@@ -179,10 +203,11 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorClient.JoinMulticastGroup: Failed to join group. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorClient.JoinMulticastGroup: Failed to join group. Exception: {e.Message}");
         }
     }
 
+    /// <inheritdoc/>
     public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
         try
@@ -194,7 +219,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
             }
             catch (Exception mEx)
             {
-                Trace.WriteLine($"[Networking] CommunicatorClient.LeaveMulticastGroup: Native drop failed: {mEx.Message}");
+                Trace.TraceWarning($"[Networking] CommunicatorClient.LeaveMulticastGroup: Native drop failed: {mEx.Message}");
             }
 
             LeaveGroupPacket packet = new LeaveGroupPacket(multicastGroup, clientIp);
@@ -203,10 +228,11 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorClient.LeaveMulticastGroup: Failed to leave group. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorClient.LeaveMulticastGroup: Failed to leave group. Exception: {e.Message}");
         }
     }
 
+    /// <inheritdoc/>
     public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority)
     {
         try
@@ -218,10 +244,11 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorClient.MulticastMessage: Failed to multicast message. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorClient.MulticastMessage: Failed to multicast message. Exception: {e.Message}");
         }
     }
 
+    /// <inheritdoc/>
     public void MulticastMessageLossy(int multicastGroup, byte[] message, int module, int priority)
     {
         try
@@ -232,10 +259,11 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] CommunicatorClient.MulticastMessageLossy: Failed to multicast lossy message. Exception: {e.Message}");
+            Trace.TraceError($"[Networking] CommunicatorClient.MulticastMessageLossy: Failed to multicast lossy message. Exception: {e.Message}");
         }
     }
 
+    /// <inheritdoc/>
     public int ListenPort
     {
         get {
@@ -248,6 +276,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public IPAddress ListenIpAddress
     {
         get {
@@ -264,9 +293,12 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
-
+    /// <summary>
+    /// Disposes all client sockets, listeners, and message queues.
+    /// </summary>
     public void Dispose()
     {
+        Trace.TraceInformation("[Networking] CommunicatorClient.Dispose: Disposing client communicator.");
         _sendingQueueListenerClient?.Dispose();
         _sendingQueueListenerLossy?.Dispose();
         _socketListener?.Dispose();

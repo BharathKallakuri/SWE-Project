@@ -1,4 +1,7 @@
-﻿using System.Runtime.CompilerServices;
+﻿// Author = Ankit Gupta
+// Roll Number = 112301010
+
+using System.Runtime.CompilerServices;
 using Incidents;
 
 namespace Location.Test.Fakes;
@@ -12,11 +15,6 @@ internal sealed class FakeIncidentController : IIncidentController
     /// The list that GetAllIncidents returns.
     /// </summary>
     public List<Incident> Incidents { get; set; } = [];
-
-    /// <summary>
-    /// The incident that GetIncidentById returns.
-    /// </summary>
-    public Incident? IncidentById { get; set; }
 
     /// <summary>
     /// The filter passed to the last GetAllIncidents call.
@@ -42,10 +40,12 @@ internal sealed class FakeIncidentController : IIncidentController
         LastFilter = filter;
         return Task.FromResult(Incidents);
     }
+
     public Task<Incident> GetIncidentById(Guid id)
     {
-        return Task.FromResult(IncidentById ?? throw new KeyNotFoundException($"No incident with id {id}."));
+        throw new NotSupportedException();
     }
+
     public Task<Incident> CreateIncident(CreateIncidentRequest request)
     {
         throw new NotSupportedException();
