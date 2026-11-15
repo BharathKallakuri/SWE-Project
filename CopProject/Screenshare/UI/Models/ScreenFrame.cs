@@ -1,4 +1,7 @@
-﻿using System.Drawing;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 

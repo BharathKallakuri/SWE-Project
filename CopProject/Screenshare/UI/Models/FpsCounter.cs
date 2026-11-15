@@ -1,4 +1,7 @@
-﻿namespace ScreenShare.Models;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+namespace ScreenShare.Models;
 
 /// <summary>
 /// counts the pictures a tile drew and turns them into frames per second. not thread-safe:

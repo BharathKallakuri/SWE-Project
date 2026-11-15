@@ -1,6 +1,9 @@
-﻿using System.Drawing;
+﻿// Author = Aryan
+// Roll Number = 112301041
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Diagnostics;
 
 namespace ScreenShare;
 
@@ -29,6 +32,7 @@ public sealed class ScalingImageSource : IImageSource, IDisposable
 
     public Bitmap Capture()
     {
+
         Bitmap frame = _inner.Capture();
 
         if (frame.Height <= MaxHeight)
@@ -50,8 +54,8 @@ public sealed class ScalingImageSource : IImageSource, IDisposable
                 attributes.SetWrapMode(WrapMode.TileFlipXY);
 
                 graphics.CompositingMode = CompositingMode.SourceCopy;
-                graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
-                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                graphics.InterpolationMode = InterpolationMode.Bilinear;
+                graphics.PixelOffsetMode = PixelOffsetMode.Half;
                 graphics.DrawImage(
                     frame,
                     new Rectangle(0, 0, width, MaxHeight),
@@ -62,10 +66,12 @@ public sealed class ScalingImageSource : IImageSource, IDisposable
                     GraphicsUnit.Pixel,
                     attributes);
 
+
                 return scaled;
             }
-            catch
+            catch (Exception exception)
             {
+                Trace.TraceError("[Screenshare] ScalingImageSource.Capture: Image scaling failed: {0}", exception);
                 scaled.Dispose();
                 throw;
             }

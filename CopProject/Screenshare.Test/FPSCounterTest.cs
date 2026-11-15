@@ -1,7 +1,10 @@
-﻿using ScreenShare;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+using ScreenShare;
 using ScreenShare.Models;
 
-namespace ScreenShare.Tests;
+namespace Screenshare.Tests;
 
 public class FpsCounterTest
 {

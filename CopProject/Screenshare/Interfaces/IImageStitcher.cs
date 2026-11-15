@@ -1,4 +1,6 @@
-﻿using System.Drawing;
+﻿// Author = Aryan
+// Roll Number = 112301041
+using System.Drawing;
 
 namespace ScreenShare;
 
@@ -14,8 +16,8 @@ public interface IImageStitcher
     long LastFrameNumber { get; }
 
     ///<summary>
-    /// true until a full frame arrives, and again after a gap in frame numbers.
-    /// while set, deltas and pulses are dropped.
+    /// true until a full frame arrives, and again after a gap in frame numbers
+    /// while set, deltas and pulses are dropped
     ///</summary>
     bool NeedsFullFrame { get; }
 
@@ -34,7 +36,7 @@ public interface IImageStitcher
     bool ApplyChangedTiles(long frameNumber, IReadOnlyList<Tile> tiles);
 
     ///<summary>
-    /// records that the screen did not change. accepted only when frameNumber is exactly LastFrameNumber + 1.
+    /// records that the screen did not change. accepted only when frameNumber is exactly LastFrameNumber + 1
     ///</summary>
     /// <returns>true if the pulse was accepted, false if it was stale or followed a gap</returns>
     bool ApplyPulse(long frameNumber);

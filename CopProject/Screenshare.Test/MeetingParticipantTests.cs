@@ -1,4 +1,7 @@
-﻿using ScreenShare;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+using ScreenShare;
 namespace Screenshare.Tests;
 
 public class MeetingParticipantTests

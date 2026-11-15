@@ -19,6 +19,7 @@
                 <ModulePath>.*\\cloud.networking.server\.dll$</ModulePath>
                 <ModulePath>.*\\cloud.ui\.dll$</ModulePath>
                 <ModulePath>.*\\controller\.dll</ModulePath>
+                <ModulePath>.*\\screenshare\.dll</ModulePath>
               </Include>
             </ModulePaths>
             <Sources>
