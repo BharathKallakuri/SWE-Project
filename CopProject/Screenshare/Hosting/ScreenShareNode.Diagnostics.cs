@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace ScreenShare;
 
@@ -23,8 +23,7 @@ public sealed partial class ScreenShareNode
         var completion = new TaskCompletionSource<HostLoadSnapshot?>(TaskCreationOptions.RunContinuationsAsynchronously);
         long queuedAt = Stopwatch.GetTimestamp();
 
-        _dispatcher.Post(() =>
-        {
+        _dispatcher.Post(() => {
             TimeSpan lag = Stopwatch.GetElapsedTime(queuedAt);
             completion.TrySetResult(host.CaptureLoad(lag));
         });
