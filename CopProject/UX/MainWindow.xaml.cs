@@ -678,7 +678,7 @@ public sealed partial class MainWindow : Window
                 }
 
                 _chatClient = new ChatClient(username, room, controller.Communicator, new IPEndPoint(address, port));
-                _chatAdapter = new ChatClientAdapter(_chatClient, DispatcherQueue);
+                _chatAdapter = new ChatClientAdapter(_chatClient, DispatcherQueue, controller);
             }
 
             _chatViewModel = new ChatPanelViewModel(_chatAdapter);
