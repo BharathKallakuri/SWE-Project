@@ -51,7 +51,7 @@ public static class FileTraceListener
     /// <summary>
     /// Reads the most recent application log entries.
     /// </summary>
-    public static async Task<string> ReadRecentLogAsync(int lineCount = 100)
+    public static async Task<string> ReadRecentLogAsync(int lineCount = 250)
     {
         if (_logPath is null || _logDirectory is null)
         {
