@@ -1,5 +1,8 @@
-﻿
+﻿// Author : Madhav P Nair
+// Roll Number : 112301020
+
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Utils.Diagnosis.Services;
 
@@ -71,12 +74,15 @@ public sealed class DiagnosisViewModel : INotifyPropertyChanged
     /// from the Insights service.
     /// </summary>
     /// <remarks>
-    /// Updates the status and report properties throughout the operation
-    /// and handles any exceptions encountered during diagnosis.
+    /// Updates the status and report properties and handles any execptions
     /// </remarks>
     public async Task RunAsync()
     {
-        if (IsBusy) return;
+        if (IsBusy)
+        {
+            Trace.TraceWarning("[Utils.Diagnosis.ViewModels][RunAsync] Diagnosis is already in progress.");
+            return;
+        }
 
         IsBusy = true;
         Status = "Analyzing log...";
@@ -89,6 +95,8 @@ public sealed class DiagnosisViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
+            Trace.TraceError($"[Utils.Diagnosis.ViewModels][RunAsync] Diagnosis failed: {ex}");
+
             Status = "Diagnosis failed.";
             Report = ex.Message;
         }
@@ -102,6 +110,8 @@ public sealed class DiagnosisViewModel : INotifyPropertyChanged
     /// Raises the <see cref="PropertyChanged"/> event for the specified property.
     /// </summary>
 
-    private void OnPropertyChanged([CallerMemberName] string? name = null) =>
+    private void OnPropertyChanged([CallerMemberName] string? name = null)
+    {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
 }

@@ -135,4 +135,18 @@ public class TestServerMonitor
 
         Assert.AreEqual(0, raised);
     }
+
+    /// <summary>Tests that disconnecting an untracked connection changes nothing but still raises Changed.</summary>
+    [TestMethod]
+    public void DisconnectingAnUntrackedConnectionStillRaisesChanged()
+    {
+        int raised = 0;
+        _monitor.Changed += () => raised++;
+        _monitor.Connected("conn-1");
+
+        _monitor.Disconnected("unknown");
+
+        Assert.AreEqual(1, _monitor.ConnectionCount);
+        Assert.AreEqual(2, raised);
+    }
 }

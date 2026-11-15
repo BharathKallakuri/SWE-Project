@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Dheeraj Ram
+// Roll Number = 142301015
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,7 +13,9 @@ using Networking.Queues;
 
 namespace Networking.Sockets;
 
-
+/// <summary>
+/// Monitors the receiving queue and dispatches reliable packets to registered module listeners.
+/// </summary>
 public class ReceivingQueueListener : IDisposable
 {
     private ConcurrentDictionary<int, IMessageListener> _moduleToMessageListenerMap;
@@ -28,6 +33,12 @@ public class ReceivingQueueListener : IDisposable
             }
         }
     }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ReceivingQueueListener"/> class and starts listening.
+    /// </summary>
+    /// <param name="receivingQueue">The queue containing incoming packets.</param>
+    /// <param name="moduleToMessageListenerMap">Map of module identifiers to registered listeners.</param>
     public ReceivingQueueListener(ReceivingQueue receivingQueue, ConcurrentDictionary<int, IMessageListener> moduleToMessageListenerMap)
     {
         this._moduleToMessageListenerMap = moduleToMessageListenerMap;
@@ -39,6 +50,9 @@ public class ReceivingQueueListener : IDisposable
         Trace.TraceInformation("[Networking] ReceivingQueueListener: Started listening thread.");
     }
 
+    /// <summary>
+    /// Dequeues packets continuously and notifies registered listeners.
+    /// </summary>
     public void ListenOnQueue()
     {
         while (IsRunning)
@@ -69,6 +83,9 @@ public class ReceivingQueueListener : IDisposable
         }
     }
 
+    /// <summary>
+    /// Stops the queue listener thread.
+    /// </summary>
     public void Dispose()
     {
         lock (_isRunningLock)
