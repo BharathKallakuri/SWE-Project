@@ -1,6 +1,8 @@
 ﻿// Author = Simeon Kandan Sonar
 // Roll Number = 112301031
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Cloud.Networking.Server.Models;
 
 /// <summary>
@@ -13,15 +15,18 @@ public sealed class InMemoryMessageStore : IMessageStore
     public int MaxMessages { get; }
     private readonly object _gate = new();
     private readonly Queue<Message> _messages = new();
+    private readonly ILogger<InMemoryMessageStore> _logger;
 
     /// <summary>
     /// Initializes the store with <paramref name="maxMessages"/> limit.
     /// </summary>
     /// <param name="maxMessages">A maximum number of messages limit</param>
-    public InMemoryMessageStore(int maxMessages = DefaultMaxMessages)
+    /// <param name="logger">Where storage activity is logged (optional)</param>
+    public InMemoryMessageStore(int maxMessages = DefaultMaxMessages, ILogger<InMemoryMessageStore>? logger = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxMessages);
         MaxMessages = maxMessages;
+        _logger = logger ?? NullLogger<InMemoryMessageStore>.Instance;
     }
 
     /// <inheritdoc />
@@ -33,13 +38,25 @@ public sealed class InMemoryMessageStore : IMessageStore
         // FIFO Policy
         ArgumentNullException.ThrowIfNull(message);
 
+        int dropped = 0;
+        int stored;
         lock (_gate)
         {
             _messages.Enqueue(message);
             while (_messages.Count > MaxMessages)
             {
                 _messages.Dequeue();
+                dropped++;
             }
+
+            stored = _messages.Count;
+        }
+
+        _logger.LogDebug("Stored message {MessageId}, {Count} message(s) in the store", message.Id, stored);
+        if (dropped > 0)
+        {
+            /* messages are lost for good here, clients that sync later will not get them */
+            _logger.LogWarning("The store is full ({MaxMessages}), dropped the {Dropped} oldest message(s)", MaxMessages, dropped);
         }
 
         // subscribers could be slow (hence outside) 

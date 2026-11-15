@@ -3,6 +3,7 @@
 
 using Cloud.Networking.Server.Models;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Cloud.Networking.Server.ViewModels;
 
@@ -20,6 +21,7 @@ public sealed class DashboardViewModel : IDisposable
     private readonly IServerMonitor _monitor;
     private readonly IMessageStore _store;
     private readonly IHubContext<MessageHub> _hub; /* to call hub methods outside of hub we use IHubContext */
+    private readonly ILogger<DashboardViewModel> _logger;
 
     /// <summary>Lets only one refresh run at a time, so an older result can never overwrite a newer one.</summary>
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
@@ -30,7 +32,8 @@ public sealed class DashboardViewModel : IDisposable
     /// <param name="monitor">The monitor providing connection and message info</param>
     /// <param name="store">Where server messages are kept for later sync</param>
     /// <param name="hub">The hub context used to reach connected clients</param>
-    public DashboardViewModel(IServerMonitor monitor, IMessageStore store, IHubContext<MessageHub> hub)
+    /// <param name="logger">Where dashboard activity and failures are logged (optional)</param>
+    public DashboardViewModel(IServerMonitor monitor, IMessageStore store, IHubContext<MessageHub> hub, ILogger<DashboardViewModel>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(monitor);
         ArgumentNullException.ThrowIfNull(store);
@@ -39,6 +42,7 @@ public sealed class DashboardViewModel : IDisposable
         _monitor = monitor;
         _store = store;
         _hub = hub;
+        _logger = logger ?? NullLogger<DashboardViewModel>.Instance;
         _monitor.Changed += OnMonitorChanged;
     }
 
@@ -101,6 +105,7 @@ public sealed class DashboardViewModel : IDisposable
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Could not load the recent messages for the dashboard");
                 Status = $"Could not load messages: {ex.Message}";
                 StatusIsError = true;
             }
@@ -145,6 +150,7 @@ public sealed class DashboardViewModel : IDisposable
             await _hub.Clients.All.SendAsync(Contract.ReceiveMessage, message);
 
             int online = _monitor.ConnectionCount;
+            _logger.LogInformation("Server message {MessageId} ({Length} characters) stored and sent to {Online} connected client(s)", message.Id, message.Content.Length, online);
             Status = online == 0
                 ? "Saved. No clients are online; they will get it when they sync."
                 : $"Sent to {online} connected client(s). Offline clients get it when they sync.";
@@ -153,6 +159,7 @@ public sealed class DashboardViewModel : IDisposable
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to send the server message");
             Status = $"Failed to send: {ex.Message}";
             StatusIsError = true;
         }
@@ -176,6 +183,21 @@ public sealed class DashboardViewModel : IDisposable
 
     private void OnMonitorChanged()
     {
-        _ = RefreshAsync();
+        _ = RefreshSafelyAsync();
+    }
+
+    /// <summary>
+    /// Nobody awaits a refresh triggered by the monitor, so a failure would vanish silently. This logs it instead.
+    /// </summary>
+    private async Task RefreshSafelyAsync()
+    {
+        try
+        {
+            await RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Refreshing the dashboard after a monitor change failed");
+        }
     }
 }

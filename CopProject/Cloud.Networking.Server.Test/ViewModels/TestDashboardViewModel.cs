@@ -294,4 +294,13 @@ public class TestDashboardViewModel
         _monitor.Verify(m => m.GetRecentMessagesAsync(It.IsAny<int>()), Times.Once);
         Assert.AreEqual(1, raised);
     }
+
+    /// <summary>Tests that a refresh failure triggered by the monitor is swallowed (logged), not thrown.</summary>
+    [TestMethod]
+    public void MonitorTriggeredRefreshFailureDoesNotThrow()
+    {
+        _monitor.SetupGet(m => m.Connections).Throws(new InvalidOperationException("boom"));
+        _monitor.Raise(m => m.Changed += null);
+        _monitor.VerifyGet(m => m.Connections, Times.Once);
+    }
 }
