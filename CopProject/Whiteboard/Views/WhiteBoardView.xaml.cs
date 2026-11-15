@@ -223,6 +223,15 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void WhiteboardCanvas_PointerCaptureLost(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        // A TextBox captures the pointer itself and releases it on pointer up.
+        // That capture-lost bubbles up here before PointerReleased does, and would
+        // be mistaken for an interrupted drag (snapping a dragged textbox back).
+        // Only the canvas losing its own capture matters.
+        if (IsInsideTextbox(e.OriginalSource as DependencyObject))
+        {
+            return;
+        }
+
         // Get the current pointer position
         Point p = e.GetCurrentPoint(WhiteboardCanvas).Position;
 
