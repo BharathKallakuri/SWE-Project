@@ -23,7 +23,7 @@ public sealed class ImageDiffResult : IDisposable
 
     /// <summary>
     /// for a delta with many changed tiles, the whole new picture too, so the sender can send
-    /// it as one image instead when that is smaller (e.g. as JPEG); null otherwise
+    /// it as one image instead when that is smaller  null otherwise
     /// </summary>
     public Bitmap? WholeFrame { get; }
 
