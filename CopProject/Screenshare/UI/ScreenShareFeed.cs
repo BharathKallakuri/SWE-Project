@@ -1,6 +1,7 @@
 ﻿// Author = Sumit
 // Roll Number = 112301032
 
+using System.Diagnostics;
 using System.Drawing;
 using ScreenShare.Interfaces;
 using ScreenShare.Models;
@@ -55,6 +56,8 @@ public sealed class ScreenShareFeed : IScreenShareFeed, IDisposable
             _subscribed.Clear();
         }
 
+        Trace.TraceInformation("[Screenshare] ScreenShareFeed.Dispose: no longer passing on the node's events.");
+
         _node.StreamAdded -= OnStreamAdded;
         _node.StreamRemoved -= OnStreamRemoved;
         _node.FrameUpdated -= OnFrameUpdated;
@@ -100,6 +103,15 @@ public sealed class ScreenShareFeed : IScreenShareFeed, IDisposable
                 .ToList();
             toUnsubscribe = _subscribed.Keys.Where(id => !wanted.ContainsKey(id)).ToList();
             _subscribed = wanted;
+        }
+
+        if (toSubscribe.Count > 0 || toUnsubscribe.Count > 0)
+        {
+            Trace.TraceInformation(
+                "[Screenshare] ScreenShareFeed.RequestFeeds: {0} subscribed or resized, {1} unsubscribed; {2} visible.",
+                toSubscribe.Count,
+                toUnsubscribe.Count,
+                wanted.Count);
         }
 
         foreach (string id in toUnsubscribe)

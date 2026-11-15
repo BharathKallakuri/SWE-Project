@@ -94,6 +94,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
         }
 
         _disposed = true;
+        Trace.TraceInformation("[Screenshare] ScreenShareViewModel.Dispose: grid emptied.");
         _feed.ParticipantJoined -= OnParticipantJoined;
         _feed.ParticipantLeft -= OnParticipantLeft;
         _feed.FrameReady -= QueueFrame;
@@ -140,6 +141,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
+        Trace.TraceInformation("[Screenshare] ScreenShareViewModel.Zoom: zoomed into {0}.", _byId[id].Name);
         _zoomedId = id;
         _byId[id].ResetFps(Elapsed);   // count only frames drawn while zoomed
         Mode = ViewMode.Zoomed;
@@ -149,6 +151,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
 
     public void BackToGrid()
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareViewModel.BackToGrid: back to the grid.");
         _zoomedId = null;
         Mode = ViewMode.Grid;
         RaiseModeChanged();
@@ -183,7 +186,8 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
             ? new ParticipantTile(id, name)
             : new ParticipantTile(id, name, _createSurface);
         _byId[id] = tile;
-        Tiles.Add(tile);             // if it lands in view, ElementPrepared fires -> TileEnteredView
+        Tiles.Add(tile);
+        Trace.TraceInformation("[Screenshare] ScreenShareViewModel.AddParticipant: tile added for {0}; {1} tile(s).", name, Tiles.Count);             // if it lands in view, ElementPrepared fires -> TileEnteredView
     }
 
     private void RemoveParticipant(string id)
@@ -195,6 +199,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
 
         Tiles.Remove(tile);
         _onScreen.Remove(id);
+        Trace.TraceInformation("[Screenshare] ScreenShareViewModel.RemoveParticipant: tile removed for {0}; {1} tile(s).", tile.Name, Tiles.Count);
 
         if (_zoomedId == id)
         {
@@ -267,10 +272,11 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
             catch (Exception e)
             {
                 // e.g. the meeting already ended; leave the toggle showing what is really happening
-                Trace.WriteLine($"[ScreenShare] could not {(value ? "start" : "stop")} sharing: {e.Message}");
+                Trace.TraceError("[Screenshare] ScreenShareViewModel.IsSharingScreen: could not {0} sharing: {1}", value ? "start" : "stop", e.Message);
             }
 
             _isSharingScreen = _feed.IsSharing;
+            Trace.TraceInformation("[Screenshare] ScreenShareViewModel.IsSharingScreen: sharing is {0}.", _isSharingScreen ? "on" : "off");
             Raise(nameof(IsSharingScreen), nameof(ShareButtonText));
         }
     }

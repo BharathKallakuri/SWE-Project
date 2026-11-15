@@ -1,6 +1,7 @@
 ﻿// Author = Sumit
 // Roll Number = 112301032
 
+using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using ScreenShare.Interfaces;
@@ -24,6 +25,7 @@ public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
         ViewModel?.Dispose();
         ViewModel = new ScreenShareViewModel(feed, DispatcherQueue);
         Bindings.Update();
+        Trace.TraceInformation("[Screenshare] ScreenShareGridView.Initialize: showing a new meeting's streams.");
     }
 
     /// <summary>
@@ -32,6 +34,7 @@ public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
     /// </summary>
     public void Clear()
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareGridView.Clear: grid cleared.");
         ViewModel?.Dispose();
     }
 

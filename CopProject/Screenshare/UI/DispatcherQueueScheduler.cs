@@ -1,6 +1,7 @@
 ﻿// Author = Sumit
 // Roll Number = 112301032
 
+using System.Diagnostics;
 using Microsoft.UI.Dispatching;
 
 namespace ScreenShare;
@@ -23,7 +24,13 @@ internal sealed class DispatcherQueueScheduler : IUiScheduler
 
     public bool Post(Action action)
     {
-        return _queue.TryEnqueue(() => action());
+        bool queued = _queue.TryEnqueue(() => action());
+        if (!queued)
+        {
+            Trace.TraceWarning("[Screenshare] DispatcherQueueScheduler.Post: the UI thread refused work; it is shutting down.");
+        }
+
+        return queued;
     }
 
     public IUiTimer CreateTimer(TimeSpan interval, bool isRepeating, Action tick)
