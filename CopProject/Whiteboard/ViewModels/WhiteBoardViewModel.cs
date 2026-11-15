@@ -6,16 +6,16 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.UI.Dispatching;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
 using Whiteboard.Client;
+using Whiteboard.Interfaces;
 using Whiteboard.Models;
 using Whiteboard.Network.Dtos;
 using Whiteboard.Network.Mappers;
 using Whiteboard.Services;
-using Whiteboard.Interfaces;
 using Whiteboard.Views;
 
 namespace Whiteboard.ViewModels;
@@ -68,8 +68,7 @@ public partial class WhiteBoardViewModel : IDisposable
     /// </summary>
     public bool HandlesPointerOnTextbox
     {
-        get
-        {
+        get {
             EnsureInitialized();
             return _currentState.HandlesPointerOnTextbox;
         }
@@ -331,7 +330,7 @@ public partial class WhiteBoardViewModel : IDisposable
 
         WhiteboardSnapshotStore store = await GetSnapshotStoreAsync();
 
-        await store.SaveSnapshotAsync( _sessionId, _whiteboardClient.UserId, items);
+        await store.SaveSnapshotAsync(_sessionId, _whiteboardClient.UserId, items);
         Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Snapshot saved successfully for Session={_sessionId}.");
     }
 

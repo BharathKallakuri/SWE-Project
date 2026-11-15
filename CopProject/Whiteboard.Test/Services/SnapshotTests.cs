@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -42,7 +42,7 @@ public class SnapshotTests
             Orientation = 30
         };
 
-        var copy = Assert.IsType<Square>(ItemSnapshot.Copy(original));
+        Square copy = Assert.IsType<Square>(ItemSnapshot.Copy(original));
 
         Assert.NotSame(original, copy);
         Assert.Equal(original.Id, copy.Id);
@@ -75,7 +75,7 @@ public class SnapshotTests
             StrokeWidth = 5
         };
 
-        var copy = Assert.IsType<FreehandItem>(ItemSnapshot.Copy(original));
+        FreehandItem copy = Assert.IsType<FreehandItem>(ItemSnapshot.Copy(original));
         original.Points[0] = new Point2D(999, 999);
         original.Points.Add(new Point2D(50, 60));
 
@@ -101,7 +101,7 @@ public class SnapshotTests
             FontSize = 24
         };
 
-        var copy = Assert.IsType<Textbox>(ItemSnapshot.Copy(original));
+        Textbox copy = Assert.IsType<Textbox>(ItemSnapshot.Copy(original));
 
         Assert.Equal(original.Content, copy.Content);
         Assert.Equal(original.Center, copy.Center);

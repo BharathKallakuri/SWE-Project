@@ -4,12 +4,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.UI;
 using Whiteboard.Interfaces;
 using Whiteboard.Items.Shapes;
 using Whiteboard.Services;
 using Whiteboard.Test.Mocks;
 using Whiteboard.ViewModels;
+using Windows.UI;
 using Xunit;
 
 namespace Whiteboard.Test.ViewModels;
@@ -242,8 +242,7 @@ public class PenStateTests
     public async Task PointerReleased_WithSmartShapeEnabled_ReplacesStrokeWithRecognizedShape()
     {
         Circle circle = new() { Center = new Point2D(50, 50), Radius = 20 };
-        MockShapeRecognitionService mockService = new()
-        {
+        MockShapeRecognitionService mockService = new() {
             IsEnabled = true,
             RecognizedShapeToReturn = circle
         };
@@ -265,8 +264,7 @@ public class PenStateTests
     public async Task PointerReleased_WithSmartShapeDisabled_KeepsFreehandOnly()
     {
         Circle circle = new() { Center = new Point2D(50, 50), Radius = 20 };
-        MockShapeRecognitionService mockService = new()
-        {
+        MockShapeRecognitionService mockService = new() {
             IsEnabled = false,
             RecognizedShapeToReturn = circle
         };
@@ -287,8 +285,7 @@ public class PenStateTests
     [Fact]
     public async Task PointerReleased_WithSmartShapeException_KeepsFreehandWithoutCrashing()
     {
-        MockShapeRecognitionService mockService = new()
-        {
+        MockShapeRecognitionService mockService = new() {
             IsEnabled = true,
             ThrowException = true
         };

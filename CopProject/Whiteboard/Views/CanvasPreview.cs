@@ -10,8 +10,8 @@ using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 using Windows.Foundation;
 using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
-using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
 using XamlLine = Microsoft.UI.Xaml.Shapes.Line;
+using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
 using XamlPolyline = Microsoft.UI.Xaml.Shapes.Polyline;
 using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
 

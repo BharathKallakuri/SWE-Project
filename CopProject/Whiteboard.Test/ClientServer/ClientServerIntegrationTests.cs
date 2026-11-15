@@ -138,10 +138,10 @@ public class ClientServerIntegrationTests
     public void HostUndoRedoUpdatesBothUsers()
     {
         var factory = new MockCommunicatorFactory();
-        var server = WhiteboardFactory.GetServerWhiteboard(factory.GetServerCommunicator());
-        var host = WhiteboardFactory.CreateClientWhiteboard(
+        IWhiteboardServer server = WhiteboardFactory.GetServerWhiteboard(factory.GetServerCommunicator());
+        IWhiteboardClient host = WhiteboardFactory.CreateClientWhiteboard(
             factory.CreateClientCommunicator(), factory.ServerEndPoint, "Host");
-        var client = WhiteboardFactory.CreateClientWhiteboard(
+        IWhiteboardClient client = WhiteboardFactory.CreateClientWhiteboard(
             factory.CreateClientCommunicator(), factory.ServerEndPoint, "Client");
 
         var hostItem = new Square();
@@ -151,7 +151,7 @@ public class ClientServerIntegrationTests
 
         host.Undo();
 
-        foreach (var board in new[] { server.Canvas, host.Canvas, client.Canvas })
+        foreach (IWhiteboard? board in new[] { server.Canvas, host.Canvas, client.Canvas })
         {
             Assert.False(board.Items.ContainsKey(hostItem.Id));
             Assert.True(board.Items.ContainsKey(clientItem.Id));
@@ -164,7 +164,7 @@ public class ClientServerIntegrationTests
 
         host.Redo();
 
-        foreach (var board in new[] { server.Canvas, host.Canvas, client.Canvas })
+        foreach (IWhiteboard? board in new[] { server.Canvas, host.Canvas, client.Canvas })
         {
             Assert.True(board.Items.ContainsKey(hostItem.Id));
             Assert.True(board.Items.ContainsKey(clientItem.Id));
@@ -181,10 +181,10 @@ public class ClientServerIntegrationTests
     public void ClientEditUpdatesHostHistory()
     {
         var factory = new MockCommunicatorFactory();
-        var server = WhiteboardFactory.GetServerWhiteboard(factory.GetServerCommunicator());
-        var host = WhiteboardFactory.CreateClientWhiteboard(
+        IWhiteboardServer server = WhiteboardFactory.GetServerWhiteboard(factory.GetServerCommunicator());
+        IWhiteboardClient host = WhiteboardFactory.CreateClientWhiteboard(
             factory.CreateClientCommunicator(), factory.ServerEndPoint, "Host");
-        var client = WhiteboardFactory.CreateClientWhiteboard(
+        IWhiteboardClient client = WhiteboardFactory.CreateClientWhiteboard(
             factory.CreateClientCommunicator(), factory.ServerEndPoint, "Client");
 
         var item = new Square { SideLegth = 40 };
@@ -194,7 +194,7 @@ public class ClientServerIntegrationTests
         edited.SideLegth = 80;
         client.EditItem(edited);
 
-        foreach (var board in new[] { server.Canvas, host.Canvas, client.Canvas })
+        foreach (IWhiteboard? board in new[] { server.Canvas, host.Canvas, client.Canvas })
         {
             Assert.Equal(80, Assert.IsType<Square>(board.Items[item.Id]).SideLegth);
             Assert.Equal("Host", board.Items[item.Id].CreatedBy);
@@ -206,7 +206,7 @@ public class ClientServerIntegrationTests
         // The client's undo restores the shape but not the host's old history.
         client.Undo();
 
-        foreach (var board in new[] { server.Canvas, host.Canvas, client.Canvas })
+        foreach (IWhiteboard? board in new[] { server.Canvas, host.Canvas, client.Canvas })
         {
             Assert.Equal(40, Assert.IsType<Square>(board.Items[item.Id]).SideLegth);
         }

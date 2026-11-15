@@ -3,6 +3,8 @@
 /// LICENSE : MIT
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using Networking;
@@ -12,8 +14,6 @@ using Whiteboard.Network.Dtos;
 using Whiteboard.Network.Mappers;
 using Whiteboard.Network.Messages;
 using Whiteboard.Network.Serializations;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Whiteboard.Client;
 

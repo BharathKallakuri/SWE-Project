@@ -18,12 +18,12 @@ using Whiteboard.Actions;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Models;
+using Whiteboard.Network.Dtos;
 using Whiteboard.Services;
+using Windows.UI;
 using Xunit;
-
 using RectangleItem = Whiteboard.Items.Shapes.Rectangle;
 using SquareItem = Whiteboard.Items.Shapes.Square;
-using Windows.UI;
 
 namespace Whiteboard.Test.History;
 
@@ -279,8 +279,8 @@ public class HistoryTests
         Assert.False(board.Items.ContainsKey(hostItem.Id));
         Assert.True(board.Items.ContainsKey(clientItem.Id));
 
-        var host = history.GetHistorySnapshots().Single(state => state.UserId == "Host");
-        var client = history.GetHistorySnapshots().Single(state => state.UserId == "Client");
+        (string UserId, List<HistoryEntryDto> Undo, List<HistoryEntryDto> Redo) host = history.GetHistorySnapshots().Single(state => state.UserId == "Host");
+        (string UserId, List<HistoryEntryDto> Undo, List<HistoryEntryDto> Redo) client = history.GetHistorySnapshots().Single(state => state.UserId == "Client");
 
         Assert.Empty(host.Undo);
         Assert.Single(host.Redo);
@@ -302,7 +302,9 @@ public class HistoryTests
         var red = Color.FromArgb(255, 255, 0, 0);
         var blue = Color.FromArgb(255, 0, 0, 255);
         var item = new SquareItem {
-            Center = new Point2D(100, 100), SideLegth = 40, FillColor = red
+            Center = new Point2D(100, 100),
+            SideLegth = 40,
+            FillColor = red
         };
 
         history.AddItem("Host", item);
@@ -315,7 +317,7 @@ public class HistoryTests
         history.EditItem("Host", edited);
 
         history.Undo("Host");
-        var restored = Assert.IsType<SquareItem>(board.Items[item.Id]);
+        SquareItem restored = Assert.IsType<SquareItem>(board.Items[item.Id]);
         Assert.Equal(red, restored.FillColor);
         Assert.Equal(40, restored.SideLegth);
         Assert.Equal(new Point2D(100, 100), restored.Center);
@@ -347,17 +349,17 @@ public class HistoryTests
         history.Undo("Host");
 
         // Host now has an undo and a redo entry for the same item.
-        var moved = ItemSnapshot.Copy(board.Items[item.Id]);
+        IItem moved = ItemSnapshot.Copy(board.Items[item.Id]);
         moved.MoveBy(20, 10);
         history.EditItem("Client", moved);
 
-        var host = history.GetHistorySnapshots().Single(state => state.UserId == "Host");
+        (string UserId, List<HistoryEntryDto> Undo, List<HistoryEntryDto> Redo) host = history.GetHistorySnapshots().Single(state => state.UserId == "Host");
         Assert.Equal(separateItem.Id, Assert.Single(host.Undo).ItemId);
         Assert.Empty(host.Redo);
         Assert.Equal("Host", board.Items[item.Id].CreatedBy);
 
         history.Undo("Client");
-        var restored = Assert.IsType<SquareItem>(board.Items[item.Id]);
+        SquareItem restored = Assert.IsType<SquareItem>(board.Items[item.Id]);
         Assert.Equal(new Point2D(0, 0), restored.Center);
         Assert.Equal(40, restored.SideLegth);
 
@@ -404,8 +406,8 @@ public class HistoryTests
 
         history.AddItem("Host", new SquareItem());
 
-        var host = history.GetHistorySnapshots().Single(state => state.UserId == "Host");
-        var client = history.GetHistorySnapshots().Single(state => state.UserId == "Client");
+        (string UserId, List<HistoryEntryDto> Undo, List<HistoryEntryDto> Redo) host = history.GetHistorySnapshots().Single(state => state.UserId == "Host");
+        (string UserId, List<HistoryEntryDto> Undo, List<HistoryEntryDto> Redo) client = history.GetHistorySnapshots().Single(state => state.UserId == "Client");
         Assert.Single(host.Undo);
         Assert.Empty(host.Redo);
         Assert.Empty(client.Undo);

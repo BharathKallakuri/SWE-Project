@@ -12,15 +12,15 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
+using Windows.Foundation;
+using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
+using XamlLine = Microsoft.UI.Xaml.Shapes.Line;
+using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
 using XamlPolyline = Microsoft.UI.Xaml.Shapes.Polyline;
 using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
-using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
-using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
-using XamlLine = Microsoft.UI.Xaml.Shapes.Line;
-using Windows.Foundation;
 
 namespace Whiteboard.ViewModels;
 
@@ -448,7 +448,7 @@ internal sealed class WhiteboardRenderer : IDisposable
             Tag = item.Id
         };
 
-        Canvas.SetLeft(visual, item.Center.X - item.Radius); 
+        Canvas.SetLeft(visual, item.Center.X - item.Radius);
         Canvas.SetTop(visual, item.Center.Y - item.Radius);
         ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
         return visual;
