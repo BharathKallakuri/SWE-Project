@@ -3,6 +3,7 @@
 
 using Cloud.Networking.Server.Models;
 using Microsoft.AspNetCore.SignalR;
+using System.Reflection;
 using Moq;
 
 namespace Cloud.Networking.Server.Test;
@@ -105,5 +106,50 @@ public class TestMonitorHubFilter
                 (_, _) => throw new InvalidOperationException("fail")));
 
         _monitor.Verify(m => m.Disconnected("conn-1"), Times.Once);
+    }
+
+    private HubInvocationContext CreateInvocation()
+    {
+        MethodInfo method = typeof(MessageHub).GetMethod(nameof(MessageHub.SendMessage))!;
+        return new HubInvocationContext(_caller.Object, _services.Object, _hub, method, ["hello"]);
+    }
+
+    /// <summary>Tests that a disconnect carrying an exception still removes the connection.</summary>
+    [TestMethod]
+    public async Task OnDisconnectedWithExceptionRemovesConnection()
+    {
+        await _filter.OnDisconnectedAsync(
+            CreateLifetime(),
+            new InvalidOperationException("dropped"),
+            (_, _) => Task.CompletedTask);
+
+        _monitor.Verify(m => m.Disconnected("conn-1"), Times.Once);
+    }
+
+    /// <summary>Tests that a successful hub call returns the result of the hub method.</summary>
+    [TestMethod]
+    public async Task InvokeMethodReturnsTheResultOfNext()
+    {
+        object expected = new();
+
+        object? result = await _filter.InvokeMethodAsync(CreateInvocation(), _ => new ValueTask<object?>(expected));
+
+        Assert.AreSame(expected, result);
+    }
+
+    /// <summary>Tests that a HubException is rethrown.</summary>
+    [TestMethod]
+    public async Task InvokeMethodRethrowsHubException()
+    {
+        await Assert.ThrowsAsync<HubException>(
+            async () => await _filter.InvokeMethodAsync(CreateInvocation(), _ => throw new HubException("bad input")));
+    }
+
+    /// <summary>Tests that any other exception is rethrown.</summary>
+    [TestMethod]
+    public async Task InvokeMethodRethrowsOtherExceptions()
+    {
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _filter.InvokeMethodAsync(CreateInvocation(), _ => throw new InvalidOperationException("bug")));
     }
 }

@@ -46,6 +46,7 @@ public class SocketListener : IDisposable
         NetworkStream stream = tcpClient.GetStream();
         _listeningThread = new Thread(() => ListenStream(stream)) { IsBackground = true };
         _listeningThread.Start();
+        Trace.TraceInformation("[Networking] SocketListener: Started socket listener thread.");
     }
 
     public void ListenStream(NetworkStream stream)
@@ -58,7 +59,7 @@ public class SocketListener : IDisposable
                 int bytesRead = stream.Read(_receivedBuffer, 0, BufferSize);
                 if (bytesRead == 0)
                 {
-                    Trace.WriteLine("[Networking] Host disconnected.");
+                    Trace.TraceInformation("[Networking] SocketListener: Host disconnected (0 bytes read).");
                     break;
                 }
                 incomingData.Seek(0, SeekOrigin.End);
@@ -71,7 +72,7 @@ public class SocketListener : IDisposable
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] Error in {this.GetType().Name}: " + e);
+            Trace.TraceError($"[Networking] Error in {GetType().Name}: {e.Message}");
         }
 
     }

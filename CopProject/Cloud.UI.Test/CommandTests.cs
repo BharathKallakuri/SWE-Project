@@ -11,13 +11,13 @@ public class AsyncCommandBaseTests
 {
     private sealed class TestCommand : AsyncCommandBase
     {
-        public bool Allowed { get; set; } = true;
+        public bool? Allowed { get; set; }
         public Func<Task> Body { get; set; } = () => Task.CompletedTask;
         public int Runs { get; private set; }
 
         protected override bool CanRun()
         {
-            return Allowed;
+            return Allowed ?? base.CanRun(); // null: use the default (true)
         }
 
         protected override async Task OnExecuteAsync()
@@ -28,42 +28,24 @@ public class AsyncCommandBaseTests
     }
 
     [TestMethod]
-    public void CanExecute_DefaultsToTrue()
+    public void CanExecuteDefaultsToTrue()
     {
         Assert.IsTrue(new TestCommand().CanExecute(null));
     }
 
     [TestMethod]
-    public void CanExecute_FollowsCanRun()
-    {
-        TestCommand command = new() { Allowed = false };
-
-        Assert.IsFalse(command.CanExecute(null));
-    }
-
-    [TestMethod]
-    public async Task ExecuteAsync_WhenNotAllowed_DoesNothing()
+    public async Task ExecuteAsyncWhenNotAllowedDoesNothing()
     {
         TestCommand command = new() { Allowed = false };
 
         await command.ExecuteAsync();
 
+        Assert.IsFalse(command.CanExecute(null));
         Assert.AreEqual(0, command.Runs);
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_WhenAllowed_RunsOnce()
-    {
-        TestCommand command = new();
-
-        await command.ExecuteAsync();
-
-        Assert.AreEqual(1, command.Runs);
-        Assert.IsTrue(command.CanExecute(null));
-    }
-
-    [TestMethod]
-    public async Task WhileRunning_CannotExecute_AndSecondCallIsIgnored()
+    public async Task WhileRunningCannotExecuteAndSecondCallIsIgnored()
     {
         TaskCompletionSource gate = new();
         TestCommand command = new() { Body = () => gate.Task };
@@ -81,7 +63,7 @@ public class AsyncCommandBaseTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_RaisesCanExecuteChanged_AtStartAndEnd()
+    public async Task ExecuteAsyncRunsOnceAndRaisesCanExecuteChangedAtStartAndEnd()
     {
         TestCommand command = new();
         int raised = 0;
@@ -90,10 +72,12 @@ public class AsyncCommandBaseTests
         await command.ExecuteAsync();
 
         Assert.AreEqual(2, raised);
+        Assert.AreEqual(1, command.Runs);
+        Assert.IsTrue(command.CanExecute(null));
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_WhenBodyThrows_PropagatesAndResets()
+    public async Task ExecuteAsyncWhenBodyThrowsPropagatesAndResets()
     {
         TestCommand command = new() { Body = () => throw new InvalidOperationException("boom") };
 
@@ -108,7 +92,7 @@ public class AsyncCommandBaseTests
 public class NotificationCommandTests
 {
     [TestMethod]
-    public async Task Command_Failure_IsShownAsError_NotThrown()
+    public async Task CommandFailureIsShownAsErrorNotThrown()
     {
         NotificationServiceViewModel vm = new(url => TestMessenger.Create(sendError: new InvalidOperationException("send failed")).Object, ViewModelHarness.RunNow) {
             ServerUrl = ViewModelHarness.Url
@@ -125,7 +109,7 @@ public class NotificationCommandTests
     }
 
     [TestMethod]
-    public void Execute_ICommandEntryPoint_RunsTheCommand()
+    public void ExecuteICommandEntryPointRunsTheCommand()
     {
         ViewModelHarness h = new();
         h.ViewModel.ServerUrl = ViewModelHarness.Url;
@@ -135,4 +119,5 @@ public class NotificationCommandTests
         Assert.AreEqual(1, h.Messengers.Count);
         Assert.AreEqual(ConnectionState.Connected, h.ViewModel.State);
     }
+
 }

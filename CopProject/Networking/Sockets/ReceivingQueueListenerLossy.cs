@@ -32,6 +32,7 @@ public class ReceivingQueueListenerLossy : IDisposable
         _isRunning = true;
         _listeningThread = new Thread(ListenOnQueue) { IsBackground = true };
         _listeningThread.Start();
+        Trace.TraceInformation("[Networking] ReceivingQueueListenerLossy: Started listening thread.");
     }
 
     public void ListenOnQueue()
@@ -58,12 +59,12 @@ public class ReceivingQueueListenerLossy : IDisposable
                 }
                 catch (Exception e)
                 {
-                    Trace.WriteLine($"[Networking] Lossy message handler for module {packet.Module} threw: {e}");
+                    Trace.TraceError($"[Networking] Lossy message handler for module {packet.Module} threw: {e}");
                 }
             }
             else
             {
-                Trace.WriteLine($"[Networking] Lossy Module {packet.Module} is not found. Unable to handle the data.");
+                Trace.TraceWarning($"[Networking] Lossy Module {packet.Module} is not found. Unable to handle the data.");
             }
         }
     }
