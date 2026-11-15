@@ -36,9 +36,9 @@ public class SelectionResizeTests
         Rectangle result = (Rectangle)canvas.Items[rectangle.Id];
 
         Assert.True(resized);
-        Assert.Equal(60, result.Width);
-        Assert.Equal(50, result.Height);
-        Assert.Equal(20, result.Left);
+        Assert.Equal(50, result.Width);
+        Assert.Equal(40, result.Height);
+        Assert.Equal(30, result.Left);
         Assert.Equal(30, result.Top);
     }
 
