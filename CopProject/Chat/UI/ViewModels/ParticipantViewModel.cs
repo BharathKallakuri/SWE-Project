@@ -1,4 +1,4 @@
-namespace UI.ViewModels;
+﻿namespace UI.ViewModels;
 
 /// <summary>Participant row shown in the meeting people picker.</summary>
 public sealed class ParticipantViewModel : AvatarViewModel

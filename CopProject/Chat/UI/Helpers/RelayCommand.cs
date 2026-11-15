@@ -20,7 +20,9 @@ public sealed class RelayCommand : ICommand
         _execute = _ => execute();
 
         if (canExecute is not null)
+        {
             _canExecute = _ => canExecute();
+        }
     }
 
     // Constructor for commands that receive a parameter.

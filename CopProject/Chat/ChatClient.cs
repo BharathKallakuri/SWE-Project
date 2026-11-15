@@ -76,8 +76,7 @@ public sealed class ChatClient : IMessageListener, IDisposable
     /// </summary>
     public int Version
     {
-        get
-        {
+        get {
             lock (_syncRoot)
             {
                 return _version;

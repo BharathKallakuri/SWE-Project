@@ -53,8 +53,7 @@ public class ChatMessage : IChatMessage
     /// <inheritdoc />
     public bool IsDeleted
     {
-        get
-        {
+        get {
             lock (_syncRoot)
             {
                 return DeletedByUser is not null;
@@ -131,8 +130,7 @@ public class ChatMessage : IChatMessage
 
     internal virtual ChatMessage DeepClone()
     {
-        ChatMessage clone = new()
-        {
+        ChatMessage clone = new() {
             Timestamp = Timestamp,
             SenderName = SenderName,
             Mentions = Mentions.Clone(),
