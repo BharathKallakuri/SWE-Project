@@ -1,4 +1,7 @@
-﻿namespace ScreenShare;
+﻿// Authot = Devapriya Pradeep
+// Roll Number = 112301006
+
+namespace ScreenShare;
 
 /// <summary>
 /// screenshare disconnect detection and recovery

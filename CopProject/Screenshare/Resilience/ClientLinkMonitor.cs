@@ -1,4 +1,9 @@
-﻿namespace ScreenShare;
+﻿// Authot = Devapriya Pradeep
+// Roll Number = 112301006
+
+using System.Diagnostics;
+
+namespace ScreenShare;
 
 /// <summary>what a client should do after one sweep of ClientLinkMonitor</summary>
 /// <param name="Outgoing">messages to send to the host</param>
@@ -97,7 +102,10 @@ public sealed class ClientLinkMonitor : ITrafficObserver
         }
         else
         {
-            ScreenShareCodec.Decode(message, out decoded);
+            if (!ScreenShareCodec.Decode(message, out decoded))
+            {
+                Trace.TraceWarning($"[ScreenShare] could not decode a {kind} message from the host");
+            }
         }
 
         lock (_lock)
@@ -109,6 +117,7 @@ public sealed class ClientLinkMonitor : ITrafficObserver
             {
                 _connected = true;
                 _recovering = true;
+                Trace.TraceInformation("[ScreenShare] host answered after being silent");
 
                 // start collecting the host's announcements now, so this message that
                 // revealed the link is back is counted too
@@ -144,6 +153,7 @@ public sealed class ClientLinkMonitor : ITrafficObserver
                 case StreamStopped stopped:
                     _knownStreams.Remove(stopped.StreamId);
                     _subscriptions.Remove(stopped.StreamId);
+                    Trace.TraceInformation($"[ScreenShare] host stopped stream {stopped.StreamId}");
                     break;
 
                 case FrameAck ack when _announce != null && ack.StreamId == _announce.StreamId:
@@ -178,6 +188,7 @@ public sealed class ClientLinkMonitor : ITrafficObserver
 
         if (!ScreenShareCodec.Decode(message, out IScreenShareMessage? decoded))
         {
+            Trace.TraceWarning($"[ScreenShare] could not decode an outgoing {kind} message");
             return;
         }
 
@@ -189,6 +200,11 @@ public sealed class ClientLinkMonitor : ITrafficObserver
             switch (decoded)
             {
                 case Hello hello:
+                    if (_hello == null)
+                    {
+                        Trace.TraceInformation("[ScreenShare] remembering Hello so it can be resent if the host goes silent");
+                    }
+
                     _hello = hello;
                     break;
 
@@ -202,15 +218,18 @@ public sealed class ClientLinkMonitor : ITrafficObserver
                     else
                     {
                         _subscriptions[subscribe.StreamId] = new SubscriptionState(subscribe, now);
+                        Trace.TraceInformation($"[ScreenShare] watching stream {subscribe.StreamId} for stalls");
                     }
                     break;
 
                 case Unsubscribe unsubscribe:
                     _subscriptions.Remove(unsubscribe.StreamId);
+                    Trace.TraceInformation($"[ScreenShare] no longer watching stream {unsubscribe.StreamId}");
                     break;
 
                 case StreamStarted started:
                     _announce = started;
+                    Trace.TraceInformation($"[ScreenShare] this client announced stream {started.StreamId}, waiting for the host to acknowledge frames");
                     _unackedSince = null;
                     _nextAnnounceAt = now + _options.RecoveryInterval;
                     break;
@@ -220,6 +239,7 @@ public sealed class ClientLinkMonitor : ITrafficObserver
                     {
                         _announce = null;
                         _unackedSince = null;
+                        Trace.TraceInformation($"[ScreenShare] this client stopped its stream {stopped.StreamId}");
                     }
                     break;
             }
@@ -252,6 +272,9 @@ public sealed class ClientLinkMonitor : ITrafficObserver
                 // the host answered after a silence so rebuild everything it may have forgotten
                 _recovering = false;
                 connectionChanged = true;
+                Trace.TraceInformation(
+                    $"[ScreenShare] link is back, resending Hello={(_hello != null ? 1 : 0)}, " +
+                    $"Subscribe={_subscriptions.Count}, StreamStarted={(_announce != null ? 1 : 0)}");
 
                 if (_hello != null)
                 {
@@ -281,6 +304,7 @@ public sealed class ClientLinkMonitor : ITrafficObserver
                 {
                     outgoing.Add(_hello);
                     _nextProbeAt = now + _options.RecoveryInterval;
+                    Trace.TraceInformation("[ScreenShare] host still silent, knocking with Hello");
                 }
             }
             else if (Expecting && now - _lastHostHeard > _options.HostSilenceTimeout)
@@ -288,6 +312,7 @@ public sealed class ClientLinkMonitor : ITrafficObserver
                 _connected = false;
                 _nextProbeAt = now;
                 connectionChanged = false;
+                Trace.TraceWarning($"[ScreenShare] no traffic from the host for {(now - _lastHostHeard).TotalSeconds:0.0}s, treating the link as down");
             }
             else
             {
@@ -303,6 +328,7 @@ public sealed class ClientLinkMonitor : ITrafficObserver
                     _knownStreams.Remove(streamId);
                     _subscriptions.Remove(streamId);
                     gone.Add(streamId);
+                    Trace.TraceWarning($"[ScreenShare] host did not re-announce stream {streamId} after the outage, treating it as ended");
                 }
 
                 _reconcileUntil = null;
@@ -329,6 +355,15 @@ public sealed class ClientLinkMonitor : ITrafficObserver
                 outgoing.Add(subscription.Message);
                 subscription.Attempts++;
                 subscription.NextAttempt = now + _options.RecoveryInterval * subscription.Attempts;
+
+                Trace.TraceWarning(
+                    $"[ScreenShare] stream {subscription.Message.StreamId} delivered nothing for {(now - subscription.LastData).TotalSeconds:0.0}s, " +
+                    $"resubscribing (attempt {subscription.Attempts} of {_options.MaxRecoveryAttempts})");
+
+                if (subscription.Attempts == _options.MaxRecoveryAttempts)
+                {
+                    Trace.TraceError($"[ScreenShare] last resubscribe for stream {subscription.Message.StreamId} sent, giving up on it if it stays silent");
+                }
             }
         }
     }
@@ -344,6 +379,7 @@ public sealed class ClientLinkMonitor : ITrafficObserver
             outgoing.Add(_announce);
             _unackedSince = now;
             _nextAnnounceAt = now + _options.RecoveryInterval;
+            Trace.TraceWarning($"[ScreenShare] host acknowledged no frames of stream {_announce.StreamId} for {(now - since).TotalSeconds:0.0}s, announcing it again");
         }
     }
 

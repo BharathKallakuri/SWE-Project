@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿// Authot = Devapriya Pradeep
+// Roll Number = 112301006
+
+using System.Diagnostics;
 
 namespace ScreenShare;
 
@@ -28,6 +31,22 @@ public sealed partial class ScreenShareNode
             completion.TrySetResult(host.CaptureLoad(lag));
         });
 
-        return completion.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Task<HostLoadSnapshot?> result = completion.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        // only watches the outcome; the caller still gets the same task and the same exception
+        result.ContinueWith(
+            t => {
+                if (t.IsFaulted && t.Exception?.GetBaseException() is TimeoutException)
+                {
+                    Trace.TraceError("[ScreenShare] host relay did not answer the load probe within 5 s, it is not keeping up");
+                }
+                else if (t.IsCompletedSuccessfully && t.Result is { } snapshot && snapshot.DispatcherLag > TimeSpan.FromMilliseconds(500))
+                {
+                    Trace.TraceWarning($"[ScreenShare] host relay is slow, a probe waited {snapshot.DispatcherLag.TotalMilliseconds:0} ms in its queue");
+                }
+            },
+            TaskScheduler.Default);
+
+        return result;
     }
 }

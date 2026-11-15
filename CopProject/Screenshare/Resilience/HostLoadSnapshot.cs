@@ -1,4 +1,7 @@
-﻿namespace ScreenShare;
+﻿// Authot = Devapriya Pradeep
+// Roll Number = 112301006
+
+namespace ScreenShare;
 
 /// <summary>
 /// how busy the host's relay is. DispatcherLag is the number to watch: it is how long a new

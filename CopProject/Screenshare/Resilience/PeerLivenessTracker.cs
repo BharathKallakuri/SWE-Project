@@ -1,4 +1,8 @@
-﻿using System.Net;
+﻿// Authot = Devapriya Pradeep
+// Roll Number = 112301006
+
+using System.Diagnostics;
+using System.Net;
 
 namespace ScreenShare;
 
@@ -44,6 +48,7 @@ public sealed class PeerLivenessTracker
                 case StreamStarted started:
                     PeerState sharer = Heard(started.Sharer);
                     sharer.SharedStreamId = started.StreamId;
+                    Trace.TraceInformation($"[ScreenShare] sharer {started.Sharer.Id} announced stream {started.StreamId}");
                     _sharerByStream[started.StreamId] = started.Sharer.Endpoint;
                     break;
 
@@ -117,10 +122,11 @@ public sealed class PeerLivenessTracker
     /// </summary>
     public IReadOnlyList<LostPeer> Sweep()
     {
+        var lost = new List<LostPeer>();
+        var reasons = new List<string>();
+
         lock (_lock)
         {
-            var lost = new List<LostPeer>();
-
             DateTimeOffset now = _time.GetUtcNow();
 
             foreach ((IPEndPoint endpoint, PeerState peer) in _peers)
@@ -137,13 +143,25 @@ public sealed class PeerLivenessTracker
 
                 if (sharerSilent || viewerSilent)
                 {
+                    // worked out before MarkLost clears the fields
+                    string reason = sharerSilent
+                        ? $"sharer of stream {peer.SharedStreamId} silent for {(now - peer.LastHeard).TotalSeconds:0.0}s"
+                        : $"viewer has not acknowledged frames for {(now - peer.OwedSince!.Value).TotalSeconds:0.0}s";
+                    reasons.Add($"[ScreenShare] declaring peer {peer.ParticipantId ?? "?"} at {endpoint} gone: {reason}");
+
                     MarkLost(peer);
                     lost.Add(new LostPeer(peer.ParticipantId, endpoint));
                 }
             }
-
-            return lost;
         }
+
+        // logged after the lock is released so a slow log cannot hold up the traffic threads
+        foreach (string reason in reasons)
+        {
+            Trace.TraceWarning(reason);
+        }
+
+        return lost;
     }
 
     private PeerState Heard(Participant participant)
@@ -157,6 +175,11 @@ public sealed class PeerLivenessTracker
     // proof that peer is live
     private void Touch(PeerState peer)
     {
+        if (peer.Lost)
+        {
+            Trace.TraceInformation($"[ScreenShare] peer {peer.ParticipantId ?? "?"} was declared gone but is sending again");
+        }
+
         peer.LastHeard = _time.GetUtcNow();
         peer.OwedSince = null;
         peer.Lost = false;
@@ -181,6 +204,7 @@ public sealed class PeerLivenessTracker
             peer.SharedStreamId == streamId)
         {
             peer.SharedStreamId = null;
+            Trace.TraceInformation($"[ScreenShare] stream {streamId} stopped, no longer expecting frames from {peer.ParticipantId ?? "?"}");
         }
     }
 
@@ -190,6 +214,7 @@ public sealed class PeerLivenessTracker
         {
             peer = new PeerState();
             _peers[endpoint] = peer;
+            Trace.TraceInformation($"[ScreenShare] now tracking peer at {endpoint}");
         }
 
         return peer;
