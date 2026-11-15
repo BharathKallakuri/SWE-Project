@@ -173,7 +173,7 @@ public sealed partial class MainWindow : Window
 
     private byte[]? GetProfilePictureBytes()
     {
-        if (string.IsNullOrEmpty(_picture)) return null;
+        if (string.IsNullOrEmpty(_picture)) { return null; }
         try
         {
             if (File.Exists(_picture))
@@ -484,11 +484,13 @@ public sealed partial class MainWindow : Window
         SharePanel.Visibility = Vis(which == "share");
         BoardPanel.Visibility = Vis(which == "board");
         FileSyncView.Visibility = Vis(which == "filesync");
+        IncidentsPanel.Visibility = Vis(which == "incidents");
 
         HomeBtn.IsChecked = which == "home";
         ShareBtn.IsChecked = which == "share";
         BoardBtn.IsChecked = which == "board";
         FileSyncBtn.IsChecked = which == "filesync";
+        IncidentsBtn.IsChecked = which == "incidents";
     }
 
     private void HomeBtn_Click(object sender, RoutedEventArgs e)
@@ -823,6 +825,25 @@ public sealed partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            await ShowErrorAsync("Unable to load incidents", ex.Message);
+        }
+    }
+
+    private async void IncidentsBtn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            // Load once; keep the page so the user's place survives switching tabs.
+            if (MeetingIncidentsFrame.Content is null)
+            {
+                IncidentPageContext context = await GetIncidentContextAsync();
+                MeetingIncidentsFrame.Navigate(typeof(AllIncidentsPage), context);
+            }
+            ShowPanel("incidents");
+        }
+        catch (Exception ex)
+        {
+            IncidentsBtn.IsChecked = false;
             await ShowErrorAsync("Unable to load incidents", ex.Message);
         }
     }
