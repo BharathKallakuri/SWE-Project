@@ -11,6 +11,7 @@ using Whiteboard.Interfaces.Shapes;
 using Windows.Foundation;
 using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
 using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
+using XamlLine = Microsoft.UI.Xaml.Shapes.Line;
 using XamlPolyline = Microsoft.UI.Xaml.Shapes.Polyline;
 using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
 
@@ -98,6 +99,8 @@ public class CanvasPreview : ICanvasPreview
             ISquare square => CreateSquareVisual(square),
             ICircle circle => CreateCircleVisual(circle),
             IEqTriangle triangle => CreateEqTriangleVisual(triangle),
+            IPolygon polygon => CreatePolygonVisual(polygon),
+            ILine line => CreateLineVisual(line),
             _ => null
         };
     }
@@ -206,6 +209,70 @@ public class CanvasPreview : ICanvasPreview
 
         Canvas.SetLeft(visual, item.BoundingBox.Left);
         Canvas.SetTop(visual, item.BoundingBox.Top);
+
+        return visual;
+    }
+
+    /// <summary>
+    /// Helper function to create a polygon from a polygon item
+    /// </summary>
+    /// <param name="item">Polygon item</param>
+    /// <returns>UI polygon which resembles the given polygon</returns>
+    private static UIElement CreatePolygonVisual(IPolygon item)
+    {
+        // When there are fewer than 3 vertices (e.g. initial segment during live preview),
+        // render an open Polyline so it does not close back on itself with a 180-degrees angle
+        if (item.Vertices.Count < 3)
+        {
+            XamlPolyline polyline = new() {
+                Stroke = new SolidColorBrush(item.BorderColor),
+                StrokeThickness = item.BorderWidth,
+                StrokeLineJoin = PenLineJoin.Round,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+                IsHitTestVisible = false
+            };
+
+            foreach (Point2D point in item.Vertices)
+            {
+                polyline.Points.Add(new Point(point.X, point.Y));
+            }
+
+            return polyline;
+        }
+
+        XamlPolygon visual = new() {
+            Fill = new SolidColorBrush(item.FillColor),
+            Stroke = new SolidColorBrush(item.BorderColor),
+            StrokeThickness = item.BorderWidth,
+            StrokeLineJoin = PenLineJoin.Round,
+            IsHitTestVisible = false
+        };
+
+        foreach (Point2D point in item.Vertices)
+        {
+            visual.Points.Add(new Point(point.X, point.Y));
+        }
+
+        return visual;
+    }
+
+    /// <summary>
+    /// Helper function to create a line from a line item
+    /// </summary>
+    /// <param name="item">Line item</param>
+    /// <returns>UI line which resembles the given line</returns>
+    private static XamlLine CreateLineVisual(ILine item)
+    {
+        XamlLine visual = new() {
+            X1 = item.Begin.X,
+            Y1 = item.Begin.Y,
+            X2 = item.End.X,
+            Y2 = item.End.Y,
+            Stroke = new SolidColorBrush(Microsoft.UI.Colors.Black),
+            StrokeThickness = 2,
+            IsHitTestVisible = false
+        };
 
         return visual;
     }
