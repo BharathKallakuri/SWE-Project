@@ -1,6 +1,7 @@
 ﻿// Author = Simeon Kandan Sonar
 // Roll Number = 112301031 
 
+using System.Diagnostics;
 using Cloud.Networking;
 using Cloud.UI.Services;
 using Cloud.UI.ViewModels;
@@ -39,6 +40,7 @@ public sealed class ConnectCommand : NotificationCommand
     {
         if (!NotificationService.TryParseUrl(ViewModel.ServerUrl, out string url))
         {
+            Trace.TraceWarning($"Rejected invalid server URL: '{ViewModel.ServerUrl}'.");
             ViewModel.ErrorText = InvalidUrlMessage;
             return;
         }

@@ -1,6 +1,7 @@
 ﻿// Author = Simeon Kandan Sonar
 // Roll Number = 112301031 
 
+using System.Diagnostics;
 using Cloud.UI.Services;
 using Cloud.UI.ViewModels;
 
@@ -48,6 +49,7 @@ public abstract class NotificationCommand : AsyncCommandBase
         }
         catch (Exception ex)
         {
+            Trace.TraceError($"{GetType().Name} failed: {ex}");
             ViewModel.ErrorText = ex.Message;
         }
         finally
