@@ -25,8 +25,7 @@ public sealed class InsightsDiagnosisService
         /* integrate with Insights to get a diagnosis */
         GeminiProvider provider = await GeminiProvider.CreateAsync(new CloudCredentialService());
         InsightsManager insights = new(provider);
-          
-        //return await insights.DiagnoseLogAsync(log); /*this is the actual method to be called */
-        return await insights.GenerateChatResponseAsync(log, "Please provide a detailed analysis of the log entries and suggest potential issues or improvements.");
+
+        return await insights.DiagnoseLogAsync(log); /*new insights api */
     }
 }
