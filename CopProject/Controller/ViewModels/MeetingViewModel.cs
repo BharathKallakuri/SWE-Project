@@ -54,7 +54,7 @@ public sealed class MeetingViewModel : ObservableObject
             AuditLogs.Insert(0, new SecurityAuditEvent 
             { 
                 User = user,
-                Activity = "Meeting created & started", 
+                Activity = info.IsHost ? "Meeting created & started" : "Joined meeting",
                 Status = "Success"
             });
 
@@ -91,6 +91,7 @@ public sealed class MeetingViewModel : ObservableObject
                 Status = "Info" 
             });
 
+            ParticipantList.Clear(); 
             timer?.Stop();
             _meetingStartedTime = null;
             _activeUsernames.Clear();
@@ -112,44 +113,18 @@ public sealed class MeetingViewModel : ObservableObject
 
         session.ParticipantsChanged += list =>
         {
-            Trace.TraceInformation($"[Controller]: ParticipantsChanged event received: {list.Count} participant(s).");
-            ParticipantList.Clear();
-            var newUsers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var p in list)
+            void UpdateList()
             {
-                ParticipantList.Add(p);
-                if (!string.IsNullOrWhiteSpace(p.Username))
+                ParticipantList.Clear();
+                foreach (var p in list)
                 {
-                    newUsers.Add(p.Username);
+                    ParticipantList.Add(p);
                 }
+                Refresh();
             }
-
-            // detecting newly joined participants
-            foreach (var username in newUsers)
-            {
-                if (!_activeUsernames.Contains(username))
-                {
-                    _activeUsernames.Add(username);
-                    Trace.TraceInformation($"[Controller]: Detected participant join: {username}.");
-                    AuditLogs.Insert(0, new SecurityAuditEvent { User = username, Activity = "Joined meeting", Status = "Success" });
-                }
-            }
-
-            // detecting participants who left
-            var leftUsers = _activeUsernames.Where(u => !newUsers.Contains(u)).ToList();
-            foreach (var username in leftUsers)
-            {
-                _activeUsernames.Remove(username);
-                Trace.TraceInformation($"[Controller]: Detected participant departure: {username}.");
-                AuditLogs.Insert(0, new SecurityAuditEvent { User = username, Activity = "Left meeting", Status = "Info" });
-            }
-
-            if (SelectedParticipant != null)
-            {
-                SelectedParticipant = ParticipantList.FirstOrDefault(p => p.Username == SelectedParticipant.Username);
-            }
-            Refresh();
+            var queue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+            if (queue != null) queue.TryEnqueue(UpdateList);
+            else UpdateList();
         };
 
         if (session.InMeeting)

@@ -168,7 +168,7 @@ public sealed class ClientController : IControllerService
         Trace.TraceInformation($"[Controller]: Sent LEAVE for user '{user.Gmail}' to {_hostIp}:{_hostPort}.");
 
         // Allow background SendingQueueListenerClient thread to flush the LEAVE packet before closing socket.
-        Thread.Sleep(150);
+        Thread.Sleep(450);
 
         // Clear remembered host and local tracking.
         _hostIp = null;

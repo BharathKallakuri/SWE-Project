@@ -446,8 +446,38 @@ public sealed partial class MainWindow : Window
         var idBox = new TextBox { Header = "Meeting ID", PlaceholderText = "e.g. 192.168.1.5" };
         var portBox = new TextBox { Header = "Port", PlaceholderText = "e.g. 5000" };
         var error = new TextBlock { Foreground = new SolidColorBrush(Colors.Red) };
-        ContentDialog dialog = MakeDialog("Join meeting", new StackPanel { Spacing = 10, Children = { idBox, portBox, error } }, "Join");
-        while (await dialog.ShowAsync() == ContentDialogResult.Primary)
+
+        var joinBtn = new Button { Content = "Join", Width = 90 };
+        var cancelBtn = new Button { Content = "Cancel", Width = 90 };
+        var buttonPanel = new StackPanel 
+        { 
+            Orientation = Orientation.Horizontal, 
+            HorizontalAlignment = HorizontalAlignment.Right, 
+            Spacing = 10, 
+            Children = { joinBtn, cancelBtn } 
+        };
+
+        var content = new StackPanel { Spacing = 10, Children = { idBox, portBox, error, buttonPanel } };
+
+        // PrimaryButtonText and CloseButtonText are empty so WinUI doesn't lock the dialog
+        var dialog = new ContentDialog
+        {
+            Title = "Join meeting",
+            Content = content,
+            XamlRoot = Root.XamlRoot
+        };
+
+        bool isCancelled = false;
+
+        // Cancel Button: ALWAYS active, immediately closes the dialog
+        cancelBtn.Click += (s, args) =>
+        {
+            isCancelled = true;
+            dialog.Hide();
+        };
+
+        // Join Button: Runs connection on a BACKGROUND thread without freezing the UI
+        joinBtn.Click += async (s, args) =>
         {
             string id = idBox.Text.Trim();
             string port = portBox.Text.Trim();
@@ -455,27 +485,41 @@ public sealed partial class MainWindow : Window
             if (id.Length == 0)
             {
                 error.Text = "Please enter the meeting ID.";
-                continue;
+                return;
             }
 
             if (!int.TryParse(port, out int number) || number < 1 || number > 65535)
             {
                 error.Text = "Port must be a number between 1 and 65535.";
-                continue;
+                return;
             }
 
-            // CONTROLLER TEAM: connect to the meeting using this id and port.
-            bool joined = _meetingService.JoinMeeting(id, number);
+            error.Text = "Connecting...";
+            joinBtn.IsEnabled = false; // Only disable Join, Cancel remains clickable.
+
+            // Run the network join on a BACKGROUND thread.
+            bool joined = await Task.Run(() => _meetingService.JoinMeeting(id, number));
+
+            if (isCancelled)
+            {
+                return; // User clicked Cancel while connecting
+            }
+
+            joinBtn.IsEnabled = true;
+
             if (!joined)
             {
-                error.Text = _meetingService.LastErrorMessage ?? ("Could not connect to meeting at " + id + ":" + port);
-                continue;
+                error.Text = _meetingService.LastErrorMessage ?? ($"Could not connect to meeting at {id}:{port}.");
+                return;
             }
 
+            // Success: Close dialog and transition
+            dialog.Hide();
             _session.StartMeeting(new MeetingInfo(id, port, IsHost: false));
             StartMeeting(id, port, false);
-            return;
-        }
+        };
+
+        await dialog.ShowAsync();
     }
 
     private void StartMeeting(string id, string port, bool host)
