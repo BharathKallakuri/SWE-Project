@@ -20,7 +20,16 @@ public sealed class SyncCommand : NotificationCommand
         return ViewModel.State == ConnectionState.Connected;
     }
 
-    protected override async Task RunAsync()
+    protected override Task RunAsync()
+    {
+        return SyncNowAsync();
+    }
+
+    /// <summary>
+    /// The sync itself, without the availability checks, so <see cref="ConnectCommand"/>
+    /// (which is still busy when it syncs) can reuse it.
+    /// </summary>
+    internal async Task SyncNowAsync()
     {
         IReadOnlyList<Message> missed = await Service.SyncAsync(ViewModel.LastMessageTime);
 
