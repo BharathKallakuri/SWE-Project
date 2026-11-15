@@ -1,3 +1,6 @@
+﻿// Author = Srikar
+// Roll Number = 142301013
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -7,16 +10,15 @@ using System.Text;
 namespace Networking.Packets;
 
 /// <summary>
-/// Provides binary serialization and deserialization for <see cref="Packet"/> instances
-/// using <see cref="BinaryWriter"/> and <see cref="BinaryReader"/>.
+/// Serializes and deserializes <see cref="Packet"/> instances to and from binary data.
 /// </summary>
 public class BinarySerialization : ISerializer<Packet>
 {
     /// <summary>
-    /// Serializes a <see cref="Packet"/> into a binary byte array using <see cref="BinaryWriter"/>.
+    /// Serializes a packet into a byte array.
     /// </summary>
     /// <param name="packet">The packet to serialize.</param>
-    /// <returns>A byte array containing the serialized binary packet data, or empty array if packet is null.</returns>
+    /// <returns>The serialized byte array, or an empty array if <paramref name="packet"/> is null.</returns>
     public byte[] Serialize(Packet packet)
     {
         if (packet == null)
@@ -58,10 +60,10 @@ public class BinarySerialization : ISerializer<Packet>
     }
 
     /// <summary>
-    /// Deserializes a binary byte array back into a <see cref="Packet"/> instance using <see cref="BinaryReader"/>.
+    /// Deserializes a byte array into a <see cref="Packet"/>.
     /// </summary>
-    /// <param name="data">The byte array to deserialize.</param>
-    /// <returns>The deserialized <see cref="Packet"/>, or null if deserialization fails.</returns>
+    /// <param name="data">The raw binary packet data.</param>
+    /// <returns>The deserialized packet, or null if deserialization fails.</returns>
     public Packet? Deserialize(byte[] data)
     {
         if (data == null || data.Length == 0)
