@@ -3,14 +3,22 @@ using ScreenShare;
 
 namespace ScreenShare;
 
+/// <summary>
+/// receives other participants' streams. a sharer may send two streams (see StreamLayers): the
+/// full one and a small grid stream. the UI only ever sees the sharer's id; this class picks
+/// which of the two to subscribe to from the size the tile asks for, and keeps the picture
+/// under the sharer's id either way.
+/// </summary>
 internal sealed class ScreenShareReceiver : IDisposable
 {
     private readonly Participant _local;
     private readonly Action<IScreenShareMessage> _sendToHost;
     private readonly TimeProvider _timeProvider;
-    private readonly Dictionary<string, string> _streamNames = new();
-    private readonly Dictionary<string, Subscription> _subscriptions = new();
-    private readonly StreamFrameCache _frames = new();
+    private readonly int _thumbnailHeight;
+    private readonly Dictionary<string, string> _streamNames = new();       // sharer's id -> name
+    private readonly HashSet<string> _withThumbnail = new();                 // sharers offering a grid stream
+    private readonly Dictionary<string, Subscription> _subscriptions = new(); // by the stream actually received
+    private readonly StreamFrameCache _frames = new();                        // by the sharer's id
 
     /// <summary>raised with the stream id and display name when a stream starts</summary>
     public event Action<string, string>? StreamAdded;
@@ -23,10 +31,13 @@ internal sealed class ScreenShareReceiver : IDisposable
 
     /// <param name="local">this participant, sent with every request so the host can reply</param>
     /// <param name="sendToHost">sends a message to the host</param>
+    /// <param name="thumbnailHeight">a tile asking for this height or less gets the grid stream;
+    /// 0 to always take the full stream</param>
     public ScreenShareReceiver(
         Participant local,
         Action<IScreenShareMessage> sendToHost,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        int thumbnailHeight = 0)
     {
         ArgumentNullException.ThrowIfNull(local);
         ArgumentNullException.ThrowIfNull(sendToHost);
@@ -35,6 +46,7 @@ internal sealed class ScreenShareReceiver : IDisposable
         _local = local;
         _sendToHost = sendToHost;
         _timeProvider = timeProvider;
+        _thumbnailHeight = thumbnailHeight;
     }
 
     private Subscription CreateSubscription(string streamId)
@@ -44,7 +56,9 @@ internal sealed class ScreenShareReceiver : IDisposable
         return subscription;
     }
 
-    private bool RemoveSubscription(string streamId)
+    /// <param name="keepPicture">true when switching between a sharer's two streams, so the
+    /// tile keeps showing the last picture until the other stream's first frame arrives</param>
+    private bool RemoveSubscription(string streamId, bool keepPicture = false)
     {
         if (!_subscriptions.Remove(streamId, out Subscription? subscription))
         {
@@ -52,36 +66,57 @@ internal sealed class ScreenShareReceiver : IDisposable
         }
 
         subscription.Dispose();
-        _frames.Remove(streamId);
+        if (!keepPicture)
+        {
+            _frames.Remove(StreamLayers.BaseOf(streamId));
+        }
+
         return true;
     }
 
     /// <summary>
-    /// starts receiving a stream. the host replies with a full frame from its copy.
-    /// unknown streams and existing subscriptions are ignored.
+    /// starts receiving a sharer's stream, or switches between its full and grid streams when
+    /// the tile's size changes. the host replies with the sharer's next full frame.
+    /// unknown streams and unchanged subscriptions are ignored.
     /// </summary>
+    /// <param name="streamId">the sharer's id, as given by StreamAdded</param>
     public void Subscribe(string streamId, int maxHeight)
     {
-        if (!_streamNames.ContainsKey(streamId) || _subscriptions.ContainsKey(streamId))
+        if (!_streamNames.ContainsKey(streamId))
         {
             return;
         }
 
-        _subscriptions[streamId] = CreateSubscription(streamId);
-        _sendToHost(new Subscribe(_local, streamId, maxHeight));
+        string wanted = maxHeight <= _thumbnailHeight && _withThumbnail.Contains(streamId)
+            ? StreamLayers.ThumbnailOf(streamId)
+            : streamId;
+        if (_subscriptions.ContainsKey(wanted))
+        {
+            return;
+        }
+
+        string other = wanted == streamId ? StreamLayers.ThumbnailOf(streamId) : streamId;
+        if (RemoveSubscription(other, keepPicture: true))
+        {
+            _sendToHost(new Unsubscribe(_local, other));
+        }
+
+        _subscriptions[wanted] = CreateSubscription(wanted);
+        _sendToHost(new Subscribe(_local, wanted, maxHeight));
     }
 
     /// <summary>
-    /// stops receiving a stream and forgets its picture
+    /// stops receiving a sharer's stream and forgets its picture
     /// </summary>
     public void Unsubscribe(string streamId)
     {
-        if (!RemoveSubscription(streamId))
+        foreach (string layer in new[] { streamId, StreamLayers.ThumbnailOf(streamId) })
         {
-            return;
+            if (RemoveSubscription(layer))
+            {
+                _sendToHost(new Unsubscribe(_local, layer));
+            }
         }
-
-        _sendToHost(new Unsubscribe(_local, streamId));
     }
 
     /// <summary>
@@ -94,20 +129,47 @@ internal sealed class ScreenShareReceiver : IDisposable
 
     private void OnStreamStarted(StreamStarted started)
     {
-        bool isNew = !_streamNames.ContainsKey(started.StreamId);
-        _streamNames[started.StreamId] = started.DisplayName;
-
         // a restarted stream numbers its frames from 0 again, so start a fresh picture;
-        // the host sends this subscriber a full frame
+        // the host sends this subscriber the sharer's next full frame
         if (_subscriptions.Remove(started.StreamId, out Subscription? old))
         {
             old.Dispose();
             _subscriptions[started.StreamId] = CreateSubscription(started.StreamId);
         }
 
+        // a grid stream is not a new participant: remember it is on offer, and stop there
+        if (StreamLayers.IsThumbnail(started.StreamId))
+        {
+            _withThumbnail.Add(StreamLayers.BaseOf(started.StreamId));
+            return;
+        }
+
+        bool isNew = !_streamNames.ContainsKey(started.StreamId);
+        _streamNames[started.StreamId] = started.DisplayName;
+
         if (isNew)
         {
             StreamAdded?.Invoke(started.StreamId, started.DisplayName);
+        }
+    }
+
+    private void OnStreamStopped(StreamStopped stopped)
+    {
+        if (StreamLayers.IsThumbnail(stopped.StreamId))
+        {
+            _withThumbnail.Remove(StreamLayers.BaseOf(stopped.StreamId));
+            RemoveSubscription(stopped.StreamId, keepPicture: true);
+            return;
+        }
+
+        // the sharer stopped: drop whichever of its streams we had, and its picture
+        RemoveSubscription(StreamLayers.ThumbnailOf(stopped.StreamId), keepPicture: true);
+        _withThumbnail.Remove(stopped.StreamId);
+        RemoveSubscription(stopped.StreamId);
+        _frames.Remove(stopped.StreamId);
+        if (_streamNames.Remove(stopped.StreamId))
+        {
+            StreamRemoved?.Invoke(stopped.StreamId);
         }
     }
 
@@ -127,12 +189,14 @@ internal sealed class ScreenShareReceiver : IDisposable
             return;
         }
 
+        // either of a sharer's streams draws the same tile
+        string sharer = StreamLayers.BaseOf(packet.StreamId);
         using (Bitmap frame = subscription.Stitcher.GetCurrentFrame()!)
         {
-            _frames.Update(packet.StreamId, frame);
+            _frames.Update(sharer, frame);
         }
 
-        FrameUpdated?.Invoke(packet.StreamId);
+        FrameUpdated?.Invoke(sharer);
     }
 
     /// <summary>
@@ -147,11 +211,7 @@ internal sealed class ScreenShareReceiver : IDisposable
                 break;
 
             case StreamStopped stopped:
-                RemoveSubscription(stopped.StreamId);
-                if (_streamNames.Remove(stopped.StreamId))
-                {
-                    StreamRemoved?.Invoke(stopped.StreamId);
-                }
+                OnStreamStopped(stopped);
                 break;
 
             case ScreenDataPacket packet:
