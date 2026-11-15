@@ -47,6 +47,13 @@
                             <FontIcon Glyph="&#xF67B;"/>
                         </Button>
 
+                        <ToggleButton
+                            x:Name="ButtonSmartShape"
+                            ToolTipService.ToolTip="Smart Shape Recognition (AI Auto-Convert)"
+                            Click="ButtonSmartShape_Click">
+                            <FontIcon Glyph="&#xE946;"/>
+                        </ToggleButton>
+
                         <Button
                             x:Name="ButtonUndo"
                             ToolTipService.ToolTip="Undo your last action"
