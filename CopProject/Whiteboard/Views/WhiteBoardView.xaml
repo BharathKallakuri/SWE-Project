@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Name="foo"
     x:Class="Whiteboard.Views.WhiteBoardView"
@@ -78,7 +78,8 @@
 
                         <Button
                             x:Name="ButtonTextBox"
-                            ToolTipService.ToolTip="Textbox">
+                            ToolTipService.ToolTip="Textbox"
+                            Click="ButtonTextBox_Click">
                             <FontIcon Glyph="&#xE8AC;"/>
                         </Button>
 
@@ -87,6 +88,18 @@
                             ToolTipService.ToolTip="Square"
                             Click="ButtonSquare_Click">
                             <FontIcon Glyph="&#xE739;" />
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonRectangle"
+                            ToolTipService.ToolTip="Rectangle"
+                            Click="ButtonRectangle_Click">
+                            <Rectangle
+                                Width="22"
+                                Height="14"
+                                Fill="Transparent"
+                                Stroke="Black"
+                                StrokeThickness="2" />
                         </Button>
 
                         <Button
@@ -100,6 +113,18 @@
                                 Stroke="Black"
                                 StrokeThickness="2" />
                         </Button>
+
+                         <Button
+                             x:Name="ButtonEllipse"
+                             ToolTipService.ToolTip="Ellipse"
+                             Click="ButtonEllipse_Click">
+                             <Ellipse
+                                 Width="22"
+                                 Height="14"
+                                 Fill="Transparent"
+                                 Stroke="Black"
+                                 StrokeThickness="2" />
+                         </Button>
 
                         <Button
                             x:Name="ButtonEqTriangle"
@@ -348,9 +373,7 @@
                         Width="10000"
                         Height="10000"
                         Background="White"
-                        PointerPressed="WhiteboardCanvas_PointerPressed"
                         PointerMoved="WhiteboardCanvas_PointerMoved"
-                        PointerReleased="WhiteboardCanvas_PointerReleased"
                         PointerCaptureLost="WhiteboardCanvas_PointerCaptureLost"
                         DoubleTapped="WhiteboardCanvas_DoubleTapped"/>
                 </ScrollViewer>

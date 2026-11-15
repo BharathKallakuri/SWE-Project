@@ -16,11 +16,14 @@ public enum WhiteboardTool
 {
     Pen,
     Square,
+    Rectangle,
     Circle,
+    Ellipse,
     EqTriangle,
+    Textbox,
     Eraser,
     Line,
-    Polygon
+    Polygon,
 }
 
 [ExcludeFromCodeCoverage]
@@ -29,8 +32,11 @@ public partial class WhiteBoardViewModel : IDisposable
 {
     private IViewModelState _penState;
     private IViewModelState _squareState;
+    private IViewModelState _rectangleState;
     private IViewModelState _circleState;
+    private IViewModelState _ellipseState;
     private IViewModelState _eqTriangleState;
+    private TextboxState _textboxState;
     private IViewModelState _eraserState;
     private IViewModelState _lineState;
     private IViewModelState _polygonState;
@@ -43,6 +49,19 @@ public partial class WhiteBoardViewModel : IDisposable
     private bool _isInitialized;
 
     public WhiteboardTool SelectedTool { get; private set; } = WhiteboardTool.Pen;
+
+    /// <summary>
+    /// Whether a pointer press that lands on a rendered textbox should be forwarded
+    /// to the current tool (e.g. eraser) instead of being left to the textbox.
+    /// </summary>
+    public bool HandlesPointerOnTextbox
+    {
+        get
+        {
+            EnsureInitialized();
+            return _currentState.HandlesPointerOnTextbox;
+        }
+    }
 
 
     /// <summary>
@@ -104,13 +123,15 @@ public partial class WhiteBoardViewModel : IDisposable
         CanvasPreview preview = new(canvas);
         _penState = new PenState(_whiteboardClient, preview, toolbarInfo);
         _squareState = new ShapeSquareState(_whiteboardClient, preview, toolbarInfo);
+        _rectangleState = new ShapeRectangleState(_whiteboardClient, preview, toolbarInfo);
         _circleState = new ShapeCircleState(_whiteboardClient, preview, toolbarInfo);
+        _ellipseState = new ShapeEllipseState(_whiteboardClient, preview, toolbarInfo);
         _eraserState = new EraserState(_whiteboardClient);
         _eqTriangleState = new ShapeEqTriangleState(_whiteboardClient, preview, toolbarInfo);
+        _textboxState = new TextboxState(_whiteboardClient, preview, toolbarInfo);
         _lineState = new LineState(_whiteboardClient, preview, toolbarInfo);
         _polygonState = new PolygonState(_whiteboardClient, preview, toolbarInfo);
-        _renderer = new WhiteboardRenderer(_whiteboardClient.Canvas, canvas);
-
+        _renderer = new WhiteboardRenderer(_whiteboardClient.Canvas, canvas, _textboxState);
         _currentState = _penState;
         _isInitialized = true;
     }
@@ -138,11 +159,17 @@ public partial class WhiteBoardViewModel : IDisposable
     {
         EnsureInitialized();
 
+        // Save any text typed into a textbox before leaving the current tool
+        _textboxState.CommitPendingEdits();
+
         IViewModelState selectedState = tool switch {
             WhiteboardTool.Pen => _penState,
             WhiteboardTool.Square => _squareState,
+            WhiteboardTool.Rectangle => _rectangleState,
             WhiteboardTool.Circle => _circleState,
+            WhiteboardTool.Ellipse => _ellipseState,
             WhiteboardTool.EqTriangle => _eqTriangleState,
+            WhiteboardTool.Textbox => _textboxState,
             WhiteboardTool.Eraser => _eraserState,
             WhiteboardTool.Line => _lineState,
             WhiteboardTool.Polygon => _polygonState,
@@ -169,6 +196,9 @@ public partial class WhiteBoardViewModel : IDisposable
     public void PointerPressed(Point2D point)
     {
         EnsureInitialized();
+
+        // Interacting with the canvas ends any in-progress text edit
+        _textboxState.CommitPendingEdits();
         _currentState.PointerPressed(point);
     }
 
