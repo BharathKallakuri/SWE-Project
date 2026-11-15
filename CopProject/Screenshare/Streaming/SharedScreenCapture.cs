@@ -1,4 +1,8 @@
-﻿using System.Drawing;
+﻿// Author = Sanjaysiva A
+// Roll Number = 112301030
+
+using System.Diagnostics;
+using System.Drawing;
 
 namespace ScreenShare;
 
@@ -21,9 +25,9 @@ internal sealed class SharedScreenCapture : IDisposable
         _source = source;
         _maxAge = maxAge;
         _timeProvider = timeProvider;
+        Trace.TraceInformation("[Screenshare] SharedScreenCapture.constructorr: Initialized SharedScreenCapture with maxAge {0}.", maxAge);
     }
 
-    /// <summary>gets how many times the screen itself was captured; for tests</summary>
     internal int ScreenCaptures { get; private set; }
 
     /// <summary>a copy of the latest capture, taking a new one if it is too old</summary>
@@ -34,11 +38,20 @@ internal sealed class SharedScreenCapture : IDisposable
             DateTimeOffset now = _timeProvider.GetUtcNow();
             if (_latest == null || now - _takenAt >= _maxAge)
             {
-                Bitmap fresh = _source.Capture();
-                ScreenCaptures++;
-                _latest?.Dispose();
-                _latest = fresh;
-                _takenAt = now;
+                try
+                {
+                    Bitmap fresh = _source.Capture();
+                    ScreenCaptures++;
+                    _latest?.Dispose();
+                    _latest = fresh;
+                    _takenAt = now;
+                    Trace.TraceInformation("[Screenshare] SharedScreenCapture.Capture: Captured fresh frame (total captures: {0}).", ScreenCaptures);
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError("[Screenshare] SharedScreenCapture.Capture: Failed to capture from image source: {0}", ex);
+                    throw;
+                }
             }
 
             return new Bitmap(_latest);
@@ -60,6 +73,7 @@ internal sealed class SharedScreenCapture : IDisposable
         }
 
         (_source as IDisposable)?.Dispose();
+        Trace.TraceInformation("[Screenshare] SharedScreenCapture.Dispose: Disposed SharedScreenCapture.");
     }
 
     private sealed class SharedView(SharedScreenCapture owner) : IImageSource

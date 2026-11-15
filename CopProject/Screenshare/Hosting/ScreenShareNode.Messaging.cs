@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿// Author = Sanjaysiva A
+// Roll Number = 112301030
+
+using System.Diagnostics;
 using System.Net;
 using Screenshare;
 
@@ -20,6 +23,7 @@ public sealed partial class ScreenShareNode
     /// </summary>
     public void StopSharing()
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareNode.StopSharing: Stopping screen sharing for participant {0}.", LocalParticipant.Id);
         Sharing? sharing;
         lock (_sharingLock)
         {
@@ -39,8 +43,11 @@ public sealed partial class ScreenShareNode
 
             if (_sharing != null)
             {
+                Trace.TraceWarning("[Screenshare] ScreenShareNode.StartSharing: Screen sharing is already active.");
                 return;
             }
+
+            Trace.TraceInformation("[Screenshare] ScreenShareNode.StartSharing: Starting screen sharing for participant {0} (runCaptureLoop: {1}).", LocalParticipant.Id, runCaptureLoop);
 
             // one screen capture feeds both streams; the full stream may reuse it for one frame
             var capture = new SharedScreenCapture(
@@ -69,6 +76,8 @@ public sealed partial class ScreenShareNode
                 full.StartLoop();
                 thumbnail?.StartLoop();
             }
+
+            Trace.TraceInformation("[Screenshare] ScreenShareNode.StartSharing: Screen sharing started successfully for participant {0}.", LocalParticipant.Id);
         }
     }
 
@@ -80,11 +89,13 @@ public sealed partial class ScreenShareNode
         Sharing? sharing = Volatile.Read(ref _sharing);
         if (sharing == null)
         {
+            Trace.TraceWarning("[Screenshare] ScreenShareNode.CaptureOnce: Sharing is not active.");
             return false;
         }
 
         bool sentFull = sharing.Full.CaptureOnce();
         bool sentThumbnail = sharing.Thumbnail?.CaptureOnce() ?? false;
+        Trace.TraceInformation("[Screenshare] ScreenShareNode.CaptureOnce: Captured frame (sentFull: {0}, sentThumbnail: {1}).", sentFull, sentThumbnail);
         return sentFull || sentThumbnail;
     }
 
@@ -93,6 +104,7 @@ public sealed partial class ScreenShareNode
     {
         if (_host != null)
         {
+            Trace.TraceInformation("[Screenshare] ScreenShareNode.RunMaintenance: Posting timeout check for host.");
             _dispatcher.Post(_host.RemoveTimedOutViewers);
         }
     }
@@ -103,19 +115,28 @@ public sealed partial class ScreenShareNode
     /// </summary>
     private void SendToHost(IScreenShareMessage message)
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareNode.SendToHost: Sending {0} message to host.", message.Kind);
         byte[] bytes = ScreenShareCodec.Encode(message);
 
-        if (_host != null)
+        try
         {
-            _dispatcher.Post(() => _host.Handle(message, bytes));
+            if (_host != null)
+            {
+                _dispatcher.Post(() => _host.Handle(message, bytes));
+            }
+            else if (message.Kind == ScreenShareMessageKind.Data && _options.SendDataLossy)
+            {
+                _communicator.SendMessageLossy(_session.HostEndpoint, bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
+            }
+            else
+            {
+                _communicator.SendMessage(_session.HostEndpoint, bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
+            }
         }
-        else if (message.Kind == ScreenShareMessageKind.Data && _options.SendDataLossy)
+        catch (Exception ex)
         {
-            _communicator.SendMessageLossy(_session.HostEndpoint, bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
-        }
-        else
-        {
-            _communicator.SendMessage(_session.HostEndpoint, bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
+            Trace.TraceError("[Screenshare] ScreenShareNode.SendToHost: Failed to send {0} to host endpoint {1}: {2}", message.Kind, _session.HostEndpoint, ex);
+            throw;
         }
     }
 
@@ -126,8 +147,11 @@ public sealed partial class ScreenShareNode
     {
         if (message is ScreenDataPacket packet && packet.StreamId == LocalParticipant.Id)
         {
+            Trace.TraceInformation("[Screenshare] ScreenShareNode.OnNetworkMessage: Dropped own data packet for stream {0}.", packet.StreamId);
             return;
         }
+
+        Trace.TraceInformation("[Screenshare] ScreenShareNode.OnNetworkMessage: Queuing network message of kind {0}.", message.Kind);
 
         if (_host != null)
         {
@@ -144,6 +168,8 @@ public sealed partial class ScreenShareNode
     /// </summary>
     private void HandleFromHost(IScreenShareMessage message)
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareNode.HandleFromHost: Handling message kind {0} from host.", message.Kind);
+
         switch (message)
         {
             case FrameAck ack:
@@ -157,7 +183,12 @@ public sealed partial class ScreenShareNode
             case UpdateSendToList update:
                 // the host says who watches one of our streams; nobody: stop sending its frames
                 ScreenShareSender? sender = Volatile.Read(ref _sharing)?.SenderOf(update.StreamId);
-                sender?.Paused = update.SendTo.Count == 0;
+                if (sender != null)
+                {
+                    bool paused = update.SendTo.Count == 0;
+                    sender.Paused = paused;
+                    Trace.TraceInformation("[Screenshare] ScreenShareNode.HandleFromHost: Stream {0} pause status updated to {1} ({2} viewers).", update.StreamId, paused, update.SendTo.Count);
+                }
                 break;
 
             default:
@@ -202,25 +233,42 @@ public sealed partial class ScreenShareNode
 
         public void Send(IPEndPoint to, IScreenShareMessage message, byte[] bytes)
         {
-            if (to.Equals(_node.LocalParticipant.Endpoint))
+            try
             {
-                _node._dispatcher.Post(() => _node.HandleFromHost(message));
+                if (to.Equals(_node.LocalParticipant.Endpoint))
+                {
+                    _node._dispatcher.Post(() => _node.HandleFromHost(message));
+                }
+                else if (message.Kind == ScreenShareMessageKind.Data && _node._options.SendDataLossy)
+                {
+                    _node._communicator.SendMessageLossy(to, bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
+                }
+                else
+                {
+                    _node._communicator.SendMessage(to, bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
+                }
+                Trace.TraceInformation("[Screenshare] ScreenShareNode.HostOutput.Send: Sent {0} to endpoint {1}.", message.Kind, to);
             }
-            else if (message.Kind == ScreenShareMessageKind.Data && _node._options.SendDataLossy)
+            catch (Exception ex)
             {
-                _node._communicator.SendMessageLossy(to, bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
-            }
-            else
-            {
-                _node._communicator.SendMessage(to, bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
+                Trace.TraceError("[Screenshare] ScreenShareNode.HostOutput.Send: Failed to send {0} to endpoint {1}: {2}", message.Kind, to, ex);
+                throw;
             }
         }
 
         public void Broadcast(IScreenShareMessage message, byte[] bytes)
         {
-            _node._communicator.BroadcastMessage(bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
-
-            _node._dispatcher.Post(() => _node.HandleFromHost(message));
+            try
+            {
+                _node._communicator.BroadcastMessage(bytes, ScreenShareModule.ModuleId, ScreenShareModule.PriorityFor(message));
+                _node._dispatcher.Post(() => _node.HandleFromHost(message));
+                Trace.TraceInformation("[Screenshare] ScreenShareNode.HostOutput.Broadcast: Broadcasted {0} message.", message.Kind);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("[Screenshare] ScreenShareNode.HostOutput.Broadcast: Failed to broadcast {0} message: {1}", message.Kind, ex);
+                throw;
+            }
         }
     }
 }
