@@ -773,6 +773,7 @@ public sealed partial class MainWindow : Window
         catch (Exception exception)
         {
             DisposeChatSession();
+            MeetingChatPanel.ShowChatServerStartupError();
             System.Diagnostics.Trace.WriteLine($"[Chat] Could not start the chat session: {exception}");
         }
     }

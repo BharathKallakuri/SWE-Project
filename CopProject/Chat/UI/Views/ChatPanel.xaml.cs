@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
+using Chat;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -67,6 +68,22 @@ public sealed partial class ChatPanel : UserControl
     public ChatPanel()
     {
         InitializeComponent();
+    }
+
+    public async void ShowChatServerStartupError()
+    {
+        if (XamlRoot is null)
+        {
+            return;
+        }
+
+        ContentDialog dialog = new() {
+            Title = "Chat unavailable",
+            Content = ChatServer.StartupFailureMessage,
+            CloseButtonText = "OK",
+            XamlRoot = XamlRoot
+        };
+        await dialog.ShowAsync();
     }
 
     public ChatPanelViewModel? ViewModel
