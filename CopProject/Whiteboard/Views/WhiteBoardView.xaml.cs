@@ -37,6 +37,9 @@ public sealed partial class WhiteBoardView : UserControl
         // opt in to handled events; otherwise tools like the eraser never see them.
         WhiteboardCanvas.AddHandler(PointerPressedEvent, new PointerEventHandler(WhiteboardCanvas_PointerPressed), handledEventsToo: true);
         WhiteboardCanvas.AddHandler(PointerReleasedEvent, new PointerEventHandler(WhiteboardCanvas_PointerReleased), handledEventsToo: true);
+
+        // Needed so dragging a textbox with the select tool keeps receiving moves
+        WhiteboardCanvas.AddHandler(PointerMovedEvent, new PointerEventHandler(WhiteboardCanvas_PointerMoved), handledEventsToo: true);
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }

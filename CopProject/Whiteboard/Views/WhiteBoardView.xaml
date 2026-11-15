@@ -338,7 +338,6 @@
                     Background="Transparent"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    PointerMoved="WhiteboardCanvas_PointerMoved"
                     PointerCaptureLost="WhiteboardCanvas_PointerCaptureLost"/>
             </Border>
         </Grid>
