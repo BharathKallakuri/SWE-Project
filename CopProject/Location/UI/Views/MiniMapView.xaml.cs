@@ -73,6 +73,9 @@ public sealed partial class MiniMapView : UserControl
         };
     }
 
+    /// <summary>
+    /// Puts a mini map inside the Incident Details page.
+    /// </summary>
     public static void AttachTo(IncidentDetailsPage page)
     {
         page.Loaded += async (sender, e) => {
@@ -150,6 +153,9 @@ public sealed partial class MiniMapView : UserControl
         MapView.NavigateToString(MapPage);
     }
 
+    /// <summary>
+    /// Handles messages from the map when the user clicks on it.
+    /// </summary>
     private async void WebMessageReceived(
         CoreWebView2 sender,
         CoreWebView2WebMessageReceivedEventArgs args)
@@ -192,6 +198,9 @@ public sealed partial class MiniMapView : UserControl
         await UpdatePinAsync();
     }
 
+    /// <summary>
+    /// Moves the pin to the current latitude and longitude if the map is ready.
+    /// </summary>
     private async Task UpdatePinAsync()
     {
         if (!_isMapReady || !Coordinates.IsValid(_latitude, _longitude))
