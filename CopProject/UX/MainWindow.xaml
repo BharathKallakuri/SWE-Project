@@ -1,7 +1,3 @@
-<!-- 
-Authors = Aashritha.y, Kalyani
-Roll numbers = 112301038, 112301016 
--->
 <?xml version="1.0" encoding="utf-8"?>
 <Window
     x:Class="UX.MainWindow"
@@ -12,7 +8,10 @@ Roll numbers = 112301038, 112301016
     xmlns:chat="using:UI.Views"
     xmlns:whiteboard="using:Whiteboard.Views"
     xmlns:screenshare="using:ScreenShare.Views">
-
+<!-- 
+Authors = Aashritha.y, Kalyani
+Roll numbers = 112301038, 112301016 
+-->
     <Grid x:Name="Root" RequestedTheme="Light" Background="#EEF3F9">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
