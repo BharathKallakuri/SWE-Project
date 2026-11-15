@@ -1,4 +1,7 @@
-﻿namespace LocationTracker.Models;
+﻿// Author = Ankit Gupta
+// Roll Number = 112301010
+
+namespace LocationTracker.Models;
 
 public static class Coordinates
 {

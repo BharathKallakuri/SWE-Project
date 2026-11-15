@@ -1,11 +1,11 @@
-﻿using System.Xml.Linq;
+﻿// Author = Vishesh Srivastava
+// Roll Number = 112301037
+
+using System.Xml.Linq;
 
 DirectoryInfo? currentDirectory = new(Directory.GetCurrentDirectory());
-DirectoryInfo? rootDirectory = currentDirectory.Parent?.Parent;
-if (rootDirectory is null)
-{
-    throw new DirectoryNotFoundException("Could not find the repository root.");
-}
+DirectoryInfo? rootDirectory = (currentDirectory.Parent?.Parent) ?? throw new DirectoryNotFoundException("Could not find the repository root.");
+
 string root = rootDirectory.FullName;
 
 /// <summary>
