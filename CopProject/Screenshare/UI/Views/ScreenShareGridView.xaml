@@ -57,7 +57,7 @@
             <!-- pictures drawn per second for the zoomed stream, updated once a second -->
             <Border VerticalAlignment="Top" HorizontalAlignment="Left" Margin="12"
                     Padding="8,4" CornerRadius="4" Background="White">
-                <TextBlock x:Name="ZoomedFps" AutomationProperties.AutomationId="ZoomedFps"
+                <TextBlock x:Name="ZoomedFps"
                            Text="{x:Bind ViewModel.ZoomedTile.FpsText, Mode=OneWay}"
                            Foreground="Black" FontFamily="Consolas"/>
             </Border>
@@ -70,7 +70,6 @@
                     VerticalAlignment="Bottom" Spacing="12" Padding="12">
             <!-- "Start screen sharing" when off; turns red with "Stop screen sharing" while sharing -->
             <ToggleButton x:Name="ShareButton"
-                          AutomationProperties.AutomationId="ShareButton"
                           IsChecked="{x:Bind ViewModel.IsSharingScreen, Mode=TwoWay}"
                           Content="{x:Bind ViewModel.ShareButtonText, Mode=OneWay}"
                           AutomationProperties.Name="{x:Bind ViewModel.ShareButtonText, Mode=OneWay}"

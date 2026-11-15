@@ -124,6 +124,16 @@ public class ParticipantTileTests
     }
 
     [Fact]
+    public void Frame_AfterFirstFrame_IsTheSurfacesPicture()
+    {
+        ParticipantTile tile = NewTileWithFakeSurface();
+
+        tile.UpdateFrame(Frame(4, 3));
+
+        Assert.Same(Assert.Single(_surfaces).Source, tile.Frame);
+    }
+
+    [Fact]
     public void UpdateFrame_FirstFrame_RaisesFrameChangedOnce()
     {
         ParticipantTile tile = NewTileWithFakeSurface();
