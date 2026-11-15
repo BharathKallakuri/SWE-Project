@@ -1,5 +1,5 @@
-﻿// Author = Vishesh Srivastava, Ankit Gupta
-// Roll Number = 112301037, 112301010
+﻿// Author = Vishesh Srivastava
+// Roll Number = 112301037
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
