@@ -15,6 +15,9 @@ namespace Cloud.UI.ViewModels;
 /// </summary>
 public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDisposable
 {
+    private static readonly ServerPreset s_lessPowerful = new("Less powerful server", "https://cloudnetworkingserver20261030224421-f0cwbvhng6g3htd8.indiasouthcentral-01.azurewebsites.net/hub");
+    private static readonly ServerPreset s_morePowerful = new("More powerful server", "https://cop-networking-server-cxc4fjgwg4h2hmc6.indiasouthcentral-01.azurewebsites.net/hub");
+
     private readonly NotificationService _service;
     private readonly Action<Action> _runOnUi;
     private readonly HashSet<Guid> _seen = new();
@@ -26,7 +29,6 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
     private string _messageText = string.Empty;
     private string? _errorText;
     private string _lastSyncText = "Not synced yet";
-    private DateTimeOffset _lastMessageTime = DateTimeOffset.MinValue;
 
     /// <param name="createMessenger">Creates a messenger for a server URL, e.g. <c>url =&gt; MessengerFactory.GetMessenger(url)</c>.</param>
     /// <param name="runOnUi">Runs an action on the UI thread. Defaults to the current thread's DispatcherQueue; tests can pass <c>action =&gt; action()</c>.</param>
@@ -49,12 +51,11 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
         _service.Reconnected += OnReconnected;
         _service.Closed += OnClosed;
 
-        _serverUrl = string.Empty;
+        // the more powerful server is the default (set directly: the commands do not exist yet)
+        _selectedPreset = s_morePowerful;
+        _serverUrl = s_morePowerful.Url;
 
-        // Connect and Reconnect do the same thing (connect, starting from a clean connection);
-        // they only differ in when they are available.
         ConnectCommand = new ConnectCommand(this, _service);
-        ReconnectCommand = new ReconnectCommand(this, _service);
         DisconnectCommand = new DisconnectCommand(this, _service);
         SendCommand = new SendCommand(this, _service);
         SyncCommand = new SyncCommand(this, _service);
@@ -74,10 +75,7 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
     public ObservableCollection<NotificationItem> Notifications { get; } = new();
 
     /// <summary>Hardcoded servers offered in the dropdown. A custom URL can still be typed in the URL box.</summary>
-    public IReadOnlyList<ServerPreset> ServerPresets { get; } = [
-        new("Less powerful server", "https://cloudnetworkingserver20261030224421-f0cwbvhng6g3htd8.indiasouthcentral-01.azurewebsites.net/hub"),
-        new("More powerful server", "https://cop-networking-server-cxc4fjgwg4h2hmc6.indiasouthcentral-01.azurewebsites.net/hub")
-    ];
+    public IReadOnlyList<ServerPreset> ServerPresets { get; } = [s_lessPowerful, s_morePowerful];
 
     /// <summary>The preset chosen in the dropdown; null when the URL box holds a custom URL.</summary>
     public ServerPreset? SelectedPreset
@@ -165,7 +163,6 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
     public bool IsEmpty => Notifications.Count == 0;
 
     public ConnectCommand ConnectCommand { get; }
-    public ReconnectCommand ReconnectCommand { get; }
     public DisconnectCommand DisconnectCommand { get; }
     public SendCommand SendCommand { get; }
     public SyncCommand SyncCommand { get; }
@@ -184,6 +181,9 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
         }
     }
 
+    /// <summary>The server we are connected to (as connected); null when not connected. Lets Connect tell "same server" from "a new one".</summary>
+    internal string? ConnectedUrl { get; set; }
+
     internal bool IsOnline => State == ConnectionState.Connected || State == ConnectionState.Reconnecting;
 
     /// <summary>
@@ -191,11 +191,7 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
     /// Live messages do not move it: otherwise a live message (e.g. our own send) would push it
     /// past older messages that were never synced, and those would be skipped.
     /// </summary>
-    internal DateTimeOffset LastMessageTime
-    {
-        get => _lastMessageTime;
-        set => _lastMessageTime = value;
-    }
+    internal DateTimeOffset LastMessageTime { get; set; } = DateTimeOffset.MinValue;
 
     /// <summary>Adds a message to the list. Returns the new item, or null when it was already shown.</summary>
     internal NotificationItem? AddNotification(Message message)
@@ -220,7 +216,6 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
     private void RaiseCommandStates()
     {
         ConnectCommand.RaiseCanExecuteChanged();
-        ReconnectCommand.RaiseCanExecuteChanged();
         DisconnectCommand.RaiseCanExecuteChanged();
         SendCommand.RaiseCanExecuteChanged();
         SyncCommand.RaiseCanExecuteChanged();
@@ -231,7 +226,7 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
     {
         Notifications.Clear();
         _seen.Clear();
-        _lastMessageTime = DateTimeOffset.MinValue;
+        LastMessageTime = DateTimeOffset.MinValue;
         LastSyncText = "Not synced yet";
     }
 
@@ -254,11 +249,15 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
         });
     }
 
-    private void OnReconnected(string? _)
+    private void OnReconnected(string? connectionId)
     {
         _runOnUi(() => {
             ErrorText = null;
             State = _service.State;
+
+            // the connection came back by itself: catch up on what was missed meanwhile.
+            // (does nothing if another command is running; it handles its own errors)
+            _ = SyncCommand.ExecuteAsync();
         });
     }
 
