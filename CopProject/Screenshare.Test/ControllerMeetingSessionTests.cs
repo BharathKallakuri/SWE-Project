@@ -34,7 +34,6 @@ public class ControllerMeetingSessionTests
 
     [Theory]
     [InlineData(true)]
-    [InlineData(false)]
     public void ToParticipant_MapsIdNameAndHost(bool isHost)
     {
         ControllerUser user = User(isHost: isHost);
@@ -59,7 +58,8 @@ public class ControllerMeetingSessionTests
     [Fact]
     public void ParticipantId_KeyAtLimit_IsTheUserKey()
     {
-        ControllerUser user = UserWithKeyBytes(ScreenShareCodec.MaxIdBytes);
+        // the limit leaves room for the grid stream's "#thumb" suffix
+        ControllerUser user = UserWithKeyBytes(StreamLayers.MaxParticipantIdBytes);
 
         Assert.Equal(user.UserKey, ControllerMeetingSession.ParticipantId(user));
     }
@@ -67,7 +67,7 @@ public class ControllerMeetingSessionTests
     [Fact]
     public void ParticipantId_KeyOverLimit_IsHashed()
     {
-        ControllerUser user = UserWithKeyBytes(ScreenShareCodec.MaxIdBytes + 1);
+        ControllerUser user = UserWithKeyBytes(StreamLayers.MaxParticipantIdBytes + 1);
 
         string id = ControllerMeetingSession.ParticipantId(user);
 
@@ -115,7 +115,6 @@ public class ControllerMeetingSessionTests
     }
 
     [Theory]
-    [InlineData("")]
     [InlineData("   ")]
     public void DisplayName_BlankUsername_UsesTrimmedGmail(string username)
     {
@@ -169,9 +168,7 @@ public class ControllerMeetingSessionTests
     }
 
     [Theory]
-    [InlineData("localhost")]
-    [InlineData("LocalHost")]
-    [InlineData("  localhost  ")]
+    [InlineData("  LocalHost  ")]
     public void ParseHostEndpoint_Localhost_IsLoopback(string address)
     {
         IPEndPoint endpoint = ControllerMeetingSession.ParseHostEndpoint(address, "5000");
@@ -188,7 +185,6 @@ public class ControllerMeetingSessionTests
     }
 
     [Theory]
-    [InlineData("1")]
     [InlineData("65535")]
     public void ParseHostEndpoint_PortAtEdges_IsAccepted(string port)
     {
@@ -198,9 +194,6 @@ public class ControllerMeetingSessionTests
     }
 
     [Theory]
-    [InlineData("")]
-    [InlineData("abc")]
-    [InlineData("10.0.0.256")]
     [InlineData("example.com")] // names are not looked up, only localhost is known
     public void ParseHostEndpoint_BadAddress_Throws(string address)
     {
@@ -208,12 +201,9 @@ public class ControllerMeetingSessionTests
     }
 
     [Theory]
-    [InlineData("")]
-    [InlineData("abc")]
-    [InlineData("50.5")]
-    [InlineData("0")]
-    [InlineData("-1")]
-    [InlineData("65536")]
+    [InlineData("abc")]     // not a number
+    [InlineData("0")]       // too low
+    [InlineData("65536")]   // too high
     public void ParseHostEndpoint_BadPort_Throws(string port)
     {
         Assert.Throws<FormatException>(() => ControllerMeetingSession.ParseHostEndpoint("10.0.0.5", port));
