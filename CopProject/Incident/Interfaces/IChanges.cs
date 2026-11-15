@@ -1,5 +1,8 @@
 ﻿namespace Incidents;
 
+/// <summary>
+/// An interface for describing changes in an incident.
+/// </summary>
 public interface IChange
 {
     string Description { get; }

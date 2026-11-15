@@ -1,7 +1,13 @@
 ﻿namespace Incidents;
 
+/// <summary>
+/// The class that represents an incident.
+/// </summary>
 public partial class Incident
 {
+    /// <summary>
+    /// Add evidence to an incident.
+    /// </summary>
     internal void AddEvidence(List<IncidentEvidence> evidence)
     {
         ArgumentNullException.ThrowIfNull(evidence);
@@ -23,6 +29,9 @@ public partial class Incident
         UpdateTime = changedTime;
     }
 
+    /// <summary>
+    /// Update status of an incident.
+    /// </summary>
     internal void UpdateStatus(IncidentStatus newStatus, string changedBy)
     {
         if (Status == newStatus) { return; }
@@ -40,6 +49,9 @@ public partial class Incident
         UpdateTime = changedTime;
     }
 
+    /// <summary>
+    /// Update category of an incident.
+    /// </summary>
     internal void UpdateCategory(IncidentCategory newCategory, string changedBy)
     {
         if (Category == newCategory) { return; }
@@ -57,6 +69,9 @@ public partial class Incident
         UpdateTime = changedTime;
     }
 
+    /// <summary>
+    /// Update severity of an incident.
+    /// </summary>
     internal void UpdateSeverity(IncidentSeverity newSeverity, string changedBy)
     {
         if (Severity == newSeverity) { return; }
@@ -74,6 +89,9 @@ public partial class Incident
         UpdateTime = changedTime;
     }
 
+    /// <summary>
+    /// Update location of an incident.
+    /// </summary>
     internal void UpdateLocation(IncidentLocation location, string changedBy)
     {
         ArgumentNullException.ThrowIfNull(location);
@@ -104,6 +122,9 @@ public partial class Incident
         UpdateTime = changedTime;
     }
 
+    /// <summary>
+    /// Add correlation edge between incidents.
+    /// </summary>
     internal static bool AddAdjacentIncident(Incident incident1, Incident incident2, string changedBy)
     {
         if (incident1.Id == incident2.Id
@@ -130,6 +151,9 @@ public partial class Incident
         return true;
     }
 
+    /// <summary>
+    /// Clones an incident.
+    /// </summary>
     internal Incident Clone()
     {
         return new Incident(

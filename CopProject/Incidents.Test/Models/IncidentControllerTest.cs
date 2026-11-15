@@ -1,16 +1,12 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
-using System.Security.Policy;
+﻿// Author: Shreesh Amit Chembeti
+// Roll Number: 112301046
+
 using FileSynchroniser.Models;
-using Incidents;
 using Incidents.Test.Implementations;
 using Cloud.Persistence;
-using Windows.ApplicationModel.Store.Preview.InstallControl;
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 
-namespace Incidents.Test;
+namespace Incidents.Test.Models;
 
 [TestClass]
 public sealed class IncidentControllerTest
@@ -44,6 +40,16 @@ public sealed class IncidentControllerTest
             FromDateTime: new DateTime(2026, 1, 1),
             ToDateTime: new DateTime(2026, 12, 31)
         ),
+
+        // Location Filter
+        new IncidentFilter(
+            Location: new IncidentLocationFilter(
+                Latitude: 10.80,
+                Longitude: 76.72,
+                Address: "IIT Palakkad, Kerala, India",
+                Radius: 10.0
+            )
+        ),
         
         // All filters
         new IncidentFilter(
@@ -62,6 +68,7 @@ public sealed class IncidentControllerTest
             )
         )
     ];
+    private List<Incident> _mockIncidents = new List<Incident>();
 
     public static IEnumerable<object?[]> IncidentFilters =>
         s_filters.Select(filter => new object?[] { filter });
@@ -76,6 +83,9 @@ public sealed class IncidentControllerTest
         SetupMockIncidents();
     }
 
+    /// <summary>
+    /// Initializes Mock Incident Controller
+    /// </summary>
     private async Task SetupIncidentController()
     {
         IStorage cloudStorageService = new IncidentCloudStorageService();
@@ -84,17 +94,20 @@ public sealed class IncidentControllerTest
     }
 
     /// <summary>
-    /// Checks that creating an incident with a null argument throws an ArgumentNullException.
+    /// Creating an incident with a null argument throws an ArgumentNullException.
     /// </summary>
     [TestMethod]
-    public async Task CreateNullIncident()
+    public async Task CreateIncident_NullArgument_ThrowsArgumentNullException()
     {
         await Assert.ThrowsExactlyAsync<ArgumentNullException>(
           () => _incidentController.CreateIncident(null!));
     }
 
+    /// <summary>
+    /// Creating a valid incident request returns a valid incident.
+    /// </summary>
     [TestMethod]
-    public async Task CreateIncident()
+    public async Task CreateIncident_ValidArgument_ReturnsCreatedIncident()
     {
         var incident = new CreateIncidentRequest(
             title: "Test Incident",
@@ -116,7 +129,7 @@ public sealed class IncidentControllerTest
     /// </summary>
     /// <returns></returns>
     [TestMethod]
-    public async Task GetIncidentById()
+    public async Task GetIncident_ValidId_ReturnsRetrievedIncident()
     {
         var incident = new CreateIncidentRequest(
             title: "Test Incident",
@@ -144,8 +157,6 @@ public sealed class IncidentControllerTest
         Assert.AreEqual(incident.Location.Latitude, retrievedIncident.Location.Latitude);
         Assert.AreEqual(incident.Location.Longitude, retrievedIncident.Location.Longitude);
     }
-
-    private List<Incident> _mockIncidents = new List<Incident>();
 
     /// <summary>
     /// Creates few incidents for testing
@@ -193,7 +204,11 @@ public sealed class IncidentControllerTest
             category: IncidentCategory.Theft,
             severity: IncidentSeverity.Low,
             status: IncidentStatus.InProgress,
-            location: new IncidentLocation(Latitude: 3.0, Longitude: 3.0),
+            location: new IncidentLocation(
+                Latitude: 10.80,
+                Longitude: 76.72,
+                Address: "IIT Palakkad, Kerala, India"
+            ),
             creationTime: DateTime.UtcNow,
             updateTime: DateTime.UtcNow,
             evidence: [],
@@ -203,6 +218,9 @@ public sealed class IncidentControllerTest
         ]);
     }
 
+    /// <summary>
+    /// Refetches and updates the local cache of incidents
+    /// </summary>
     [TestMethod]
     public async Task RefreshIncidents_ReturnsTask()
     {
@@ -210,27 +228,33 @@ public sealed class IncidentControllerTest
     }
 
     /// <summary>
-    /// Get incident by id and check that the retrieved incident matches the created incident.
+    /// Gets all incidents with a valid filter.
     /// </summary>
-    /// <returns></returns>
     [TestMethod]
     [DynamicData(nameof(IncidentFilters))]
-    public async Task GetAllIncidents(IncidentFilter filter)
+    public async Task GetAllIncidents_ValidFilter_ReturnsIncidents(IncidentFilter filter)
     {
         List<Incident> incidents = await _incidentController.GetAllIncidents(filter);
 
         Assert.IsNotNull(incidents);
     }
 
+    /// <summary>
+    /// Add evidence to a null incident throws ArgumentNullException.
+    /// </summary>
+    /// <returns></returns>
     [TestMethod]
-    public async Task AddEvidence_NullIncident()
+    public async Task AddEvidence_NullIncident_ThrowsArgumentNullException()
     {
         await Assert.ThrowsExactlyAsync<ArgumentNullException>(
             () => _incidentController.AddEvidence(null!, []));
     }
 
+    /// <summary>
+    /// Add null evidence to a valid incident throws ArgumentNullException.
+    /// </summary>
     [TestMethod]
-    public async Task AddEvidence_NullEvidence()
+    public async Task AddEvidence_NullEvidence_ThrowsArgumentNullException()
     {
         if (_mockIncidents.Count == 0)
         {
@@ -241,8 +265,11 @@ public sealed class IncidentControllerTest
             () => _incidentController.AddEvidence(_mockIncidents[0], null!));
     }
 
+    /// <summary>
+    /// Add Evidence to a resolved Incident throws InvalidOperationException
+    /// </summary>
     [TestMethod]
-    public async Task AddEvidence_ResolvedIncident()
+    public async Task AddEvidence_ResolvedIncident_ThrowsInvalidOperationException()
     {
         Incident resolvedIncident = new Incident(
             id: Guid.NewGuid(),
@@ -264,8 +291,11 @@ public sealed class IncidentControllerTest
             () => _incidentController.AddEvidence(resolvedIncident, []));
     }
 
+    /// <summary>
+    /// Adding evidence when ETag of Incident not available in cloud storage thows InvalidOperationException
+    /// </summary>
     [TestMethod]
-    public async Task AddEvidence_ETagNotFound()
+    public async Task AddEvidence_ETagNotFound_ThrowsInvalidOperationException()
     {
         Incident? incident = _mockIncidents.Find(i => i.Status != IncidentStatus.Resolved);
 
@@ -287,8 +317,11 @@ public sealed class IncidentControllerTest
             }));
     }
 
+    /// <summary>
+    /// Add evidence to a valid Incident returns true
+    /// </summary>
     [TestMethod]
-    public async Task AddEvidence_ValidIncident()
+    public async Task AddEvidence_ValidIncident_ReturnsTrue()
     {
         Incident? incident = await _incidentController.CreateIncident(new CreateIncidentRequest(
             title: "Test Incident",

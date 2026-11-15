@@ -81,7 +81,7 @@ public sealed partial class IncidentDetailsPage : Page
             DataContext = dialogViewModel
         };
 
-        Trace.TraceInformation($"[Incidents]: Showing Add Evidence dialog for incident with ID {ViewModel?.Incident?.Id}.");
+        Trace.TraceInformation($"[Incidents] AddEvidence_Click: Showing Add Evidence dialog for incident with ID {ViewModel?.Incident?.Id}.");
         ContentDialogResult result = await dialog.ShowAsync();
 
         if (result == ContentDialogResult.Primary && dialogViewModel.IsValid && ViewModel != null)
