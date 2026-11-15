@@ -301,6 +301,10 @@ public class ChatClientTests
         Guid existingId = chatroom.AddMessage(NewMessage("guest", "Old"));
         RecordingCommunicator communicator = new();
         using ChatClient client = NewClient(communicator, chatroom);
+        bool roomResetRaised = false;
+        bool participantsChangedRaised = false;
+        client.RoomReset += () => roomResetRaised = true;
+        client.ParticipantsChanged += _ => participantsChangedRaised = true;
         ApplyBatch(client, 0, 1, new ChatOperation[]
         {
             new MessageEdited(existingId, "Updated", "guest", null)
@@ -313,6 +317,8 @@ public class ChatClientTests
         Assert.Equal(0, client.Version);
         Assert.False(chatroom.TryGetMessage(existingId, out _));
         Assert.DoesNotContain("guest", chatroom.Participants);
+        Assert.True(roomResetRaised);
+        Assert.True(participantsChangedRaised);
     }
 
     [Fact]
