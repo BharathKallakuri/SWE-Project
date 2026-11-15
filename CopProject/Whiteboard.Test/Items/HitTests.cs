@@ -185,11 +185,34 @@ public class HitTests : BaseGenerator
         // Midpoint on line should hit
         Assert.True(line.HitTest(new Point2D(60, 10)));
 
+        // Endpoints should hit
+        Assert.True(line.HitTest(new Point2D(10, 10)));
+        Assert.True(line.HitTest(new Point2D(110, 10)));
+
         // Within default threshold (5.0 - TestTolerance) should hit
         Assert.True(line.HitTest(new Point2D(60, 10 + Whiteboard.Items.Line.DefaultHitThreshold - TestTolerance)));
 
         // Beyond default threshold should miss
         Assert.False(line.HitTest(new Point2D(60, 10 + Whiteboard.Items.Line.DefaultHitThreshold + 1.0)));
+
+        // Diagonal line test
+        var diagLine = new Line() {
+            Begin = new Point2D(0, 0),
+            End = new Point2D(100, 100),
+            Width = 2.0
+        };
+        Assert.True(diagLine.HitTest(new Point2D(50, 50)));
+        Assert.True(diagLine.HitTest(new Point2D(52, 50)));
+        Assert.False(diagLine.HitTest(new Point2D(80, 20)));
+
+        // Thick line test where Width / 2.0 > DefaultHitThreshold (e.g. Width = 20 -> threshold = 10)
+        var thickLine = new Line() {
+            Begin = new Point2D(0, 50),
+            End = new Point2D(100, 50),
+            Width = 20.0
+        };
+        Assert.True(thickLine.HitTest(new Point2D(50, 58)));
+        Assert.False(thickLine.HitTest(new Point2D(50, 62)));
     }
 
     /// <summary>
@@ -240,5 +263,106 @@ public class HitTests : BaseGenerator
         // Outside should miss
         Assert.False(textbox.HitTest(new Point2D(40, 50)));
         Assert.False(textbox.HitTest(new Point2D(160, 90)));
+    }
+
+    /// <summary>
+    /// Test hit testing for polygon item.
+    /// </summary>
+    [Fact]
+    public void Polygon()
+    {
+        var poly = new Whiteboard.Items.Shapes.Polygon() {
+            BorderWidth = 4.0,
+            Vertices = [
+                new Point2D(0, 0),
+                new Point2D(100, 0),
+                new Point2D(100, 100),
+                new Point2D(0, 100)
+            ]
+        };
+
+        // Interior point should hit
+        Assert.True(poly.HitTest(new Point2D(50, 50)));
+
+        // Vertices should hit
+        Assert.True(poly.HitTest(new Point2D(0, 0)));
+        Assert.True(poly.HitTest(new Point2D(100, 100)));
+
+        // Points on edges should hit
+        Assert.True(poly.HitTest(new Point2D(50, 0)));
+        Assert.True(poly.HitTest(new Point2D(100, 50)));
+
+        // Points within threshold of edge should hit (threshold = max(5.0, 4.0/2) = 5.0)
+        Assert.True(poly.HitTest(new Point2D(50, -4.0)));
+        Assert.True(poly.HitTest(new Point2D(104.0, 50)));
+
+        // Points far outside should miss
+        Assert.False(poly.HitTest(new Point2D(50, -10.0)));
+        Assert.False(poly.HitTest(new Point2D(150, 50)));
+        Assert.False(poly.HitTest(new Point2D(-20, -20)));
+
+        // Non-convex polygon test (V-shape)
+        var vShape = new Whiteboard.Items.Shapes.Polygon() {
+            BorderWidth = 2.0,
+            Vertices = [
+                new Point2D(0, 0),
+                new Point2D(50, 50),
+                new Point2D(100, 0),
+                new Point2D(50, 100)
+            ]
+        };
+
+        // Interior of V-shape should hit
+        Assert.True(vShape.HitTest(new Point2D(50, 75)));
+
+        // Concave region outside should miss
+        Assert.False(vShape.HitTest(new Point2D(50, 20)));
+
+        // Degenerate cases
+        var emptyPoly = new Whiteboard.Items.Shapes.Polygon();
+        Assert.False(emptyPoly.HitTest(new Point2D(0, 0)));
+
+        var singlePointPoly = new Whiteboard.Items.Shapes.Polygon() {
+            Vertices = [new Point2D(10, 10)]
+        };
+        Assert.False(singlePointPoly.HitTest(new Point2D(10, 10)));
+
+        // 2-point polygon (acts as line segment)
+        var twoPointPoly = new Whiteboard.Items.Shapes.Polygon() {
+            BorderWidth = 2.0,
+            Vertices = [new Point2D(0, 0), new Point2D(100, 0)]
+        };
+        Assert.True(twoPointPoly.HitTest(new Point2D(50, 0)));
+        Assert.True(twoPointPoly.HitTest(new Point2D(50, 4.0)));
+        Assert.False(twoPointPoly.HitTest(new Point2D(50, 10.0)));
+
+        // Triangle polygon (3 vertices)
+        var triPoly = new Whiteboard.Items.Shapes.Polygon() {
+            Vertices = [
+                new Point2D(50, 0),
+                new Point2D(100, 100),
+                new Point2D(0, 100)
+            ]
+        };
+        Assert.True(triPoly.HitTest(new Point2D(50, 50))); // Centroid/interior
+        Assert.False(triPoly.HitTest(new Point2D(10, 10))); // Outside top-left
+
+        // Thick border scaling test (BorderWidth = 30 -> threshold = 15)
+        var thickBorderPoly = new Whiteboard.Items.Shapes.Polygon() {
+            BorderWidth = 30.0,
+            Vertices = [
+                new Point2D(0, 0),
+                new Point2D(100, 0),
+                new Point2D(100, 100),
+                new Point2D(0, 100)
+            ]
+        };
+        Assert.True(thickBorderPoly.HitTest(new Point2D(50, -12.0))); // Within 15.0 of top edge
+        Assert.False(thickBorderPoly.HitTest(new Point2D(50, -20.0))); // Beyond 15.0 of top edge
+
+        // Polygon after MoveBy
+        poly.MoveBy(200, 200);
+        Assert.False(poly.HitTest(new Point2D(50, 50)));   // Old location misses
+        Assert.True(poly.HitTest(new Point2D(250, 250)));  // New location hits
     }
 }
