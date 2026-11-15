@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Incidents;
 using LocationTracker.Interfaces;
+using LocationTracker.Models;
 using LocationTracker.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -17,6 +18,7 @@ public sealed partial class LocationMapView : UserControl
     private readonly IMapService _map;
     private readonly LocationMapViewModel _viewModel;
     private bool _mapInitializationStarted;
+    private LocationSearchResult? _pendingSearchLocation;
 
     public LocationMapView(IMapService map)
     {
@@ -24,6 +26,7 @@ public sealed partial class LocationMapView : UserControl
         _map = map;
         _viewModel = new LocationMapViewModel(map);
         _viewModel.IncidentsChanged += ViewModel_IncidentsChanged;
+        _viewModel.LocationSearchRequested += ViewModel_LocationSearchRequested;
         DataContext = _viewModel;
         Loaded += LocationMapView_Loaded;
     }
@@ -124,6 +127,27 @@ public sealed partial class LocationMapView : UserControl
         }
     }
 
+    private async void ViewModel_LocationSearchRequested(
+        object? sender,
+        LocationSearchResult location)
+    {
+        _pendingSearchLocation = location;
+        await ShowSearchLocationAsync();
+    }
+
+    private async Task ShowSearchLocationAsync()
+    {
+        if (MapView.CoreWebView2 is null || _pendingSearchLocation is null)
+        {
+            return;
+        }
+
+        string latitude = JsonSerializer.Serialize(_pendingSearchLocation.Latitude);
+        string longitude = JsonSerializer.Serialize(_pendingSearchLocation.Longitude);
+        await MapView.ExecuteScriptAsync($"showSearchLocation({latitude}, {longitude});");
+        _pendingSearchLocation = null;
+    }
+
     /// <summary>
     /// Handles a click on the map by retrieving the location and invoking the LocationSelected event.
     /// </summary>
@@ -157,6 +181,7 @@ public sealed partial class LocationMapView : UserControl
         }
 
         await _viewModel.LoadAsync();
+        await ShowSearchLocationAsync();
     }
 
     private const string MapPage = """
@@ -178,6 +203,7 @@ public sealed partial class LocationMapView : UserControl
           <script>
             const map = L.map('map').setView([10.79, 76.68], 12);
             const incidentMarkers = L.layerGroup().addTo(map);
+            let searchMarker = null;
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
               attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
@@ -202,6 +228,19 @@ public sealed partial class LocationMapView : UserControl
                 lng: e.latlng.lng
               }));
             });
+
+            function showSearchLocation(lat, lng) {
+              if (searchMarker !== null) {
+                map.removeLayer(searchMarker);
+              }
+              searchMarker = L.circleMarker([lat, lng], {
+                radius: 7,
+                color: '#b00020',
+                fillColor: '#e53935',
+                fillOpacity: 0.9
+              }).addTo(map);
+              map.setView([lat, lng], Math.max(map.getZoom(), 14));
+            }
 
             function selectIncident(id) {
               window.chrome.webview.postMessage(JSON.stringify({

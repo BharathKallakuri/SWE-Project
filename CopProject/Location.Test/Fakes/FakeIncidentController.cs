@@ -14,11 +14,6 @@ internal sealed class FakeIncidentController : IIncidentController
     public List<Incident> Incidents { get; set; } = [];
 
     /// <summary>
-    /// The incident that GetIncidentById returns.
-    /// </summary>
-    public Incident? IncidentById { get; set; }
-
-    /// <summary>
     /// The filter passed to the last GetAllIncidents call.
     /// </summary>
     public IncidentFilter? LastFilter { get; private set; }
@@ -42,10 +37,12 @@ internal sealed class FakeIncidentController : IIncidentController
         LastFilter = filter;
         return Task.FromResult(Incidents);
     }
+
     public Task<Incident> GetIncidentById(Guid id)
     {
-        return Task.FromResult(IncidentById ?? throw new KeyNotFoundException($"No incident with id {id}."));
+        throw new NotSupportedException();
     }
+
     public Task<Incident> CreateIncident(CreateIncidentRequest request)
     {
         throw new NotSupportedException();
