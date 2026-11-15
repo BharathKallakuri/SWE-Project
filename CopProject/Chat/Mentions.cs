@@ -1,4 +1,7 @@
-﻿namespace Chat;
+﻿// Author: Zeeshan
+// Roll no.: 112301040
+
+namespace Chat;
 
 /// <summary>
 /// Represents the users mentioned in a message.
@@ -21,8 +24,7 @@ public sealed class Mentions : IMentions
     /// <returns>A new mentions object with the same values.</returns>
     public Mentions Clone()
     {
-        return new Mentions
-        {
+        return new Mentions {
             All = All,
             Usernames = new HashSet<string>(Usernames, Usernames.Comparer)
         };

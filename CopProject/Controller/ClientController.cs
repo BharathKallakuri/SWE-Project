@@ -1,3 +1,6 @@
+// K.Bala Krishna
+// 112301015
+
 using System.Diagnostics;
 using System.Net;
 using System.Text;
@@ -7,8 +10,10 @@ using Utils;
 
 namespace Controller;
 
-// Client-side implementation of IControllerService .
-// Runs on Machine B (or any participant machine). It sends JOIN/LEAVE messages to the remote host and listens for broadcast notifications
+/// <summary>
+/// Client-side implementation of IControllerService .
+/// Runs on Machine B (or any participant machine). It sends JOIN/LEAVE messages to the remote host and listens for broadcast notifications.
+/// </summary>
 public sealed class ClientController : IControllerService
 {
     private ControllerUser? _currentUser;
@@ -17,16 +22,23 @@ public sealed class ClientController : IControllerService
     private string? _hostIp;
     private int _hostPort;
 
-    //for storing the user count and users information
+    // For storing the user count and users information
     private int _lastKnownUserCount;
-    private readonly Dictionary<string,ControllerUser> _knownUsers = new();
-    private readonly List<IUserNotificationHandler> _notificationHandlers=new();
-    internal bool _initialSync=false;
+    private readonly Dictionary<string, ControllerUser> _knownUsers = new();
+    private readonly List<IUserNotificationHandler> _notificationHandlers = new();
+    internal bool InitialSync = false;
+    internal readonly ManualResetEventSlim JoinResponseEvent = new(false);
+    public string? LastErrorMessage { get; internal set; }
+    internal bool IsJoined = false;
 
     // Events
     public event EventHandler<MeetingEndedEventArgs>? MeetingEnded;
     public event EventHandler<UserJoinedEventArgs>? UserJoined;
     public event EventHandler<UserLeftEventArgs>? UserLeft;
+    public event EventHandler<string>? SecurityAlertRaised;
+    public event EventHandler<string>? JoinRejected;
+    internal void RaiseSecurityAlert(string alert) => SecurityAlertRaised?.Invoke(this, alert);
+    internal void RaiseJoinRejected(string reason) => JoinRejected?.Invoke(this, reason);
 
     public int ListenPort => _communicator?.ListenPort ?? 0;
     public ICommunicator? Communicator => _communicator;
@@ -35,19 +47,22 @@ public sealed class ClientController : IControllerService
     public void RegisterNotificationHandler(IUserNotificationHandler handler)
     {
         if(handler != null && !_notificationHandlers.Contains(handler))
+        {
             _notificationHandlers.Add(handler);
-        
+        }
     }
 
     public void UnregisterNotificationHandler(IUserNotificationHandler handler)
     {
         if(handler != null && _notificationHandlers.Contains(handler))
+        {
             _notificationHandlers.Remove(handler);
+        }
     }
 
     internal void NotifyHandlersUserJoined(ControllerUser user)
     {
-        foreach(var handler in _notificationHandlers)
+        foreach (var handler in _notificationHandlers)
         {
             handler.OnUserJoined(user);
         }
@@ -65,12 +80,12 @@ public sealed class ClientController : IControllerService
     {
         _currentUser = user ?? throw new ArgumentNullException(nameof(user));
         _communicator = communicator;
-        // Subscribe to incoming notifications from the host if communicator was provided upfront
+        // Subscribe to incoming notifications from the host if communicator was provided upfront.
         _communicator?.AddSubscriber(Protocol.ControllerSubscriberId, new ClientNotificationListener(this));
     }
-    // IControllerService functions implementation 
 
-    // Not applicable on the client side. Use a HostController to start /end meetings.
+    // IControllerService functions implementation. 
+    // Not applicable on the client side. Use a HostController to start/end meetings.
     public bool StartMeeting()
     {
         Trace.TraceWarning("StartMeeting called on Client. Only the host can start meetings.");
@@ -91,8 +106,9 @@ public sealed class ClientController : IControllerService
             Trace.TraceWarning($"JoinMeeting failed: '{hostIp}' is not a valid IP address.");
             return false;
         }
-        var serverEndPoint = new IPEndPoint(IPAddress.Parse(hostIp),hostPort);
-        if(_communicator != null){
+        var serverEndPoint = new IPEndPoint(ipAddress, hostPort);
+        if(_communicator != null)
+        {
             _communicator.RemoveSubscriber(Protocol.ControllerSubscriberId);
             if(_communicator is IDisposable disposable){
                 disposable.Dispose();
@@ -101,12 +117,13 @@ public sealed class ClientController : IControllerService
         }
 
         ICommunicator? comm = CommunicatorFactory.CreateCommunicator(serverEndPoint,isServer:false,isClient:true);
-        if(comm == null || comm.ListenPort == 0){
+        if(comm == null || comm.ListenPort == 0)
+        {
             (comm as IDisposable)?.Dispose() ;
             Trace.TraceWarning($"failed to connect to host at {hostIp}:{hostPort}");
             return false;
         }
-        _communicator = comm ;
+        _communicator = comm;
         _communicator.AddSubscriber(Protocol.ControllerSubscriberId, new ClientNotificationListener(this));
         _hostIp = hostIp;
         _hostPort = hostPort;
@@ -119,12 +136,25 @@ public sealed class ClientController : IControllerService
         {   
             _knownUsers[user.UserKey] = user;
         }
-         string message = Protocol.FormatJoinRequest(user);
+        JoinResponseEvent.Reset();
+        IsJoined = false;
+        LastErrorMessage = null;
+        string message = Protocol.FormatJoinRequest(user);
         SendToHost(hostIp, hostPort, message);
         Trace.TraceInformation($"Sent JOIN for user '{user.Username}' to {hostIp}:{hostPort}.");
+        // Wait up to 1 second for host response.
+        JoinResponseEvent.Wait(TimeSpan.FromMilliseconds(1000));
+        if (!IsJoined)
+        {
+            if (string.IsNullOrEmpty(LastErrorMessage))
+            {
+                LastErrorMessage = $"Could not connect to meeting at {hostIp}:{hostPort}.";
+            }
+            return false;
+        }
         return true;
     }
-    //Sends a LEAVE message to the host the client previously joined.
+    // Sends a LEAVE message to the host the client previously joined.
     public void LeaveMeeting(ControllerUser user)
     {
         if (_hostIp == null)
@@ -137,10 +167,10 @@ public sealed class ClientController : IControllerService
         SendToHost(_hostIp, _hostPort, message);
         Trace.TraceInformation($"Sent LEAVE for user '{user.Gmail}' to {_hostIp}:{_hostPort}.");
 
-        // Allow background SendingQueueListenerClient thread to flush the LEAVE packet before closing socket
+        // Allow background SendingQueueListenerClient thread to flush the LEAVE packet before closing socket.
         Thread.Sleep(150);
 
-        // Clear remembered host and local tracking
+        // Clear remembered host and local tracking.
         _hostIp = null;
         _hostPort = 0;
         _lastKnownUserCount = 0;
@@ -173,9 +203,8 @@ public sealed class ClientController : IControllerService
         _communicator.SendMessage(endPoint, data, Protocol.ControllerSubscriberId, 1);
     }
 
-    // Indicates whether the client is currently joined to a host
+    // Indicates whether the client is currently joined to a host.
     public bool IsConnected => _hostIp != null;
-
 
     // Returns the user count tracked from host broadcast notifications.
     public int GetActiveUserCount()
@@ -186,7 +215,7 @@ public sealed class ClientController : IControllerService
         }
     }
 
-    /// Returns the  user list, updated from host broadcast notifications.
+    // Returns the  user list, updated from host broadcast notifications.
     public List<ControllerUser> GetActiveUsers()
     {
         lock (_knownUsers)
@@ -194,8 +223,7 @@ public sealed class ClientController : IControllerService
             return _knownUsers.Values.ToList();
         }
     }
-
-    // fire events from notification listener ─────────────
+    // Fire events from notification listener .
 
     internal void RaiseMeetingEnded(MeetingEndedEventArgs e)
     {
@@ -217,6 +245,7 @@ public sealed class ClientController : IControllerService
         }
         MeetingEnded?.Invoke(this, e);
     }
+
     internal void RaiseUserJoined(UserJoinedEventArgs e) => UserJoined?.Invoke(this, e);
     internal void RaiseUserLeft(UserLeftEventArgs e) => UserLeft?.Invoke(this, e);
     internal void UpdateUserCount(int count) => _lastKnownUserCount = count;
@@ -233,16 +262,15 @@ public sealed class ClientController : IControllerService
     }
 
     public int GetLastKnownUserCount() => _lastKnownUserCount;
-
+    
     // Cleanup 
-
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
 
-        // Auto-send LEAVE to host if still connected, so host cleans up this user
-        if (_hostIp != null&& _currentUser != null)
+        // Auto-send LEAVE to host if still connected, so host cleans up this user.
+        if (IsJoined && _hostIp != null&& _currentUser != null)
         {
             try
             {
@@ -270,130 +298,6 @@ public sealed class ClientController : IControllerService
         lock (_knownUsers)
         {
             _knownUsers.Clear();
-        }
-    }
-}
-
-// Listens for broadcast notifications from the host and raises events .
-
-internal class ClientNotificationListener : IMessageListener
-{
-    private readonly ClientController _client;
-
-    public ClientNotificationListener(ClientController client)
-    {
-        _client = client;
-    }
-
-    public void OnMessageReceived(byte[] message)
-    {
-        if (message == null || message.Length == 0)
-        {
-            Trace.TraceWarning("Client received empty notification.");
-            return;
-        }
-
-        string messageString = Encoding.UTF8.GetString(message);
-        ParsedMessage? parsed = Protocol.Parse(messageString);
-        if (parsed == null)
-        {
-            Trace.TraceWarning($"Client received malformed notification: {messageString}");
-            return;
-        }
-        
-        switch (parsed.Type)
-        {
-            case Protocol.NotifyUserJoined:
-                {
-                    try
-                    {
-                        // Payload: TargetUserJson | AllUsersListJson
-                        ControllerUser? joinedUser = JsonSerializer.Deserialize<ControllerUser>(parsed.Payload);
-                        if (joinedUser != null)
-                        {
-                            if (parsed.Extra.Length > 0 && !string.IsNullOrWhiteSpace(parsed.Extra[0]))
-                            {
-                                var allUsers = JsonSerializer.Deserialize<List<ControllerUser>>(parsed.Extra[0]);
-                                if (allUsers != null)
-                                    _client.SyncUserList(allUsers);
-                            }
-                            _client.UpdateUserCount(_client.GetActiveUserCount());
-                            _client.RaiseUserJoined(new UserJoinedEventArgs(joinedUser, _client.GetActiveUserCount()));
-                            if(!_client._initialSync)
-                            {
-                                _client._initialSync=true;
-                                //First call always notifies about the Current User
-                                if(_client.CurrentUser != null)
-                                {
-                                    _client.NotifyHandlersUserJoined(_client.CurrentUser);
-                                }
-                                foreach(var user in _client.GetActiveUsers())
-                                {
-                                    if(user.UserKey != _client.CurrentUser?.UserKey)
-                                    {
-                                        _client.NotifyHandlersUserJoined(user);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                _client.NotifyHandlersUserJoined(joinedUser);
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.TraceError($"Failed to parse NotifyUserJoined: {ex.Message}");
-                    }
-                    break;
-                }
-
-            case Protocol.NotifyUserLeft:
-                {
-                    try
-                    {
-                        // Payload: TargetUserJson | AllUsersListJson
-                        ControllerUser? leftUser = JsonSerializer.Deserialize<ControllerUser>(parsed.Payload);
-                        if (leftUser != null)
-                        {
-                            if (parsed.Extra.Length > 0 && !string.IsNullOrWhiteSpace(parsed.Extra[0]))
-                            {
-                                var allUsers = JsonSerializer.Deserialize<List<ControllerUser>>(parsed.Extra[0]);
-                                if (allUsers != null)
-                                    _client.SyncUserList(allUsers);
-                            }
-                            _client.UpdateUserCount(_client.GetActiveUserCount());
-                            _client.RaiseUserLeft(new UserLeftEventArgs(leftUser, _client.GetActiveUserCount()));
-                            _client.NotifyHandlersUserLeft(leftUser);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.TraceError($"Failed to parse NotifyUserLeft: {ex.Message}");
-                    }
-                    break;
-                }
-
-            case Protocol.NotifySessionEnded:
-                {
-                    try
-                    {
-                        ControllerUser? hostUser = JsonSerializer.Deserialize<ControllerUser>(parsed.Payload);
-                        if (hostUser != null)
-                        {
-                            _client.RaiseMeetingEnded(new MeetingEndedEventArgs(hostUser));
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.TraceError($"Failed to parse NotifySessionEnded: {ex.Message}");
-                    }
-                    break;
-                }
-
-            default:
-                Trace.TraceWarning($"Client received unknown notification type: {parsed.Type}");
-                break;
         }
     }
 }

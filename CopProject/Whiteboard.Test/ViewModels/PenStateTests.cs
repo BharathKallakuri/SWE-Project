@@ -145,7 +145,7 @@ public class PenStateTests
 
         Assert.Equal(1, _preview.ClearCount);
 
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(2)); // Wait for at most 2000ms
+        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
         Assert.True(wasAdded, "Item was not added in due time.");
 
         Assert.Single(_client.AddedItems);

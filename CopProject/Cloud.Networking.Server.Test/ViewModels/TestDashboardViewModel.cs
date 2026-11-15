@@ -1,6 +1,5 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿// Author = Simeon Kandan Sonar
+// Roll Number = 112301031
 
 using Cloud.Networking.Server.Models;
 using Cloud.Networking.Server.ViewModels;
@@ -294,5 +293,14 @@ public class TestDashboardViewModel
 
         _monitor.Verify(m => m.GetRecentMessagesAsync(It.IsAny<int>()), Times.Once);
         Assert.AreEqual(1, raised);
+    }
+
+    /// <summary>Tests that a refresh failure triggered by the monitor is swallowed (logged), not thrown.</summary>
+    [TestMethod]
+    public void MonitorTriggeredRefreshFailureDoesNotThrow()
+    {
+        _monitor.SetupGet(m => m.Connections).Throws(new InvalidOperationException("boom"));
+        _monitor.Raise(m => m.Changed += null);
+        _monitor.VerifyGet(m => m.Connections, Times.Once);
     }
 }

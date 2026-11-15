@@ -1,13 +1,18 @@
-﻿using System.Collections.ObjectModel;
+﻿// Author = Vishesh Srivastava
+// Roll Number = 112301037
+
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Incidents;
+using Incidents.ViewModels.Utils;
 using LocationTracker.Interfaces;
 using LocationTracker.Models;
-using LocationTracker.ViewModels.Utils;
+using LocationViewModelBase = LocationTracker.ViewModels.Utils.ViewModelBase;
 
 namespace LocationTracker.ViewModels;
 
-public sealed class LocationMapViewModel : ViewModelBase
+public sealed class LocationMapViewModel : LocationViewModelBase
 {
     private readonly IMapService _mapService;
     private string _titleText = string.Empty;
@@ -16,15 +21,18 @@ public sealed class LocationMapViewModel : ViewModelBase
     private string _selectedStatus = "All";
     private DateTimeOffset? _fromDate;
     private DateTimeOffset? _toDate;
+    private string _addressSearchText = string.Empty;
     private string _errorMessage = string.Empty;
 
     public ObservableCollection<MapIncident> Incidents { get; } = [];
 
     public event EventHandler? IncidentsChanged;
+    public event EventHandler<LocationSearchResult>? LocationSearchRequested;
 
     public LocationMapViewModel(IMapService mapService)
     {
         _mapService = mapService;
+        SearchAddressCommand = new RelayCommand(async () => await SearchAddressAsync());
 
         CategoryOptions = ["All", .. Enum.GetNames<IncidentCategory>()];
         SeverityOptions = ["All", .. Enum.GetNames<IncidentSeverity>()];
@@ -34,6 +42,17 @@ public sealed class LocationMapViewModel : ViewModelBase
     public List<string> CategoryOptions { get; }
     public List<string> SeverityOptions { get; }
     public List<string> StatusOptions { get; }
+    public RelayCommand SearchAddressCommand { get; }
+
+    public string AddressSearchText
+    {
+        get => _addressSearchText;
+        set {
+            if (_addressSearchText == value) { return; }
+            _addressSearchText = value;
+            OnPropertyChanged(nameof(AddressSearchText));
+        }
+    }
 
     public string ErrorMessage
     {
@@ -111,6 +130,9 @@ public sealed class LocationMapViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Loads incidents using the current map filters.
+    /// </summary>
     public async Task LoadAsync()
     {
         if (!IsDateRangeValid())
@@ -119,8 +141,17 @@ public sealed class LocationMapViewModel : ViewModelBase
         }
 
         ErrorMessage = string.Empty;
-        List<Incident> incidents =
-            await _mapService.GetIncidentsForMapAsync(BuildFilter());
+        List<Incident> incidents;
+        try
+        {
+            incidents = await _mapService.GetIncidentsForMapAsync(BuildFilter());
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"[Location] LocationMapViewModel.LoadAsync: Error occurred while loading incidents: {ex.Message}");
+            ErrorMessage = "Could not load incidents.";
+            return;
+        }
 
         Incidents.Clear();
         foreach (Incident incident in incidents)
@@ -136,10 +167,44 @@ public sealed class LocationMapViewModel : ViewModelBase
                 incident.Location.Longitude,
                 incident.Location.Address));
         }
-
+        Trace.TraceInformation($"[Location] LocationMapViewModel.LoadAsync: Loaded {Incidents.Count} incidents.");
         IncidentsChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Resolves the entered address and sends it to the map.
+    /// </summary>
+    private async Task SearchAddressAsync()
+    {
+        if (string.IsNullOrWhiteSpace(AddressSearchText))
+        {
+            ErrorMessage = "Enter an address to search.";
+            return;
+        }
+
+        try
+        {
+            LocationSearchResult? location =
+                await _mapService.SearchAddressAsync(AddressSearchText.Trim());
+            if (location is null)
+            {
+                ErrorMessage = "Address not found.";
+                return;
+            }
+
+            ErrorMessage = string.Empty;
+            LocationSearchRequested?.Invoke(this, location);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"[Location] LocationMapViewModel.SearchAddressAsync: Address search failed: {ex.Message}");
+            ErrorMessage = "Could not search for the address.";
+        }
+    }
+
+    /// <summary>
+    /// Converts the selected UI values into a service filter.
+    /// </summary>
     private IncidentFilter BuildFilter()
     {
         string search = TitleText.Trim();
@@ -169,10 +234,14 @@ public sealed class LocationMapViewModel : ViewModelBase
             null);
     }
 
+    /// <summary>
+    /// Stops the reload when the selected dates are reversed.
+    /// </summary>
     private void ApplyFilter()
     {
         if (!IsDateRangeValid())
         {
+            Trace.TraceWarning($"[Location] LocationMapViewModel.ApplyFilter: Invalid date range FromDate={FromDate} ToDate={ToDate}.");
             ErrorMessage = "The start date must be before the end date.";
             return;
         }

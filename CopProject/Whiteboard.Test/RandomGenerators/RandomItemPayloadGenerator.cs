@@ -44,8 +44,12 @@ public class RandomItemPayloadGenerator : BaseGenerator
         Point2D begin = RandomPointGenerator.Generate();
         Point2D end = RandomPointGenerator.Generate();
 
-        // 2. Generate a line payload
-        ItemPayload.Line line = new(begin, end);
+        // 2. Generate random color and thickness
+        string color = RandomColorGenerator.Generate().ToString();
+        double width = Rng.NextDouble() * 50;
+
+        // 3. Generate a line payload
+        ItemPayload.Line line = new(begin, end, color, width);
         return line;
     }
 

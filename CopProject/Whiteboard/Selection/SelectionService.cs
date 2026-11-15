@@ -1,4 +1,7 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+﻿//owner : U Sai Vignesh
+// License : MIT
+
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -9,7 +12,7 @@ using System.Diagnostics.CodeAnalysis;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Items.Shapes;
-using Whiteboard.Models;
+using Whiteboard.Services;
 
 namespace Whiteboard.Selection;
 
@@ -17,10 +20,10 @@ namespace Whiteboard.Selection;
 // Temporary exclusion from code coverage
 public class SelectionService : ISelectionService
 {
-    private readonly WhiteboardCanvas _canvas;
+    private readonly IWhiteboard _canvas;
     private readonly ISelectionState _selectionState;
 
-    public SelectionService(WhiteboardCanvas canvas, ISelectionState selectionState)
+    public SelectionService(IWhiteboard canvas, ISelectionState selectionState)
     {
         _canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
         _selectionState = selectionState ?? throw new ArgumentNullException(nameof(selectionState));
@@ -40,9 +43,30 @@ public class SelectionService : ISelectionService
         return true;
     }
 
+    /// <summary>
+    /// Moves every selected item on the local canvas only.
+    /// Sending the result to the server is left to the caller, so a drag
+    /// can update the screen on every pointer move but be sent just once.
+    /// </summary>
     public bool MoveSelected(double dx, double dy, string modifiedBy = "system")
     {
-        throw new NotImplementedException("MoveSelected is not implemented yet.");
+        bool moved = false;
+
+        foreach (Guid id in _selectionState.SelectedItemIds)
+        {
+            if (!_canvas.Items.TryGetValue(id, out IItem? item))
+            {
+                continue;
+            }
+
+            // Move a copy so the item object held by the canvas (and its history) is never mutated
+            IItem copy = ItemSnapshot.Copy(item);
+            copy.MoveBy(dx, dy);
+            copy.LastModifiedDateTime = DateTime.Now;
+            moved |= _canvas.EditItem(copy);
+        }
+
+        return moved;
     }
 
     public bool RotateSelected(double deltaAngle, string modifiedBy = "system")

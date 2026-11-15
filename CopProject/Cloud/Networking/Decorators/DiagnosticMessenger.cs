@@ -1,6 +1,5 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿// Author = Simeon Kandan Sonar
+// Roll Number = 112301031
 
 using Cloud.Networking.Mocking;
 
@@ -48,13 +47,13 @@ internal sealed class DiagnosticMessenger : IMessenger
     {
         try
         {
-            _tracer.WriteLine("-- connecting");
+            _tracer.Info("-- connecting");
             await _messenger.ConnectAsync();
-            _tracer.WriteLine("-- connected");
+            _tracer.Info("-- connected");
         }
         catch (Exception ex)
         {
-            _tracer.WriteLine($"-- connection failed: {ex}");
+            _tracer.WriteError($"-- connection failed: {ex}");
             throw;
         }
     }
@@ -67,11 +66,11 @@ internal sealed class DiagnosticMessenger : IMessenger
         try
         {
             await _messenger.SendMessageAsync(content);
-            _tracer.WriteLine("-- message sent");
+            _tracer.Info("-- message sent");
         }
         catch (Exception ex)
         {
-            _tracer.WriteLine($"-- message sending failed: {ex}");
+            _tracer.WriteError($"-- message sending failed: {ex}");
             throw;
         }
     }
@@ -84,12 +83,12 @@ internal sealed class DiagnosticMessenger : IMessenger
         try
         {
             IReadOnlyList<Message> missed = await _messenger.SyncAsync(since);
-            _tracer.WriteLine($"-- synced {missed.Count} message(s)");
+            _tracer.Info($"-- synced {missed.Count} message(s)");
             return missed;
         }
         catch (Exception ex)
         {
-            _tracer.WriteLine($"-- sync failed: {ex}");
+            _tracer.WriteError($"-- sync failed: {ex}");
             throw;
         }
     }
@@ -102,36 +101,36 @@ internal sealed class DiagnosticMessenger : IMessenger
         try
         {
             await _messenger.DisconnectAsync();
-            _tracer.WriteLine("-- disconnected");
+            _tracer.Info("-- disconnected");
         }
         catch (Exception ex)
         {
-            _tracer.WriteLine($"-- disconnection failed: {ex}");
+            _tracer.WriteError($"-- disconnection failed: {ex}");
             throw;
         }
     }
 
     private void OnMessageReceived(Message message)
     {
-        _tracer.WriteLine($"-- message received from {message.SenderId}");
+        _tracer.Info($"-- message received from {message.SenderId}");
         MessageReceived?.Invoke(message);
     }
 
     private void OnReconnecting(Exception? exception)
     {
-        _tracer.WriteLine($"-- reconnecting: {exception?.Message}");
+        _tracer.WriteWarn($"-- reconnecting: {exception?.Message}");
         Reconnecting?.Invoke(exception);
     }
 
     private void OnReconnected(string? connectionId)
     {
-        _tracer.WriteLine($"-- reconnected: {connectionId}");
+        _tracer.Info($"-- reconnected: {connectionId}");
         Reconnected?.Invoke(connectionId);
     }
 
     private void OnClosed(Exception? exception)
     {
-        _tracer.WriteLine($"-- connection closed: {exception?.Message}");
+        _tracer.WriteWarn($"-- connection closed: {exception?.Message}");
         Closed?.Invoke(exception);
     }
 
@@ -151,7 +150,7 @@ internal sealed class DiagnosticMessenger : IMessenger
         }
         catch (Exception ex)
         {
-            _tracer.WriteLine($"-- disposal failed: {ex}");
+            _tracer.WriteError($"-- disposal failed: {ex}");
             throw;
         }
     }

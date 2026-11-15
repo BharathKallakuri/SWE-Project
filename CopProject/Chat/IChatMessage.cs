@@ -1,4 +1,7 @@
-﻿namespace Chat;
+﻿// Author: Rajdeep
+// Roll no.: 112301045
+
+namespace Chat;
 
 /// <summary>
 /// Describes the operations supported by a chat message.

@@ -1,9 +1,10 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
 using Whiteboard.Interfaces;
+using Windows.UI;
 
 namespace Whiteboard.Items;
 
@@ -14,6 +15,8 @@ public class Line : Item, ILine
     public const double DefaultHitThreshold = 5.0;
     public Point2D Begin { get; set; } = new Point2D(0, 0);
     public Point2D End { get; set; } = new Point2D(1, 1);
+    public Color Color { get; set; } = Windows.UI.Color.FromArgb(255, 0, 0, 0);
+    public double Width { get; set; } = 3.0;
 
     public override Rect2D BoundingBox
     {
@@ -40,9 +43,8 @@ public class Line : Item, ILine
 
     public override bool HitTest(Point2D point)
     {
+        double threshold = Math.Max(DefaultHitThreshold, Width / 2.0);
         double distance = PerpDist(point, Begin, End);
-        return distance <= DefaultHitThreshold;
+        return distance <= threshold;
     }
-
-
 }
