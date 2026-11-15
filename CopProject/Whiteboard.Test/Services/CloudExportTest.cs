@@ -1,4 +1,8 @@
-﻿using System.Text.Json;
+﻿/// Author : Karthik Krishna M
+/// Roll Number : 112301014
+/// LICENSE : MIT
+
+using System.Text.Json;
 using Cloud.Persistence;
 using Microsoft.UI.Xaml;
 using Whiteboard.Interfaces;

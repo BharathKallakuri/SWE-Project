@@ -67,6 +67,9 @@ public abstract class ViewModelStateBase : IViewModelState
     }
 
     /// <inheritdoc/>
+    public virtual bool HandlesPointerOnTextbox => true;
+
+    /// <inheritdoc/>
     public abstract void PointerPressed(Point2D point);
 
     /// <inheritdoc/>
@@ -77,4 +80,14 @@ public abstract class ViewModelStateBase : IViewModelState
 
     /// <inheritdoc/>
     public abstract void PointerCaptureLost(Point2D point);
+
+    /// <inheritdoc/>
+    public virtual void PointerDoubleTapped(Point2D point) { }
+
+    /// <inheritdoc/>
+    public virtual void Reset()
+    {
+        _isDrawing = false;
+        Preview.ClearPreview();
+    }
 }
