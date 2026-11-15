@@ -186,8 +186,16 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
 
     internal bool IsOnline => State == ConnectionState.Connected || State == ConnectionState.Reconnecting;
 
-    /// <summary>Timestamp of the newest message shown; the starting point of a sync.</summary>
-    internal DateTimeOffset LastMessageTime => _lastMessageTime;
+    /// <summary>
+    /// Timestamp of the newest message fetched by a sync; the starting point of the next sync.
+    /// Live messages do not move it: otherwise a live message (e.g. our own send) would push it
+    /// past older messages that were never synced, and those would be skipped.
+    /// </summary>
+    internal DateTimeOffset LastMessageTime
+    {
+        get => _lastMessageTime;
+        set => _lastMessageTime = value;
+    }
 
     /// <summary>Adds a message to the list. Returns the new item, or null when it was already shown.</summary>
     internal NotificationItem? AddNotification(Message message)
@@ -204,11 +212,6 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
             ReceivedAt = message.Timestamp
         };
         Notifications.Insert(0, item);
-
-        if (message.Timestamp > _lastMessageTime)
-        {
-            _lastMessageTime = message.Timestamp;
-        }
 
         return item;
     }
