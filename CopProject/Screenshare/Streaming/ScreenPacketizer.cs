@@ -23,11 +23,27 @@ public sealed class ScreenPacketizer
     public long NextFrameNumber { get; private set; }
 
     /// <exception cref="ArgumentException">the stream id is empty</exception>
-    public ScreenPacketizer(string streamId)
+    private readonly int _jpegQuality;
+    private readonly int _tileSize;
+    private bool _jpegWonLastCheck;
+    private int _fullFramesSinceCheck;
+
+    /// <summary>how many full frames go out as JPEG, without trying PNG, after JPEG was smaller</summary>
+    internal const int PngRecheckInterval = 15;
+
+    /// <param name="jpegQuality">JPEG quality 1 to 100 for full frames, or 0 for PNG</param>
+    /// <param name="tileSize">the tile size the differ used, written into delta packets</param>
+    /// <exception cref="ArgumentOutOfRangeException">the quality is not 0 to 100, or the tile size not positive</exception>
+    public ScreenPacketizer(string streamId, int jpegQuality = 0, int tileSize = ImageDiffer.TILE_SIZE)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
+        ArgumentOutOfRangeException.ThrowIfNegative(jpegQuality);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(jpegQuality, 100);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(tileSize);
 
         StreamId = streamId;
+        _jpegQuality = jpegQuality;
+        _tileSize = tileSize;
     }
 
     /// <summary>
@@ -44,9 +60,12 @@ public sealed class ScreenPacketizer
 
         ScreenDataPacket packet;
 
-        if (result.IsFullFrame)
+        // a big change may be smaller sent as one JPEG than as many PNG tiles (a scrolled page)
+        byte[]? wholeFrameJpeg = BigDeltaAsJpegIfSmaller(result);
+
+        if (result.IsFullFrame || wholeFrameJpeg != null)
         {
-            Bitmap frame = result.FullFrame!;
+            Bitmap frame = result.IsFullFrame ? result.FullFrame! : result.WholeFrame!;
 
             packet = new ScreenDataPacket(
                 StreamId,
@@ -55,7 +74,7 @@ public sealed class ScreenPacketizer
                 frame.Width,
                 frame.Height,
                 DataPacketType.FullFrame,
-                fullFrameData: PngEncoder.Encode(frame));
+                fullFrameData: wholeFrameJpeg ?? EncodeFullFrame(frame));
 
             // deltas and pulses carry no image, so it needs to remember the size from the last full frame.
             // the differ sends a full frame whenever the size changes.
@@ -77,10 +96,47 @@ public sealed class ScreenPacketizer
                 : new ScreenDataPacket(
                     StreamId, NextFrameNumber, capturedAtUtc, _width, _height,
                     DataPacketType.ChangedTiles,
-                    changedTiles: result.ChangedTiles);
+                    changedTiles: result.ChangedTiles,
+                    tileSize: _tileSize);
         }
 
         NextFrameNumber++;
         return packet;
+    }
+
+    /// <summary>
+    /// PNG, or with JPEG on the smaller of the two
+    /// </summary>
+    private byte[] EncodeFullFrame(Bitmap frame)
+    {
+        if (_jpegQuality == 0)
+        {
+            return PngEncoder.Encode(frame);
+        }
+
+        byte[] jpeg = JpegEncoder.Encode(frame, _jpegQuality);
+
+        if (_jpegWonLastCheck && _fullFramesSinceCheck < PngRecheckInterval)
+        {
+            _fullFramesSinceCheck++;
+            return jpeg;
+        }
+
+        byte[] png = PngEncoder.Encode(frame);
+        _jpegWonLastCheck = jpeg.Length < png.Length;
+        _fullFramesSinceCheck = 0;
+        return _jpegWonLastCheck ? jpeg : png;
+    }
+
+    private byte[]? BigDeltaAsJpegIfSmaller(ImageDiffResult result)
+    {
+        if (_jpegQuality == 0 || result.IsFullFrame || result.WholeFrame == null || _width == 0)
+        {
+            return null;
+        }
+
+        byte[] jpeg = JpegEncoder.Encode(result.WholeFrame, _jpegQuality);
+        long tileBytes = result.ChangedTiles.Sum(tile => (long)tile.Data.Length);
+        return jpeg.Length < tileBytes ? jpeg : null;
     }
 }
