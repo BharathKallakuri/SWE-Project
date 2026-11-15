@@ -119,13 +119,19 @@ public partial class WhiteBoardViewModel : IDisposable
     }
 
     public WhiteBoardViewModel(WhiteboardSession session, DispatcherQueue? dispatcherQueue = null, IShapeRecognitionService? shapeRecognitionService = null)
+        : this(session, "default-session", dispatcherQueue, shapeRecognitionService)
+    {
+    }
+
+    public WhiteBoardViewModel(WhiteboardSession session, string sessionId, DispatcherQueue? dispatcherQueue = null, IShapeRecognitionService? shapeRecognitionService = null)
     {
         ArgumentNullException.ThrowIfNull(session);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
 
         _session = session;
         _dispatcherQueue = dispatcherQueue;
         _whiteboardClient = session.Client;
-        _sessionId = string.Empty;
+        _sessionId = sessionId;
         _shapeRecognitionService = shapeRecognitionService ?? new ShapeRecognitionService();
 
         _session.UserLeft += OnSessionUserLeft;

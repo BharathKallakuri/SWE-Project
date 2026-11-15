@@ -816,7 +816,8 @@ public sealed partial class MainWindow : Window
                 ? WhiteboardSession.StartHost(_userId, controller.Communicator, portNumber)
                 : WhiteboardSession.StartClient(_userId, controller.Communicator, _meetingId, portNumber);
 
-            _whiteboardViewModel = new WhiteBoardViewModel(_whiteboardSession, DispatcherQueue);
+            string sessionId = string.IsNullOrWhiteSpace(_meetingId) ? "default-session" : _meetingId;
+            _whiteboardViewModel = new WhiteBoardViewModel(_whiteboardSession, sessionId, DispatcherQueue);
             WhiteboardViewControl.ViewModel = _whiteboardViewModel;
             _meetingService.RegisterNotificationHandler(_whiteboardSession);
         }

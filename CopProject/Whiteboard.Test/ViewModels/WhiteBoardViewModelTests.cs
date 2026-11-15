@@ -6,6 +6,7 @@ using Whiteboard.Client;
 using Whiteboard.Interfaces;
 using Whiteboard.Services;
 using Whiteboard.Test.Mocks;
+using Whiteboard.Test.Mocks.Networking;
 using Whiteboard.ViewModels;
 
 namespace Whiteboard.Test.ViewModels;
@@ -20,6 +21,15 @@ public class WhiteBoardViewModelTests
         Assert.Throws<ArgumentNullException>(() => new WhiteBoardViewModel((IWhiteboardClient)null!, "session-1"));
         Assert.Throws<ArgumentException>(() => new WhiteBoardViewModel(_client, ""));
         Assert.Throws<ArgumentNullException>(() => new WhiteBoardViewModel((WhiteboardSession)null!));
+        Assert.Throws<ArgumentNullException>(() => new WhiteBoardViewModel((WhiteboardSession)null!, "session-1"));
+    }
+
+    [Fact]
+    public void Constructor_WithSession_EmptySessionId_ThrowsArgumentException()
+    {
+        using WhiteboardSession session = WhiteboardSession.StartClient("user1", new MockCommunicatorFactory().CreateClientCommunicator(), "127.0.0.1", 1234);
+        Assert.Throws<ArgumentException>(() => new WhiteBoardViewModel(session, ""));
+        Assert.Throws<ArgumentException>(() => new WhiteBoardViewModel(session, "   "));
     }
 
     [Fact]
