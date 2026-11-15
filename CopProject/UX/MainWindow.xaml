@@ -174,17 +174,8 @@ Roll numbers = 112301038, 112301016
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <Button Content="Back" Click="DiagnosisBack_Click" Background="White" HorizontalAlignment="Left"/>
-                <Frame x:Name="DiagnosisFrame" Grid.Row="1"/>
-            </StackPanel>
-
-            <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
-                <Grid>
-                    <!-- Diagnosis: WRITE YOUR XAML CODE INSIDE THIS GRID -->
-                </Grid>
-            </Border>
+            <Button Content="Back" Click="DiagnosisBack_Click" Background="White" HorizontalAlignment="Left"/>
+            <Frame x:Name="DiagnosisFrame" Grid.Row="1"/>
         </Grid>
 
         <!-- Meeting screen -->
