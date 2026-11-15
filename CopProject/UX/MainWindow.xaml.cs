@@ -512,12 +512,18 @@ public sealed partial class MainWindow : Window
         BoardPanel.Visibility = Vis(which == "board");
         FileSyncView.Visibility = Vis(which == "filesync");
         IncidentsPanel.Visibility = Vis(which == "incidents");
+        CloudMeetingPanel.Visibility = Vis(which == "cloud");
+        DiagnosisPanel.Visibility = Vis(which == "diagnosis");
+        LocationPanel.Visibility = Vis(which == "location");
 
         HomeBtn.IsChecked = which == "home";
         ShareBtn.IsChecked = which == "share";
         BoardBtn.IsChecked = which == "board";
         FileSyncBtn.IsChecked = which == "filesync";
         IncidentsBtn.IsChecked = which == "incidents";
+        CloudBtn.IsChecked = which == "cloud";
+        DiagnosisBtn.IsChecked = which == "diagnosis";
+        LocationBtn.IsChecked = which == "location";
     }
 
     private void HomeBtn_Click(object sender, RoutedEventArgs e)
@@ -533,6 +539,31 @@ public sealed partial class MainWindow : Window
     private void BoardBtn_Click(object sender, RoutedEventArgs e)
     {
         ShowPanel("board");
+    }
+    private void CloudBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ShowPanel("cloud");
+    }
+    private void DiagnosisBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ShowPanel("diagnosis");
+    }
+    private async void LocationBtn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            var geocoding = new NominatimGeocodingService(new HttpClient());
+            var map = new LocationMapView(new MapService(context.IncidentController, geocoding));
+            map.IncidentSelected += LocationIncidentSelected;
+            map.LocationSelected += LocationSelectedOnMap;
+            LocationMeetingHost.Content = map;
+            ShowPanel("location");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load location", ex.Message);
+        }
     }
 
     private void FileSyncBtn_Click(object sender, RoutedEventArgs e)
@@ -953,6 +984,15 @@ public sealed partial class MainWindow : Window
             CloseButtonText = "OK",
             XamlRoot = Root.XamlRoot
         }.ShowAsync();
+    }
+    private void Diagnosis_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen("diagnosis");
+    }
+
+    private void DiagnosisBack_Click(object sender, RoutedEventArgs e)
+    {
+        ShowScreen(_inMeeting ? "meeting" : "dash");
     }
 
     private void IncidentsBack_Click(object sender, RoutedEventArgs e)
