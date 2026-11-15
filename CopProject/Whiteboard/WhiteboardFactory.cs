@@ -2,6 +2,7 @@
 /// Roll No : 112301024
 /// LICENSE : MIT
 
+using System.Diagnostics;
 using System.Net;
 using Networking;
 using Whiteboard.Client;
@@ -20,6 +21,7 @@ public static class WhiteboardFactory
     /// <returns>A new whiteboard client state manager</returns>
     public static IWhiteboardClient CreateClientWhiteboard(ICommunicator clientCommunicator, IPEndPoint serverEndPoint, string userId)
     {
+        Trace.TraceInformation($"[Whiteboard][WhiteboardFactory] Creating client whiteboard for User={userId}, ServerEndPoint={serverEndPoint}.");
         return new WhiteboardClient(clientCommunicator, serverEndPoint, userId);
     }
 
@@ -29,6 +31,7 @@ public static class WhiteboardFactory
     /// <returns>A new whiteboard server state manager</returns>
     public static IWhiteboardServer GetServerWhiteboard(ICommunicator serverCommunicator)
     {
+        Trace.TraceInformation("[Whiteboard][WhiteboardFactory] Creating server whiteboard.");
         return new WhiteboardServer(serverCommunicator);
     }
 }

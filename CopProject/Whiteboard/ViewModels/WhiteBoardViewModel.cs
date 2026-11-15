@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI.Dispatching;
 using System.Linq;
@@ -146,6 +147,7 @@ public partial class WhiteBoardViewModel : IDisposable
     {
         if (_isInitialized)
         {
+            Trace.TraceWarning("[Whiteboard][WhiteBoardViewModel][Warning] InitializeViewModel called when already initialized.");
             throw new InvalidOperationException("The whiteboard view model has already been initialized.");
         }
 
@@ -164,6 +166,7 @@ public partial class WhiteBoardViewModel : IDisposable
         _renderer = new WhiteboardRenderer(_whiteboardClient.Canvas, canvas, _textboxState, _selectState);
         _currentState = _penState;
         _isInitialized = true;
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Initialized view model for User={_whiteboardClient.UserId}, SessionId={_sessionId}.");
     }
 
     /// <summary>
@@ -171,6 +174,7 @@ public partial class WhiteBoardViewModel : IDisposable
     /// </summary>
     public void Undo()
     {
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Undo requested by User={_whiteboardClient.UserId}.");
         _whiteboardClient.Undo();
     }
 
@@ -179,6 +183,7 @@ public partial class WhiteBoardViewModel : IDisposable
     /// </summary>
     public void Redo()
     {
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Redo requested by User={_whiteboardClient.UserId}.");
         _whiteboardClient.Redo();
     }
 
@@ -218,6 +223,7 @@ public partial class WhiteBoardViewModel : IDisposable
             _currentState.Reset();
             _currentState = selectedState;
             SelectedTool = tool;
+            Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Selected tool {tool} for User={_whiteboardClient.UserId}.");
         }
     }
 
@@ -269,6 +275,7 @@ public partial class WhiteBoardViewModel : IDisposable
     /// <param name="username">Username of the leaving user</param>
     public void OnUserLeft(string username)
     {
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] OnUserLeft: User={username}.");
         if (_isInitialized && _whiteboardClient.UserId == username)
         {
             _currentState.PointerCaptureLost(new Point2D(0, 0));
@@ -280,6 +287,7 @@ public partial class WhiteBoardViewModel : IDisposable
     /// </summary>
     public void OnMeetingEnded()
     {
+        Trace.TraceInformation("[Whiteboard][WhiteBoardViewModel] OnMeetingEnded received.");
         if (_isInitialized)
         {
             _currentState.PointerCaptureLost(new Point2D(0, 0));
@@ -313,14 +321,17 @@ public partial class WhiteBoardViewModel : IDisposable
     public async Task SaveSnapshotAsync()
     {
         List<ItemDto> items = _whiteboardClient.Canvas.Items.Values.Select(ItemMapper.ToDto).ToList();
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Saving snapshot for Session={_sessionId}, User={_whiteboardClient.UserId}, Items={items.Count}.");
 
         WhiteboardSnapshotStore store = await GetSnapshotStoreAsync();
 
         await store.SaveSnapshotAsync( _sessionId, _whiteboardClient.UserId, items);
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Snapshot saved successfully for Session={_sessionId}.");
     }
 
     public async Task<List<WhiteboardSnapshotSummary>> ListSnapshotsAsync()
     {
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Listing snapshots for Session={_sessionId}.");
         WhiteboardSnapshotStore store = await GetSnapshotStoreAsync();
         return await store.ListAsync(_sessionId);
     }
@@ -328,10 +339,12 @@ public partial class WhiteBoardViewModel : IDisposable
     public async Task RestoreSnapshotAsync(string snapshotId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(snapshotId);
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Restoring snapshot {snapshotId} for Session={_sessionId}.");
 
         WhiteboardSnapshotStore store = await GetSnapshotStoreAsync();
         WhiteboardSnapshot snapshot = await store.LoadAsync(_sessionId, snapshotId);
 
         _whiteboardClient.RestoreSnapshot(new WhiteboardDto(snapshot.Items));
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Restored snapshot {snapshotId} with {snapshot.Items.Count} items.");
     }
 }

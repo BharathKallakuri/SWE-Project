@@ -3,6 +3,7 @@
 /// LICENSE : MIT
 
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -28,6 +29,7 @@ public class CloudExport
     public async Task<bool> ExportToCloudAsync(UIElement element, string whiteboardId, string userId, bool isJpeg = false)
     {
         ArgumentNullException.ThrowIfNull(element);
+        Trace.TraceInformation($"[Whiteboard][CloudExport] ExportToCloudAsync: WhiteboardId={whiteboardId}, UserId={userId}, isJpeg={isJpeg}.");
 
         _storage ??= await StorageFactory.CreateAsync(ModuleType.WhiteBoard);
 
@@ -55,7 +57,18 @@ public class CloudExport
 
         byte[] data = JsonSerializer.SerializeToUtf8Bytes(record);
         string key = $"{userId}:{whiteboardId}:{exportData.FileName}";
+        Trace.TraceInformation($"[Whiteboard][CloudExport] Saving export data to Cloud with Key={key} ({data.Length} bytes).");
 
-        return await _storage.Create(key, data);
+        bool success = await _storage.Create(key, data);
+        if (success)
+        {
+            Trace.TraceInformation($"[Whiteboard][CloudExport] Successfully saved export data to Cloud: Key={key}.");
+        }
+        else
+        {
+            Trace.TraceError($"[Whiteboard][CloudExport][Error] Failed to save export data to Cloud: Key={key}.");
+        }
+
+        return success;
     }
 }
