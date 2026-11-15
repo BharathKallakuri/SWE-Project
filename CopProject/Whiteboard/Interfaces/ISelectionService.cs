@@ -24,6 +24,15 @@ public interface ISelectionService
     bool MoveSelected(double dx, double dy, string modifiedBy = "system");
 
     /// <summary>
+    /// Resizes the selected item from its top-left anchor to the supplied pointer position.
+    /// </summary>
+    /// <param name="originalItem">The item state captured when resizing started.</param>
+    /// <param name="pointer">The current bottom-right handle position.</param>
+    /// <param name="modifiedBy">User performing the modification.</param>
+    /// <returns><see langword="true"/> when the selection was resized; otherwise, <see langword="false"/>.</returns>
+    bool ResizeSelected(IItem originalItem, Point2D pointer, string modifiedBy = "system");
+
+    /// <summary>
     /// Rotates the selected item or items by the specified angle.
     /// </summary>
     /// <param name="deltaAngle">Angle, in degrees, to add to the selected items.</param>
