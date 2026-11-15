@@ -1,3 +1,6 @@
+﻿// Author: Rajat
+// Roll no.: 112301044
+
 using Chat;
 using Controller;
 using Microsoft.UI.Dispatching;

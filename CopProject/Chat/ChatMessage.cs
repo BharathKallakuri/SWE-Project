@@ -1,4 +1,7 @@
-﻿namespace Chat;
+﻿// Author: Rajdeep
+// Roll no.: 112301045
+
+namespace Chat;
 
 /// <summary>
 /// Represents a message sent in a chatroom or thread.

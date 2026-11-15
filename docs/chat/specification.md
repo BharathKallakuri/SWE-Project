@@ -1,3 +1,8 @@
+<!--
+Authors: Rajdeep, Zeeshan, Rajat
+Roll numbers: 112301045, 112301040, 112301044
+-->
+
 # Specification
 
 Specification for the chat module.

@@ -1,4 +1,7 @@
-﻿namespace Chat;
+﻿// Author: Zeeshan
+// Roll no.: 112301040
+
+namespace Chat;
 
 /// <summary>
 /// Represents a message that can own a single-level thread of replies.

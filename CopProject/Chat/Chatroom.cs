@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿// Author: Zeeshan
+// Roll no.: 112301040
+
+using System.Diagnostics;
 
 namespace Chat;
 
