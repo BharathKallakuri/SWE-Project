@@ -1,4 +1,7 @@
-﻿namespace Incidents;
+﻿// Author: Shreesh Amit Chembeti
+// Roll Number: 112301046
+
+namespace Incidents;
 
 /// <summary>
 /// An interface for describing changes in an incident.

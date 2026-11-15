@@ -8,6 +8,9 @@ using Cloud.Persistence;
 
 namespace Incidents.Test.Models;
 
+/// <summary>
+/// Test Class for Retrieving Incidents, Adding Evidence, Refresh.
+/// </summary>
 [TestClass]
 public sealed class IncidentControllerTest
 {
