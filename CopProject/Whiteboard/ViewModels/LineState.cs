@@ -95,7 +95,7 @@ public class LineState : ViewModelStateBase
                 if (HasNonZeroLength(_startPoint, point))
                 {
                     ILine item = _line;
-                    Task.Run(() => WhiteboardClient.AddItem(item));
+                    DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
                 }
             }
 
@@ -136,7 +136,7 @@ public class LineState : ViewModelStateBase
             {
                 _line.End = point;
                 ILine item = _line;
-                Task.Run(() => WhiteboardClient.AddItem(item));
+                DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
                 Reset();
             }
         }

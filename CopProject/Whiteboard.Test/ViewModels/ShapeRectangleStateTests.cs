@@ -2,6 +2,7 @@
 /// Roll no : 112301033
 /// LICENSE : MIT
 
+using System.Threading.Tasks;
 using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 using Whiteboard.Items.Shapes;
@@ -122,7 +123,7 @@ public class ShapeRectangleStateTests
     /// Check that a valid rectangle is added and the preview is cleared
     /// </summary>
     [Fact]
-    public void PointerReleased_WithPositiveDimensions_SubmitsAndClearsPreview()
+    public async Task PointerReleased_WithPositiveDimensions_SubmitsAndClearsPreview()
     {
         ShapeRectangleState state = new(_client, _preview, _toolbar);
         state.PointerPressed(new Point2D(10, 10));
@@ -131,7 +132,7 @@ public class ShapeRectangleStateTests
         state.PointerReleased(new Point2D(30, 40));
 
         Assert.Equal(1, _preview.ClearCount);
-        Assert.True(_client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(2)), "Item was not added in time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
         IRectangle submitted = Assert.IsAssignableFrom<IRectangle>(Assert.Single(_client.AddedItems));
         Assert.Equal(20, submitted.Width);
         Assert.Equal(30, submitted.Height);
