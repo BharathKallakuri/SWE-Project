@@ -1,10 +1,19 @@
-﻿using System;
+﻿// Author: M Sreenath Karthick
+// Roll Number: 112301042
+
+using System;
 using System.Text.RegularExpressions;
 
 namespace Incidents;
 
+/// <summary>
+/// Helper class to filter incidents for a filter request.
+/// </summary>
 internal static class IncidentFilterHelper
 {
+    /// <summary>
+    /// Checks if incident matches the filter
+    /// </summary>
     public static bool Matches(
         Incident incident,
         IncidentFilter filter)
@@ -21,6 +30,9 @@ internal static class IncidentFilterHelper
                MatchesLocation(incident, filter);
     }
 
+    /// <summary>
+    /// Checks if the incident matches the title filter.
+    /// </summary>
     private static bool MatchesTitle(Incident incident, IncidentFilter filter)
     {
         if (string.IsNullOrWhiteSpace(filter.Title))
@@ -35,6 +47,9 @@ internal static class IncidentFilterHelper
             TimeSpan.FromMilliseconds(100));
     }
 
+    /// <summary>
+    /// Checks if the incident matches the status filter.
+    /// </summary>
     private static bool MatchesStatus(Incident incident, IncidentFilter filter)
     {
         if (!filter.Status.HasValue)
@@ -45,6 +60,9 @@ internal static class IncidentFilterHelper
         return incident.Status == filter.Status.Value;
     }
 
+    /// <summary>
+    /// Checks if the incident matches the category filter.
+    /// </summary>
     private static bool MatchesCategory(Incident incident, IncidentFilter filter)
     {
         if (!filter.Category.HasValue)
@@ -55,6 +73,9 @@ internal static class IncidentFilterHelper
         return incident.Category == filter.Category.Value;
     }
 
+    /// <summary>
+    /// Checks if the incident matches the severity filter.
+    /// </summary>
     private static bool MatchesSeverity(Incident incident, IncidentFilter filter)
     {
         if (!filter.Severity.HasValue)
@@ -65,6 +86,9 @@ internal static class IncidentFilterHelper
         return incident.Severity == filter.Severity.Value;
     }
 
+    /// <summary>
+    /// Checks if the incident matches the date filter.
+    /// </summary>
     private static bool MatchesDate(Incident incident, IncidentFilter filter)
     {
         if (filter.FromDateTime.HasValue && incident.CreationTime < filter.FromDateTime.Value)
@@ -80,7 +104,9 @@ internal static class IncidentFilterHelper
         return true;
     }
 
-
+    /// <summary>
+    /// Checks if the incident matches the created by filter.
+    /// </summary>
     private static bool MatchesCreator(Incident incident, IncidentFilter filter)
     {
         if (string.IsNullOrWhiteSpace(filter.CreatedBy))
@@ -95,6 +121,9 @@ internal static class IncidentFilterHelper
             TimeSpan.FromMilliseconds(100));
     }
 
+    /// <summary>
+    /// Checks if the incident matches the location filter.
+    /// </summary>
     private static bool MatchesLocation(Incident incident, IncidentFilter filter)
     {
         if (filter.Location is null)
@@ -105,6 +134,9 @@ internal static class IncidentFilterHelper
         return MatchesIncidentLocation(incident.Location, filter.Location);
     }
 
+    /// <summary>
+    /// Checks if the incident address matchess with the filter address.
+    /// </summary>
     private static bool MatchesAddress(IncidentLocation location, IncidentLocationFilter filter)
     {
         if (string.IsNullOrWhiteSpace(filter.Address))
@@ -120,6 +152,9 @@ internal static class IncidentFilterHelper
         return location.Address.Contains(filter.Address, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Checks if the incident coordinates match the filter coordinates.
+    /// </summary>
     private static bool MatchesCoordinates(IncidentLocation location, IncidentLocationFilter filter)
     {
         if (filter.Radius is null)
@@ -135,7 +170,10 @@ internal static class IncidentFilterHelper
         return distance <= filter.Radius.Value;
     }
 
-    public static bool MatchesIncidentLocation(IncidentLocation location, IncidentLocationFilter filter)
+    /// <summary>
+    /// Checks if the incident matches the location filter.
+    /// </summary>
+    private static bool MatchesIncidentLocation(IncidentLocation location, IncidentLocationFilter filter)
     {
         ArgumentNullException.ThrowIfNull(location);
         ArgumentNullException.ThrowIfNull(filter);
@@ -144,12 +182,12 @@ internal static class IncidentFilterHelper
                MatchesCoordinates(location, filter);
     }
 
-    // <summary>
-    // Calculates the distance between two geographic coordinates using the Haversine formula.
-    // The code is from the following blog post: 
-    // https://www.geeksforgeeks.org/dsa/haversine-formula-to-find-distance-between-two-points-on-a-sphere
-    // </summary>
-    public static double DistanceToKm(
+    /// <summary>
+    /// Calculates the distance between two geographic coordinates using the Haversine formula.
+    /// The code is from the following blog post:
+    /// https://www.geeksforgeeks.org/dsa/haversine-formula-to-find-distance-between-two-points-on-a-sphere
+    /// </summary>
+    private static double DistanceToKm(
         double latitude1,
         double longitude1,
         double latitude2,
@@ -168,6 +206,9 @@ internal static class IncidentFilterHelper
         return EarthRadiusKm * 2 * Math.Asin(Math.Sqrt(a));
     }
 
+    /// <summary>
+    /// Converts Degree to Radians.
+    /// </summary>
     private static double DegreesToRadians(double degrees)
     {
         return degrees * Math.PI / 180.0;

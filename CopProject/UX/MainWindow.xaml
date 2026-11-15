@@ -202,6 +202,11 @@
                         <Frame x:Name="FileSyncFrame" Grid.Row="1"/>
                     </Grid>
                 </Border>
+
+                <!-- INCIDENTS TEAM: Hosting Incidents inside meeting workspace -->
+                <Border x:Name="IncidentsPanel" Background="White" CornerRadius="10" Visibility="Collapsed" Padding="20">
+                    <Frame x:Name="MeetingIncidentsFrame"/>
+                </Border>
             </Grid>
 
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center"
@@ -217,7 +222,8 @@
                 <!-- FILE SYNC TEAM: Toggle button inside meeting controls -->
                 <ToggleButton x:Name="FileSyncBtn" Content="FileSync" Click="FileSyncBtn_Click"
                               Width="90" Height="50"/>
-                <Button Content="Incidents" Click="Incidents_Click" Width="90" Height="50"/>
+                <ToggleButton x:Name="IncidentsBtn" Content="Incidents" Click="IncidentsBtn_Click" 
+                              Width="90" Height="50"/>
                 <Button Content="Location" Click="Location_Click" Width="90" Height="50"/>
                 <Button Content="Cloud" Click="Cloud_Click" Width="90" Height="50"/>
                 <Button x:Name="EndBtn" Content="End Meeting" Click="End_Click" Width="110" Height="50"
