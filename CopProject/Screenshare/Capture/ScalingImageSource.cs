@@ -54,8 +54,8 @@ public sealed class ScalingImageSource : IImageSource, IDisposable
                 attributes.SetWrapMode(WrapMode.TileFlipXY);
 
                 graphics.CompositingMode = CompositingMode.SourceCopy;
-                graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
-                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                graphics.InterpolationMode = InterpolationMode.Bilinear;
+                graphics.PixelOffsetMode = PixelOffsetMode.Half;
                 graphics.DrawImage(
                     frame,
                     new Rectangle(0, 0, width, MaxHeight),

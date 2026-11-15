@@ -65,7 +65,7 @@ public class ScreenCapturer : IImageSource
 
         if (width <= 0 || height <= 0)
         {
-            Trace.TraceWarning("[Screenshare] Invalid screen dimensions received: {0}x{1}.", width, height);    
+            Trace.TraceWarning("[Screenshare] Invalid screen dimensions received: {0}x{1}.", width, height);
             throw new InvalidOperationException(
                 $"Invalid screen dimensions: {width}x{height}");
         }
