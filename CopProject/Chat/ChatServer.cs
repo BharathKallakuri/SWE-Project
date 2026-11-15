@@ -539,7 +539,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
     /// <param name="chatContext">The formatted room history sent to Insights.</param>
     /// <param name="sourceMessage">The user message that triggered the response.</param>
     /// <param name="sourceMessageId">The ID of the triggering message.</param>
-    private async Task GenerateAiReplyAsync(
+    internal async Task GenerateAiReplyAsync(
         string userMessage,
         string chatContext,
         SendMessage sourceMessage,
