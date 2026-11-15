@@ -340,6 +340,10 @@ public sealed partial class MainWindow : Window
     }
     private async void ShowCrashDashboard()
     {
+        // Author = Gundamaraju Hemanth Kashyap
+
+        // Roll Number = 112301009
+
         try
         {
             ICrashReportService service = await CrashReportService.CreateAsync(CrashHandler.Current?.PendingUploader);
