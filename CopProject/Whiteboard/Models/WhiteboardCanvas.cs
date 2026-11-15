@@ -1,4 +1,7 @@
-﻿using System;
+﻿//owner : U Sai Vignesh
+// License : MIT
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -68,7 +71,7 @@ public class WhiteboardCanvas : IWhiteboard
     }
 
     // Selection helper: topmost item at a point (highest Zindex wins)
-    public IItem HitTestTopmost(Point2D point)
+    public IItem? HitTestTopmost(Point2D point)
     {
         return Items.Values
             .Where(i => i.HitTest(point))

@@ -4,6 +4,7 @@
 
 using System;
 using Whiteboard.Interfaces;
+using Windows.UI;
 
 namespace Whiteboard.Items;
 
@@ -14,6 +15,8 @@ public class Line : Item, ILine
     public const double DefaultHitThreshold = 5.0;
     public Point2D Begin { get; set; } = new Point2D(0, 0);
     public Point2D End { get; set; } = new Point2D(1, 1);
+    public Color Color { get; set; } = Windows.UI.Color.FromArgb(255, 0, 0, 0);
+    public double Width { get; set; } = 3.0;
 
     public override Rect2D BoundingBox
     {
@@ -32,11 +35,16 @@ public class Line : Item, ILine
         }
     }
 
-    public override bool HitTest(Point2D point)
+    public override void MoveBy(double dX, double dY)
     {
-        double distance = PerpDist(point, Begin, End);
-        return distance <= DefaultHitThreshold;
+        Begin = Begin with { X = Begin.X + dX, Y = Begin.Y + dY };
+        End = End with { X = End.X + dX, Y = End.Y + dY };
     }
 
-
+    public override bool HitTest(Point2D point)
+    {
+        double threshold = Math.Max(DefaultHitThreshold, Width / 2.0);
+        double distance = PerpDist(point, Begin, End);
+        return distance <= threshold;
+    }
 }

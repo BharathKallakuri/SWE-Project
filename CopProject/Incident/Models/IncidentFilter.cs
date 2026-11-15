@@ -1,5 +1,11 @@
-﻿namespace Incidents;
+﻿// Author: Shreesh Amit Chembeti
+// Roll Number: 112301046
 
+namespace Incidents;
+
+/// <summary>
+/// A filter object for filtering incidents
+/// </summary>
 public record IncidentFilter(
     string? Title = null,
     IncidentStatus? Status = null,

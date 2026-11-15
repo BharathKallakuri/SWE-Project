@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author: M Sreenath Karthick
+// Roll Number: 112301042
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,6 +9,7 @@ using Incidents;
 using Incidents.Test.Implementations;
 using Incidents.ViewModels;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Incidents.Test.ViewModels;
@@ -33,7 +37,7 @@ public class AllIncidentsPageViewModelTests
         IncidentCloudStorageService storageService = new();
         IncidentFileSynchroniser fileSynchroniser = new();
 
-        _controller = await IncidentController.CreateAsync(storageService, fileSynchroniser);
+        _controller = await IncidentController.CreateAsync(_user1, storageService, fileSynchroniser);
 
         // Create incidents through the real controller.
         _vehicleIncident = await CreateTestIncident(
@@ -107,7 +111,6 @@ public class AllIncidentsPageViewModelTests
         Assert.AreEqual("All", viewModel.SelectedSeverity);
 
         Assert.IsNull(viewModel.FromDate);
-        Assert.IsNull(viewModel.ToDate);
 
         Assert.AreEqual(string.Empty, viewModel.CreatedByInput);
         Assert.IsEmpty(viewModel.Incidents);
@@ -135,7 +138,11 @@ public class AllIncidentsPageViewModelTests
                 "All",
                 "DrunkDriving",
                 "Theft",
-                "Accident"
+                "Accident",
+                "Assault",
+                "Vandalism",
+                "Murder",
+                "Other",
             },
             _viewModel.CategoryOptions);
 
@@ -625,20 +632,6 @@ public class AllIncidentsPageViewModelTests
         VMTestHelpers.AssertNoPropertyChanged(
             _viewModel,
             () => _viewModel.ToDate = date,
-            nameof(_viewModel.ToDate));
-    }
-
-    /// <summary>
-    /// Setting ToDate to null when it is already null raises no notification.
-    /// </summary>
-    [TestMethod]
-    public void ToDate_NullValue_DoesNotRaisePropertyChanged()
-    {
-        Assert.IsNull(_viewModel.ToDate);
-
-        VMTestHelpers.AssertNoPropertyChanged(
-            _viewModel,
-            () => _viewModel.ToDate = null,
             nameof(_viewModel.ToDate));
     }
 

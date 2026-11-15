@@ -1,3 +1,6 @@
+// K.Bala Krishna,K.Saideep
+// 112301015,112301018
+
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -9,6 +12,10 @@ using Utils;
 
 namespace Controller.Models;
 
+/// <summary>
+/// Manages the lifecycle of meetings, handling host creation, client connections, 
+/// participant list updates, and forwarding events between the network layer and the UI.
+/// </summary>
 public sealed class ControllerMeetingService
 {
     private MeetingSession? _session;
@@ -17,7 +24,9 @@ public sealed class ControllerMeetingService
     private readonly SynchronizationContext? _uiThread = SynchronizationContext.Current;
     public IControllerService? ActiveController => _activeController;
     private readonly List<IUserNotificationHandler> _registeredHandlers = new();
+    public string? LastErrorMessage { get; private set; }
 
+    // Manages external listeners wanting participant updates.
     public void RegisterNotificationHandler(IUserNotificationHandler handler)
     {
         if (handler != null && !_registeredHandlers.Contains(handler))
@@ -43,6 +52,7 @@ public sealed class ControllerMeetingService
         _session.MeetingEnded += OnMeetingEnded;
     }
 
+    // Sets up a new meeting session acting as the host.
     public (string Id, string Port) CreateMeeting()
     {
         CleanupController();
@@ -51,7 +61,7 @@ public sealed class ControllerMeetingService
         string email = !string.IsNullOrWhiteSpace(_session?.CurrentUserEmail) ? _session.CurrentUserEmail : $"{username}@smail.iitpkd.ac.in";
 
         string localIp = NetworkUtils.GetLocalIpAddress();
-        var hostUser = new ControllerUser(username, email, null, localIp, 0, isHost: true);
+        var hostUser = new ControllerUser(username, email, _session?.CurrentUserProfilePicture, localIp, 0, isHost: true);
 
         var host = ControllerFactory.CreateHost(hostUser);
         _activeController = host;
@@ -72,6 +82,7 @@ public sealed class ControllerMeetingService
         return (id, port);
     }
 
+    // Connects to a remote host meeting session as a participant.
     public bool JoinMeeting(string hostIp, int hostPort)
     {
         CleanupController();
@@ -80,7 +91,7 @@ public sealed class ControllerMeetingService
         string username = !string.IsNullOrWhiteSpace(_session?.CurrentUserId) ? _session.CurrentUserId : "Participant";
         string email = !string.IsNullOrWhiteSpace(_session?.CurrentUserEmail) ? _session.CurrentUserEmail : $"{username}@smail.iitpkd.ac.in";
 
-        var clientUser = new ControllerUser(username, email, null, NetworkUtils.GetLocalIpAddress(), 0, isHost: false);
+        var clientUser = new ControllerUser(username, email, _session?.CurrentUserProfilePicture, NetworkUtils.GetLocalIpAddress(), 0, isHost: false);
         var client = ControllerFactory.CreateClient(clientUser);
 
         string targetHost = hostIp.Trim();
@@ -92,6 +103,7 @@ public sealed class ControllerMeetingService
         bool joined = client.JoinMeeting(targetHost, hostPort, clientUser);
         if (!joined)
         {
+            LastErrorMessage = (client as ClientController)?.LastErrorMessage;
             client.Dispose();
             return false;
         }
@@ -107,6 +119,20 @@ public sealed class ControllerMeetingService
         return true;
     }
 
+    // Updates the local user's profile picture
+    public void UpdateProfilePicture(byte[]? picture)
+    {
+        if (_activeController != null)
+        {
+            if (_activeController.CurrentUser != null)
+            {
+                _activeController.CurrentUser.ProfilePicture = picture;
+            }
+            UpdateActiveParticipants();
+        }
+    }
+
+    // Triggered when a meeting officially starts, hooks up events and counts.
     private void OnMeetingStarted(MeetingInfo info)
     {
         if (_session == null) return;
@@ -130,11 +156,21 @@ public sealed class ControllerMeetingService
         }
     }
 
+    // Wires up internal event handlers for controller updates.
     private void HookControllerEvents(IControllerService controller)
     {
         controller.UserJoined += OnUserJoined;
         controller.UserLeft += OnUserLeft;
         controller.MeetingEnded += OnRemoteMeetingEnded;
+        if (controller is HostController host)
+        {
+            host.SecurityAlertRaised += OnSecurityAlertRaised;
+        }
+        else if (controller is ClientController client)
+        {
+            client.SecurityAlertRaised += OnSecurityAlertRaised;
+            client.JoinRejected += OnJoinRejected;
+        }
     }
 
     private void UnhookControllerEvents(IControllerService controller)
@@ -142,6 +178,15 @@ public sealed class ControllerMeetingService
         controller.UserJoined -= OnUserJoined;
         controller.UserLeft -= OnUserLeft;
         controller.MeetingEnded -= OnRemoteMeetingEnded;
+         if (controller is HostController host)
+        {
+            host.SecurityAlertRaised -= OnSecurityAlertRaised;
+        }
+        else if (controller is ClientController client)
+        {
+            client.SecurityAlertRaised -= OnSecurityAlertRaised;
+            client.JoinRejected -= OnJoinRejected;
+        }
     }
 
     private void OnUserJoined(object? sender, UserJoinedEventArgs e)
@@ -156,6 +201,7 @@ public sealed class ControllerMeetingService
         UpdateActiveParticipants();
     }
 
+    // Cleans up active controllers when the meeting is ended locally.
     private void OnRemoteMeetingEnded(object? sender, MeetingEndedEventArgs e)
     {
         if (_session != null && _session.InMeeting)
@@ -197,7 +243,8 @@ public sealed class ControllerMeetingService
             PostToUI(() => _session.ParticipantCount = count);
         }
     }
-
+    
+    // Pulls the latest active participant details and updates the UI session model.
     private void UpdateActiveParticipants()
     {
         if (_activeController == null || _session == null) return;
@@ -217,6 +264,7 @@ public sealed class ControllerMeetingService
         });
     }
 
+    // Ensures UI-bound state changes post back to the main thread safely.
     private void PostToUI(Action action)
     {
         if (_uiThread != null)
@@ -236,6 +284,20 @@ public sealed class ControllerMeetingService
             UnhookControllerEvents(_activeController);
             _activeController.Dispose();
             _activeController = null;
+        }
+    }
+
+    private void OnSecurityAlertRaised(object? sender, string message)
+    {
+        _session?.RaiseSecurityAlert(message);
+    }
+
+    private void OnJoinRejected(object? sender, string reason)
+    {
+        if (_session != null)
+        {
+            _session.EndReason = reason;
+            PostToUI(() => _session.EndMeeting());
         }
     }
 }

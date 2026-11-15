@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Name="foo"
     x:Class="Whiteboard.Views.WhiteBoardView"
@@ -14,7 +14,7 @@
             <RowDefinition Height="32"/>
         </Grid.RowDefinitions>
 
-        <!-- TOOLBAR -->
+        <!-- Toolbar -->
         <Border
             Grid.Row="0"
             Background="White"
@@ -22,102 +22,379 @@
             BorderBrush="#DDDDDD"
             BorderThickness="0,0,0,1">
 
-            <ScrollViewer
-                HorizontalScrollBarVisibility="Auto"
-                VerticalScrollBarVisibility="Disabled"
-                HorizontalScrollMode="Enabled"
-                VerticalScrollMode="Disabled">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
+                <!-- Whiteboard tools -->
+                <ScrollViewer
+                    Grid.Column="0"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Disabled"
+                    HorizontalScrollMode="Enabled"
+                    VerticalScrollMode="Disabled">
+
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Spacing="8">
+
+                        <Button
+                            x:Name="ButtonPen"
+                            ToolTipService.ToolTip="Pen"
+                            Click="ButtonPen_Click">
+                            <FontIcon Glyph="&#xF67B;"/>
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonUndo"
+                            ToolTipService.ToolTip="Undo your last action"
+                            IsEnabled="False"
+                            Click="ButtonUndo_Click">
+                            <FontIcon Glyph="&#xE7A7;"/>
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonRedo"
+                            ToolTipService.ToolTip="Redo your last action"
+                            IsEnabled="False"
+                            Click="ButtonRedo_Click">
+                            <FontIcon Glyph="&#xE7A6;"/>
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonSelectItems"
+                            ToolTipService.ToolTip="Select items"
+                            Click="ButtonSelectItems_Click">
+                            <FontIcon Glyph="&#xE8B0;"/>
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonEraseItems"
+                            ToolTipService.ToolTip="Erase items"
+                            Click="ButtonEraseItems_Click">
+                            <FontIcon Glyph="&#xE75C;"/>
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonTextBox"
+                            ToolTipService.ToolTip="Textbox"
+                            Click="ButtonTextBox_Click">
+                            <FontIcon Glyph="&#xE8AC;"/>
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonSquare"
+                            ToolTipService.ToolTip="Square"
+                            Click="ButtonSquare_Click">
+                            <FontIcon Glyph="&#xE739;" />
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonRectangle"
+                            ToolTipService.ToolTip="Rectangle"
+                            Click="ButtonRectangle_Click">
+                            <Rectangle
+                                Width="22"
+                                Height="14"
+                                Fill="Transparent"
+                                Stroke="Black"
+                                StrokeThickness="2" />
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonCircle"
+                            ToolTipService.ToolTip="Circle"
+                            Click="ButtonCircle_Click">
+                            <Ellipse
+                                Width="18"
+                                Height="18"
+                                Fill="Transparent"
+                                Stroke="Black"
+                                StrokeThickness="2" />
+                        </Button>
+
+                         <Button
+                             x:Name="ButtonEllipse"
+                             ToolTipService.ToolTip="Ellipse"
+                             Click="ButtonEllipse_Click">
+                             <Ellipse
+                                 Width="22"
+                                 Height="14"
+                                 Fill="Transparent"
+                                 Stroke="Black"
+                                 StrokeThickness="2" />
+                         </Button>
+
+                        <Button
+                            x:Name="ButtonEqTriangle"
+                            ToolTipService.ToolTip="Equilateral triangle"
+                            Click="ButtonEqTriangle_Click">
+                            <Polygon
+                                Width="18"
+                                Height="18"
+                                Points="9,0 18,18 0,18"
+                                Fill="Transparent"
+                                Stroke="Black"
+                                StrokeThickness="2" />
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonLine"
+                            ToolTipService.ToolTip="Line"
+                            Click="ButtonLine_Click">
+                            <Line
+                                X1="2"
+                                Y1="16"
+                                X2="16"
+                                Y2="2"
+                                Stroke="Black"
+                                StrokeThickness="2" />
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonPolygon"
+                            ToolTipService.ToolTip="Polygon"
+                            Click="ButtonPolygon_Click">
+                            <Polygon
+                                Width="18"
+                                Height="18"
+                                Points="9,0 18,6 15,18 3,18 0,6"
+                                Fill="Transparent"
+                                Stroke="Black"
+                                StrokeThickness="2" />
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonDeleteSelectedItems"
+                            ToolTipService.ToolTip="Delete selected items">
+                            <FontIcon Glyph="&#xE74D;"/>
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonDeleteAllOwnedItems"
+                            ToolTipService.ToolTip="Delete all owned items">
+                            <FontIcon Glyph="&#xED62;"/>
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonUploadToCloud"
+                            ToolTipService.ToolTip="Upload to cloud">
+                            <FontIcon Glyph="&#xE898;" />
+                        </Button>
+                        
+                        <Button
+                            x:Name="ButtonSaveSnapshot"
+                            ToolTipService.ToolTip="Save whiteboard snapshot"
+                            Click="ButtonSaveSnapshot_Click">
+                            <FontIcon Glyph="&#xE74E;" />
+                        </Button>
+
+                        <Button
+                            x:Name="ButtonRestoreSnapshot"
+                            ToolTipService.ToolTip="Restore a saved snapshot"
+                            Click="ButtonRestoreSnapshot_Click">
+                            <FontIcon Glyph="&#xE8E5;" />
+                        </Button>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Toolbar -->
                 <StackPanel
+                    Grid.Column="1"
                     Orientation="Horizontal"
-                    Spacing="8">
+                    Spacing="8"
+                    VerticalAlignment="Center"
+                    Margin="16,0,0,0">
 
+                    <!-- Fill color picker -->
                     <Button
-                        x:Name="ButtonPen"
-                        ToolTipService.ToolTip="Pen"
-                        Click="ButtonPen_Click">
-                        <FontIcon Glyph="&#xF67B;"/>
+                        x:Name="ButtonFillColor"
+                        ToolTipService.ToolTip="Fill Color"
+                        Padding="6"
+                        VerticalAlignment="Center">
+                        
+                        <!-- Currently selected fill color -->
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <Border
+                                x:Name="FillColorIndicator"
+                                Width="20"
+                                Height="20"
+                                CornerRadius="4"
+                                Background="Black"
+                                BorderBrush="#B0B0B0"
+                                BorderThickness="1"/>
+                            <FontIcon Glyph="&#xE70D;" FontSize="10"/>
+                        </StackPanel>
+                        
+                        <!-- Fill color options -->
+                        <Button.Flyout>
+                            <Flyout x:Name="FlyoutFillColor">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Fill Color" Margin="0,0,0,4"/>
+                                    <VariableSizedWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="5" ItemWidth="36" ItemHeight="36">
+                                        <Button Width="30" Height="30" Padding="0" Tag="#000000" Click="FillColorOption_Click" ToolTipService.ToolTip="Black">
+                                            <Rectangle Width="24" Height="24" Fill="Black" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#F4F4F6" Click="FillColorOption_Click" ToolTipService.ToolTip="Off-White">
+                                            <Rectangle Width="24" Height="24" Fill="#F4F4F6" Stroke="#CCCCCC" StrokeThickness="1" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#E53935" Click="FillColorOption_Click" ToolTipService.ToolTip="Red">
+                                            <Rectangle Width="24" Height="24" Fill="#E53935" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#1E88E5" Click="FillColorOption_Click" ToolTipService.ToolTip="Blue">
+                                            <Rectangle Width="24" Height="24" Fill="#1E88E5" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#43A047" Click="FillColorOption_Click" ToolTipService.ToolTip="Green">
+                                            <Rectangle Width="24" Height="24" Fill="#43A047" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#FDD835" Click="FillColorOption_Click" ToolTipService.ToolTip="Yellow">
+                                            <Rectangle Width="24" Height="24" Fill="#FDD835" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#FB8C00" Click="FillColorOption_Click" ToolTipService.ToolTip="Orange">
+                                            <Rectangle Width="24" Height="24" Fill="#FB8C00" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#8E24AA" Click="FillColorOption_Click" ToolTipService.ToolTip="Purple">
+                                            <Rectangle Width="24" Height="24" Fill="#8E24AA" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#00ACC1" Click="FillColorOption_Click" ToolTipService.ToolTip="Cyan">
+                                            <Rectangle Width="24" Height="24" Fill="#00ACC1" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#757575" Click="FillColorOption_Click" ToolTipService.ToolTip="Gray">
+                                            <Rectangle Width="24" Height="24" Fill="#757575" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                    </VariableSizedWrapGrid>
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
                     </Button>
 
+                    <!-- Border color picker -->
                     <Button
-                        x:Name="ButtonUndo"
-                        ToolTipService.ToolTip="Undo">
-                        <FontIcon Glyph="&#xE7A7;"/>
+                        x:Name="ButtonBorderColor"
+                        ToolTipService.ToolTip="Border Color"
+                        Padding="6"
+                        VerticalAlignment="Center">
+                        
+                        <!-- Currently selected border color -->
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <Border
+                                x:Name="BorderColorIndicator"
+                                Width="20"
+                                Height="20"
+                                CornerRadius="4"
+                                Background="Black"
+                                BorderBrush="#B0B0B0"
+                                BorderThickness="1"/>
+                            <FontIcon Glyph="&#xE70D;" FontSize="10"/>
+                        </StackPanel>
+                        
+                        <!-- Border color options -->
+                        <Button.Flyout>
+                            <Flyout x:Name="FlyoutBorderColor">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Border Color" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                    <VariableSizedWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="5" ItemWidth="36" ItemHeight="36">
+                                        <Button Width="30" Height="30" Padding="0" Tag="#000000" Click="BorderColorOption_Click" ToolTipService.ToolTip="Black">
+                                            <Rectangle Width="24" Height="24" Fill="Black" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#F4F4F6" Click="BorderColorOption_Click" ToolTipService.ToolTip="Off-White">
+                                            <Rectangle Width="24" Height="24" Fill="#F4F4F6" Stroke="#CCCCCC" StrokeThickness="1" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#E53935" Click="BorderColorOption_Click" ToolTipService.ToolTip="Red">
+                                            <Rectangle Width="24" Height="24" Fill="#E53935" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#1E88E5" Click="BorderColorOption_Click" ToolTipService.ToolTip="Blue">
+                                            <Rectangle Width="24" Height="24" Fill="#1E88E5" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#43A047" Click="BorderColorOption_Click" ToolTipService.ToolTip="Green">
+                                            <Rectangle Width="24" Height="24" Fill="#43A047" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#FDD835" Click="BorderColorOption_Click" ToolTipService.ToolTip="Yellow">
+                                            <Rectangle Width="24" Height="24" Fill="#FDD835" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#FB8C00" Click="BorderColorOption_Click" ToolTipService.ToolTip="Orange">
+                                            <Rectangle Width="24" Height="24" Fill="#FB8C00" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#8E24AA" Click="BorderColorOption_Click" ToolTipService.ToolTip="Purple">
+                                            <Rectangle Width="24" Height="24" Fill="#8E24AA" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#00ACC1" Click="BorderColorOption_Click" ToolTipService.ToolTip="Cyan">
+                                            <Rectangle Width="24" Height="24" Fill="#00ACC1" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                        <Button Width="30" Height="30" Padding="0" Tag="#757575" Click="BorderColorOption_Click" ToolTipService.ToolTip="Gray">
+                                            <Rectangle Width="24" Height="24" Fill="#757575" RadiusX="3" RadiusY="3"/>
+                                        </Button>
+                                    </VariableSizedWrapGrid>
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
                     </Button>
 
-                    <Button
-                        x:Name="ButtonRedo"
-                        ToolTipService.ToolTip="Redo">
-                        <FontIcon Glyph="&#xE7A6;"/>
-                    </Button>
-
-                    <Button
-                        x:Name="ButtonSelectItems"
-                        ToolTipService.ToolTip="Select items">
-                        <FontIcon Glyph="&#xE8B0;"/>
-                    </Button>
-
-                    <Button
-                        x:Name="ButtonEraseItems"
-                        ToolTipService.ToolTip="Erase items">
-                        <FontIcon Glyph="&#xE75C;"/>
-                    </Button>
-
-                    <Button
-                        x:Name="ButtonTextBox"
-                        ToolTipService.ToolTip="Textbox">
-                        <FontIcon Glyph="&#xE8AC;"/>
-                    </Button>
-
-                    <Button
-                        x:Name="ButtonSquare"
-                        ToolTipService.ToolTip="Square"
-                        Click="ButtonSquare_Click">
-                        <FontIcon Glyph="&#xE739;" />
-                    </Button>
-
-                    <Button
-                        x:Name="ButtonDeleteSelectedItems"
-                        ToolTipService.ToolTip="Delete selected items">
-                        <FontIcon Glyph="&#xE74D;"/>
-                    </Button>
-
-                    <Button
-                        x:Name="ButtonDeleteAllOwnedItems"
-                        ToolTipService.ToolTip="Delete all owned items">
-                        <FontIcon Glyph="&#xED62;"/>
-                    </Button>
-
-                    <Button
-                        x:Name="ButtonUploadToCloud"
-                        ToolTipService.ToolTip="Upload to cloud">
-                        <FontIcon Glyph="&#xE898;" />
-                    </Button>
+                    <!-- Border width slider -->
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        VerticalAlignment="Center"
+                        ToolTipService.ToolTip="Border Width">
+                        
+                        <!-- Slider -->
+                        <Slider
+                            x:Name="SliderBorderWidth"
+                            Minimum="1"
+                            Maximum="30"
+                            Value="3"
+                            Width="110"
+                            VerticalAlignment="Center"
+                            ToolTipService.ToolTip="Border Width"
+                            ValueChanged="SliderBorderWidth_ValueChanged"/>
+                        
+                        <!-- Currently selected border width -->
+                        <TextBlock
+                            x:Name="TextBorderWidth"
+                            Text="3 px"
+                            Width="36"
+                            VerticalAlignment="Center"
+                            Foreground="#444444"
+                            FontSize="12"/>
+                    </StackPanel>
 
                 </StackPanel>
-            </ScrollViewer>
+            </Grid>
         </Border>
 
-        <!-- WHITEBOARD -->
+        <!-- Whiteboard -->
         <Grid
             Grid.Row="1">
             <Border
-                Background="White"
-                BorderThickness="1"
-                SizeChanged="CanvasContainer_SizeChanged">
+                Background="#E5E7EB"
+                BorderThickness="1">
 
-                <Canvas
-                    x:Name="WhiteboardCanvas"
-                    Background="Transparent"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    PointerPressed="WhiteboardCanvas_PointerPressed"
-                    PointerMoved="WhiteboardCanvas_PointerMoved"
-                    PointerReleased="WhiteboardCanvas_PointerReleased"
-                    PointerCaptureLost="WhiteboardCanvas_PointerCaptureLost"/>
+                <ScrollViewer
+                    x:Name="CanvasScrollViewer"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollMode="Enabled"
+                    VerticalScrollMode="Enabled"
+                    ZoomMode="Enabled"
+                    MinZoomFactor="0.25"
+                    MaxZoomFactor="3.0"
+                    ViewChanged="CanvasScrollViewer_ViewChanged">
+
+                    <Canvas
+                        x:Name="WhiteboardCanvas"
+                        Width="10000"
+                        Height="10000"
+                        Background="White"
+                        PointerCaptureLost="WhiteboardCanvas_PointerCaptureLost"
+                        DoubleTapped="WhiteboardCanvas_DoubleTapped"/>
+                </ScrollViewer>
             </Border>
         </Grid>
-        <!-- STATUS BAR -->
+        
+        <!-- Status bar -->
         <Border
             Grid.Row="2"
             Background="White"
@@ -125,26 +402,78 @@
             BorderBrush="#DDDDDD"
             BorderThickness="0,1,0,0">
 
-            <StackPanel
-                Orientation="Horizontal"
-                Spacing="24">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <TextBlock
-                    Text="Tool: Select"
-                    Foreground="#333333"
-                    VerticalAlignment="Center"/>
+                <!--
+                <StackPanel
+                    Grid.Column="0"
+                    Orientation="Horizontal"
+                    Spacing="24">
 
-                <TextBlock
-                    Text="Color: Black"
-                    Foreground="#333333"
-                    VerticalAlignment="Center"/>
+                    <TextBlock
+                        Text="Tool: Active"
+                        Foreground="#333333"
+                        VerticalAlignment="Center"/>
 
-                <TextBlock
-                    Text="Zoom: 100%"
-                    Foreground="#333333"
-                    VerticalAlignment="Center"/>
+                    <TextBlock
+                        Text="Color: Selected"
+                        Foreground="#333333"
+                        VerticalAlignment="Center"/>
 
-            </StackPanel>
+                </StackPanel>
+                -->
+
+                <!-- Zoom Controls -->
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    VerticalAlignment="Center">
+
+                    <Button
+                        x:Name="ButtonZoomOut"
+                        ToolTipService.ToolTip="Zoom Out (-10%)"
+                        Padding="4,2"
+                        Click="ButtonZoomOut_Click">
+                        <FontIcon Glyph="&#xE738;" FontSize="12"/>
+                    </Button>
+
+                    <Slider
+                        x:Name="SliderZoom"
+                        Minimum="25"
+                        Maximum="300"
+                        Value="100"
+                        Width="120"
+                        VerticalAlignment="Center"
+                        ToolTipService.ToolTip="Zoom Level"
+                        ValueChanged="SliderZoom_ValueChanged"/>
+
+                    <Button
+                        x:Name="ButtonZoomIn"
+                        ToolTipService.ToolTip="Zoom In (+10%)"
+                        Padding="4,2"
+                        Click="ButtonZoomIn_Click">
+                        <FontIcon Glyph="&#xE710;" FontSize="12"/>
+                    </Button>
+
+                    <Button
+                        x:Name="ButtonResetZoom"
+                        ToolTipService.ToolTip="Reset Zoom (100%)"
+                        Padding="6,2"
+                        Click="ButtonResetZoom_Click">
+                        <TextBlock
+                            x:Name="TextZoom"
+                            Text="100%"
+                            FontSize="12"
+                            Foreground="#333333"/>
+                    </Button>
+
+                </StackPanel>
+            </Grid>
         </Border>
 
     </Grid>

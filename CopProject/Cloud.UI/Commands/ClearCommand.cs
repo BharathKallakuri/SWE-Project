@@ -1,4 +1,8 @@
-﻿using Cloud.UI.ViewModels;
+﻿// Author = Simeon Kandan Sonar
+// Roll Number = 112301031 
+
+using System.Diagnostics;
+using Cloud.UI.ViewModels;
 
 namespace Cloud.UI.Commands;
 
@@ -22,6 +26,8 @@ public sealed class ClearCommand : CommandBase
 
     public override void Execute(object? parameter)
     {
+        int count = _viewModel.Notifications.Count;
         _viewModel.Notifications.Clear();
+        Trace.TraceInformation($"Cleared {count} notification(s).");
     }
 }

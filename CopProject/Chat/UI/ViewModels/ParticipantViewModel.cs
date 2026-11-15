@@ -1,3 +1,6 @@
+﻿// Author: Rajat
+// Roll no.: 112301044
+
 namespace UI.ViewModels;
 
 /// <summary>Participant row shown in the meeting people picker.</summary>

@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+Author: M Sreenath Karthick
+Roll Number: 112301042
+-->
+
 <Page
     x:Class="Incidents.Views.CreateIncidentPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -169,7 +174,11 @@
                                     <DataTemplate>
                                         <Grid Padding="4" ColumnSpacing="12">
                                             <StackPanel Spacing="2">
-                                                <TextBlock Text="{Binding FilePath}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding FilePath}" TextTrimming="CharacterEllipsis" />
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="Uploaded by:" FontWeight="SemiBold"  />
+                                                    <TextBlock Text="{Binding UploadedBy}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
                                                 <TextBlock Text="{Binding Description}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
                                         </Grid>

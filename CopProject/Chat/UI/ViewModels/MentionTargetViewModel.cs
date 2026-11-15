@@ -1,3 +1,6 @@
+﻿// Author: Rajat
+// Roll no.: 112301044
+
 using UI.Helpers;
 
 namespace UI.ViewModels;
@@ -27,14 +30,18 @@ public sealed class MentionTargetViewModel : ObservableObject
     public bool IsSelected
     {
         get => _isSelected;
-        private set
-        {
+        private set {
             if (SetProperty(ref _isSelected, value))
+            {
                 OnPropertyChanged(nameof(SelectionMark));
+            }
         }
     }
 
     public RelayCommand ToggleCommand { get; }
     public RelayCommand RemoveCommand { get; }
-    internal void SetSelected(bool selected) => IsSelected = selected;
+    internal void SetSelected(bool selected)
+    {
+        IsSelected = selected;
+    }
 }

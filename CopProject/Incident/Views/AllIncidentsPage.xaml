@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+Author: M Sreenath Karthick
+Roll Number: 112301042
+-->
+
 <Page
     x:Class="Incidents.Views.AllIncidentsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -30,6 +35,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <TextBox
@@ -54,6 +60,12 @@
 
             <Button
                 Grid.Column="3"
+                Height="40"
+                Content="Refresh"
+                Click="Sync_Click" />
+            
+            <Button
+                Grid.Column="4"
                 Height="40"
                 Padding="16,0"
                 Style="{StaticResource AccentButtonStyle}"
@@ -127,7 +139,7 @@
                         Grid.Column="2"
                         Header="Created By (User ID)"
                         HorizontalAlignment="Stretch"
-                        PlaceholderText="Enter Guid..."
+                        PlaceholderText="Enter User ID"
                         Text="{Binding CreatedByInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 </Grid>
             </StackPanel>

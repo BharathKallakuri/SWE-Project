@@ -1,4 +1,7 @@
-﻿namespace Chat;
+﻿// Author: Rajdeep
+// Roll no.: 112301045
+
+namespace Chat;
 
 /// <summary>
 /// Constants shared by the Chat module.

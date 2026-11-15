@@ -1,8 +1,7 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿/// Owner   : Raagam Hitesh Parmar
+/// LICENSE : MIT
 
-using Microsoft.UI.Xaml.Input;
+using Whiteboard.Interfaces;
 
 namespace Whiteboard.ViewModels;
 
@@ -12,22 +11,38 @@ namespace Whiteboard.ViewModels;
 public interface IViewModelState
 {
     /// <summary>
+    /// Whether a pointer press that lands on a rendered textbox should be handled by this state.
+    /// When false, the press is left to the textbox (e.g. so the user can type into it).
+    /// </summary>
+    bool HandlesPointerOnTextbox { get; }
+
+    /// <summary>
     /// Called every time the pointer is pressed on the canvas
     /// </summary>
-    void PointerPressed(object sender, PointerRoutedEventArgs e);
+    void PointerPressed(Point2D point);
 
     /// <summary>
     /// Called every time the captured pointer is moved on the canvas
     /// </summary>
-    void PointerMoved(object sender, PointerRoutedEventArgs e);
+    void PointerMoved(Point2D point);
 
     /// <summary>
     /// Called every time the captured pointer is released on the canvas
     /// </summary>
-    void PointerReleased(object sender, PointerRoutedEventArgs e);
+    void PointerReleased(Point2D point);
 
     /// <summary>
     /// Called every time the captured pointer is lost
     /// </summary>
-    void PointerCaptureLost(object sender, PointerRoutedEventArgs e);
+    void PointerCaptureLost(Point2D point);
+
+    /// <summary>
+    /// Called when the pointer is double tapped/clicked on the canvas
+    /// </summary>
+    void PointerDoubleTapped(Point2D point) { }
+
+    /// <summary>
+    /// Resets the state machine and canvas preview
+    /// </summary>
+    void Reset() { }
 }

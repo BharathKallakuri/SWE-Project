@@ -72,7 +72,7 @@ public abstract record ItemPayload
     [ExcludeFromCodeCoverage]
     public sealed record Freehand(List<Point2D> Points, string StrokeColor, double StrokWidth) : ItemPayload;
     [ExcludeFromCodeCoverage]
-    public sealed record Line(Point2D Begin, Point2D End) : ItemPayload;
+    public sealed record Line(Point2D Begin, Point2D End, string Color, double Width) : ItemPayload;
     [ExcludeFromCodeCoverage]
     public sealed record Textbox(Point2D Center, string Content, string FontFamily, int FontSize, string FontColor) : ItemPayload;
     [ExcludeFromCodeCoverage]

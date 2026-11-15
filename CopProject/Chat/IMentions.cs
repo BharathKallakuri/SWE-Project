@@ -1,4 +1,7 @@
-﻿namespace Chat;
+﻿// Author: Zeeshan
+// Roll no.: 112301040
+
+namespace Chat;
 
 /// <summary>
 /// Operations related to mentions in a chat message.

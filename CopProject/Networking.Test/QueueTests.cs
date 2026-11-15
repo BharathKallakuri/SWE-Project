@@ -1,5 +1,9 @@
+﻿// Author = Dheeraj Ram
+// Roll Number = 142301015
+
 using System;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Networking.Packets;
@@ -13,11 +17,11 @@ namespace Networking.Test;
 [TestClass]
 public class QueueTests
 {
-    private static readonly IPEndPoint DummyEndpoint = new(IPAddress.Loopback, 8080);
+    private static readonly IPEndPoint s_dummyEndpoint = new(IPAddress.Loopback, 8080);
 
     private static Packet CreatePacket(string content = "test")
     {
-        return new Packet(Encoding.UTF8.GetBytes(content), DummyEndpoint, 1, 1);
+        return new Packet(Encoding.UTF8.GetBytes(content), s_dummyEndpoint, 1, 1);
     }
 
     /// <summary>
@@ -88,8 +92,7 @@ public class QueueTests
         ManualResetEventSlim waitingStarted = new(false);
         bool waitResult = false;
 
-        Thread waitingThread = new(() =>
-        {
+        Thread waitingThread = new(() => {
             waitingStarted.Set();
             waitResult = queue.WaitForItem(2000);
         });
@@ -141,5 +144,19 @@ public class QueueTests
         Assert.IsFalse(queue.WaitForItem(50));
         // Enqueue after dispose should not throw
         queue.Enqueue(CreatePacket("after_dispose"));
+    }
+
+    /// <summary>
+    /// Checks that ResetItemAdded handles ObjectDisposedException gracefully when queue is disposed.
+    /// </summary>
+    [TestMethod]
+    public void Queue_ResetItemAdded_HandlesDisposedEvent()
+    {
+        Queue queue = new();
+        queue.Dispose();
+
+        MethodInfo? method = typeof(Queue).GetMethod("ResetItemAdded", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.IsNotNull(method);
+        method.Invoke(queue, null);
     }
 }

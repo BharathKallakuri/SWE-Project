@@ -1,4 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿// Author: M Sreenath Karthick
+// Roll Number: 112301042
+
+using System.Diagnostics.CodeAnalysis;
 using Incidents.ViewModels;
 using Incidents.ViewModels.Utils;
 using Microsoft.UI.Xaml;
@@ -78,6 +81,17 @@ public sealed partial class AllIncidentsPage : Page
                 typeof(IncidentDetailsPage),
                 new IncidentDetailsPageParameters(_context, incident.Id)
             );
+        }
+    }
+
+    /// <summary>
+    /// Synchronizes with the cloud and refreshes the incidents list.
+    /// </summary>
+    private async void Sync_Click(object _, RoutedEventArgs __)
+    {
+        if (ViewModel != null)
+        {
+            await ViewModel.LoadAsync();
         }
     }
 }

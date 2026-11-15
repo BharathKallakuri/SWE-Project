@@ -1,4 +1,7 @@
-﻿namespace Chat;
+﻿// Author: Zeeshan
+// Roll no.: 112301040
+
+namespace Chat;
 
 /// <summary>
 /// Describes a chat message that can contain one level of threaded replies.

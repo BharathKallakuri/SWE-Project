@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author: M Sreenath Karthick
+// Roll Number: 112301042
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,7 +32,7 @@ public class IncidentDetailsPageViewModelDisplayTest
         IncidentCloudStorageService storageService = new();
         IncidentFileSynchroniser fileSynchroniser = new();
 
-        _controller = await IncidentController.CreateAsync(storageService, fileSynchroniser);
+        _controller = await IncidentController.CreateAsync(_currentUserId, storageService, fileSynchroniser);
         _viewModel = new IncidentDetailsPageViewModel(_controller, _currentUserId);
     }
 
@@ -125,9 +128,13 @@ public class IncidentDetailsPageViewModelDisplayTest
             {
                 nameof(_viewModel.IsEditMode),
                 nameof(_viewModel.IsReadOnlyMode),
-                nameof(_viewModel.EditButtonText),
+                nameof(_viewModel.IsResolved),
+                nameof(_viewModel.EditButtonVisibility),
+                nameof(_viewModel.UnresolveButtonVisibility),
+                nameof(_viewModel.EditActionsVisibility),
                 nameof(_viewModel.EditVisibility),
-                nameof(_viewModel.ReadOnlyVisibility)
+                nameof(_viewModel.ReadOnlyVisibility),
+                nameof(_viewModel.EditButtonText)
             },
             changedProperties);
     }

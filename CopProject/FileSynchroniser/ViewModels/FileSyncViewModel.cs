@@ -1,9 +1,15 @@
 ﻿// Author : Murali
 
+// Roll no : 112301019
+
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Linq;
 using System.Windows.Input;
+using System.Xml.Linq;
 using FileSynchroniser.Models;
+using Utils;
 
 namespace FileSynchroniser.ViewModels;
 
@@ -21,7 +27,7 @@ public class SyncFileItem
 /// <summary>
 /// ViewModel for the synchroniser view.
 /// </summary>
-public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
+public class FileSyncViewModel : INotifyPropertyChanged, IDisposable, IUserNotificationHandler
 {
     private readonly ISync _sync;
     private readonly IFileOperations _files;
@@ -30,6 +36,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     private readonly RelayCommand _deleteSelectedCommand;
 
     private SyncFileItem? _selectedFile;
+    private ControllerUser? _selectedPeer;
     private string _statusMessage = "Ready";
     private bool _hasError;
 
@@ -56,6 +63,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
 
         RootDirectory = _files.GetDirectory();
         LoadFiles();
+        Trace.WriteLine($"[FileSyncViewModel] Initialized. RootDirectory='{RootDirectory}'");
     }
 
     /// <summary>
@@ -98,6 +106,93 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     }
 
     /// <summary>
+    /// List of available meeting participants for synchronization.
+    /// </summary>
+    public ObservableCollection<ControllerUser> AvailablePeers { get; } = new();
+
+    /// <summary>
+    /// The currently selected peer to synchronize with.
+    /// </summary>
+    public ControllerUser? SelectedPeer
+    {
+        get => _selectedPeer;
+        set {
+            if (_selectedPeer == value)
+            {
+                return;
+            }
+            _selectedPeer = value;
+            OnPropertyChanged(nameof(SelectedPeer));
+        }
+    }
+
+    /// <summary>
+    /// Sets the list of active peers from the controller.
+    /// </summary>
+    public void SetAvailableUsers(IEnumerable<ControllerUser> users)
+    {
+        ArgumentNullException.ThrowIfNull(users);
+
+        RunOnUi(() => {
+            AvailablePeers.Clear();
+            foreach (ControllerUser user in users)
+            {
+                AvailablePeers.Add(user);
+            }
+
+            if (SelectedPeer == null || !AvailablePeers.Contains(SelectedPeer))
+            {
+                SelectedPeer = AvailablePeers.FirstOrDefault();
+            }
+        });
+    }
+
+    /// <summary>
+    /// Called when a new participant joins the meeting.
+    /// </summary>
+    public void OnUserJoined(ControllerUser user)
+    {
+        if (user == null)
+        {
+            return;
+        }
+
+        RunOnUi(() => {
+            if (!AvailablePeers.Any(p => p.UserKey == user.UserKey || (p.Ip == user.Ip && p.Port == user.Port)))
+            {
+                AvailablePeers.Add(user);
+                if (SelectedPeer == null)
+                {
+                    SelectedPeer = user;
+                }
+            }
+        });
+    }
+
+    /// <summary>
+    /// Called when a participant leaves the meeting.
+    /// </summary>
+    public void OnUserLeft(ControllerUser user)
+    {
+        if (user == null)
+        {
+            return;
+        }
+
+        RunOnUi(() => {
+            ControllerUser? match = AvailablePeers.FirstOrDefault(p => p.UserKey == user.UserKey || (p.Ip == user.Ip && p.Port == user.Port));
+            if (match != null)
+            {
+                AvailablePeers.Remove(match);
+                if (SelectedPeer == match)
+                {
+                    SelectedPeer = AvailablePeers.FirstOrDefault();
+                }
+            }
+        });
+    }
+
+    /// <summary>
     /// Message shown to the user about the latest operation.
     /// </summary>
     public string StatusMessage
@@ -131,6 +226,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
         HasError = false;
         _sync.Synchronise();   // raises OnSyncComplete / OnSyncError
         LoadFiles();
+        Trace.WriteLine("[FileSyncViewModel] Refresh completed.");
     }
 
     /// <summary>
@@ -140,6 +236,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     {
         if (SelectedFile is null)
         {
+            Trace.WriteLine("[FileSyncViewModel] Delete requested but no file is selected.");
             return;
         }
 
@@ -150,6 +247,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
 
         if (results.TryGetValue(path, out bool deleted) && deleted)
         {
+            Trace.WriteLine($"[FileSyncViewModel] File deleted successfully: '{path}'");
             StatusMessage = $"Deleted '{path}'.";
             LoadFiles();
         }
@@ -224,6 +322,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            Trace.WriteLine($"[FileSyncViewModel] Failed to load files: {ex}");
             ShowError(ex.Message);
         }
     }
@@ -233,6 +332,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     /// </summary>
     private void HandleSyncComplete()
     {
+        Trace.WriteLine("[FileSyncViewModel] Sync completed event received.");
         RunOnUi(() => StatusMessage = $"Synchronised at {DateTime.Now:T}.");
     }
 
@@ -241,6 +341,7 @@ public class FileSyncViewModel : INotifyPropertyChanged, IDisposable
     /// </summary>
     private void HandleSyncError(string message)
     {
+        Trace.WriteLine($"[FileSyncViewModel] Sync error received: {message}");
         RunOnUi(() => ShowError(message));
     }
 
