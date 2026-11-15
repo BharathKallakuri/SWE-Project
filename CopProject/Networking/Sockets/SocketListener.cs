@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Dheeraj Ram
+// Roll Number = 142301015
+
+using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,6 +16,9 @@ using Networking.Queues;
 
 namespace Networking.Sockets;
 
+/// <summary>
+/// Reads streaming data from a TCP connection, reconstructs framed packets, and places them in the receiving queue.
+/// </summary>
 public class SocketListener : IDisposable
 {
     private bool _isRunning;
@@ -35,7 +41,11 @@ public class SocketListener : IDisposable
     private byte[] _receivedBuffer = new byte[BufferSize];
     private PacketSerializer _packetSerializer = new PacketSerializer();
 
-
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SocketListener"/> class and starts reading from the client stream.
+    /// </summary>
+    /// <param name="receivingQueue">The target receiving queue for incoming packets.</param>
+    /// <param name="tcpClient">The connected TCP client to listen on.</param>
     public SocketListener(ReceivingQueue receivingQueue, TcpClient tcpClient)
     {
         _isRunningLock = new object();
@@ -49,6 +59,10 @@ public class SocketListener : IDisposable
         Trace.TraceInformation("[Networking] SocketListener: Started socket listener thread.");
     }
 
+    /// <summary>
+    /// Continuously reads bytes from the network stream into an accumulation buffer.
+    /// </summary>
+    /// <param name="stream">The network stream to read from.</param>
     public void ListenStream(NetworkStream stream)
     {
         using MemoryStream incomingData = new MemoryStream();
@@ -77,6 +91,10 @@ public class SocketListener : IDisposable
 
     }
 
+    /// <summary>
+    /// Extracts framed packets from the buffer and enqueues them.
+    /// </summary>
+    /// <param name="input">The memory buffer containing incoming byte data.</param>
     public void ProcessData(MemoryStream input)
     {
         byte[] buffer = input.GetBuffer();
@@ -111,6 +129,9 @@ public class SocketListener : IDisposable
         }
     }
 
+    /// <summary>
+    /// Closes the TCP connection and stops listening.
+    /// </summary>
     public void Dispose()
     {
         lock (_isRunningLock)

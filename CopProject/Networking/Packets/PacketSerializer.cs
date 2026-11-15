@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Srikar
+// Roll Number = 142301013
+
+using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,9 +12,18 @@ using System.Xml.Serialization;
 
 namespace Networking.Packets;
 
+/// <summary>
+/// Encodes and decodes length-prefixed packet frames for stream transmission.
+/// </summary>
 public class PacketSerializer
 {
     private BinarySerialization _packetSerializer = new BinarySerialization();
+
+    /// <summary>
+    /// Encodes a packet into a length-prefixed byte array.
+    /// </summary>
+    /// <param name="packet">The packet to encode.</param>
+    /// <returns>A byte array prefixed with a 4-byte big-endian length header.</returns>
     public byte[] PacketToBytes(Packet packet)
     {
         byte[] serializedData = _packetSerializer.Serialize(packet);
@@ -20,6 +32,12 @@ public class PacketSerializer
         Buffer.BlockCopy(serializedData, 0, finalData, 4, serializedData.Length);
         return finalData;
     }
+
+    /// <summary>
+    /// Decodes a length-prefixed byte array into a <see cref="Packet"/>.
+    /// </summary>
+    /// <param name="data">The raw framed byte array.</param>
+    /// <returns>The deserialized packet, or null if decoding fails.</returns>
     public Packet? BytesToPacket(byte[] data)
     {
         try
