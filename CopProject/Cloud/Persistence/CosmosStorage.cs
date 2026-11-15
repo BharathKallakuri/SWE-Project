@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿using System.Diagnostics;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 
 namespace Cloud.Persistence;
@@ -31,6 +32,7 @@ internal class CosmosStorage : IStorage
         string databaseName,
         string containerName)
     {
+        Trace.TraceInformation("[Cloud.Persistence][CosmosStorage] creating Cosmos storage instance.");
         _client = client;
         _databaseName = databaseName;
         _containerName = containerName;
@@ -53,6 +55,7 @@ internal class CosmosStorage : IStorage
         Func<FeedIterator<PersistenceItem>> readAllEtagsIterator,
         Func<int, FeedIterator<PersistenceItem>> readLatestIterator)
     {
+        Trace.TraceInformation("[Cloud.Persistence][CosmosStorage] creating Cosmos storage instance with injected test dependencies.");
         _client = null!;
         _databaseName = string.Empty;
         _containerName = string.Empty;
@@ -69,6 +72,7 @@ internal class CosmosStorage : IStorage
     /// <returns>Task</returns>
     internal async Task InitializeAsync()
     {
+        Trace.TraceInformation("[Cloud.Persistence][InitializeAsync] initializing Cosmos DB database and container.");
         Database database =
             await _client.CreateDatabaseIfNotExistsAsync(
                 _databaseName,
@@ -80,6 +84,7 @@ internal class CosmosStorage : IStorage
                 "/id");
 
         _container = response.Container;
+        Trace.TraceInformation("[Cloud.Persistence][InitializeAsync] Cosmos DB container initialized successfully.");
 
     }
 
@@ -90,6 +95,7 @@ internal class CosmosStorage : IStorage
     /// <inheritdoc/>
     public async Task<bool> Create(string key, byte[] data)
     {
+        Trace.TraceInformation("[Cloud.Persistence][Create] creating item.");
         PersistenceItem item = new PersistenceItem {
             Id = key,
             Data = data
@@ -98,11 +104,13 @@ internal class CosmosStorage : IStorage
         try
         {
             await _container.CreateItemAsync(item, new PartitionKey(item.Id));
+            Trace.TraceInformation($"[Cloud.Persistence][Create] item with ID '{key}' created successfully.");
             return true;
         }
 
-        catch (CosmosException)
+        catch (CosmosException ex)
         {
+            Trace.TraceError($"[Cloud.Persistence][Create] failed to create item with ID '{key}'. CosmosException: {ex.StatusCode} - {ex.Message}");
             return false;
         }
     }
@@ -110,6 +118,7 @@ internal class CosmosStorage : IStorage
     /// <inheritdoc/>
     public async Task<(bool Success, byte[] Data)> Read(string key)
     {
+        Trace.TraceInformation($"[Cloud.Persistence][Read] reading item with ID '{key}'.");
         try
         {
             ItemResponse<PersistenceItem> response =
@@ -117,10 +126,13 @@ internal class CosmosStorage : IStorage
                     key,
                     new PartitionKey(key));
 
+            Trace.TraceInformation($"[Cloud.Persistence][Read] item with ID '{key}' read successfully.");
             return (true, response.Resource.Data);
         }
-        catch (CosmosException)
+        catch (CosmosException ex)
         {
+            Trace.TraceError($"[Cloud.Persistence][Read] failed to read item with ID '{key}'.");
+            Trace.TraceError($"[Cloud.Persistence][Read] CosmosException: {ex.StatusCode} - {ex.Message}");
             return (false, Array.Empty<byte>());
         }
     }
@@ -132,16 +144,19 @@ internal class CosmosStorage : IStorage
 
     public async Task<(bool Success, string Etag)> ReadEtag(string key)
     {
+        Trace.TraceInformation("[Cloud.Persistence][ReadEtag] reading item ETag.");
         try
         {
             ItemResponse<PersistenceItem> response =
                 await _container.ReadItemAsync<PersistenceItem>(
                     key,
                     new PartitionKey(key));
+            Trace.TraceInformation("[Cloud.Persistence][ReadEtag] item ETag read successfully.");
             return (true, response.ETag);
         }
-        catch (CosmosException)
+        catch (CosmosException ex)
         {
+            Trace.TraceError($"[Cloud.Persistence][ReadEtag] failed to read item ETag with ID '{key}'. CosmosException: {ex.StatusCode} - {ex.Message}");
             return (false, string.Empty);
         }
     }
@@ -153,6 +168,7 @@ internal class CosmosStorage : IStorage
        This is because the winner changes the ETag by writing which makes others' ETags stale */
     public async Task<bool> Update(string key, byte[] data, string etag)
     {
+        Trace.TraceInformation("[Cloud.Persistence][Update] updating item with ETag concurrency check.");
 
         PersistenceItem item = new PersistenceItem {
             Id = key,
@@ -169,6 +185,7 @@ internal class CosmosStorage : IStorage
                     IfMatchEtag = etag
                 });
 
+            Trace.TraceInformation("[Cloud.Persistence][Update] item updated successfully.");
             return true;
 
         }
@@ -177,7 +194,11 @@ internal class CosmosStorage : IStorage
             // The ETag does not match, so the item has been modified by another process
             if (ex.StatusCode == System.Net.HttpStatusCode.PreconditionFailed)
             {
-                Console.WriteLine($"Update failed for key '{key}': ETag mismatch");
+                Trace.TraceWarning($"[Cloud.Persistence][Update] update rejected because the ETag did not match for item with ID '{key}'.");
+            }
+            else
+            {
+                Trace.TraceError($"[Cloud.Persistence][Update] failed to update item with ID '{key}'. CosmosException: {ex.StatusCode} - {ex.Message}");
             }
             return false;
         }
@@ -186,15 +207,18 @@ internal class CosmosStorage : IStorage
     /// <inheritdoc/>
     public async Task<bool> Delete(string key)
     {
+        Trace.TraceInformation("[Cloud.Persistence][Delete] deleting item.");
         try
         {
             await _container.DeleteItemAsync<PersistenceItem>(
                 key,
                 new PartitionKey(key));
+            Trace.TraceInformation("[Cloud.Persistence][Delete] item deleted successfully.");
             return true;
         }
-        catch (CosmosException)
+        catch (CosmosException ex)
         {
+            Trace.TraceError($"[Cloud.Persistence][Delete] failed to delete item with ID '{key}'. CosmosException: {ex.StatusCode} - {ex.Message}");
             return false;
         }
     }
@@ -202,13 +226,16 @@ internal class CosmosStorage : IStorage
     /// <inheritdoc/>
     public async Task<bool> CreateAll(Dictionary<string, byte[]> items)
     {
+        Trace.TraceInformation($"[Cloud.Persistence][CreateAll] creating {items.Count} items.");
         foreach (KeyValuePair<string, byte[]> item in items)
         {
             if (!await Create(item.Key, item.Value))
             {
+                Trace.TraceError($"[Cloud.Persistence][CreateAll] bulk creation stopped because an item with ID '{item.Key}' could not be created.");
                 return false;
             }
         }
+        Trace.TraceInformation("[Cloud.Persistence][CreateAll] all items created successfully.");
         return true;
     }
 
@@ -217,6 +244,7 @@ internal class CosmosStorage : IStorage
     // All other bulk CRUD operations are atomic like this
     public async Task<(bool Success, Dictionary<string, byte[]>)> ReadAll(string[] keys)
     {
+        Trace.TraceInformation($"[Cloud.Persistence][ReadAll] reading {keys.Length} items.");
         Dictionary<string, byte[]> result = [];
         foreach (string key in keys)
         {
@@ -227,15 +255,18 @@ internal class CosmosStorage : IStorage
             }
             else
             {
+                Trace.TraceError($"[Cloud.Persistence][ReadAll] bulk read stopped because an item with ID '{key}' could not be read.");
                 return (false, new Dictionary<string, byte[]>());
             }
         }
+        Trace.TraceInformation("[Cloud.Persistence][ReadAll] all items read successfully.");
         return (true, result);
     }
 
     /// <inheritdoc/>
     public async Task<(bool Success, List<string>)> GetAllKeys()
     {
+        Trace.TraceInformation("[Cloud.Persistence][GetAllKeys] retrieving all item keys.");
         List<string> keys = [];
 
         try
@@ -248,10 +279,12 @@ internal class CosmosStorage : IStorage
                 keys.AddRange(page);
             }
 
+            Trace.TraceInformation($"[Cloud.Persistence][GetAllKeys] retrieved {keys.Count} keys.");
             return (true, keys);
         }
-        catch (CosmosException)
+        catch (CosmosException ex)
         {
+            Trace.TraceError($"[Cloud.Persistence][GetAllKeys] failed to retrieve item keys. CosmosException: {ex.StatusCode} - {ex.Message}");
             return (false, new List<string>());
         }
     }
@@ -260,6 +293,7 @@ internal class CosmosStorage : IStorage
     /* this will be helpful when all the items are to be updated */
     public async Task<(bool Success, Dictionary<string, string>)> ReadAllEtags()
     {
+        Trace.TraceInformation("[Cloud.Persistence][ReadAllEtags] retrieving all item ETags.");
         Dictionary<string, string> etags = [];
 
         try
@@ -276,6 +310,7 @@ internal class CosmosStorage : IStorage
 
                     if (etag is null)
                     {
+                        Trace.TraceError("[Cloud.Persistence][ReadAllEtags] encountered an item with a null ETag.");
                         return (false, new Dictionary<string, string>());
                     }
                     else
@@ -285,10 +320,12 @@ internal class CosmosStorage : IStorage
                 }
             }
 
+            Trace.TraceInformation($"[Cloud.Persistence][ReadAllEtags] retrieved {etags.Count} ETags.");
             return (true, etags);
         }
-        catch (CosmosException)
+        catch (CosmosException ex)
         {
+            Trace.TraceError($"[Cloud.Persistence][ReadAllEtags] failed to retrieve item ETags. CosmosException: {ex.StatusCode} - {ex.Message}");
             return (false, new Dictionary<string, string>());
         }
     }
@@ -300,6 +337,7 @@ internal class CosmosStorage : IStorage
     */
     public async Task<(bool Success, Dictionary<string, string> Etags)> ReadEtags(string[] keys)
     {
+        Trace.TraceInformation($"[Cloud.Persistence][ReadEtags] retrieving ETags for {keys.Length} items.");
         Dictionary<string, string> etags = new Dictionary<string, string>();
         foreach (string key in keys)
         {
@@ -310,9 +348,11 @@ internal class CosmosStorage : IStorage
             }
             else
             {
+                Trace.TraceError($"[Cloud.Persistence][ReadEtags] failed to retrieve ETag for item with ID '{key}'.");
                 return (false, new Dictionary<string, string>());
             }
         }
+        Trace.TraceInformation($"[Cloud.Persistence][ReadEtags] retrieved {etags.Count} ETags.");
         return (true, etags);
     }
 
@@ -323,10 +363,12 @@ internal class CosmosStorage : IStorage
     */
     public async Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags)
     {
+        Trace.TraceInformation($"[Cloud.Persistence][UpdateAll] updating {items.Count} items.");
         foreach (string key in items.Keys)
         {
             if (!etags.ContainsKey(key))
             {
+                Trace.TraceWarning($"[Cloud.Persistence][UpdateAll] an ETag is missing for item with ID '{key}'.");
                 return false;
             }
         }
@@ -340,23 +382,28 @@ internal class CosmosStorage : IStorage
 
             if (!success)
             {
+                Trace.TraceError($"[Cloud.Persistence][UpdateAll] bulk update stopped because item with ID '{item.Key}' could not be updated.");
                 return false;
             }
         }
 
+        Trace.TraceInformation("[Cloud.Persistence][UpdateAll] all items updated successfully.");
         return true;
     }
 
     /// <inheritdoc/>
     public async Task<bool> DeleteAll(string[] keys)
     {
+        Trace.TraceInformation($"[Cloud.Persistence][DeleteAll] deleting {keys.Length} items.");
         foreach (string key in keys)
         {
             if (!await Delete(key))
             {
+                Trace.TraceError($"[Cloud.Persistence][DeleteAll] bulk deletion stopped because item with ID '{key}' could not be deleted");
                 return false;
             }
         }
+        Trace.TraceInformation("[Cloud.Persistence][DeleteAll] all items deleted successfully.");
         return true;
     }
 
@@ -366,11 +413,13 @@ internal class CosmosStorage : IStorage
     */
     public async Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int count)
     {
+        Trace.TraceInformation($"[Cloud.Persistence][ReadLatest] retrieving the latest {count} items");
         Dictionary<string, byte[]> items = [];
 
         /* return false and empty dictionary if count is invalid */
         if (count <= 0)
         {
+            Trace.TraceWarning("[Cloud.Persistence][ReadLatest] count must be greater than zero.");
             return (false, items);
         }
 
@@ -389,13 +438,14 @@ internal class CosmosStorage : IStorage
                 }
             }
 
+            Trace.TraceInformation($"[Cloud.Persistence][ReadLatest] retrieved {items.Count} items");
             return (true, items);
         }
-        catch (CosmosException)
+        catch (CosmosException ex)
         {
+            Trace.TraceError($"[Cloud.Persistence][ReadLatest] failed to retrieve the latest items. CosmosException: {ex.StatusCode} - {ex.Message}");
             return (false, []); /* return false and empty dict in case of exceptions */
         }
     }
 
 }
-
