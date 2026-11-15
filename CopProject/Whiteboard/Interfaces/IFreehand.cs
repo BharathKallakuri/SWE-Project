@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿/// Author : Karthik Krishna M
+/// Roll Number : 112301014
+/// LICENSE : MIT
+
+using System.Collections.Generic;
 using Windows.UI;
 
 namespace Whiteboard.Interfaces;
