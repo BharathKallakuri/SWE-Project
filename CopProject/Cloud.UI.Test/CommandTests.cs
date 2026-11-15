@@ -6,9 +6,13 @@ using Cloud.UI.ViewModels;
 
 namespace Cloud.UI.Test;
 
+/// <summary>
+/// Tests the busy guard and lifecycle shared by all async commands.
+/// </summary>
 [TestClass]
 public class AsyncCommandBaseTests
 {
+    /// <summary>A minimal command whose permission and body each test can control.</summary>
     private sealed class TestCommand : AsyncCommandBase
     {
         public bool? Allowed { get; set; }
@@ -27,12 +31,14 @@ public class AsyncCommandBaseTests
         }
     }
 
+    /// <summary>A command with no extra condition can run.</summary>
     [TestMethod]
     public void CanExecuteDefaultsToTrue()
     {
         Assert.IsTrue(new TestCommand().CanExecute(null));
     }
 
+    /// <summary>A command that cannot run is skipped without executing.</summary>
     [TestMethod]
     public async Task ExecuteAsyncWhenNotAllowedDoesNothing()
     {
@@ -44,6 +50,7 @@ public class AsyncCommandBaseTests
         Assert.AreEqual(0, command.Runs);
     }
 
+    /// <summary>A running command is unavailable and ignores a second start.</summary>
     [TestMethod]
     public async Task WhileRunningCannotExecuteAndSecondCallIsIgnored()
     {
@@ -62,6 +69,7 @@ public class AsyncCommandBaseTests
         Assert.IsTrue(command.CanExecute(null));
     }
 
+    /// <summary>A run executes once and raises CanExecuteChanged when it starts and ends.</summary>
     [TestMethod]
     public async Task ExecuteAsyncRunsOnceAndRaisesCanExecuteChangedAtStartAndEnd()
     {
@@ -76,6 +84,7 @@ public class AsyncCommandBaseTests
         Assert.IsTrue(command.CanExecute(null));
     }
 
+    /// <summary>An exception from the body propagates and the command becomes available again.</summary>
     [TestMethod]
     public async Task ExecuteAsyncWhenBodyThrowsPropagatesAndResets()
     {
@@ -88,9 +97,13 @@ public class AsyncCommandBaseTests
 
 }
 
+/// <summary>
+/// Tests error handling and the ICommand entry point of the notification commands.
+/// </summary>
 [TestClass]
 public class NotificationCommandTests
 {
+    /// <summary>A failing command shows its message as an error instead of throwing.</summary>
     [TestMethod]
     public async Task CommandFailureIsShownAsErrorNotThrown()
     {
@@ -108,6 +121,7 @@ public class NotificationCommandTests
         Assert.IsTrue(vm.SendCommand.CanExecute(null), "busy flag must be released after a failure");
     }
 
+    /// <summary>ICommand.Execute starts the command.</summary>
     [TestMethod]
     public void ExecuteICommandEntryPointRunsTheCommand()
     {
