@@ -18,7 +18,7 @@ Roll numbers = 112301038, 112301016
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid Background="#0B2A4A" Padding="20,10">
-            <TextBlock Text="SecureMeet" FontSize="20" FontWeight="SemiBold"
+            <TextBlock Text="PawPatrol" FontSize="20" FontWeight="SemiBold"
                        Foreground="White" VerticalAlignment="Center"/>
 
             <StackPanel x:Name="UserPanel" Orientation="Horizontal" Spacing="12"
