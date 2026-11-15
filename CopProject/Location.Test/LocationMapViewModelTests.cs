@@ -165,6 +165,31 @@ public sealed class LocationMapViewModelTests
     }
 
     /// <summary>
+    /// A range with one date or equal dates should be accepted.
+    /// </summary>
+    [TestMethod]
+    public async Task LoadAsyncWithPartialOrEqualDateRangePasses()
+    {
+        DateTimeOffset date = new(2026, 12, 1, 0, 0, 0, TimeSpan.Zero);
+        _viewModel.ToDate = date;
+        _viewModel.ToDate = date;
+
+        await _viewModel.LoadAsync();
+
+        Assert.IsNotNull(_mapService.LastFilter);
+        Assert.IsNull(_mapService.LastFilter.FromDateTime);
+        Assert.AreEqual(date.DateTime, _mapService.LastFilter.ToDateTime);
+
+        _viewModel.FromDate = date;
+        _viewModel.FromDate = date;
+        await _viewModel.LoadAsync();
+
+        Assert.AreEqual(date.DateTime, _mapService.LastFilter.FromDateTime);
+        Assert.AreEqual(date.DateTime, _mapService.LastFilter.ToDateTime);
+        Assert.AreEqual(string.Empty, _viewModel.ErrorMessage);
+    }
+
+    /// <summary>
     /// The map should be told to refresh after incidents are loaded.
     /// </summary>
     [TestMethod]
