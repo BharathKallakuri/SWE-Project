@@ -59,7 +59,7 @@ public class WhiteboardCanvas : IWhiteboard
         return true;
     }
 
-    // Optional compatibility helper if older call-sites still use RemoveItem
+
     public bool RemoveItem(IItem item)
     {
         if (item is null)
