@@ -1,8 +1,11 @@
-﻿using System.Diagnostics;
+﻿// Author: Rajdeep
+// Roll no.: 112301045
+
+using System.Diagnostics;
 using System.Net;
-using Insights.AI;
 using System.Text.Json;
 using Controller;
+using Insights.AI;
 using Networking;
 using Utils;
 
@@ -96,8 +99,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
     /// </summary>
     public int Version
     {
-        get
-        {
+        get {
             lock (_syncRoot)
             {
                 return _operations.Count;
@@ -378,84 +380,83 @@ public sealed class ChatServer : IMessageListener, IDisposable
         switch (request)
         {
             case SendMessage send:
-            {
-                ArgumentNullException.ThrowIfNull(send.Mentions);
-                ChatMessageWithThreads serverMessage = new()
                 {
-                    Timestamp = send.Timestamp,
-                    SenderName = username,
-                    Mentions = send.Mentions.Clone(),
-                    Content = send.Content
-                };
-                serverMessage.ParentMessageId = send.ReplyToMessageId;
-                Guid messageId;
-                if (send.ThreadParentMessageId is Guid parentId)
-                {
-                    try
+                    ArgumentNullException.ThrowIfNull(send.Mentions);
+                    ChatMessageWithThreads serverMessage = new() {
+                        Timestamp = send.Timestamp,
+                        SenderName = username,
+                        Mentions = send.Mentions.Clone(),
+                        Content = send.Content,
+                        ParentMessageId = send.ReplyToMessageId
+                    };
+                    Guid messageId;
+                    if (send.ThreadParentMessageId is Guid parentId)
                     {
-                        messageId = Chatroom.AddThreadMessage(parentId, serverMessage);
+                        try
+                        {
+                            messageId = Chatroom.AddThreadMessage(parentId, serverMessage);
+                        }
+                        catch (KeyNotFoundException)
+                        {
+                            return RoomResult.NotFound;
+                        }
                     }
-                    catch (KeyNotFoundException)
+                    else
                     {
-                        return RoomResult.NotFound;
+                        messageId = Chatroom.AddMessage(serverMessage);
                     }
-                }
-                else
-                {
-                    messageId = Chatroom.AddMessage(serverMessage);
-                }
 
-                operation = new MessageAdded(
-                    messageId,
-                    serverMessage.DeepCloneWithoutThreadMessages(),
-                    send.ThreadParentMessageId);
-                return RoomResult.Ok;
-            }
+                    operation = new MessageAdded(
+                        messageId,
+                        serverMessage.DeepCloneWithoutThreadMessages(),
+                        send.ThreadParentMessageId);
+                    return RoomResult.Ok;
+                }
 
             case EditMessage edit:
-            {
-                RoomResult result = Chatroom.EditMessage(
-                    edit.MessageId,
-                    edit.NewContent,
-                    username,
-                    edit.ThreadParentMessageId);
-                if (result == RoomResult.Ok)
                 {
-                    operation = new MessageEdited(edit.MessageId, edit.NewContent, username, edit.ThreadParentMessageId);
-                }
+                    RoomResult result = Chatroom.EditMessage(
+                        edit.MessageId,
+                        edit.NewContent,
+                        username,
+                        edit.ThreadParentMessageId);
+                    if (result == RoomResult.Ok)
+                    {
+                        operation = new MessageEdited(edit.MessageId, edit.NewContent, username, edit.ThreadParentMessageId);
+                    }
 
-                return result;
-            }
+                    return result;
+                }
 
             case DeleteMessage delete:
-            {
-                RoomResult result = Chatroom.DeleteMessage(delete.MessageId, username, delete.ThreadParentMessageId);
-                if (result == RoomResult.Ok)
                 {
-                    operation = new MessageDeleted(delete.MessageId, username, delete.ThreadParentMessageId);
+                    RoomResult result = Chatroom.DeleteMessage(delete.MessageId, username, delete.ThreadParentMessageId);
+                    if (result == RoomResult.Ok)
+                    {
+                        operation = new MessageDeleted(delete.MessageId, username, delete.ThreadParentMessageId);
+                    }
+
+                    return result;
                 }
 
-                return result;
-            }
-
             case ToggleReaction reaction:
-            {
-                RoomResult result = Chatroom.ToggleReaction(
-                    reaction.MessageId,
-                    reaction.Emoji,
-                    username,
-                    reaction.ThreadParentMessageId);
-                if (result == RoomResult.Ok)
                 {
-                    operation = new ReactionToggled(
+                    RoomResult result = Chatroom.ToggleReaction(
                         reaction.MessageId,
                         reaction.Emoji,
                         username,
                         reaction.ThreadParentMessageId);
-                }
+                    if (result == RoomResult.Ok)
+                    {
+                        operation = new ReactionToggled(
+                            reaction.MessageId,
+                            reaction.Emoji,
+                            username,
+                            reaction.ThreadParentMessageId);
+                    }
 
-                return result;
-            }
+                    return result;
+                }
 
             default:
                 return RoomResult.Forbidden;
@@ -517,8 +518,7 @@ public sealed class ChatServer : IMessageListener, IDisposable
 
         return string.Join(
             Environment.NewLine,
-            messages.Select(item =>
-            {
+            messages.Select(item => {
                 ChatMessage message = item.Message;
                 string relation = string.Empty;
                 Guid? replyToId = message.ParentMessageId ?? item.ThreadParentMessageId;

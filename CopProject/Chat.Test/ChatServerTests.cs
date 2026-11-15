@@ -1,3 +1,6 @@
+// Author: Rajdeep
+// Roll no.: 112301045
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -112,7 +115,7 @@ public class ChatServerTests
     }
 
     [Fact]
-    public void UnregisterClientRemovesParticipantAndBroadcastsUpdatedList()
+    public void UnregisterClientRemovesGuestAndPreservesHost()
     {
         RecordingCommunicator communicator = new();
         RecordingController controller = new();
@@ -128,17 +131,8 @@ public class ChatServerTests
         Assert.DoesNotContain("guest", server.Chatroom.Participants);
         Assert.Single(communicator.Sent);
         Assert.Equal(new[] { "host" }, ReadUpdate(communicator.Sent[0]).Participants);
-    }
 
-    [Fact]
-    public void UnregisterClientKeepsHostInRoom()
-    {
-        RecordingCommunicator communicator = new();
-        RecordingController controller = new();
-        using ChatServer server = NewServer(communicator, controller);
-        controller.AddEndpoint("host", ClientAddress);
-        server.RegisterClient("host");
-
+        communicator.Sent.Clear();
         Assert.True(server.UnregisterClient("host"));
         Assert.Contains("host", server.Chatroom.Participants);
     }

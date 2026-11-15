@@ -1,27 +1,30 @@
+﻿// Author: Rajat
+// Roll no.: 112301044
+
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text;
+using Chat;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using UI.Helpers;
 using Windows.UI;
 using Windows.UI.Text;
-using Chat;
-using UI.Helpers;
 
 namespace UI.ViewModels;
 
 /// <summary>Presentation state for one chat message or thread reply.</summary>
 public sealed class MessageViewModel : AvatarViewModel
 {
-    private static readonly Brush IncomingBrush = new SolidColorBrush(Color.FromArgb(255, 241, 244, 248));
-    private static readonly Brush OutgoingBrush = new SolidColorBrush(Color.FromArgb(255, 220, 235, 255));
-    private static readonly Brush DeletedBrush = new SolidColorBrush(Color.FromArgb(255, 243, 244, 246));
-    private static readonly Brush MentionBorderBrush = new SolidColorBrush(Color.FromArgb(255, 224, 168, 62));
-    private static readonly Brush MentionedBubbleBrush = new SolidColorBrush(Color.FromArgb(255, 255, 244, 214));
-    private static readonly Brush MentionedOtherBubbleBrush = new SolidColorBrush(Color.FromArgb(255, 255, 249, 232));
-    private static readonly Brush JumpHighlightBrush = new SolidColorBrush(Color.FromArgb(255, 255, 233, 168));
-    private static readonly Brush JumpHighlightBorderBrush = new SolidColorBrush(Color.FromArgb(255, 217, 154, 0));
-    private static readonly Brush NormalBorderBrush = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+    private static readonly Brush s_incomingBrush = new SolidColorBrush(Color.FromArgb(255, 241, 244, 248));
+    private static readonly Brush s_outgoingBrush = new SolidColorBrush(Color.FromArgb(255, 220, 235, 255));
+    private static readonly Brush s_deletedBrush = new SolidColorBrush(Color.FromArgb(255, 243, 244, 246));
+    private static readonly Brush s_mentionBorderBrush = new SolidColorBrush(Color.FromArgb(255, 224, 168, 62));
+    private static readonly Brush s_mentionedBubbleBrush = new SolidColorBrush(Color.FromArgb(255, 255, 244, 214));
+    private static readonly Brush s_mentionedOtherBubbleBrush = new SolidColorBrush(Color.FromArgb(255, 255, 249, 232));
+    private static readonly Brush s_jumpHighlightBrush = new SolidColorBrush(Color.FromArgb(255, 255, 233, 168));
+    private static readonly Brush s_jumpHighlightBorderBrush = new SolidColorBrush(Color.FromArgb(255, 217, 154, 0));
+    private static readonly Brush s_normalBorderBrush = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
     private readonly string _hostName;
     private readonly Action<MessageViewModel> _replyInChat;
     private readonly Action<MessageViewModel> _openThread;
@@ -66,24 +69,30 @@ public sealed class MessageViewModel : AvatarViewModel
         _jumpToMessage = jumpToMessage;
 
         if (message is ChatMessageWithThreads threadedMessage)
+        {
             _replyCount = threadedMessage.ThreadById.Count;
+        }
 
-        foreach (var reaction in message.Reactions)
+        foreach (KeyValuePair<string, HashSet<string>> reaction in message.Reactions)
+        {
             Reactions.Add(new ReactionViewModel(reaction.Key, reaction.Value, currentUsername, emoji => _toggleReaction(this, emoji)));
+        }
 
         ReplyInChatCommand = new RelayCommand(() => _replyInChat(this), () => CanReplyInChat);
         OpenThreadCommand = new RelayCommand(() => _openThread(this), () => CanOpenThread);
         EditCommand = new RelayCommand(() => _beginEdit(this), () => CanEdit);
         DeleteCommand = new RelayCommand(() => _deleteMessage(this), () => CanDelete);
-        ToggleReactionCommand = new RelayCommand(parameter =>
-        {
+        ToggleReactionCommand = new RelayCommand(parameter => {
             if (parameter is string emoji && !string.IsNullOrWhiteSpace(emoji))
+            {
                 _toggleReaction(this, emoji);
+            }
         }, parameter => parameter is string emoji && !string.IsNullOrWhiteSpace(emoji) && !IsDeleted);
-        JumpToReplyCommand = new RelayCommand(() =>
-        {
+        JumpToReplyCommand = new RelayCommand(() => {
             if (ReplyToMessageId is Guid targetId)
+            {
                 _jumpToMessage(targetId);
+            }
         }, () => ReplyToMessageId is not null);
         SendCustomReactionCommand = new RelayCommand(SendCustomReaction, CanSendCustomReaction);
         ToggleReactionPickerCommand = new RelayCommand(
@@ -101,11 +110,11 @@ public sealed class MessageViewModel : AvatarViewModel
     public bool IsOwnMessage => string.Equals(SenderUsername, CurrentUsername, StringComparison.Ordinal);
     public bool IsCurrentUserHost { get; }
     public HorizontalAlignment BubbleAlignment => IsOwnMessage ? HorizontalAlignment.Right : HorizontalAlignment.Left;
-    public Brush BubbleBrush => IsDeleted ? DeletedBrush : IsJumpHighlighted ? JumpHighlightBrush
-        : IsMentioned ? MentionedBubbleBrush
-        : IsOwnMessage ? OutgoingBrush : IncomingBrush;
-    public Brush MessageBorderBrush => IsJumpHighlighted ? JumpHighlightBorderBrush
-        : IsMentioned ? MentionBorderBrush : NormalBorderBrush;
+    public Brush BubbleBrush => IsDeleted ? s_deletedBrush : IsJumpHighlighted ? s_jumpHighlightBrush
+        : IsMentioned ? s_mentionedBubbleBrush
+        : IsOwnMessage ? s_outgoingBrush : s_incomingBrush;
+    public Brush MessageBorderBrush => IsJumpHighlighted ? s_jumpHighlightBorderBrush
+        : IsMentioned ? s_mentionBorderBrush : s_normalBorderBrush;
     public Thickness MessageBorderThickness => new(IsJumpHighlighted ? 3 : IsMentioned ? 2 : 0);
     public Brush ContentForeground => IsDeleted ? new SolidColorBrush(Color.FromArgb(255, 107, 114, 128)) : new SolidColorBrush(Color.FromArgb(255, 31, 41, 55));
     public FontStyle ContentFontStyle => IsDeleted ? FontStyle.Italic : FontStyle.Normal;
@@ -133,16 +142,22 @@ public sealed class MessageViewModel : AvatarViewModel
     public string CustomReactionText
     {
         get => _customReactionText;
-        set { if (SetProperty(ref _customReactionText, value)) SendCustomReactionCommand.NotifyCanExecuteChanged(); }
+        set {
+            if (SetProperty(ref _customReactionText, value))
+            {
+                SendCustomReactionCommand.NotifyCanExecuteChanged();
+            }
+        }
     }
     public bool IsJumpHighlighted => _isJumpHighlighted;
     public bool IsReactionPickerOpen
     {
         get => _isReactionPickerOpen;
-        private set
-        {
+        private set {
             if (SetProperty(ref _isReactionPickerOpen, value))
+            {
                 OnPropertyChanged(nameof(ReactionPickerVisibility));
+            }
         }
     }
     public Visibility ReactionPickerVisibility => IsReactionPickerOpen && !IsDeleted
@@ -173,29 +188,54 @@ public sealed class MessageViewModel : AvatarViewModel
     public RelayCommand SendCustomReactionCommand { get; }
     public RelayCommand ToggleReactionPickerCommand { get; }
 
-    private bool CanSendCustomReaction() => !IsDeleted && IsSingleEmoji(CustomReactionText);
+    private bool CanSendCustomReaction()
+    {
+        return !IsDeleted && IsSingleEmoji(CustomReactionText);
+    }
 
     private void SendCustomReaction()
     {
         string emoji = CustomReactionText.Trim();
-        if (!CanSendCustomReaction()) return;
+        if (!CanSendCustomReaction())
+        {
+            return;
+        }
+
         CustomReactionText = string.Empty;
         _toggleReaction(this, emoji);
     }
 
     private static bool IsSingleEmoji(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return false;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
         string emoji = value.Trim();
-        if (new StringInfo(emoji).LengthInTextElements != 1) return false;
+        if (new StringInfo(emoji).LengthInTextElements != 1)
+        {
+            return false;
+        }
+
         foreach (Rune rune in emoji.EnumerateRunes())
-            if ((rune.Value >= 0x2300 && rune.Value <= 0x27FF) || rune.Value >= 0x1F000) return true;
+        {
+            if ((rune.Value >= 0x2300 && rune.Value <= 0x27FF) || rune.Value >= 0x1F000)
+            {
+                return true;
+            }
+        }
+
         return false;
     }
 
     internal void SetJumpHighlighted(bool highlighted)
     {
-        if (_isJumpHighlighted == highlighted) return;
+        if (_isJumpHighlighted == highlighted)
+        {
+            return;
+        }
+
         _isJumpHighlighted = highlighted;
         OnPropertyChanged(nameof(IsJumpHighlighted));
         OnPropertyChanged(nameof(BubbleBrush));
@@ -214,7 +254,11 @@ public sealed class MessageViewModel : AvatarViewModel
 
     internal void ApplyEdit(string newContent)
     {
-        if (IsDeleted) return;
+        if (IsDeleted)
+        {
+            return;
+        }
+
         _content = newContent;
         _editCount++;
         OnPropertyChanged(nameof(Content));
@@ -226,7 +270,11 @@ public sealed class MessageViewModel : AvatarViewModel
 
     internal void ApplyDeletion(string deleter)
     {
-        if (IsDeleted) return;
+        if (IsDeleted)
+        {
+            return;
+        }
+
         _deletedByUser = deleter;
         IsReactionPickerOpen = false;
         OnPropertyChanged(nameof(ReactionPickerVisibility));
@@ -261,7 +309,10 @@ public sealed class MessageViewModel : AvatarViewModel
             return;
         }
         reaction.ToggleUser(username);
-        if (reaction.Count == 0) Reactions.Remove(reaction);
+        if (reaction.Count == 0)
+        {
+            Reactions.Remove(reaction);
+        }
     }
 
     internal void IncrementReplyCount()

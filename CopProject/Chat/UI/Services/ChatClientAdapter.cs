@@ -1,3 +1,6 @@
+﻿// Author: Rajat
+// Roll no.: 112301044
+
 using Chat;
 using Controller;
 using Microsoft.UI.Dispatching;
@@ -77,7 +80,10 @@ public sealed class ChatClientAdapter : IDisposable
         _client?.Chatroom.Participants ?? _server!.Chatroom.Participants;
 
     /// <summary>Returns the meeting's user list as the controller knows it (includes profile pictures and emails). Empty when no controller is attached.</summary>
-    public IReadOnlyList<ControllerUser> GetMeetingUsers() => _controller?.GetActiveUsers() ?? new List<ControllerUser>();
+    public IReadOnlyList<ControllerUser> GetMeetingUsers()
+    {
+        return _controller?.GetActiveUsers() ?? new List<ControllerUser>();
+    }
 
     // Events exposed to the ViewModels.
     // These events are always raised on the UI thread.
@@ -138,19 +144,26 @@ public sealed class ChatClientAdapter : IDisposable
         RaiseUserInfoChanged();
     }
 
-    private void RaiseUserInfoChanged() => DispatchToUI(() => UserInfoChanged?.Invoke());
+    private void RaiseUserInfoChanged()
+    {
+        DispatchToUI(() => UserInfoChanged?.Invoke());
+    }
 
     private void RaiseHostParticipantsChanged()
     {
         if (_server is null)
+        {
             return;
+        }
 
         var snapshot = new HashSet<string>(_server.Chatroom.Participants);
 
         // Queue this so ChatServer has already applied the participant change.
         _dispatcherQueue.TryEnqueue(() => {
             if (Volatile.Read(ref _disposed) == 0)
+            {
                 ParticipantsChanged?.Invoke(snapshot);
+            }
         });
     }
 
@@ -165,22 +178,27 @@ public sealed class ChatClientAdapter : IDisposable
         ArgumentNullException.ThrowIfNull(callback);
 
         if (Volatile.Read(ref _disposed) != 0)
+        {
             return false;
+        }
 
         if (_dispatcherQueue.HasThreadAccess)
         {
             if (Volatile.Read(ref _disposed) != 0)
+            {
                 return false;
+            }
 
             callback();
             return true;
         }
 
-        return _dispatcherQueue.TryEnqueue(() =>
-        {
+        return _dispatcherQueue.TryEnqueue(() => {
             // The adapter might have been disposed while the callback was queued.
             if (Volatile.Read(ref _disposed) == 0)
+            {
                 callback();
+            }
         });
     }
 
@@ -213,7 +231,9 @@ public sealed class ChatClientAdapter : IDisposable
         ThrowIfDisposed();
 
         if (_server is not null)
+        {
             return Guid.NewGuid();
+        }
 
         return _client!.Reset();
     }
@@ -251,7 +271,9 @@ public sealed class ChatClientAdapter : IDisposable
         ThrowIfDisposed();
 
         if (_server is not null)
+        {
             return SubmitHostRequest(new EditMessage(messageId, newContent, threadParentMessageId));
+        }
 
         return _client!.EditMessage(
             messageId,
@@ -266,7 +288,9 @@ public sealed class ChatClientAdapter : IDisposable
         ThrowIfDisposed();
 
         if (_server is not null)
+        {
             return SubmitHostRequest(new DeleteMessage(messageId, threadParentMessageId));
+        }
 
         return _client!.DeleteMessage(
             messageId,
@@ -281,7 +305,9 @@ public sealed class ChatClientAdapter : IDisposable
         ThrowIfDisposed();
 
         if (_server is not null)
+        {
             return SubmitHostRequest(new global::Chat.ToggleReaction(messageId, emoji, threadParentMessageId));
+        }
 
         return _client!.ToggleReaction(
             messageId,
@@ -295,10 +321,11 @@ public sealed class ChatClientAdapter : IDisposable
         RoomResult result = _server!.SubmitHostRequest(request);
 
         // Defer the completion so ChatPanelViewModel has registered its pending request.
-        _dispatcherQueue.TryEnqueue(() =>
-        {
+        _dispatcherQueue.TryEnqueue(() => {
             if (Volatile.Read(ref _disposed) == 0)
+            {
                 RequestCompleted?.Invoke(requestId, result);
+            }
         });
 
         return requestId;
@@ -316,7 +343,9 @@ public sealed class ChatClientAdapter : IDisposable
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
+        {
             return;
+        }
 
         if (_client is not null)
         {
@@ -327,7 +356,9 @@ public sealed class ChatClientAdapter : IDisposable
         }
 
         if (_server is not null)
+        {
             _server.OperationApplied -= OnOperationApplied;
+        }
 
         if (_controller is not null)
         {

@@ -1,4 +1,7 @@
-﻿using System.Windows.Input;
+﻿// Author: Rajat
+// Roll no.: 112301044
+
+using System.Windows.Input;
 
 namespace UI.Helpers;
 
@@ -20,7 +23,9 @@ public sealed class RelayCommand : ICommand
         _execute = _ => execute();
 
         if (canExecute is not null)
+        {
             _canExecute = _ => canExecute();
+        }
     }
 
     // Constructor for commands that receive a parameter.
