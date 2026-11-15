@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Bharath
+// Roll Number = 112301013
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,6 +17,9 @@ using Networking.Sockets;
 
 namespace Networking.TCPCommunication;
 
+/// <summary>
+/// Client-side communicator managing reliable (TCP) and lossy (UDP) communications.
+/// </summary>
 public class CommunicatorClient : ICommunicator, IDisposable
 {
     private readonly SendingQueue _sendingQueue = new SendingQueue();
@@ -36,6 +42,10 @@ public class CommunicatorClient : ICommunicator, IDisposable
     private readonly UdpSocketListener? _multicastSocketListener;
     private readonly ConcurrentDictionary<int, IMessageListenerLossy> _moduleToLossyMessageListenerMap = new ConcurrentDictionary<int, IMessageListenerLossy>();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CommunicatorClient"/> class and connects to the server.
+    /// </summary>
+    /// <param name="serverIp">The server endpoint to connect to.</param>
     public CommunicatorClient(IPEndPoint serverIp)
     {
         _serverIp = serverIp;
@@ -86,6 +96,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
     {
         try
@@ -99,6 +110,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public void SendMessageLossy(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
     {
         try
@@ -112,30 +124,35 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public void AddSubscriber(int module, IMessageListener subscriber)
     {
         _moduleToMessageListenerMap[module] = subscriber;
         Trace.TraceInformation($"[Networking] CommunicatorClient.AddSubscriber: Subscribed listener for module {module}");
     }
 
+    /// <inheritdoc/>
     public void RemoveSubscriber(int module)
     {
         _moduleToMessageListenerMap.TryRemove(module, out _);
         Trace.TraceInformation($"[Networking] CommunicatorClient.RemoveSubscriber: Removed subscriber for module {module}");
     }
 
+    /// <inheritdoc/>
     public void AddLossySubscriber(int module, IMessageListenerLossy subscriber)
     {
         _moduleToLossyMessageListenerMap[module] = subscriber;
         Trace.TraceInformation($"[Networking] CommunicatorClient.AddLossySubscriber: Subscribed lossy listener for module {module}");
     }
 
+    /// <inheritdoc/>
     public void RemoveLossySubscriber(int module)
     {
         _moduleToLossyMessageListenerMap.TryRemove(module, out _);
         Trace.TraceInformation($"[Networking] CommunicatorClient.RemoveLossySubscriber: Removed lossy subscriber for module {module}");
     }
 
+    /// <inheritdoc/>
     public void BroadcastMessage(byte[] message, int module, int priority)
     {
         try
@@ -151,6 +168,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public void BroadcastMessageLossy(byte[] message, int module, int priority)
     {
         try
@@ -164,6 +182,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
         try
@@ -188,6 +207,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
         try
@@ -212,6 +232,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority)
     {
         try
@@ -227,6 +248,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public void MulticastMessageLossy(int multicastGroup, byte[] message, int module, int priority)
     {
         try
@@ -241,6 +263,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public int ListenPort
     {
         get {
@@ -253,6 +276,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public IPAddress ListenIpAddress
     {
         get {
@@ -269,7 +293,9 @@ public class CommunicatorClient : ICommunicator, IDisposable
         }
     }
 
-
+    /// <summary>
+    /// Disposes all client sockets, listeners, and message queues.
+    /// </summary>
     public void Dispose()
     {
         Trace.TraceInformation("[Networking] CommunicatorClient.Dispose: Disposing client communicator.");

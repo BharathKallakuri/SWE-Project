@@ -1,117 +1,114 @@
-﻿using System.Net;
+﻿// Author = Bharath
+// Roll Number = 112301013
+
+using System.Net;
 
 namespace Networking;
 
 /// <summary>
-/// Declares a communicator that can send and receive messages.
+/// Defines communication operations for sending, receiving, broadcasting, and multicasting messages.
 /// </summary>
 public interface ICommunicator
 {
     /// <summary>
-    /// Gets the port that is used for listening.
+    /// Gets the port used for listening.
     /// </summary>
     int ListenPort { get; }
 
     /// <summary>
-    /// Gets the IPAddress that is used for listening.
+    /// Gets the IP address used for listening.
     /// </summary>
     IPAddress ListenIpAddress { get; }
 
     /// <summary>
-    /// Adds a subscriber.
+    /// Registers a listener for reliable messages sent to a specific module.
     /// </summary>
-    /// <param name="module">module id for the subscriber</param>
-    /// <param name="subscriber">The message listener instance</param>
+    /// <param name="module">The module identifier.</param>
+    /// <param name="subscriber">The message listener callback.</param>
     void AddSubscriber(int module, IMessageListener subscriber);
 
     /// <summary>
-    /// Removes a subscriber
+    /// Unregisters the listener for a specific module.
     /// </summary>
-    /// <param name="module">Module id of the subscriber to be removed</param>
+    /// <param name="module">The module identifier to remove.</param>
     void RemoveSubscriber(int module);
 
     /// <summary>
-    /// Adds a subscriber for lossy messages.
+    /// Registers a listener for lossy (UDP) messages sent to a specific module.
     /// </summary>
-    /// <param name="module">Module id for the lossy subscriber</param>
-    /// <param name="subscriber">The lossy message listener instance</param>
+    /// <param name="module">The module identifier.</param>
+    /// <param name="subscriber">The lossy message listener callback.</param>
     void AddLossySubscriber(int module, IMessageListenerLossy subscriber);
 
     /// <summary>
-    /// Removes a subscriber for lossy messages.
+    /// Unregisters the lossy message listener for a specific module.
     /// </summary>
-    /// <param name="module">Module id of the subscriber to be removed</param>
+    /// <param name="module">The module identifier to remove.</param>
     void RemoveLossySubscriber(int module);
 
     /// <summary>
-    /// Sends the given message to the given ip and port.
+    /// Sends a reliable message to a specific endpoint.
     /// </summary>
-    /// <param name="ipEndPoint">IP EndPoint(Address:Port) of the destination</param>
-    /// <param name="message">Message to be sent</param>
-    /// <param name="module">Module id of the module to which the message should be sent</param>
-    /// <param name="priority">Priority of the message to be sent</param>
+    /// <param name="iPEndPoint">Destination endpoint.</param>
+    /// <param name="message">Payload data to send.</param>
+    /// <param name="module">Target module identifier.</param>
+    /// <param name="priority">Message priority level.</param>
     void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority);
 
     /// <summary>
-    /// Sends the given message using lossy transport (UDP) to the given ip and port.
+    /// Sends a lossy (UDP) message to a specific endpoint.
     /// </summary>
-    /// <param name="iPEndPoint">IP EndPoint(Address:Port) of the destination</param>
-    /// <param name="message">Message to be sent</param>
-    /// <param name="module">Module id of the module to which the message should be sent</param>
-    /// <param name="priority">Priority of the message to be sent</param>
+    /// <param name="iPEndPoint">Destination endpoint.</param>
+    /// <param name="message">Payload data to send.</param>
+    /// <param name="module">Target module identifier.</param>
+    /// <param name="priority">Message priority level.</param>
     void SendMessageLossy(IPEndPoint iPEndPoint, byte[] message, int module, int priority);
 
-
     /// <summary>
-    /// Broadcasts the message to every listener in a given module
+    /// Broadcasts a reliable message to all connected clients for a given module.
     /// </summary>
-    /// <param name="message">Message to be broadcasted</param>
-    /// <param name="module">Module ID of the module to which the message should be broadcasted</param>
-    /// <param name="priority">Priority of the message</param>
+    /// <param name="message">Payload data to broadcast.</param>
+    /// <param name="module">Target module identifier.</param>
+    /// <param name="priority">Message priority level.</param>
     void BroadcastMessage(byte[] message, int module, int priority);
 
     /// <summary>
-    /// Broadcasts the message using lossy transport (UDP) to all listeners.
+    /// Broadcasts a lossy (UDP) message to all clients for a given module.
     /// </summary>
-    /// <param name="message">Message to be broadcasted</param>
-    /// <param name="module">Module ID of the module to which the message should be broadcasted</param>
-    /// <param name="priority">Priority of the message</param>
+    /// <param name="message">Payload data to broadcast.</param>
+    /// <param name="module">Target module identifier.</param>
+    /// <param name="priority">Message priority level.</param>
     void BroadcastMessageLossy(byte[] message, int module, int priority);
 
-    ///Multicast Methods
-
     /// <summary>
-    /// Join a Multicast Group
+    /// Subscribes a client to a multicast group.
     /// </summary>
-    /// <param name="multicastGroup">Multicast group id</param>
-    /// <param name="clientIp">IP Endpoint of the joining client</param>
+    /// <param name="multicastGroup">Multicast group identifier.</param>
+    /// <param name="clientIp">Endpoint of the joining client.</param>
     void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp);
 
     /// <summary>
-    /// Leave a Multicast group
+    /// Unsubscribes a client from a multicast group.
     /// </summary>
-    /// <param name="multicastGroup">Multicast group id</param>
-    /// <param name="clientIp">IP Endpoint of the leaving client</param>
+    /// <param name="multicastGroup">Multicast group identifier.</param>
+    /// <param name="clientIp">Endpoint of the leaving client.</param>
     void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp);
 
-
     /// <summary>
-    /// Send message to all users in a Multicast group
+    /// Sends a reliable message to all members of a multicast group.
     /// </summary>
-    /// <param name="multicastGroup">IP Endpoint of the Mutlicast group</param>
-    /// <param name="message">Message to be sent</param>
-    /// <param name="module">Module ID of the module to which the message is multicasted</param>
-    /// <param name="priority">Priority of the message</param>
+    /// <param name="multicastGroup">Multicast group identifier.</param>
+    /// <param name="message">Payload data to send.</param>
+    /// <param name="module">Target module identifier.</param>
+    /// <param name="priority">Message priority level.</param>
     void MulticastMessage(int multicastGroup, byte[] message, int module, int priority);
 
     /// <summary>
-    /// Sends a message using lossy transport (UDP) to all users in a multicast group.
+    /// Sends a lossy (UDP) message to all members of a multicast group.
     /// </summary>
-    /// <param name="multicastGroup">Multicast group id</param>
-    /// <param name="message">Message to be sent</param>
-    /// <param name="module">Module ID of the module to which the message is multicasted</param>
-    /// <param name="priority">Priority of the message</param>
+    /// <param name="multicastGroup">Multicast group identifier.</param>
+    /// <param name="message">Payload data to send.</param>
+    /// <param name="module">Target module identifier.</param>
+    /// <param name="priority">Message priority level.</param>
     void MulticastMessageLossy(int multicastGroup, byte[] message, int module, int priority);
-
-
 }

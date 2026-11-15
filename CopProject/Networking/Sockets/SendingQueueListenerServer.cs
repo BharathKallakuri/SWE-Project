@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Bharath
+// Roll Number = 112301013
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,6 +15,9 @@ using Networking.Queues;
 
 namespace Networking.Sockets;
 
+/// <summary>
+/// Monitors the server sending queue and transmits packets to connected clients over TCP.
+/// </summary>
 public class SendingQueueListenerServer : IDisposable
 {
     private SendingQueue _sendingQueue;
@@ -34,6 +40,12 @@ public class SendingQueueListenerServer : IDisposable
     private ConcurrentDictionary<IPEndPoint, TcpClient> _clientToTcpListenerMap;
 
     private PacketSerializer _packetSerializer;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SendingQueueListenerServer"/> class and begins processing the queue.
+    /// </summary>
+    /// <param name="sendingQueue">The sending queue containing outgoing packets.</param>
+    /// <param name="clientToTcpListenerMap">Map of client endpoints to active TCP connections.</param>
     public SendingQueueListenerServer(SendingQueue sendingQueue, ConcurrentDictionary<IPEndPoint, TcpClient> clientToTcpListenerMap)
     {
         _isRunningLock = new object();
@@ -46,6 +58,9 @@ public class SendingQueueListenerServer : IDisposable
         Trace.TraceInformation("[Networking] SendingQueueListenerServer: Started server sending queue listener thread.");
     }
 
+    /// <summary>
+    /// Dequeues packets and dispatches them to their destination clients.
+    /// </summary>
     public void ListenOnQueue()
     {
         while (IsRunning)
@@ -64,6 +79,11 @@ public class SendingQueueListenerServer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Transmits data to a specific client endpoint with automatic retries on transient failures.
+    /// </summary>
+    /// <param name="data">The framed packet bytes to send.</param>
+    /// <param name="destination">The destination client endpoint.</param>
     public void SendDataToClient(byte[] data, IPEndPoint destination)
     {
         if (destination != null && destination.Address.IsIPv4MappedToIPv6)
@@ -100,6 +120,9 @@ public class SendingQueueListenerServer : IDisposable
         Trace.TraceError($"[Networking] SendingQueueListenerServer.SendDataToClient: Max retry attempts reached. Client {destination} disconnected and removed.");
     }
 
+    /// <summary>
+    /// Stops the server sender thread.
+    /// </summary>
     public void Dispose()
     {
         lock (_isRunningLock)
