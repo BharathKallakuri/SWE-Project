@@ -11,13 +11,13 @@ public class AsyncCommandBaseTests
 {
     private sealed class TestCommand : AsyncCommandBase
     {
-        public bool Allowed { get; set; } = true;
+        public bool? Allowed { get; set; }
         public Func<Task> Body { get; set; } = () => Task.CompletedTask;
         public int Runs { get; private set; }
 
         protected override bool CanRun()
         {
-            return Allowed;
+            return Allowed ?? base.CanRun(); // null: use the default (true)
         }
 
         protected override async Task OnExecuteAsync()
@@ -34,32 +34,14 @@ public class AsyncCommandBaseTests
     }
 
     [TestMethod]
-    public void CanExecuteFollowsCanRun()
-    {
-        TestCommand command = new() { Allowed = false };
-
-        Assert.IsFalse(command.CanExecute(null));
-    }
-
-    [TestMethod]
     public async Task ExecuteAsyncWhenNotAllowedDoesNothing()
     {
         TestCommand command = new() { Allowed = false };
 
         await command.ExecuteAsync();
 
+        Assert.IsFalse(command.CanExecute(null));
         Assert.AreEqual(0, command.Runs);
-    }
-
-    [TestMethod]
-    public async Task ExecuteAsyncWhenAllowedRunsOnce()
-    {
-        TestCommand command = new();
-
-        await command.ExecuteAsync();
-
-        Assert.AreEqual(1, command.Runs);
-        Assert.IsTrue(command.CanExecute(null));
     }
 
     [TestMethod]
@@ -81,7 +63,7 @@ public class AsyncCommandBaseTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsyncRaisesCanExecuteChangedAtStartAndEnd()
+    public async Task ExecuteAsyncRunsOnceAndRaisesCanExecuteChangedAtStartAndEnd()
     {
         TestCommand command = new();
         int raised = 0;
@@ -90,6 +72,8 @@ public class AsyncCommandBaseTests
         await command.ExecuteAsync();
 
         Assert.AreEqual(2, raised);
+        Assert.AreEqual(1, command.Runs);
+        Assert.IsTrue(command.CanExecute(null));
     }
 
     [TestMethod]
@@ -135,4 +119,5 @@ public class NotificationCommandTests
         Assert.AreEqual(1, h.Messengers.Count);
         Assert.AreEqual(ConnectionState.Connected, h.ViewModel.State);
     }
+
 }

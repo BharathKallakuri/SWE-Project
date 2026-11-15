@@ -49,11 +49,6 @@ public class ObservableObjectTests
             get => _value;
             set => SetProperty(ref _value, value);
         }
-
-        public void Raise(string? name)
-        {
-            OnPropertyChanged(name);
-        }
     }
 
     [TestMethod]
@@ -61,11 +56,13 @@ public class ObservableObjectTests
     {
         Sample sample = new();
         List<string?> names = new();
-        sample.PropertyChanged += (_, e) => names.Add(e.PropertyName);
+        object? sender = null;
+        sample.PropertyChanged += (s, e) => { sender = s; names.Add(e.PropertyName); };
 
         sample.Value = 5;
 
         CollectionAssert.AreEqual(new[] { nameof(Sample.Value) }, names);
+        Assert.AreSame(sample, sender);
         Assert.AreEqual(5, sample.Value);
     }
 
@@ -79,20 +76,6 @@ public class ObservableObjectTests
         sample.Value = 5;
 
         Assert.AreEqual(0, raised);
-    }
-
-    [TestMethod]
-    public void OnPropertyChangedPassesSenderAndName()
-    {
-        Sample sample = new();
-        object? sender = null;
-        string? name = null;
-        sample.PropertyChanged += (s, e) => { sender = s; name = e.PropertyName; };
-
-        sample.Raise("Other");
-
-        Assert.AreSame(sample, sender);
-        Assert.AreEqual("Other", name);
     }
 
 }

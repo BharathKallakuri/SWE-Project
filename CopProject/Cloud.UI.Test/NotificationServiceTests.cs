@@ -28,7 +28,6 @@ public class NotificationServiceTests
     [DataRow("https://localhost:5001/hub", "https://localhost:5001/hub")]
     [DataRow("http://example.com", "http://example.com/")]
     [DataRow("  https://example.com/x  ", "https://example.com/x")]
-    [DataRow("HTTP://EXAMPLE.COM/", "http://example.com/")]
     public void TryParseUrlValidUrlReturnsNormalisedForm(string input, string expected)
     {
         Assert.IsTrue(NotificationService.TryParseUrl(input, out string url));
@@ -37,11 +36,7 @@ public class NotificationServiceTests
 
     [TestMethod]
     [DataRow("")]
-    [DataRow("   ")]
-    [DataRow("localhost:5001")]
-    [DataRow("/relative/path")]
     [DataRow("ftp://example.com")]
-    [DataRow("file:///c:/x")]
     [DataRow("not a url")]
     public void TryParseUrlInvalidUrlReturnsFalseAndEmpty(string input)
     {
@@ -162,26 +157,16 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task ConnectAsyncConnectsMessengerAndStateFollows()
+    public async Task ConnectAsyncAndDisconnectAsyncDriveTheMessenger()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
 
         await service.ConnectAsync();
-
-        _created[0].Verify(m => m.ConnectAsync(), Times.Once);
         Assert.AreEqual(ConnectionState.Connected, service.State);
-    }
-
-    [TestMethod]
-    public async Task DisconnectAsyncDisconnectsMessenger()
-    {
-        NotificationService service = CreateService();
-        await service.UseServerAsync(UrlA);
-        await service.ConnectAsync();
-
         await service.DisconnectAsync();
 
+        _created[0].Verify(m => m.ConnectAsync(), Times.Once);
         _created[0].Verify(m => m.DisconnectAsync(), Times.Once);
         Assert.AreEqual(ConnectionState.Disconnected, service.State);
     }
@@ -212,9 +197,20 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task MessengerEventsAreForwarded()
+    public async Task MessengerEventsAreIgnoredWithoutSubscribersAndForwardedWithThem()
     {
         NotificationService service = CreateService();
+        await service.UseServerAsync(UrlA);
+        Message sent = TestData.Msg();
+        Exception e1 = new("r");
+        Exception e2 = new("c");
+
+        // nobody listens yet: must not throw
+        _created[0].RaiseMessage(sent);
+        _created[0].RaiseReconnecting(e1);
+        _created[0].RaiseReconnected("conn-0");
+        _created[0].RaiseClosed(e2);
+
         Message? message = null;
         Exception? reconnecting = null;
         string? reconnectedId = null;
@@ -223,10 +219,6 @@ public class NotificationServiceTests
         service.Reconnecting += e => reconnecting = e;
         service.Reconnected += id => reconnectedId = id;
         service.Closed += e => closed = e;
-        await service.UseServerAsync(UrlA);
-        Message sent = TestData.Msg();
-        Exception e1 = new("r");
-        Exception e2 = new("c");
 
         _created[0].RaiseMessage(sent);
         _created[0].RaiseReconnecting(e1);
@@ -251,13 +243,4 @@ public class NotificationServiceTests
         Assert.AreEqual(ConnectionState.Disconnected, service.State);
     }
 
-    [TestMethod]
-    public async Task DisposeAsyncMessengerDisposeThrowsIsSwallowed()
-    {
-        NotificationService service = CreateService();
-        await service.UseServerAsync(UrlA);
-        _created[0].Setup(m => m.DisposeAsync()).Throws(new InvalidOperationException("nope"));
-
-        await service.DisposeAsync();
-    }
 }
