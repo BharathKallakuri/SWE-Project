@@ -1,6 +1,8 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using Incidents;
 using LocationTracker.Interfaces;
+using LocationTracker.Models;
 using LocationTracker.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -16,6 +18,7 @@ public sealed partial class LocationMapView : UserControl
     private readonly IMapService _map;
     private readonly LocationMapViewModel _viewModel;
     private bool _mapInitializationStarted;
+    private LocationSearchResult? _pendingSearchLocation;
 
     public LocationMapView(IMapService map)
     {
@@ -23,13 +26,21 @@ public sealed partial class LocationMapView : UserControl
         _map = map;
         _viewModel = new LocationMapViewModel(map);
         _viewModel.IncidentsChanged += ViewModel_IncidentsChanged;
+        _viewModel.LocationSearchRequested += ViewModel_LocationSearchRequested;
         DataContext = _viewModel;
         Loaded += LocationMapView_Loaded;
     }
 
     private async void LocationMapView_Loaded(object sender, RoutedEventArgs e)
     {
-        await InitializeMapAsync();
+        try
+        {
+            await InitializeMapAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"[Location] LocationMapView.LocationMapView_Loaded: Error occurred while initializing the map: {ex.Message}");
+        }
     }
 
     /// <summary>Initializes WebView2 before loading the map.</summary>
@@ -65,7 +76,17 @@ public sealed partial class LocationMapView : UserControl
     {
         string messageJson = args.TryGetWebMessageAsString()
             ?? args.WebMessageAsJson;
-        using JsonDocument message = JsonDocument.Parse(messageJson);
+        JsonDocument message;
+        try
+        {
+            message = JsonDocument.Parse(messageJson);
+        }
+        catch (JsonException ex)
+        {
+            Trace.TraceError($"[Location] LocationMapView.WebView_WebMessageReceived: Failed to parse message JSON: {ex.Message}");
+            return;
+        }
+        using JsonDocument _ = message;
         if (!message.RootElement.TryGetProperty("type", out JsonElement type))
         {
             return;
@@ -95,9 +116,36 @@ public sealed partial class LocationMapView : UserControl
         {
             return;
         }
+        try
+        {
+            string incidents = JsonSerializer.Serialize(_viewModel.Incidents);
+            await MapView.ExecuteScriptAsync($"setIncidents({incidents});");
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"[Location] LocationMapView.ViewModel_IncidentsChanged: Error occurred while updating incidents on the map: {ex.Message}");
+        }
+    }
 
-        string incidents = JsonSerializer.Serialize(_viewModel.Incidents);
-        await MapView.ExecuteScriptAsync($"setIncidents({incidents});");
+    private async void ViewModel_LocationSearchRequested(
+        object? sender,
+        LocationSearchResult location)
+    {
+        _pendingSearchLocation = location;
+        await ShowSearchLocationAsync();
+    }
+
+    private async Task ShowSearchLocationAsync()
+    {
+        if (MapView.CoreWebView2 is null || _pendingSearchLocation is null)
+        {
+            return;
+        }
+
+        string latitude = JsonSerializer.Serialize(_pendingSearchLocation.Latitude);
+        string longitude = JsonSerializer.Serialize(_pendingSearchLocation.Longitude);
+        await MapView.ExecuteScriptAsync($"showSearchLocation({latitude}, {longitude});");
+        _pendingSearchLocation = null;
     }
 
     /// <summary>
@@ -110,8 +158,9 @@ public sealed partial class LocationMapView : UserControl
         {
             location = await _map.GetLocationForClickAsync(latitude, longitude);
         }
-        catch (HttpRequestException)
+        catch (Exception ex)
         {
+            Trace.TraceWarning($"[Location] LocationMapView.OnMapClickedAsync: Address lookup failed, using raw coordinates: {ex.Message}");
             location = new IncidentLocation(latitude, longitude);
         }
 
@@ -127,10 +176,12 @@ public sealed partial class LocationMapView : UserControl
     {
         if (!args.IsSuccess)
         {
+            Trace.TraceError($"[Location] LocationMapView.MapView_NavigationCompleted: Map navigation failed: {args.WebErrorStatus}");
             return;
         }
 
         await _viewModel.LoadAsync();
+        await ShowSearchLocationAsync();
     }
 
     private const string MapPage = """
@@ -152,6 +203,7 @@ public sealed partial class LocationMapView : UserControl
           <script>
             const map = L.map('map').setView([10.79, 76.68], 12);
             const incidentMarkers = L.layerGroup().addTo(map);
+            let searchMarker = null;
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
               attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
@@ -176,6 +228,19 @@ public sealed partial class LocationMapView : UserControl
                 lng: e.latlng.lng
               }));
             });
+
+            function showSearchLocation(lat, lng) {
+              if (searchMarker !== null) {
+                map.removeLayer(searchMarker);
+              }
+              searchMarker = L.circleMarker([lat, lng], {
+                radius: 7,
+                color: '#b00020',
+                fillColor: '#e53935',
+                fillOpacity: 0.9
+              }).addTo(map);
+              map.setView([lat, lng], Math.max(map.getZoom(), 14));
+            }
 
             function selectIncident(id) {
               window.chrome.webview.postMessage(JSON.stringify({

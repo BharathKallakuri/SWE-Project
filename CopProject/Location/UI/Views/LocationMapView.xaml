@@ -14,6 +14,21 @@
             <StackPanel Spacing="14">
                 <TextBlock Text="Map Filters" FontSize="22" FontWeight="Bold" Margin="0,0,0,10" Foreground="Black"/>
 
+                <TextBlock Text="Find address" FontSize="14" FontWeight="SemiBold" Foreground="Black"/>
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0"
+                             Foreground="Black"
+                             PlaceholderText="Search for a place"
+                             Text="{Binding AddressSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Grid.Column="1"
+                            Content="Search"
+                            Command="{Binding SearchAddressCommand}" />
+                </Grid>
+
                 <TextBlock Text="Title contains" FontSize="14" FontWeight="SemiBold" Foreground="Black"/>
                 <TextBox x:Name="TitleFilterBox"
                          Foreground="Black"
