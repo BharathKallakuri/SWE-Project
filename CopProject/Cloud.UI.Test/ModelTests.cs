@@ -20,7 +20,7 @@ public class NotificationItemTests
     }
 
     [TestMethod]
-    public void TimeText_IsShortLocalTime()
+    public void TimeTextIsShortLocalTime()
     {
         NotificationItem item = Create();
 
@@ -28,7 +28,7 @@ public class NotificationItemTests
     }
 
     [TestMethod]
-    public void Subtitle_IsSenderDotTime()
+    public void SubtitleIsSenderDotTime()
     {
         NotificationItem item = Create("bob");
 
@@ -57,7 +57,7 @@ public class ObservableObjectTests
     }
 
     [TestMethod]
-    public void SetProperty_NewValue_RaisesWithPropertyName()
+    public void SetPropertyNewValueRaisesWithPropertyName()
     {
         Sample sample = new();
         List<string?> names = new();
@@ -70,7 +70,7 @@ public class ObservableObjectTests
     }
 
     [TestMethod]
-    public void SetProperty_SameValue_DoesNotRaise()
+    public void SetPropertySameValueDoesNotRaise()
     {
         Sample sample = new() { Value = 5 };
         int raised = 0;
@@ -82,7 +82,7 @@ public class ObservableObjectTests
     }
 
     [TestMethod]
-    public void OnPropertyChanged_PassesSenderAndName()
+    public void OnPropertyChangedPassesSenderAndName()
     {
         Sample sample = new();
         object? sender = null;

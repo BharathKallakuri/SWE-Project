@@ -10,7 +10,7 @@ namespace Cloud.UI.Test;
 public class NotificationServiceViewModelTests
 {
     [TestMethod]
-    public void InitialState_IsDisconnectedAndEmpty()
+    public void InitialStateIsDisconnectedAndEmpty()
     {
         NotificationServiceViewModel vm = new ViewModelHarness().ViewModel;
 
@@ -26,7 +26,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public void InitialCommandAvailability_AllUnavailable()
+    public void InitialCommandAvailabilityAllUnavailable()
     {
         NotificationServiceViewModel vm = new ViewModelHarness().ViewModel;
 
@@ -39,7 +39,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public void ServerUrl_Change_EnablesConnect_AndRaisesCanExecuteChanged()
+    public void ServerUrlChangeEnablesConnectAndRaisesCanExecuteChanged()
     {
         NotificationServiceViewModel vm = new ViewModelHarness().ViewModel;
         int raised = 0;
@@ -52,7 +52,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public void MessageText_Change_RaisesSendCanExecuteChanged()
+    public void MessageTextChangeRaisesSendCanExecuteChanged()
     {
         NotificationServiceViewModel vm = new ViewModelHarness().ViewModel;
         int raised = 0;
@@ -64,7 +64,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Connect_RaisesStatePropertyNotifications()
+    public async Task ConnectRaisesStatePropertyNotifications()
     {
         ViewModelHarness h = new();
         List<string?> names = new();
@@ -78,7 +78,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Connect_Success_ConnectsAndNormalisesUrl()
+    public async Task ConnectSuccessConnectsAndNormalisesUrl()
     {
         ViewModelHarness h = new();
 
@@ -93,7 +93,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Connect_InvalidUrl_ShowsErrorAndDoesNotCreateMessenger()
+    public async Task ConnectInvalidUrlShowsErrorAndDoesNotCreateMessenger()
     {
         ViewModelHarness h = new();
 
@@ -106,7 +106,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Connect_Failure_ShowsErrorAndStaysDisconnected()
+    public async Task ConnectFailureShowsErrorAndStaysDisconnected()
     {
         NotificationServiceViewModel vm = new(url => TestMessenger.Create(connectError: new IOException("refused")).Object, ViewModelHarness.RunNow) {
             ServerUrl = ViewModelHarness.Url
@@ -121,7 +121,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Connect_ClearsPreviousError()
+    public async Task ConnectClearsPreviousError()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync("ftp://nope");
@@ -133,7 +133,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Connect_WhileRunning_IsBusy_AndAllCommandsUnavailable()
+    public async Task ConnectWhileRunningIsBusyAndAllCommandsUnavailable()
     {
         TaskCompletionSource gate = new();
         Mock<IMessenger>? mock = null;
@@ -160,7 +160,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task AfterConnect_ReconnectAndDisconnectAvailable_ConnectIsNot()
+    public async Task AfterConnectReconnectAndDisconnectAvailableConnectIsNot()
     {
         ViewModelHarness h = new();
 
@@ -172,7 +172,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Reconnect_ReusesMessenger_AndKeepsNotifications()
+    public async Task ReconnectReusesMessengerAndKeepsNotifications()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -188,7 +188,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Disconnect_ClosesConnection_AndEnablesConnect()
+    public async Task DisconnectClosesConnectionAndEnablesConnect()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -202,7 +202,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Connect_ToDifferentServer_ClearsNotificationsAndDisposesOldMessenger()
+    public async Task ConnectToDifferentServerClearsNotificationsAndDisposesOldMessenger()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync("https://a.example/hub");
@@ -219,7 +219,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Connect_ToDifferentServer_ResetsDeduplicationAndSyncStart()
+    public async Task ConnectToDifferentServerResetsDeduplicationAndSyncStart()
     {
         ViewModelHarness h = new();
         Guid id = Guid.NewGuid();
@@ -236,7 +236,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public void Send_NotAvailableWhenDisconnected()
+    public void SendNotAvailableWhenDisconnected()
     {
         NotificationServiceViewModel vm = new ViewModelHarness().ViewModel;
 
@@ -248,7 +248,7 @@ public class NotificationServiceViewModelTests
     [TestMethod]
     [DataRow("")]
     [DataRow("   ")]
-    public async Task Send_NotAvailableForBlankText(string text)
+    public async Task SendNotAvailableForBlankText(string text)
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -259,7 +259,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Send_SendsTrimmedText_AndClearsInput()
+    public async Task SendSendsTrimmedTextAndClearsInput()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -274,7 +274,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Send_WhileReconnecting_IsNotAvailable()
+    public async Task SendWhileReconnectingIsNotAvailable()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -287,13 +287,13 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public void Sync_NotAvailableWhenDisconnected()
+    public void SyncNotAvailableWhenDisconnected()
     {
         Assert.IsFalse(new ViewModelHarness().ViewModel.SyncCommand.CanExecute(null));
     }
 
     [TestMethod]
-    public async Task Sync_AddsMissedMessages_NewestOnTop_WithoutAlerts()
+    public async Task SyncAddsMissedMessagesNewestOnTopWithoutAlerts()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -316,7 +316,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Sync_FirstSync_StartsFromMinValue_ThenFromNewestMessage()
+    public async Task SyncFirstSyncStartsFromMinValueThenFromNewestMessage()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -332,7 +332,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Sync_SkipsMessagesAlreadyShown()
+    public async Task SyncSkipsMessagesAlreadyShown()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -347,7 +347,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Sync_NothingMissed_Reports0New()
+    public async Task SyncNothingMissedReports0New()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -359,7 +359,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task MessageReceived_AddsItemOnTop_AndRaisesNotificationReceived()
+    public async Task MessageReceivedAddsItemOnTopAndRaisesNotificationReceived()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -381,7 +381,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task MessageReceived_Duplicate_IsIgnored()
+    public async Task MessageReceivedDuplicateIsIgnored()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -397,7 +397,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Notifications_Change_RaisesIsEmpty_AndUpdatesClearAvailability()
+    public async Task NotificationsChangeRaisesIsEmptyAndUpdatesClearAvailability()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -415,7 +415,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Clear_EmptiesList()
+    public async Task ClearEmptiesList()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -429,7 +429,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Reconnecting_UpdatesState()
+    public async Task ReconnectingUpdatesState()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -445,7 +445,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Reconnected_ClearsErrorAndUpdatesState()
+    public async Task ReconnectedClearsErrorAndUpdatesState()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -461,7 +461,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Closed_WithException_ShowsErrorAndDisconnects()
+    public async Task ClosedWithExceptionShowsErrorAndDisconnects()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -475,7 +475,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task Closed_WithoutException_DisconnectsWithoutError()
+    public async Task ClosedWithoutExceptionDisconnectsWithoutError()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();
@@ -488,7 +488,7 @@ public class NotificationServiceViewModelTests
     }
 
     [TestMethod]
-    public async Task DisposeAsync_DisposesMessenger()
+    public async Task DisposeAsyncDisposesMessenger()
     {
         ViewModelHarness h = new();
         await h.ConnectAsync();

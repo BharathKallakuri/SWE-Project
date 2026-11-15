@@ -28,13 +28,13 @@ public class AsyncCommandBaseTests
     }
 
     [TestMethod]
-    public void CanExecute_DefaultsToTrue()
+    public void CanExecuteDefaultsToTrue()
     {
         Assert.IsTrue(new TestCommand().CanExecute(null));
     }
 
     [TestMethod]
-    public void CanExecute_FollowsCanRun()
+    public void CanExecuteFollowsCanRun()
     {
         TestCommand command = new() { Allowed = false };
 
@@ -42,7 +42,7 @@ public class AsyncCommandBaseTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_WhenNotAllowed_DoesNothing()
+    public async Task ExecuteAsyncWhenNotAllowedDoesNothing()
     {
         TestCommand command = new() { Allowed = false };
 
@@ -52,7 +52,7 @@ public class AsyncCommandBaseTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_WhenAllowed_RunsOnce()
+    public async Task ExecuteAsyncWhenAllowedRunsOnce()
     {
         TestCommand command = new();
 
@@ -63,7 +63,7 @@ public class AsyncCommandBaseTests
     }
 
     [TestMethod]
-    public async Task WhileRunning_CannotExecute_AndSecondCallIsIgnored()
+    public async Task WhileRunningCannotExecuteAndSecondCallIsIgnored()
     {
         TaskCompletionSource gate = new();
         TestCommand command = new() { Body = () => gate.Task };
@@ -81,7 +81,7 @@ public class AsyncCommandBaseTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_RaisesCanExecuteChanged_AtStartAndEnd()
+    public async Task ExecuteAsyncRaisesCanExecuteChangedAtStartAndEnd()
     {
         TestCommand command = new();
         int raised = 0;
@@ -93,7 +93,7 @@ public class AsyncCommandBaseTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_WhenBodyThrows_PropagatesAndResets()
+    public async Task ExecuteAsyncWhenBodyThrowsPropagatesAndResets()
     {
         TestCommand command = new() { Body = () => throw new InvalidOperationException("boom") };
 
@@ -108,7 +108,7 @@ public class AsyncCommandBaseTests
 public class NotificationCommandTests
 {
     [TestMethod]
-    public async Task Command_Failure_IsShownAsError_NotThrown()
+    public async Task CommandFailureIsShownAsErrorNotThrown()
     {
         NotificationServiceViewModel vm = new(url => TestMessenger.Create(sendError: new InvalidOperationException("send failed")).Object, ViewModelHarness.RunNow) {
             ServerUrl = ViewModelHarness.Url
@@ -125,7 +125,7 @@ public class NotificationCommandTests
     }
 
     [TestMethod]
-    public void Execute_ICommandEntryPoint_RunsTheCommand()
+    public void ExecuteICommandEntryPointRunsTheCommand()
     {
         ViewModelHarness h = new();
         h.ViewModel.ServerUrl = ViewModelHarness.Url;

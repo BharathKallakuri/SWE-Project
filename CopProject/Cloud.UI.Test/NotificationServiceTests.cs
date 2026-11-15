@@ -29,7 +29,7 @@ public class NotificationServiceTests
     [DataRow("http://example.com", "http://example.com/")]
     [DataRow("  https://example.com/x  ", "https://example.com/x")]
     [DataRow("HTTP://EXAMPLE.COM/", "http://example.com/")]
-    public void TryParseUrl_ValidUrl_ReturnsNormalisedForm(string input, string expected)
+    public void TryParseUrlValidUrlReturnsNormalisedForm(string input, string expected)
     {
         Assert.IsTrue(NotificationService.TryParseUrl(input, out string url));
         Assert.AreEqual(expected, url);
@@ -43,38 +43,38 @@ public class NotificationServiceTests
     [DataRow("ftp://example.com")]
     [DataRow("file:///c:/x")]
     [DataRow("not a url")]
-    public void TryParseUrl_InvalidUrl_ReturnsFalseAndEmpty(string input)
+    public void TryParseUrlInvalidUrlReturnsFalseAndEmpty(string input)
     {
         Assert.IsFalse(NotificationService.TryParseUrl(input, out string url));
         Assert.AreEqual(string.Empty, url);
     }
 
     [TestMethod]
-    public void Constructor_NullFactory_Throws()
+    public void ConstructorNullFactoryThrows()
     {
         Assert.ThrowsExactly<ArgumentNullException>(() => new NotificationService(null!));
     }
 
     [TestMethod]
-    public void State_WithoutMessenger_IsDisconnected()
+    public void StateWithoutMessengerIsDisconnected()
     {
         Assert.AreEqual(ConnectionState.Disconnected, CreateService().State);
     }
 
     [TestMethod]
-    public async Task ConnectAsync_BeforeUseServer_Throws()
+    public async Task ConnectAsyncBeforeUseServerThrows()
     {
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => CreateService().ConnectAsync());
     }
 
     [TestMethod]
-    public async Task DisconnectAsync_WithoutMessenger_DoesNothing()
+    public async Task DisconnectAsyncWithoutMessengerDoesNothing()
     {
         await CreateService().DisconnectAsync();
     }
 
     [TestMethod]
-    public async Task UseServerAsync_FirstCall_CreatesMessengerAndRaisesServerChanged()
+    public async Task UseServerAsyncFirstCallCreatesMessengerAndRaisesServerChanged()
     {
         NotificationService service = CreateService();
         int serverChanged = 0;
@@ -89,7 +89,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task UseServerAsync_SameUrl_ReusesMessenger()
+    public async Task UseServerAsyncSameUrlReusesMessenger()
     {
         NotificationService service = CreateService();
         int serverChanged = 0;
@@ -104,7 +104,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task UseServerAsync_SameUrlWhileConnected_Disconnects()
+    public async Task UseServerAsyncSameUrlWhileConnectedDisconnects()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -117,7 +117,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task UseServerAsync_DifferentUrl_DisposesOldAndCreatesNew()
+    public async Task UseServerAsyncDifferentUrlDisposesOldAndCreatesNew()
     {
         NotificationService service = CreateService();
         int serverChanged = 0;
@@ -134,7 +134,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task UseServerAsync_DifferentUrl_UnsubscribesFromOldMessenger()
+    public async Task UseServerAsyncDifferentUrlUnsubscribesFromOldMessenger()
     {
         NotificationService service = CreateService();
         int received = 0;
@@ -150,7 +150,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task UseServerAsync_OldMessengerDisposeThrows_IsSwallowed()
+    public async Task UseServerAsyncOldMessengerDisposeThrowsIsSwallowed()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -162,7 +162,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task ConnectAsync_ConnectsMessenger_AndStateFollows()
+    public async Task ConnectAsyncConnectsMessengerAndStateFollows()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -174,7 +174,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task DisconnectAsync_DisconnectsMessenger()
+    public async Task DisconnectAsyncDisconnectsMessenger()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -187,7 +187,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task SendAsync_ForwardsText()
+    public async Task SendAsyncForwardsText()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -198,7 +198,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task SyncAsync_ForwardsSinceAndReturnsMessages()
+    public async Task SyncAsyncForwardsSinceAndReturnsMessages()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -212,7 +212,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task MessengerEvents_AreForwarded()
+    public async Task MessengerEventsAreForwarded()
     {
         NotificationService service = CreateService();
         Message? message = null;
@@ -240,7 +240,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task DisposeAsync_DisposesMessenger_AndResetsState()
+    public async Task DisposeAsyncDisposesMessengerAndResetsState()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -252,7 +252,7 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
-    public async Task DisposeAsync_MessengerDisposeThrows_IsSwallowed()
+    public async Task DisposeAsyncMessengerDisposeThrowsIsSwallowed()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
