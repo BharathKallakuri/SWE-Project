@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using Microsoft.Azure.Cosmos;
-using System.Diagnostics;
 
 namespace Cloud.Persistence;
 
