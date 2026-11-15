@@ -56,6 +56,12 @@ public class CommunicatorClient : ICommunicator, IDisposable
         {
             _tcpClient.LingerState = new LingerOption(false, 0);
             _tcpClient.Connect(_serverIp.Address, _serverIp.Port);
+
+            Socket clientSocket = _tcpClient.Client;
+            clientSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+            clientSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);
+            clientSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 10);
+            clientSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 3);
             _socketListener = new SocketListener(_receivingQueue, _tcpClient);
             _sendingQueueListenerClient = new SendingQueueListenerClient(_sendingQueue, _tcpClient);
 
