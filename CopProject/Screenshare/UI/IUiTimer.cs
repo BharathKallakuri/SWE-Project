@@ -1,4 +1,7 @@
-﻿namespace ScreenShare;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+namespace ScreenShare;
 
 /// <summary>
 /// a timer made by an IUiScheduler. Start while running restarts the wait.

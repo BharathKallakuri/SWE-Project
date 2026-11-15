@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+using System.Diagnostics;
 using Controller;
 using Controller.Models;
 using Microsoft.UI.Dispatching;
@@ -31,6 +34,8 @@ public sealed class ScreenShareMeetingIntegration : IDisposable
     /// <param name="view">the view in the meeting's Share panel</param>
     /// <param name="options">tuning; defaults to ScreenShareOptions' defaults</param>
     /// <exception cref="ArgumentNullException">an argument is null</exception>
+    // not covered by unit tests, nor are the two helpers below: they need the app's
+    // ControllerMeetingService and a WinUI view; the tests use the internal constructor
     public ScreenShareMeetingIntegration(ControllerMeetingService meetingService, MeetingSession session, ScreenShareGridView view, ScreenShareOptions? options = null)
         : this(
             ActiveControllerOf(meetingService),
@@ -115,6 +120,8 @@ public sealed class ScreenShareMeetingIntegration : IDisposable
         ScreenShareFeed feed;
         lock (_lock)
         {
+            // only when Dispose runs on another thread while a meeting is starting, so
+            // tests can't reach it reliably
             if (_disposed)
             {
                 return;
