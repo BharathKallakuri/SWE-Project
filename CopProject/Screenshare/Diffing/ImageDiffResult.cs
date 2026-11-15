@@ -1,4 +1,7 @@
-﻿// to capture whether we need to transfer full frame or partial or nothing
+﻿// Author = Aryan
+// Roll Number = 112301041
+
+// to capture whether we need to transfer full frame or partial or nothing
 
 using System.Drawing;
 using System.Diagnostics;
