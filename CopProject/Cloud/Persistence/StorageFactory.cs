@@ -1,8 +1,8 @@
 ﻿// Author = Madhav P Nair
 // Roll Number = 112301020
 
-using Microsoft.Azure.Cosmos;
 using System.Diagnostics;
+using Microsoft.Azure.Cosmos;
 
 namespace Cloud.Persistence;
 
