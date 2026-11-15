@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Srikar
+// Roll Number = 142301013
+
+using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -8,6 +11,9 @@ using Networking.Queues;
 
 namespace Networking.Sockets;
 
+/// <summary>
+/// Listens for incoming UDP datagrams, deserializes them into packets, and adds them to the receiving queue.
+/// </summary>
 public class UdpSocketListener : IDisposable
 {
     private readonly ReceivingQueue _receivingQueue;
@@ -27,6 +33,11 @@ public class UdpSocketListener : IDisposable
         }
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UdpSocketListener"/> class and starts the receive loop.
+    /// </summary>
+    /// <param name="receivingQueue">The queue to receive incoming packets.</param>
+    /// <param name="udpClient">The UDP client bound for receiving.</param>
     public UdpSocketListener(ReceivingQueue receivingQueue, UdpClient udpClient)
     {
         _receivingQueue = receivingQueue;
@@ -36,6 +47,9 @@ public class UdpSocketListener : IDisposable
         _listeningThread.Start();
     }
 
+    /// <summary>
+    /// Continuously receives UDP datagrams and enqueues deserialized packets.
+    /// </summary>
     public void ListenUdp()
     {
         while (IsRunning)
@@ -74,6 +88,9 @@ public class UdpSocketListener : IDisposable
         }
     }
 
+    /// <summary>
+    /// Stops listening and closes the UDP client.
+    /// </summary>
     public void Dispose()
     {
         lock (_isRunningLock)
