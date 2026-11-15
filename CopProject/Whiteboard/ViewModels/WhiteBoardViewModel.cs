@@ -18,7 +18,9 @@ public enum WhiteboardTool
     Square,
     Circle,
     EqTriangle,
-    Eraser
+    Eraser,
+    Line,
+    Polygon
 }
 
 [ExcludeFromCodeCoverage]
@@ -30,6 +32,8 @@ public partial class WhiteBoardViewModel : IDisposable
     private IViewModelState _circleState;
     private IViewModelState _eqTriangleState;
     private IViewModelState _eraserState;
+    private IViewModelState _lineState;
+    private IViewModelState _polygonState;
     private readonly IWhiteboardClient _whiteboardClient;
     private readonly WhiteboardSession? _session;
     private readonly DispatcherQueue? _dispatcherQueue;
@@ -103,6 +107,8 @@ public partial class WhiteBoardViewModel : IDisposable
         _circleState = new ShapeCircleState(_whiteboardClient, preview, toolbarInfo);
         _eraserState = new EraserState(_whiteboardClient);
         _eqTriangleState = new ShapeEqTriangleState(_whiteboardClient, preview, toolbarInfo);
+        _lineState = new LineState(_whiteboardClient, preview, toolbarInfo);
+        _polygonState = new PolygonState(_whiteboardClient, preview, toolbarInfo);
         _renderer = new WhiteboardRenderer(_whiteboardClient.Canvas, canvas);
 
         _currentState = _penState;
@@ -138,11 +144,26 @@ public partial class WhiteBoardViewModel : IDisposable
             WhiteboardTool.Circle => _circleState,
             WhiteboardTool.EqTriangle => _eqTriangleState,
             WhiteboardTool.Eraser => _eraserState,
+            WhiteboardTool.Line => _lineState,
+            WhiteboardTool.Polygon => _polygonState,
             _ => throw new ArgumentOutOfRangeException(nameof(tool))
         };
 
-        _currentState = selectedState;
-        SelectedTool = tool;
+        if (!ReferenceEquals(_currentState, selectedState))
+        {
+            _currentState.Reset();
+            _currentState = selectedState;
+            SelectedTool = tool;
+        }
+    }
+
+    /// <summary>
+    /// Resets the currently active drawing state and clears any live preview.
+    /// </summary>
+    public void ResetCurrentState()
+    {
+        EnsureInitialized();
+        _currentState.Reset();
     }
 
     public void PointerPressed(Point2D point)
@@ -161,6 +182,12 @@ public partial class WhiteBoardViewModel : IDisposable
     {
         EnsureInitialized();
         _currentState.PointerReleased(point);
+    }
+
+    public void PointerDoubleTapped(Point2D point)
+    {
+        EnsureInitialized();
+        _currentState.PointerDoubleTapped(point);
     }
 
     public void PointerCaptureLost(Point2D point)
