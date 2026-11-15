@@ -10,11 +10,13 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Chat.Test" />
+    <InternalsVisibleTo Include="Chat.UI.Test" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Controller\Controller.csproj" />
     <ProjectReference Include="..\Networking\Networking.csproj" />
+    <ProjectReference Include="..\Insights\Insights.csproj" />
     <Compile Remove="UI/**/*.cs" />
     <Page Remove="UI/**/*.xaml" />
 

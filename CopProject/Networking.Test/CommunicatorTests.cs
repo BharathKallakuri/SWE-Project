@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Bharath
+// Roll Number = 112301013
+
+using System;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
@@ -926,7 +929,7 @@ public class CommunicatorTests
         Assert.AreEqual("192.168.1.10", user.Ip);
         Assert.AreEqual(8080, user.Port);
         Assert.IsTrue(user.IsHost);
-        Assert.AreEqual("test@domain.com#192.168.1.10#8080", user.UserKey);
+        Assert.AreEqual("test@domain.com", user.UserKey);
         Assert.AreEqual("Host", user.RoleDisplay);
         StringAssert.Contains(user.ToString(), "Host");
         Assert.IsTrue(user.JoinedAt <= DateTime.UtcNow);

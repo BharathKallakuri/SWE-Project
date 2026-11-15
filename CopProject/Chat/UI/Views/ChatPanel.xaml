@@ -14,7 +14,7 @@
                     <ColumnDefinition Width="34"/>
                 </Grid.ColumnDefinitions>
 
-                <Grid Grid.Column="0" Width="32" Height="32" VerticalAlignment="Top" Visibility="{Binding LeftAvatarVisibility}">
+                <Grid Grid.Column="0" Width="32" Height="32" VerticalAlignment="Top" Visibility="{Binding LeftAvatarVisibility}" ToolTipService.ToolTip="{Binding AvatarToolTip}">
                     <Ellipse Fill="{Binding AvatarBrush}"/>
                     <TextBlock Text="{Binding Initials}" Visibility="{Binding InitialsVisibility}" Foreground="White" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
@@ -114,7 +114,7 @@
                             Foreground="#0F5FC2" BorderThickness="0"/>
                 </StackPanel>
 
-                <Grid Grid.Column="2" Width="32" Height="32" VerticalAlignment="Top" Visibility="{Binding RightAvatarVisibility}">
+                <Grid Grid.Column="2" Width="32" Height="32" VerticalAlignment="Top" Visibility="{Binding RightAvatarVisibility}" ToolTipService.ToolTip="{Binding AvatarToolTip}">
                     <Ellipse Fill="{Binding AvatarBrush}"/>
                     <TextBlock Text="{Binding Initials}" Visibility="{Binding InitialsVisibility}" Foreground="White" FontSize="10"
                                FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -129,7 +129,7 @@
                         <ColumnDefinition Width="34"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Grid Width="32" Height="32">
+                    <Grid Width="32" Height="32" ToolTipService.ToolTip="{Binding AvatarToolTip}">
                         <Ellipse Fill="{Binding AvatarBrush}"/>
                         <TextBlock Text="{Binding Initials}" Visibility="{Binding InitialsVisibility}" Foreground="White" FontSize="10"
                                    FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -178,7 +178,13 @@
                             <TextBlock Text="Meeting chat" FontSize="18" FontWeight="SemiBold" Foreground="#0B2A4A"/>
                             <TextBlock Text="Messages are shared with everyone" FontSize="11" Foreground="#6B7280"/>
                         </StackPanel>
-                        <Button x:Name="ParticipantsButton" Grid.Column="1" Padding="10,7" Background="Transparent" BorderThickness="0"
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <Button x:Name="RefreshButton" Command="{Binding ResetCommand}" Visibility="{Binding RefreshVisibility}"
+                                Padding="10,7" Background="Transparent" BorderThickness="0" VerticalAlignment="Center"
+                                AutomationProperties.Name="Refresh chat" ToolTipService.ToolTip="Reload the full chat history from the server">
+                            <FontIcon Glyph="&#xE72C;" FontSize="16" Foreground="#5F6B7A"/>
+                        </Button>
+                        <Button x:Name="ParticipantsButton" Padding="10,7" Background="Transparent" BorderThickness="0"
                                 VerticalAlignment="Center" AutomationProperties.Name="Show meeting participants">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon Glyph="&#xE716;" FontSize="17" Foreground="#5F6B7A"/>
@@ -200,6 +206,7 @@
                                 </Flyout>
                             </Button.Flyout>
                         </Button>
+                        </StackPanel>
                     </Grid>
                 </Border>
 

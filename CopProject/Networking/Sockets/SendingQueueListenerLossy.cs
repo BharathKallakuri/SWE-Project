@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Srikar
+// Roll Number = 142301013
+
+using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -8,11 +11,14 @@ using Networking.Queues;
 
 namespace Networking.Sockets;
 
+/// <summary>
+/// Monitors the lossy sending queue and transmits outgoing packets via UDP.
+/// </summary>
 public class SendingQueueListenerLossy : IDisposable
 {
     private readonly SendingQueue _sendingQueue;
     private readonly UdpClient _udpClient;
-    private readonly PacketSerializer _packetSerializer = new();
+    private readonly BinarySerialization _binarySerializer = new();
     private readonly Thread _listeningThread;
     private readonly object _isRunningLock = new();
     private bool _isRunning;
@@ -27,6 +33,11 @@ public class SendingQueueListenerLossy : IDisposable
         }
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SendingQueueListenerLossy"/> class and begins transmission.
+    /// </summary>
+    /// <param name="sendingQueue">The sending queue containing outgoing lossy packets.</param>
+    /// <param name="udpClient">The configured UDP client used for sending.</param>
     public SendingQueueListenerLossy(SendingQueue sendingQueue, UdpClient udpClient)
     {
         _sendingQueue = sendingQueue;
@@ -38,7 +49,7 @@ public class SendingQueueListenerLossy : IDisposable
         }
         catch (Exception ex)
         {
-            Trace.WriteLine($"[Networking] SendingQueueListenerLossy: Could not configure broadcast/multicast options: {ex.Message}");
+            Trace.TraceWarning($"[Networking] SendingQueueListenerLossy: Could not configure broadcast/multicast options: {ex.Message}");
         }
 
         _isRunning = true;
@@ -46,6 +57,9 @@ public class SendingQueueListenerLossy : IDisposable
         _listeningThread.Start();
     }
 
+    /// <summary>
+    /// Dequeues packets from the sending queue and transmits them as UDP datagrams.
+    /// </summary>
     public void ListenOnQueue()
     {
         while (IsRunning)
@@ -57,7 +71,7 @@ public class SendingQueueListenerLossy : IDisposable
             }
 
             Packet packet = _sendingQueue.Dequeue()!;
-            byte[] data = _packetSerializer.PacketToBytes(packet);
+            byte[] data = _binarySerializer.Serialize(packet);
 
             try
             {
@@ -71,11 +85,14 @@ public class SendingQueueListenerLossy : IDisposable
             }
             catch (Exception e)
             {
-                Trace.WriteLine($"[Networking] SendingQueueListenerLossy: Error sending UDP packet to {packet.Destination}: {e.Message}");
+                Trace.TraceError($"[Networking] SendingQueueListenerLossy: Error sending UDP packet to {packet.Destination}: {e.Message}");
             }
         }
     }
 
+    /// <summary>
+    /// Stops the lossy sender thread.
+    /// </summary>
     public void Dispose()
     {
         lock (_isRunningLock)

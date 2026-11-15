@@ -1,5 +1,8 @@
 ﻿// Author : Murali
 
+// Roll no : 112301019
+
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Microsoft.UI.Dispatching;
@@ -37,9 +40,10 @@ internal sealed class WinUiDispatcherQueue : IDispatcherQueue
 
             return queue is null ? null : new WinUiDispatcherQueue(queue);
         }
-        catch (COMException)
+        catch (COMException ex)
         {
             // "Class not registered": the Windows App SDK runtime isn't available.
+            Trace.WriteLine($"[WinUiDispatcher] DispatcherQueue unavailable: {ex}");
             return null;
         }
     }

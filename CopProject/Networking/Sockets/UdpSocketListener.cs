@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Srikar
+// Roll Number = 142301013
+
+using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -8,11 +11,14 @@ using Networking.Queues;
 
 namespace Networking.Sockets;
 
+/// <summary>
+/// Listens for incoming UDP datagrams, deserializes them into packets, and adds them to the receiving queue.
+/// </summary>
 public class UdpSocketListener : IDisposable
 {
     private readonly ReceivingQueue _receivingQueue;
     private readonly UdpClient _udpClient;
-    private readonly PacketSerializer _packetSerializer = new();
+    private readonly BinarySerialization _binarySerializer = new();
     private readonly Thread _listeningThread;
     private readonly object _isRunningLock = new();
     private bool _isRunning;
@@ -27,6 +33,11 @@ public class UdpSocketListener : IDisposable
         }
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UdpSocketListener"/> class and starts the receive loop.
+    /// </summary>
+    /// <param name="receivingQueue">The queue to receive incoming packets.</param>
+    /// <param name="udpClient">The UDP client bound for receiving.</param>
     public UdpSocketListener(ReceivingQueue receivingQueue, UdpClient udpClient)
     {
         _receivingQueue = receivingQueue;
@@ -36,6 +47,9 @@ public class UdpSocketListener : IDisposable
         _listeningThread.Start();
     }
 
+    /// <summary>
+    /// Continuously receives UDP datagrams and enqueues deserialized packets.
+    /// </summary>
     public void ListenUdp()
     {
         while (IsRunning)
@@ -49,7 +63,7 @@ public class UdpSocketListener : IDisposable
                     continue;
                 }
 
-                Packet? packet = _packetSerializer.BytesToPacket(data);
+                Packet? packet = _binarySerializer.Deserialize(data);
                 if (packet != null)
                 {
                     _receivingQueue.Enqueue(packet);
@@ -69,11 +83,14 @@ public class UdpSocketListener : IDisposable
                 {
                     break;
                 }
-                Trace.WriteLine($"[Networking] UdpSocketListener exception: {e.Message}");
+                Trace.TraceError($"[Networking] UdpSocketListener exception: {e.Message}");
             }
         }
     }
 
+    /// <summary>
+    /// Stops listening and closes the UDP client.
+    /// </summary>
     public void Dispose()
     {
         lock (_isRunningLock)
@@ -91,7 +108,7 @@ public class UdpSocketListener : IDisposable
         }
         catch (Exception e)
         {
-            Trace.WriteLine($"[Networking] UdpSocketListener.Dispose: Exception closing UdpClient: {e.Message}");
+            Trace.TraceError($"[Networking] UdpSocketListener.Dispose: Exception closing UdpClient: {e.Message}");
         }
     }
 }

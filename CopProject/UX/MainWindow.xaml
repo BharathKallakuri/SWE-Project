@@ -31,6 +31,8 @@
        Foreground="White" Background="#1F4A78"/>
                 <Button x:Name="CrashHandlerTopBtn" Content="CrashHandler" Click="CrashHandler_Click"
        Foreground="White" Background="#1F4A78"/>
+                <Button x:Name="DiagnosisTopBtn" Content="Diagnosis" Click="Diagnosis_Click"
+                        Foreground="White" Background="#1F4A78"/>
                 <PersonPicture x:Name="ProfilePic" Width="30" Height="30"/>
                 <TextBlock x:Name="ProfileName" Foreground="White" VerticalAlignment="Center"/>
                 <Button Content="Edit profile" Click="EditProfile_Click" Foreground="White"
@@ -158,9 +160,19 @@
 
             <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="20">
                 <Grid>
-                    <!-- CrashHandler TEAM: WRITE YOUR XAML CODE INSIDE THIS GRID -->
+                    <Frame x:Name="CrashFrame" />
                 </Grid>
             </Border>
+        </Grid>
+
+        <!-- Diagnosis screen -->
+        <Grid x:Name="DiagnosisView" Grid.Row="1" Padding="40,24" RowSpacing="20" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Button Content="Back" Click="DiagnosisBack_Click" Background="White" HorizontalAlignment="Left"/>
+            <Frame x:Name="DiagnosisFrame" Grid.Row="1"/>
         </Grid>
 
         <!-- Meeting screen -->
@@ -202,6 +214,11 @@
                         <Frame x:Name="FileSyncFrame" Grid.Row="1"/>
                     </Grid>
                 </Border>
+
+                <!-- INCIDENTS TEAM: Hosting Incidents inside meeting workspace -->
+                <Border x:Name="IncidentsPanel" Background="White" CornerRadius="10" Visibility="Collapsed" Padding="20">
+                    <Frame x:Name="MeetingIncidentsFrame"/>
+                </Border>
             </Grid>
 
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center"
@@ -217,9 +234,12 @@
                 <!-- FILE SYNC TEAM: Toggle button inside meeting controls -->
                 <ToggleButton x:Name="FileSyncBtn" Content="FileSync" Click="FileSyncBtn_Click"
                               Width="90" Height="50"/>
-                <Button Content="Incidents" Click="Incidents_Click" Width="90" Height="50"/>
+                <ToggleButton x:Name="IncidentsBtn" Content="Incidents" Click="IncidentsBtn_Click" 
+                              Width="90" Height="50"/>
                 <Button Content="Location" Click="Location_Click" Width="90" Height="50"/>
                 <Button Content="Cloud" Click="Cloud_Click" Width="90" Height="50"/>
+                <!-- DIAGNOSIS : Run diagnosis inside the meeting -->
+                <Button Content="Diagnosis" Click="Diagnosis_Click" Width="90" Height="50"/>
                 <Button x:Name="EndBtn" Content="End Meeting" Click="End_Click" Width="110" Height="50"
                         Background="#D13438" Foreground="White"/>
             </StackPanel>

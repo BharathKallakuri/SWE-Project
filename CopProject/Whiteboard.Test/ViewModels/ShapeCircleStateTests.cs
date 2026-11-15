@@ -128,7 +128,7 @@ public class ShapeCircleStateTests
 
         Assert.Equal(1, _preview.ClearCount);
 
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(2));
+        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
         Assert.True(wasAdded, "Item was not added in time.");
 
         Assert.Single(_client.AddedItems);

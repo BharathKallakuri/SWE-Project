@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author: M Sreenath Karthick
+// Roll Number: 112301042
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -66,8 +69,6 @@ public sealed class CreateIncidentPageViewModel : ViewModelBase
     /// Severity the user can choose from.
     /// </summary>
     public IReadOnlyList<IncidentSeverity> Severities { get; }
-
-    // todo(@sreenath): Change signature to Tuple<IncidentEvidence, byte[]> to include the bytes of the file uploaded
 
     /// <summary>
     /// Evidence metadata displayed in the UI.
