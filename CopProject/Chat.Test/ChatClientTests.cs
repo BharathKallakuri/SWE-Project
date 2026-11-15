@@ -262,8 +262,7 @@ public class ChatClientTests
     [Fact]
     public void SendRequestRethrowsCommunicatorFailure()
     {
-        RecordingCommunicator communicator = new()
-        {
+        RecordingCommunicator communicator = new() {
             SendException = new InvalidOperationException("send failed")
         };
         using ChatClient client = NewClient(communicator);

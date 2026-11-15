@@ -28,8 +28,7 @@ internal static class DispatcherThread
         Controller = DispatcherQueueController.CreateOnDedicatedThread();
         using ManualResetEventSlim initialized = new(false);
         Exception? error = null;
-        Controller.DispatcherQueue.TryEnqueue(() =>
-        {
+        Controller.DispatcherQueue.TryEnqueue(() => {
             try
             {
                 WinRtActivationContext.EnsureActivated();
@@ -59,8 +58,7 @@ internal static class DispatcherThread
 
     public static DispatcherQueue Queue => Controller.DispatcherQueue;
 
-    public static void Run(Action action) => Run(() =>
-    {
+    public static void Run(Action action) => Run(() => {
         action();
         return true;
     });
@@ -80,21 +78,20 @@ internal static class DispatcherThread
         T? result = default;
         Exception? error = null;
 
-        if (!Queue.TryEnqueue(() =>
+        if (!Queue.TryEnqueue(() => {
+            try
             {
-                try
-                {
-                    result = action();
-                }
-                catch (Exception exception)
-                {
-                    error = exception;
-                }
-                finally
-                {
-                    done.Set();
-                }
-            }))
+                result = action();
+            }
+            catch (Exception exception)
+            {
+                error = exception;
+            }
+            finally
+            {
+                done.Set();
+            }
+        }))
         {
             throw new InvalidOperationException("Could not enqueue the test body onto the dispatcher.");
         }
@@ -172,8 +169,7 @@ internal sealed class RecordingCommunicator : ICommunicator
     }
 
     public List<ChatClientRequestBody> ReadRequests()
-        => Sent.Select(sent =>
-        {
+        => Sent.Select(sent => {
             ChatClientRequestEnvelope envelope = JsonSerializer.Deserialize<ChatClientRequestEnvelope>(sent.Payload)!;
             return new ChatClientRequestBody(envelope.RequestId, envelope.Request, envelope.Username);
         }).ToList();

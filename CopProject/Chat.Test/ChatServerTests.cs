@@ -1,4 +1,4 @@
-// Author: Rajdeep
+﻿// Author: Rajdeep
 // Roll no.: 112301045
 
 using System;
@@ -374,14 +374,12 @@ public class ChatServerTests
     {
         Chatroom chatroom = new("room", "host");
         DateTimeOffset historyTimestamp = new(2026, 11, 15, 8, 0, 0, TimeSpan.Zero);
-        Guid threadRootId = chatroom.AddMessage(new ChatMessageWithThreads
-        {
+        Guid threadRootId = chatroom.AddMessage(new ChatMessageWithThreads {
             Timestamp = historyTimestamp,
             SenderName = "host",
             Content = "Rajdeep said my brother's name is Rajnotdeep."
         });
-        chatroom.AddThreadMessage(threadRootId, new ChatMessage
-        {
+        chatroom.AddThreadMessage(threadRootId, new ChatMessage {
             Timestamp = historyTimestamp.AddMinutes(1),
             SenderName = "guest",
             Content = "That was in the family discussion."
@@ -400,8 +398,7 @@ public class ChatServerTests
         server.RegisterClient("guest");
 
         TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        server.OperationApplied += operation =>
-        {
+        server.OperationApplied += operation => {
             if (operation is MessageAdded added
                 && added.Message.SenderName == ChatConstants.AiAssistantUsername)
             {
@@ -437,8 +434,7 @@ public class ChatServerTests
     public async Task ChAiMentionReplyReferencesQuestionInSameThread()
     {
         Chatroom chatroom = new("room", "host");
-        Guid threadRootId = chatroom.AddMessage(new ChatMessageWithThreads
-        {
+        Guid threadRootId = chatroom.AddMessage(new ChatMessageWithThreads {
             Timestamp = DateTimeOffset.UtcNow,
             SenderName = "host",
             Content = "Question thread"
@@ -456,8 +452,7 @@ public class ChatServerTests
 
         TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
         Guid? questionMessageId = null;
-        server.OperationApplied += operation =>
-        {
+        server.OperationApplied += operation => {
             if (operation is not MessageAdded added)
             {
                 return;
@@ -490,8 +485,7 @@ public class ChatServerTests
     public async Task ReplyToChAiMessageGeneratesQuestionWithReferencedMessage()
     {
         Chatroom chatroom = new("room", "host");
-        Guid aiMessageId = chatroom.AddMessage(new ChatMessageWithThreads
-        {
+        Guid aiMessageId = chatroom.AddMessage(new ChatMessageWithThreads {
             Timestamp = new DateTimeOffset(2026, 11, 15, 8, 0, 0, TimeSpan.Zero),
             SenderName = ChatConstants.AiAssistantUsername,
             Content = "Rajdeep's brother is Rajnotdeep."
@@ -509,8 +503,7 @@ public class ChatServerTests
 
         TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
         Guid? questionMessageId = null;
-        server.OperationApplied += operation =>
-        {
+        server.OperationApplied += operation => {
             if (operation is not MessageAdded added)
             {
                 return;
@@ -560,8 +553,7 @@ public class ChatServerTests
 
         TaskCompletionSource<MessageAdded> aiReplySource = new(TaskCreationOptions.RunContinuationsAsynchronously);
         Guid? questionMessageId = null;
-        server.OperationApplied += operation =>
-        {
+        server.OperationApplied += operation => {
             if (operation is not MessageAdded added)
             {
                 return;
@@ -645,8 +637,7 @@ public class ChatServerTests
     public async Task GenerateAiReplyDoesNotRecordReplyWhenThreadWasCleared()
     {
         Chatroom chatroom = new("room", "host");
-        Guid threadParentId = chatroom.AddMessage(new ChatMessageWithThreads
-        {
+        Guid threadParentId = chatroom.AddMessage(new ChatMessageWithThreads {
             SenderName = "host",
             Content = "Thread root"
         });
@@ -946,8 +937,7 @@ public class ChatServerTests
         NewServerWithGuestMessage()
     {
         Chatroom chatroom = new("room", "host");
-        Guid messageId = chatroom.AddMessage(new ChatMessageWithThreads
-        {
+        Guid messageId = chatroom.AddMessage(new ChatMessageWithThreads {
             Timestamp = DateTimeOffset.UtcNow,
             SenderName = "guest",
             Content = "Original"

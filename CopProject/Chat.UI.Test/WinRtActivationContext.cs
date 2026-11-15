@@ -40,8 +40,7 @@ internal static class WinRtActivationContext
                 if (_handle == new IntPtr(-1))
                 {
                     string manifestPath = BuildManifest();
-                    ACTCTX context = new()
-                    {
+                    ACTCTX context = new() {
                         cbSize = Marshal.SizeOf<ACTCTX>(),
                         dwFlags = ActctxWithWindowsVersion,
                         lpSource = manifestPath
