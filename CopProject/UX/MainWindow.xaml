@@ -234,11 +234,9 @@
                         <Grid x:Name="CloudMeetingHost" Grid.Row="1"/>
                     </Grid>
                 </Border>
-                <Border x:Name="DiagnosisPanel" Background="White" CornerRadius="10" Visibility="Collapsed">
-                    <StackPanel Padding="20">
-                        <!-- Diagnosis UI goes here -->
-                        <TextBlock Text="Diagnosis module goes here"/>
-                    </StackPanel>
+
+                <Border x:Name="DiagnosisPanel" Background="White" CornerRadius="10" Visibility="Collapsed" Padding="20">
+                    <Frame x:Name="DiagnosisMeetingFrame" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
                 </Border>
 
                 <!-- INCIDENTS TEAM: Hosting Incidents inside meeting workspace -->
