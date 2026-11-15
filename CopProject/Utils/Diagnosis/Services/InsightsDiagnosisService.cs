@@ -2,10 +2,10 @@
 // Roll Number : 112301020
 
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Insights.AI;
 using Utils.Diagnostics;
-using System.Diagnostics;
 
 namespace Utils.Diagnosis.Services;
 

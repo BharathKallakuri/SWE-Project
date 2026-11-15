@@ -2,8 +2,8 @@
 // Roll Number : 112301020
 
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Utils.Diagnosis.Services;
 
 namespace Utils.Diagnosis.ViewModels;
@@ -110,6 +110,8 @@ public sealed class DiagnosisViewModel : INotifyPropertyChanged
     /// Raises the <see cref="PropertyChanged"/> event for the specified property.
     /// </summary>
 
-    private void OnPropertyChanged([CallerMemberName] string? name = null) =>
+    private void OnPropertyChanged([CallerMemberName] string? name = null)
+    {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
 }
