@@ -25,7 +25,7 @@ internal class ClientNotificationListener : IMessageListener
     {
         if (message == null || message.Length == 0)
         {
-            Trace.TraceWarning("Client received empty notification.");
+            Trace.TraceWarning("[Controller]: Client received empty notification.");
             return;
         }
 
@@ -33,7 +33,7 @@ internal class ClientNotificationListener : IMessageListener
         ParsedMessage? parsed = Protocol.Parse(messageString);
         if (parsed == null)
         {
-            Trace.TraceWarning($"Client received malformed notification: {messageString}");
+            Trace.TraceWarning($"[Controller]: Client received malformed notification: {messageString}");
             return;
         }
         
@@ -81,7 +81,7 @@ internal class ClientNotificationListener : IMessageListener
                 }
                 catch (Exception ex)
                 {
-                    Trace.TraceError($"Failed to parse NotifyUserJoined: {ex.Message}");
+                    Trace.TraceError($"[Controller]: Failed to parse NotifyUserJoined: {ex.Message}");
                 }
                 break;
             }
@@ -107,7 +107,7 @@ internal class ClientNotificationListener : IMessageListener
                 }
                 catch (Exception ex)
                 {
-                    Trace.TraceError($"Failed to parse NotifyUserLeft: {ex.Message}");
+                    Trace.TraceError($"[Controller]: Failed to parse NotifyUserLeft: {ex.Message}");
                 }
                 break;
             }
@@ -124,7 +124,7 @@ internal class ClientNotificationListener : IMessageListener
                 }
                 catch (Exception ex)
                 {
-                    Trace.TraceError($"Failed to parse NotifySessionEnded: {ex.Message}");
+                    Trace.TraceError($"[Controller]: Failed to parse NotifySessionEnded: {ex.Message}");
                 }
                 break;
             }
@@ -153,7 +153,7 @@ internal class ClientNotificationListener : IMessageListener
             }
             
             default:
-                Trace.TraceWarning($"Client received unknown notification type: {parsed.Type}");
+                Trace.TraceWarning($"[Controller]: Client received unknown notification type: {parsed.Type}");
                 break;
         }
     }

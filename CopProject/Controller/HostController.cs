@@ -80,14 +80,14 @@ public sealed class HostController : IControllerService
         SessionInfo? session = _sessionManager.CreateSession(_hostUser);
         if (session == null)
         {
-            Trace.TraceWarning("StartMeeting failed: a session already exists.");
+            Trace.TraceWarning("[Controller]: StartMeeting failed: a session already exists.");
             return false;
         }
 
         bool started = _sessionManager.StartSession(_hostUser);
         if (!started)
         {
-            Trace.TraceWarning("StartMeeting failed: could not transition session to Active.");
+            Trace.TraceWarning("[Controller]: StartMeeting failed: could not transition session to Active.");
             return false;
         }
         foreach(var handler in _notificationHandlers)
@@ -95,7 +95,7 @@ public sealed class HostController : IControllerService
             handler.OnUserJoined(_hostUser);
         }
 
-        Trace.TraceInformation($"Meeting started by host '{_hostUser.Username}'.");
+        Trace.TraceInformation($"[Controller]: Meeting started by host '{_hostUser.Username}'.");
         return true;
     }
 
@@ -107,14 +107,14 @@ public sealed class HostController : IControllerService
         bool ended = _sessionManager.EndSession(_hostUser.UserKey);
         if (!ended)
         {
-            Trace.TraceWarning("EndMeeting failed.");
+            Trace.TraceWarning("[Controller]: EndMeeting failed.");
             return false;
         }
         
         // Broadcast end notification to all participants
         string payload = JsonSerializer.Serialize(_hostUser);
         Broadcast(Protocol.FormatNotification(Protocol.NotifySessionEnded, payload));
-        Trace.TraceInformation($"Meeting ended by host '{_hostUser.Username}'.");
+        Trace.TraceInformation($"[Controller]: Meeting ended by host '{_hostUser.Username}'.");
         return true;
     }
 
@@ -123,7 +123,7 @@ public sealed class HostController : IControllerService
     ///</summary>
     public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user)
     {
-        Trace.TraceWarning("JoinMeeting called on HostController. Use a ClientController to join remote meetings.");
+        Trace.TraceWarning("[Controller]: JoinMeeting called on HostController. Use a ClientController to join remote meetings.");
         return false;
     }   
 
@@ -132,7 +132,7 @@ public sealed class HostController : IControllerService
     ///</summary>
     public void LeaveMeeting(ControllerUser user)
     {
-        Trace.TraceWarning("LeaveMeeting called on HostController. Use a ClientController to leave remote meetings.");
+        Trace.TraceWarning("[Controller]: LeaveMeeting called on HostController. Use a ClientController to leave remote meetings.");
     }
 
     ///<summary>
@@ -193,7 +193,7 @@ public sealed class HostController : IControllerService
     private void OnDuplicateUserDetected(object? sender, ControllerUser user)
     {
         string alert = $"Duplicate join rejected: '{user.Gmail}' attempted to join from {user.Ip} while already in meeting.";
-        Trace.TraceWarning(alert);
+        Trace.TraceWarning($"[Controller]: {alert}");
         SecurityAlertRaised?.Invoke(this, alert);
         string rejectMsg = Protocol.FormatNotification(Protocol.NotifyJoinRejected, $"User with email '{user.Gmail}' is already in this meeting on another device.");
         Broadcast(rejectMsg);

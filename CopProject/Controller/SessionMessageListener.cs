@@ -29,21 +29,21 @@ public class SessionMessageListener : IMessageListener
     {
         if (message == null || message.Length == 0)
         {
-            Trace.TraceWarning($"Controller received empty message.");
+            Trace.TraceWarning("[Controller]: Controller received empty message.");
             return;
         }
 
         string rawMessage = Encoding.UTF8.GetString(message);
         if (string.IsNullOrEmpty(rawMessage))
         {
-            Trace.TraceWarning($"Controller received empty message.");
+            Trace.TraceWarning("[Controller]: Controller received empty message.");
             return;
         }
 
         string[] parts = rawMessage.Split(Protocol.Separator, 2);
         if (parts.Length < 2)
         {
-            Trace.TraceWarning($"Controller received malformed message: {rawMessage}");
+            Trace.TraceWarning($"[Controller]: Controller received malformed message: {rawMessage}");
             return;
         }
 
@@ -73,7 +73,7 @@ public class SessionMessageListener : IMessageListener
     {
         if (!_sessionManager.HasActiveSession())
         {
-            Trace.TraceWarning("Join failed: no active session on this host.");
+            Trace.TraceWarning("[Controller]: Join failed: no active session on this host.");
             return;
         }
         try
@@ -81,23 +81,23 @@ public class SessionMessageListener : IMessageListener
             ControllerUser? user = JsonSerializer.Deserialize<ControllerUser>(userJson);
             if (user == null)
             {
-                Trace.TraceWarning("Join failed: malformed user payload.");
+                Trace.TraceWarning("[Controller]: Join failed: malformed user payload.");
                 return;
             }
             user.IsHost = false; // Joined users are clients/participants
             bool joined = _sessionManager.JoinSession(user);
             if (joined)
             {
-                Trace.TraceInformation($"{user.Username} joined session from {user.Ip}:{user.Port}");
+                Trace.TraceInformation($"[Controller]: {user.Username} joined session from {user.Ip}:{user.Port}");
             }
             else
             {
-                Trace.TraceWarning($"Join failed for {user.Username} (could not add to session)");
+                Trace.TraceWarning($"[Controller]: Join failed for {user.Username} (could not add to session)");
             }
         }
         catch (Exception ex)
         {
-            Trace.TraceError($"Failed to process JOIN payload: {ex.Message}");
+            Trace.TraceError($"[Controller]: Failed to process JOIN payload: {ex.Message}");
         }
     }
 
@@ -109,7 +109,7 @@ public class SessionMessageListener : IMessageListener
     {
         if (!_sessionManager.HasActiveSession())
         {
-            Trace.TraceWarning($"Leave failed for {userKey}: no active session on this host.");
+            Trace.TraceWarning($"[Controller]: Leave failed for {userKey}: no active session on this host.");
             return;
         }
 
@@ -117,11 +117,11 @@ public class SessionMessageListener : IMessageListener
 
         if (left)
         {
-            Trace.TraceInformation($"{userKey} left session");
+            Trace.TraceInformation($"[Controller]: {userKey} left session");
         }
         else
         {
-            Trace.TraceWarning($"Leave failed for {userKey}");
+            Trace.TraceWarning($"[Controller]: Leave failed for {userKey}");
         }
     }
 }
