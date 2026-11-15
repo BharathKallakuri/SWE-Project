@@ -65,6 +65,15 @@ internal static class DispatcherThread
         return true;
     });
 
+    /// <summary>
+    /// Drains everything queued on the dispatcher. Only call this from the
+    /// test thread, between <see cref="Run"/> phases — never from inside a test body.
+    /// </summary>
+    public static void Flush()
+    {
+        Run(() => true);
+    }
+
     public static T Run<T>(Func<T> action)
     {
         using ManualResetEventSlim done = new(false);
