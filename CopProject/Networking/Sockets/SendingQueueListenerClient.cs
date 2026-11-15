@@ -41,6 +41,7 @@ public class SendingQueueListenerClient : IDisposable
         _packetSerializer = new();
         _listeningThread = new(ListenOnQueue) { IsBackground = true };
         _listeningThread.Start();
+        Trace.TraceInformation("[Networking] SendingQueueListenerClient: Started listening thread.");
     }
     public void ListenOnQueue()
     {
@@ -59,10 +60,11 @@ public class SendingQueueListenerClient : IDisposable
             {
                 NetworkStream stream = _clientSocket.GetStream();
                 stream.Write(data, 0, data.Length);
+                Trace.TraceInformation($"[Networking] SendingQueueListenerClient: Sent {data.Length} bytes (Priority {packet.Priority}, Module {packet.Module}) to server.");
             }
             catch (Exception e)
             {
-                Trace.WriteLine($"[Networking] SendingQueueListenerClient.ListenOnQueue: Error sending data to server. Exception: {e.Message}");
+                Trace.TraceError($"[Networking] SendingQueueListenerClient.ListenOnQueue: Error sending data to server. Exception: {e.Message}");
             }
         }
     }
