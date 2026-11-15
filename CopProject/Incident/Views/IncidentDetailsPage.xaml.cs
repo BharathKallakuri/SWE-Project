@@ -19,7 +19,7 @@ namespace Incidents.Views;
 [ExcludeFromCodeCoverage]
 public sealed partial class IncidentDetailsPage : Page
 {
-    private IncidentDetailsPageViewModel? ViewModel => DataContext as IncidentDetailsPageViewModel;
+    public IncidentDetailsPageViewModel? ViewModel => DataContext as IncidentDetailsPageViewModel;
     private IncidentPageContext? _context;
 
     /// <summary>

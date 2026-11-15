@@ -245,6 +245,11 @@ Roll Number: 112301042
                                 <TextBox
                                     Header="Address / Landmark"
                                     Text="{Binding EditableAddress, Mode=TwoWay}" />
+
+                                <ContentControl
+                                    x:Name="MiniMapHost"
+                                    x:FieldModifier="public"
+                                    HorizontalContentAlignment="Stretch" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
