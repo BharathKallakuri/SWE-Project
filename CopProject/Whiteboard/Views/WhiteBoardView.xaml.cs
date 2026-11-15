@@ -3,6 +3,7 @@
 /// LICENSE : MIT
 
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -50,6 +51,7 @@ public sealed partial class WhiteBoardView : UserControl
             _viewModel?.HistoryChanged -= UpdateHistoryButtons;
 
             _viewModel = value;
+            Trace.TraceInformation($"[Whiteboard][WhiteBoardView] ViewModel set (IsNotNull={_viewModel is not null}).");
 
             if (_viewModel is not null)
             {
@@ -106,6 +108,7 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] View loaded.");
         if (_viewModel is not null)
         {
             _viewModel.HistoryChanged += UpdateHistoryButtons;
@@ -128,6 +131,7 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] View unloaded.");
         _viewModel?.HistoryChanged -= UpdateHistoryButtons;
     }
 
@@ -151,6 +155,7 @@ public sealed partial class WhiteBoardView : UserControl
     /// <param name="e">Event details.</param>
     private void ButtonUndo_Click(object sender, RoutedEventArgs e)
     {
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] Undo button clicked.");
         _viewModel?.Undo();
     }
 
@@ -161,6 +166,7 @@ public sealed partial class WhiteBoardView : UserControl
     /// <param name="e">Event details.</param>
     private void ButtonRedo_Click(object sender, RoutedEventArgs e)
     {
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] Redo button clicked.");
         _viewModel?.Redo();
     }
 
@@ -572,6 +578,7 @@ public sealed partial class WhiteBoardView : UserControl
             return;
         }
 
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] Save snapshot button clicked.");
         try
         {
             await _viewModel.SaveSnapshotAsync();
@@ -579,6 +586,7 @@ public sealed partial class WhiteBoardView : UserControl
         }
         catch (Exception ex)
         {
+            Trace.TraceError($"[Whiteboard][WhiteBoardView][Error] Save snapshot failed: {ex.Message}");
             await ShowMessageAsync("Save failed", ex.Message);
         }
     }
@@ -590,6 +598,7 @@ public sealed partial class WhiteBoardView : UserControl
             return;
         }
 
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] Restore snapshot button clicked.");
         try
         {
             List<WhiteboardSnapshotSummary> snapshots = await _viewModel.ListSnapshotsAsync();

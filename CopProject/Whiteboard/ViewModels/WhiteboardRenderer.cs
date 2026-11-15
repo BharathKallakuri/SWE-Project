@@ -8,6 +8,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -70,6 +71,8 @@ internal sealed class WhiteboardRenderer : IDisposable
         {
             RenderAdded(item);
         }
+
+        Trace.TraceInformation($"[Whiteboard][WhiteboardRenderer] Initialized with {_board.Items.Count} items.");
     }
 
     public void Dispose()
@@ -78,6 +81,7 @@ internal sealed class WhiteboardRenderer : IDisposable
         _board.ItemUpdated -= RenderUpdated;
         _board.ItemDeleted -= RemoveDeleted;
         _selectState.SelectionChanged -= RefreshSelectionOutline;
+        Trace.TraceInformation("[Whiteboard][WhiteboardRenderer] Disposed.");
     }
 
     private void RenderAdded(IItem item)
@@ -92,6 +96,7 @@ internal sealed class WhiteboardRenderer : IDisposable
         Canvas.SetZIndex(visual, (int)item.Zindex);
         _visuals[item.Id] = visual;
         _canvas.Children.Add(visual);
+        Trace.TraceInformation($"[Whiteboard][WhiteboardRenderer] Visual added: Item={item.Id}, Type={item.GetType().Name}.");
 
         // A freshly created empty textbox gets focus so the user can start typing
         if (visual is TextBox textBox && item is ITextbox { Content: "" })
@@ -215,6 +220,7 @@ internal sealed class WhiteboardRenderer : IDisposable
             _isResizing = true;
             _resizeHandle?.CapturePointer(e.Pointer);
             e.Handled = true;
+            Trace.TraceInformation("[Whiteboard][WhiteboardRenderer] Resize handle pressed.");
         }
     }
 
@@ -238,6 +244,7 @@ internal sealed class WhiteboardRenderer : IDisposable
             _isResizing = false;
             _resizeHandle?.ReleasePointerCapture(e.Pointer);
             e.Handled = true;
+            Trace.TraceInformation("[Whiteboard][WhiteboardRenderer] Resize handle released.");
         }
     }
 
@@ -273,6 +280,7 @@ internal sealed class WhiteboardRenderer : IDisposable
         if (_visuals.Remove(id, out Microsoft.UI.Xaml.UIElement? visual))
         {
             _canvas.Children.Remove(visual);
+            Trace.TraceInformation($"[Whiteboard][WhiteboardRenderer] Visual removed: Item={id}.");
         }
 
         for (int index = _canvas.Children.Count - 1; index >= 0; index--)

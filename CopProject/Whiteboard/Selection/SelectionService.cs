@@ -7,6 +7,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
@@ -35,10 +36,12 @@ public class SelectionService : ISelectionService
         if (hitItem is null)
         {
             _selectionState.Clear();
+            Trace.TraceInformation($"[Whiteboard][SelectionService] SelectAtPoint at ({point.X}, {point.Y}) hit nothing; cleared selection.");
             return false;
         }
 
         _selectionState.SelectSingle(hitItem.Id);
+        Trace.TraceInformation($"[Whiteboard][SelectionService] Selected item {hitItem.Id} ({hitItem.GetType().Name}) at ({point.X}, {point.Y}).");
         return true;
     }
 
@@ -50,6 +53,7 @@ public class SelectionService : ISelectionService
     public bool MoveSelected(double dx, double dy)
     {
         bool moved = false;
+        Trace.TraceInformation($"[Whiteboard][SelectionService] Moving {_selectionState.SelectedItemIds.Count} selected items by dx={dx}, dy={dy}.");
 
         foreach (Guid id in _selectionState.SelectedItemIds)
         {
@@ -71,6 +75,7 @@ public class SelectionService : ISelectionService
     public bool ResizeSelected(IItem originalItem, Point2D pointer, string modifiedBy = "system")
     {
         ArgumentNullException.ThrowIfNull(originalItem);
+        Trace.TraceInformation($"[Whiteboard][SelectionService] Resizing item {originalItem.Id} to pointer ({pointer.X}, {pointer.Y}).");
 
         if (!_selectionState.IsSelected(originalItem.Id) ||
             !_canvas.Items.ContainsKey(originalItem.Id))

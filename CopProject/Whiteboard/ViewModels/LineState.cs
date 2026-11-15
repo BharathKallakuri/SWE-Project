@@ -3,6 +3,7 @@
 /// LICENSE : MIT
 
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
@@ -79,6 +80,7 @@ public class LineState : ViewModelStateBase
                 Zindex = GetNextZIndex()
             };
 
+            Trace.TraceInformation($"[Whiteboard][LineState] Line started at ({_startPoint.X}, {_startPoint.Y}).");
             // Preview the line
             Preview.ShowPreview(_line);
         }
@@ -95,6 +97,7 @@ public class LineState : ViewModelStateBase
                 if (HasNonZeroLength(_startPoint, point))
                 {
                     ILine item = _line;
+                    Trace.TraceInformation($"[Whiteboard][LineState] Line completed: from ({_startPoint.X}, {_startPoint.Y}) to ({point.X}, {point.Y}).");
                     Task.Run(() => WhiteboardClient.AddItem(item));
                 }
             }
