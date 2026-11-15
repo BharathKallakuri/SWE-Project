@@ -36,7 +36,7 @@ public class TextboxStateTests
         _client.Canvas.AddItem(textbox);
         return textbox;
     }
-
+    // constructor should throw if any argument is null
     [Fact]
     public void Constructor_NullArguments_ThrowArgumentNullException()
     {
@@ -51,7 +51,7 @@ public class TextboxStateTests
     {
         Assert.False(CreateState().HandlesPointerOnTextbox);
     }
-
+    // clicking empty space should create a new textbox at that point
     [Fact]
     public void PointerPressed_OnEmptyArea_AddsTextboxAtPoint()
     {
@@ -104,7 +104,7 @@ public class TextboxStateTests
 
         Assert.False(state.HasPendingEdits);
     }
-
+    // null text should be saved as an empty string
     [Fact]
     public void UpdateText_NullText_TreatedAsEmpty()
     {
@@ -116,7 +116,7 @@ public class TextboxStateTests
 
         Assert.Equal(string.Empty, textbox.Content);
     }
-
+    // committing should send the typed text to the client
     [Fact]
     public void CommitPendingEdits_SendsEditThroughClient()
     {
@@ -131,7 +131,7 @@ public class TextboxStateTests
         Assert.Equal("hello", ((ITextbox)_client.Canvas.Items[textbox.Id]).Content);
         Assert.False(state.HasPendingEdits);
     }
-
+    // typing many times before comit should only send the last tex
     [Fact]
     public void CommitPendingEdits_KeepsOnlyLatestText()
     {
@@ -161,7 +161,7 @@ public class TextboxStateTests
         Assert.Empty(_client.EditedItems);
         Assert.False(state.HasPendingEdits);
     }
-
+    // pending text for an item that isn't a textbox should be ignored
     [Fact]
     public void CommitPendingEdits_ForNonTextboxItem_IsIgnored()
     {
@@ -175,8 +175,7 @@ public class TextboxStateTests
         Assert.Empty(_client.EditedItems);
     }
 
-    // content got updated to the same text before we committed (eg. from another client),
-    // so there's nothing to send
+    // same content ,no update if  already matching
     [Fact]
     public void CommitPendingEdits_ContentAlreadyMatches_DoesNotSendEdit()
     {
