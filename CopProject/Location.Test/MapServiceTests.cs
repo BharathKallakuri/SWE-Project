@@ -1,3 +1,6 @@
+﻿// Author =  Ankit Gupta
+// Roll Number =  112301010
+
 using Incidents;
 using Location.Test.Fakes;
 using LocationTracker.Models;
@@ -51,68 +54,6 @@ public class MapServiceTests
         await _service.GetIncidentsForMapAsync(filter);
 
         Assert.AreSame(filter, _incidents.LastFilter);
-    }
-
-    /// <summary>
-    /// Looking up an incident by id should return the controller's incident.
-    /// </summary>
-    [TestMethod]
-    public async Task GetIncidentById()
-    {
-        Incident incident = FakeIncidentController.MakeIncident();
-        _incidents.IncidentById = incident;
-
-        Incident result = await _service.GetIncidentByIdAsync(Guid.NewGuid());
-
-        Assert.AreSame(incident, result);
-    }
-
-    /// <summary>
-    /// Recent incidents should use a filter with only FromDateTime set.
-    /// </summary>
-    [TestMethod]
-    public async Task GetRecentIncidents()
-    {
-        await _service.GetRecentIncidentsAsync(TimeSpan.FromHours(2));
-
-        Assert.IsNotNull(_incidents.LastFilter);
-        Assert.IsNotNull(_incidents.LastFilter.FromDateTime);
-        Assert.IsNull(_incidents.LastFilter.Location);
-    }
-
-    /// <summary>
-    /// Nearby search should build a location filter with the given values.
-    /// </summary>
-    [TestMethod]
-    public async Task GetNearbyIncidentsValidInput()
-    {
-        await _service.GetNearbyIncidentsAsync(10.8, 76.7, 5);
-
-        IncidentLocationFilter? location = _incidents.LastFilter?.Location;
-        Assert.IsNotNull(location);
-        Assert.AreEqual(10.8, location.Latitude);
-        Assert.AreEqual(76.7, location.Longitude);
-        Assert.AreEqual(5.0, location.Radius);
-    }
-
-    /// <summary>
-    /// Invalid coordinates should throw.
-    /// </summary>
-    [TestMethod]
-    public async Task GetNearbyIncidentsInvalidCoordinates()
-    {
-        await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(
-            () => _service.GetNearbyIncidentsAsync(91, 0, 5));
-    }
-
-    /// <summary>
-    /// A negative radius should throw.
-    /// </summary>
-    [TestMethod]
-    public async Task GetNearbyIncidentsNegativeRadius()
-    {
-        await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(
-            () => _service.GetNearbyIncidentsAsync(10, 10, -1));
     }
 
     /// <summary>

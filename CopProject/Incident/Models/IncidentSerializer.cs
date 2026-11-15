@@ -1,13 +1,21 @@
-﻿
+﻿// Author: M Sreenath Karthick
+// Roll Number: 112301042
+
 using System.Xml.Serialization;
 
 namespace Incidents;
 
+/// <summary>
+/// Helper class for serializing incidents.
+/// </summary>
 internal static class IncidentSerializer
 {
     private static readonly XmlSerializer s_serializer =
         new XmlSerializer(typeof(IncidentXmlDocument));
 
+    /// <summary>
+    /// Serializes incident into XML format bytes.
+    /// </summary>
     public static byte[] Serialize(Incident incident)
     {
         ArgumentNullException.ThrowIfNull(incident);
@@ -61,6 +69,9 @@ internal static class IncidentSerializer
         return stream.ToArray();
     }
 
+    /// <summary>
+    /// Deserialize XML format bytes to Incident.
+    /// </summary>
     public static Incident Deserialize(byte[] data)
     {
         ArgumentNullException.ThrowIfNull(data);
@@ -120,6 +131,9 @@ internal static class IncidentSerializer
         string ChangedBy) : IChange;
 }
 
+/// <summary>
+/// XML equivalent for Incident.
+/// </summary>
 [XmlRoot("Incident")]
 public class IncidentXmlDocument
 {
@@ -149,6 +163,9 @@ public class IncidentXmlDocument
     public List<Guid> Edges { get; set; } = [];
 }
 
+/// <summary>
+/// XML equivalent for IncidentLocation.
+/// </summary>
 public class IncidentLocationXml
 {
     public double Latitude { get; set; }
@@ -158,6 +175,9 @@ public class IncidentLocationXml
     public IncidentLocationXml() { }
 }
 
+/// <summary>
+/// XML equivalent for IncidentEvidence.
+/// </summary>
 public class IncidentEvidenceXml
 {
     public Guid Id { get; set; }
@@ -170,6 +190,9 @@ public class IncidentEvidenceXml
     public IncidentEvidenceXml() { }
 }
 
+/// <summary>
+/// XML equivalent for IncidentChange.
+/// </summary>
 public class ChangeXmlDocument
 {
     public string Description { get; set; } = "";

@@ -1,0 +1,102 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Chat.UI.Test</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Platforms>AnyCPU;x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Chat\UI\UI.csproj" />
+    <ProjectReference Include="..\Chat\Chat.csproj" />
+  </ItemGroup>
+
+  <!-- Plain library (like the other UI test projects). The WindowsAppSDK's native runtime
+       is not installed on this machine, so deploy the local-only runtime DLLs into the output;
+       otherwise WinRT COM activation (e.g. DispatcherQueueController) fails at test time. -->
+  <ItemGroup>
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.winui\2.3.9\runtimes-framework\win-x64\native\**\*.*">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.foundation\2.3.12\runtimes-framework\win-x64\native\**\*.*">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.interactiveexperiences\2.1.9\runtimes-framework\win-x64\native\**\*.*">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.dwrite\2.1.0\runtimes-framework\win-x64\native\**\*.*">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.ai\2.5.5\runtimes-framework\win-x64\native\**\*.*">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.search\2.5.5\runtimes-framework\win-x64\native\**\*.*">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.widgets\2.0.5\runtimes-framework\win-x64\native\**\*.*">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Locations of the WinAppSDK activation manifest fragments (must match the deployed packages). -->
+  <ItemGroup>
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.winui\2.3.9\metadata\Microsoft.*.winmd" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.foundation\2.3.12\metadata\Microsoft.*.winmd" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.interactiveexperiences\2.1.9\metadata\10.0.17763.0\Microsoft.*.winmd" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.ai\2.5.5\metadata\Microsoft.*.winmd" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.search\2.5.5\metadata\Microsoft.*.winmd" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(NuGetPackageRoot)microsoft.windowsappsdk.widgets\2.0.5\metadata\Microsoft.*.winmd" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>WinAppSdkFragment</_Parameter1>
+      <_Parameter2>$(NuGetPackageRoot)microsoft.windowsappsdk.winui/2.3.9/runtimes-framework/package.appxfragment</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>WinAppSdkFragment</_Parameter1>
+      <_Parameter2>$(NuGetPackageRoot)microsoft.windowsappsdk.foundation/2.3.12/runtimes-framework/package.appxfragment</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>WinAppSdkFragment</_Parameter1>
+      <_Parameter2>$(NuGetPackageRoot)microsoft.windowsappsdk.interactiveexperiences/2.1.9/runtimes-framework/package.appxfragment</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>WinAppSdkFragment</_Parameter1>
+      <_Parameter2>$(NuGetPackageRoot)microsoft.windowsappsdk.ai/2.5.5/runtimes-framework/package.appxfragment</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>WinAppSdkFragment</_Parameter1>
+      <_Parameter2>$(NuGetPackageRoot)microsoft.windowsappsdk.search/2.5.5/runtimes-framework/package.appxfragment</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>WinAppSdkFragment</_Parameter1>
+      <_Parameter2>$(NuGetPackageRoot)microsoft.windowsappsdk.widgets/2.0.5/runtimes-framework/package.appxfragment</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>

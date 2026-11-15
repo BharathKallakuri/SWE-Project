@@ -1,13 +1,17 @@
+// Author : Saideep.
+// Roll No : 112301018.
 using System.Diagnostics;
-using System.Net;
 using System.Text;
 using System.Text.Json;
 using Networking;
 using Utils;
+
 namespace Controller;
 
-// Host-side implementation of IControllerService.
-// Runs on Machine A — the machine that creates and owns meetings.It listens for incoming JOIN/LEAVE messages from clients, manages
+///<summary>
+/// Host-side implementation of IControllerService.
+/// It runs on the host machine that creates and owns meetings.
+///</summary>
 
 public sealed class HostController : IControllerService
 {
@@ -17,10 +21,10 @@ public sealed class HostController : IControllerService
     private bool _disposed;
     private readonly List<IUserNotificationHandler> _notificationHandlers = new();
 
-    //Events 
     public event EventHandler<MeetingEndedEventArgs>? MeetingEnded;
     public event EventHandler<UserJoinedEventArgs>? UserJoined;
     public event EventHandler<UserLeftEventArgs>? UserLeft;
+    public event EventHandler<string>? SecurityAlertRaised;
 
     public int ListenPort => _communicator.ListenPort;
     public ICommunicator? Communicator => _communicator;
@@ -29,17 +33,29 @@ public sealed class HostController : IControllerService
 
     public SessionManager SessionManager => _sessionManager;
 
+    ///<summary>
+    /// It registers a handler to receive user join and leave notifications.
+    ///</summary>
     public void RegisterNotificationHandler(IUserNotificationHandler handler)
     {
         if(handler != null && !_notificationHandlers.Contains(handler))
+        {
             _notificationHandlers.Add(handler);
+        }
         
     }
+
+    ///<summary>
+    /// Unregisters a previously registered user notification handler.
+    ///</summary>
     public void UnregisterNotificationHandler(IUserNotificationHandler handler)
     {
         if(handler != null && _notificationHandlers.Contains(handler))
+        {
             _notificationHandlers.Remove(handler);
+        }
     }
+
     public HostController(ControllerUser hostUser, ICommunicator communicator)
     {
         _hostUser = hostUser ?? throw new ArgumentNullException(nameof(hostUser));
@@ -49,15 +65,16 @@ public sealed class HostController : IControllerService
         _hostUser.Ip = NetworkUtils.GetLocalIpAddress();
         _hostUser.Port = _communicator.ListenPort;
         _communicator.AddSubscriber(Protocol.ControllerSubscriberId, new SessionMessageListener(_sessionManager));
-
-        // Forward SessionManager events to our own event surface and broadcast to participants
         _sessionManager.UserJoined += OnUserJoined;
         _sessionManager.UserLeft += OnUserLeft;
         _sessionManager.MeetingEnded += OnMeetingEnded;
+        _sessionManager.DuplicateUserDetected += OnDuplicateUserDetected;
+
     }
 
-    // IControllerService functions implementation 
-    // Creates and starts a new meeting. The host user is added as the first participant.
+    ///<summary>
+    /// Creates and starts a new meeting. The host user is added as the first participant.
+    ///</summary>
     public bool StartMeeting()
     {
         SessionInfo? session = _sessionManager.CreateSession(_hostUser);
@@ -82,11 +99,11 @@ public sealed class HostController : IControllerService
         return true;
     }
 
-    // Ends the meeting. Broadcasts a session-ended notification to all participants.
+    ///<summary>
+    /// Ends the meeting and broadcasts a session-ended notification to all participants.
+    ///</summary>
     public bool EndMeeting()
     {
-        List<ControllerUser> users = _sessionManager.GetActiveUsers();
-
         bool ended = _sessionManager.EndSession(_hostUser.UserKey);
         if (!ended)
         {
@@ -101,32 +118,42 @@ public sealed class HostController : IControllerService
         return true;
     }
 
-    // Not applicable on the host side
+    ///<summary>
+    /// It is not applicable on host side . So, we return false with a trace warning.
+    ///</summary>
     public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user)
     {
         Trace.TraceWarning("JoinMeeting called on HostController. Use a ClientController to join remote meetings.");
         return false;
-    }
+    }   
 
+    ///<summary>
+    /// Not applicable on host side. Host can only end meeting.
+    ///</summary>
     public void LeaveMeeting(ControllerUser user)
     {
         Trace.TraceWarning("LeaveMeeting called on HostController. Use a ClientController to leave remote meetings.");
     }
 
+    ///<summary>
+    /// Gets the active user count of a session.
+    ///</summary>
     public int GetActiveUserCount() => _sessionManager.GetActiveUserCount();
 
+    ///<summary>
+    /// Gets the list of active users in the session.
+    ///</summary>
     public List<ControllerUser> GetActiveUsers() => _sessionManager.GetActiveUsers();
 
-    // Broadcasting 
-    // Sends a message to every participant in the given peer list.
     private void Broadcast(string message)
     {
         byte[] data = Encoding.UTF8.GetBytes(message);
         _communicator.BroadcastMessage(data, Protocol.ControllerSubscriberId, 1);
     }
 
-    // Event handlers 
-
+    ///<summary>
+    /// Broadcasts the updated participant list and notifying registered handlers.
+    ///</summary>
     private void OnUserJoined(object? sender, UserJoinedEventArgs e)
     {
         UserJoined?.Invoke(this, e);
@@ -139,6 +166,9 @@ public sealed class HostController : IControllerService
         }
     }
 
+    ///<summary>
+    ///It also the does the same work like broadcasts the updated participant list.
+    ///</summary>
     private void OnUserLeft(object? sender, UserLeftEventArgs e)
     {
         UserLeft?.Invoke(this, e);
@@ -152,11 +182,26 @@ public sealed class HostController : IControllerService
         }
     }
 
+    ///<summary>
+    /// Handles the event by forwarding it to subscribers.
+    ///</summary>
     private void OnMeetingEnded(object? sender, MeetingEndedEventArgs e)
     {
         MeetingEnded?.Invoke(this, e);
     }
 
+    private void OnDuplicateUserDetected(object? sender, ControllerUser user)
+    {
+        string alert = $"Duplicate join rejected: '{user.Gmail}' attempted to join from {user.Ip} while already in meeting.";
+        Trace.TraceWarning(alert);
+        SecurityAlertRaised?.Invoke(this, alert);
+        string rejectMsg = Protocol.FormatNotification(Protocol.NotifyJoinRejected, $"User with email '{user.Gmail}' is already in this meeting on another device.");
+        Broadcast(rejectMsg);
+    }
+
+    ///<summary>
+    /// Releases all the resources used by this file and unsubscribe from events.
+    ///</summary>
     public void Dispose()
     {
         if (_disposed) return;
@@ -165,6 +210,7 @@ public sealed class HostController : IControllerService
         _sessionManager.UserJoined -= OnUserJoined;
         _sessionManager.UserLeft -= OnUserLeft;
         _sessionManager.MeetingEnded -= OnMeetingEnded;
+        _sessionManager.DuplicateUserDetected -= OnDuplicateUserDetected;
 
         _communicator.RemoveSubscriber(Protocol.ControllerSubscriberId);
         Thread.Sleep(150);

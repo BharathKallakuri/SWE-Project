@@ -1,4 +1,7 @@
-﻿using System;
+﻿//owner : U Sai Vignesh
+// License : MIT
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author: Zeeshan
+// Roll no.: 112301040
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -257,6 +260,20 @@ public class ChatClientTests
     }
 
     [Fact]
+    public void SendRequestRethrowsCommunicatorFailure()
+    {
+        RecordingCommunicator communicator = new()
+        {
+            SendException = new InvalidOperationException("send failed")
+        };
+        using ChatClient client = NewClient(communicator);
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => client.Sync());
+
+        Assert.Equal("send failed", exception.Message);
+    }
+
+    [Fact]
     public void AppliesBatchRaisesEventsAdvancesVersionAndUpdatesParticipants()
     {
         Chatroom chatroom = new("room", "host");
@@ -287,6 +304,10 @@ public class ChatClientTests
         Guid existingId = chatroom.AddMessage(NewMessage("guest", "Old"));
         RecordingCommunicator communicator = new();
         using ChatClient client = NewClient(communicator, chatroom);
+        bool roomResetRaised = false;
+        bool participantsChangedRaised = false;
+        client.RoomReset += () => roomResetRaised = true;
+        client.ParticipantsChanged += _ => participantsChangedRaised = true;
         ApplyBatch(client, 0, 1, new ChatOperation[]
         {
             new MessageEdited(existingId, "Updated", "guest", null)
@@ -299,6 +320,8 @@ public class ChatClientTests
         Assert.Equal(0, client.Version);
         Assert.False(chatroom.TryGetMessage(existingId, out _));
         Assert.DoesNotContain("guest", chatroom.Participants);
+        Assert.True(roomResetRaised);
+        Assert.True(participantsChangedRaised);
     }
 
     [Fact]
@@ -434,6 +457,7 @@ public class ChatClientTests
         public IPEndPoint? LastDestination { get; private set; }
         public int? LastSentModule { get; private set; }
         public int? LastPriority { get; private set; }
+        public Exception? SendException { get; init; }
 
         public void AddSubscriber(int module, IMessageListener subscriber)
         {
@@ -449,6 +473,11 @@ public class ChatClientTests
 
         public void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
         {
+            if (SendException is not null)
+            {
+                throw SendException;
+            }
+
             LastDestination = iPEndPoint;
             LastSentMessage = message;
             LastSentModule = module;

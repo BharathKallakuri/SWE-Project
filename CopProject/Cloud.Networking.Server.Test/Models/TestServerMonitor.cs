@@ -1,6 +1,5 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿// Author = Simeon Kandan Sonar
+// Roll Number = 112301031
 
 using Cloud.Networking.Server.Models;
 using Moq;
@@ -135,5 +134,19 @@ public class TestServerMonitor
         _store.Raise(s => s.MessageAdded += null, NewMessage("hello"));
 
         Assert.AreEqual(0, raised);
+    }
+
+    /// <summary>Tests that disconnecting an untracked connection changes nothing but still raises Changed.</summary>
+    [TestMethod]
+    public void DisconnectingAnUntrackedConnectionStillRaisesChanged()
+    {
+        int raised = 0;
+        _monitor.Changed += () => raised++;
+        _monitor.Connected("conn-1");
+
+        _monitor.Disconnected("unknown");
+
+        Assert.AreEqual(1, _monitor.ConnectionCount);
+        Assert.AreEqual(2, raised);
     }
 }

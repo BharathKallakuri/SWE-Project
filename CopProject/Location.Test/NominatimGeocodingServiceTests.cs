@@ -1,3 +1,6 @@
+﻿// Author = Ankit Gupta
+// Roll Number = 112301010
+
 using System.Net;
 using Location.Test.Fakes;
 using LocationTracker.Services;
@@ -115,4 +118,31 @@ public class NominatimGeocodingServiceTests
 
         await Assert.ThrowsExactlyAsync<HttpRequestException>(() => service.GetAddressAsync(10, 10));
     }
+
+    /// <summary>
+    /// A server error during an address search should surface as an exception.
+    /// </summary>
+    /// <returns>A task for the asynchronous test.</returns>
+    [TestMethod]
+    public async Task FindCoordinatesAsyncServerError()
+    {
+        NominatimGeocodingService service = CreateService(string.Empty, HttpStatusCode.InternalServerError);
+
+        await Assert.ThrowsExactlyAsync<HttpRequestException>(() => service.FindCoordinatesAsync("IIT Palakkad"));
+    }
+
+    /// <summary>
+    /// A result with out-of-range coordinates should return null.
+    /// </summary>
+    /// <returns>A task for the asynchronous test.</returns>
+    [TestMethod]
+    public async Task FindCoordinatesAsyncInvalidCoordinatesReturned()
+    {
+        NominatimGeocodingService service = CreateService("""[ { "lat": "91", "lon": "200" } ]""");
+
+        (double Latitude, double Longitude)? result = await service.FindCoordinatesAsync("Somewhere");
+
+        Assert.IsNull(result);
+    }
+
 }

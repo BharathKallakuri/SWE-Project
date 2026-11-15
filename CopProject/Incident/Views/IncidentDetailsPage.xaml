@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+Author: M Sreenath Karthick
+Roll Number: 112301042
+-->
+
 <Page
     x:Class="Incidents.Views.IncidentDetailsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -240,6 +245,11 @@
                                 <TextBox
                                     Header="Address / Landmark"
                                     Text="{Binding EditableAddress, Mode=TwoWay}" />
+
+                                <ContentControl
+                                    x:Name="MiniMapHost"
+                                    x:FieldModifier="public"
+                                    HorizontalContentAlignment="Stretch" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -367,6 +377,7 @@
 
                                         <StackPanel Grid.Column="1" Spacing="2">
                                             <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="13" />
+                                            <TextBlock Text="{Binding ChangedBy}" FontWeight="SemiBold" TextWrapping="Wrap" FontSize="11" />
                                             <TextBlock
                                                 Text="{Binding ChangedTime}"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"

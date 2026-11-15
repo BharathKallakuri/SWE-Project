@@ -1,8 +1,8 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿// Author = Simeon Kandan Sonar
+// Roll Number = 112301031
 
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Cloud.Networking.Server.Models;
 
@@ -18,17 +18,20 @@ public class MessageHub : Hub
     public const int MaxContentLength = 2_000;
 
     private readonly IMessageStore _store;
+    private readonly ILogger<MessageHub> _logger;
 
     /// <summary>
     /// Initializes the hub with <see cref="IMessageStore"/> instance.
     /// </summary>
     /// <param name="store">a <see cref="IMessageStore"/> instance.</param>
+    /// <param name="logger">Where message traffic is logged (optional)</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="store"/> is null.</exception>
-    public MessageHub(IMessageStore store)
+    public MessageHub(IMessageStore store, ILogger<MessageHub>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(store);
 
         _store = store;
+        _logger = logger ?? NullLogger<MessageHub>.Instance;
     }
 
     /// <summary>
@@ -57,6 +60,9 @@ public class MessageHub : Hub
 
         await _store.AddAsync(message);
         await Clients.All.SendAsync(Contract.ReceiveMessage, message);
+
+        /* the content itself is not logged, only who sent it and how long it was */
+        _logger.LogInformation("Message {MessageId} from {ConnectionId} ({Length} characters) stored and broadcast", message.Id, message.SenderId, trimmed.Length);
         return message;
     }
 
@@ -67,6 +73,9 @@ public class MessageHub : Hub
     /// <returns>A list of messages after "since".</returns>
     public async Task<Message[]> GetMessagesSince(DateTimeOffset since)
     {
-        return [.. await _store.GetSinceAsync(since)];
+        Message[] missed = [.. await _store.GetSinceAsync(since)];
+
+        _logger.LogInformation("Connection {ConnectionId} synced {Count} message(s) since {Since}", Context?.ConnectionId, missed.Length, since);
+        return missed;
     }
 }
