@@ -2,6 +2,7 @@
 // Roll Number = 112301032
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using ScreenShare.Interfaces;
@@ -10,6 +11,8 @@ using ScreenShare.ViewModels;
 
 namespace ScreenShare.Views;
 
+// not covered by unit tests: a WinUI view only runs inside the app, like the other modules' views
+[ExcludeFromCodeCoverage]
 public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
 {
     public ScreenShareViewModel? ViewModel { get; private set; }

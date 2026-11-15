@@ -1,4 +1,7 @@
-﻿namespace ScreenShare;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+namespace ScreenShare;
 
 /// <summary>
 /// every shared screen is sent as two streams: the full one, named after the sharer, for a

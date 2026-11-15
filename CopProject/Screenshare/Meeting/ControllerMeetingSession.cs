@@ -15,7 +15,7 @@ namespace ScreenShare;
 /// <summary>
 /// the meeting as ScreenShare sees it, built from the Controller module for one meeting.
 ///
-/// a participant's id is the Controller's UserKey (gmail#ip#port): the client and the host
+/// a participant's id is the Controller's UserKey (the user's gmail): the client and the host
 /// build it from the same values, so the host can match a leaving user to their stream.
 /// create it after the meeting started and dispose it when the meeting ends.
 /// </summary>

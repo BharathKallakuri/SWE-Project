@@ -12,10 +12,9 @@ namespace Screenshare.Tests;
 
 public class ControllerMeetingSessionTests
 {
-    // UserKey is gmail#ip#port; with this ip and port the key is the gmail's length + 14
+    // UserKey is the user's gmail
     private const string Ip = "10.0.0.1";
     private const int Port = 5000;
-    private const int KeyOverhead = 14;
 
     private static ControllerUser User(string username = "Sumit", string gmail = "sumit@gmail.com", bool isHost = false)
     {
@@ -24,7 +23,7 @@ public class ControllerMeetingSessionTests
 
     private static ControllerUser UserWithKeyBytes(int keyBytes)
     {
-        return User(gmail: new string('a', keyBytes - KeyOverhead));
+        return User(gmail: new string('a', keyBytes));
     }
 
     // ToParticipant
@@ -43,7 +42,7 @@ public class ControllerMeetingSessionTests
 
         MeetingParticipant participant = ControllerMeetingSession.ToParticipant(user);
 
-        Assert.Equal("sumit@gmail.com#10.0.0.1#5000", participant.Id);
+        Assert.Equal("sumit@gmail.com", participant.Id);
         Assert.Equal("Sumit", participant.DisplayName);
         Assert.Equal(isHost, participant.IsHost);
     }
@@ -101,8 +100,8 @@ public class ControllerMeetingSessionTests
     [Fact]
     public void ParticipantId_CountsBytesNotCharacters()
     {
-        // 'é' is 2 bytes in UTF-8: 60 of them are 120 bytes but only 60 characters
-        ControllerUser user = User(gmail: new string('é', 60));
+        // 'é' is 2 bytes in UTF-8: just over half the limit in characters is over it in bytes
+        ControllerUser user = User(gmail: new string('é', StreamLayers.MaxParticipantIdBytes / 2 + 1));
 
         string id = ControllerMeetingSession.ParticipantId(user);
 
