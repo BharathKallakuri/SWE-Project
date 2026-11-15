@@ -1,12 +1,19 @@
+// Author : Saideep.
+// Roll No : 112301018.
 using Utils;
+
 namespace Controller;
 
-// Base class for all session-related event arguments.
+///<summary>
+/// Base class for all session-related event arguments.
+/// </summary>
 public class SessionEventArgs : EventArgs
 {
 }
 
-// It will be Raised when a user joins a session.
+///<summary>
+/// Provides data for the event that is raised when a user joins a session.
+/// </summary>
 public class UserJoinedEventArgs : SessionEventArgs
 {
     public ControllerUser User { get; }
@@ -19,7 +26,9 @@ public class UserJoinedEventArgs : SessionEventArgs
     }
 }
 
-// It is Raised when a user leaves a session.
+///<summary>
+/// Provides data for the event that is raised when a user leaves the session.
+/// </summary>
 public class UserLeftEventArgs : SessionEventArgs
 {
     public ControllerUser User { get; }
@@ -32,7 +41,9 @@ public class UserLeftEventArgs : SessionEventArgs
     }
 }
 
-// It will be Raised when a session ends.
+///<summary>
+/// provides data for the event that is raised when a session ends.
+/// </summary>
 public class MeetingEndedEventArgs : SessionEventArgs
 {
     public ControllerUser Host { get; }

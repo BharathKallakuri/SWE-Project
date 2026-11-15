@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Srikar
+// Roll Number = 142301013
+
+using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -8,6 +11,9 @@ using Networking.Queues;
 
 namespace Networking.Sockets;
 
+/// <summary>
+/// Monitors the lossy sending queue and transmits outgoing packets via UDP.
+/// </summary>
 public class SendingQueueListenerLossy : IDisposable
 {
     private readonly SendingQueue _sendingQueue;
@@ -27,6 +33,11 @@ public class SendingQueueListenerLossy : IDisposable
         }
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SendingQueueListenerLossy"/> class and begins transmission.
+    /// </summary>
+    /// <param name="sendingQueue">The sending queue containing outgoing lossy packets.</param>
+    /// <param name="udpClient">The configured UDP client used for sending.</param>
     public SendingQueueListenerLossy(SendingQueue sendingQueue, UdpClient udpClient)
     {
         _sendingQueue = sendingQueue;
@@ -46,6 +57,9 @@ public class SendingQueueListenerLossy : IDisposable
         _listeningThread.Start();
     }
 
+    /// <summary>
+    /// Dequeues packets from the sending queue and transmits them as UDP datagrams.
+    /// </summary>
     public void ListenOnQueue()
     {
         while (IsRunning)
@@ -76,6 +90,9 @@ public class SendingQueueListenerLossy : IDisposable
         }
     }
 
+    /// <summary>
+    /// Stops the lossy sender thread.
+    /// </summary>
     public void Dispose()
     {
         lock (_isRunningLock)

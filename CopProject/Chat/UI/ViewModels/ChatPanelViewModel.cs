@@ -1,9 +1,12 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Chat;
 using UI.Helpers;
 using UI.Services;
+using Utils;
 
 namespace UI.ViewModels;
 
@@ -16,6 +19,7 @@ public sealed class ChatPanelViewModel : ObservableObject, IDisposable
     private readonly Dictionary<Guid, List<MessageViewModel>> _threadMessagesByParentId = new();
     private readonly Dictionary<Guid, PendingRequest> _pendingRequests = new();
     private readonly Dictionary<string, ImageSource> _avatarSources = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string?> _avatarToolTips = new(StringComparer.Ordinal);
     private static readonly TimeSpan RequestConfirmationTimeout = TimeSpan.FromSeconds(8);
     private bool _disposed, _initialized;
     private string _messageText = string.Empty, _threadMessageText = string.Empty, _statusMessage = string.Empty;
@@ -39,6 +43,8 @@ public sealed class ChatPanelViewModel : ObservableObject, IDisposable
         _chat.RequestCompleted += OnRequestCompleted;
         _chat.RoomReset += OnRoomReset;
         _chat.ParticipantsChanged += OnParticipantsChanged;
+        _chat.UserInfoChanged += OnUserInfoChanged;
+        RefreshUserInfo();
 
         SendMessageCommand = new RelayCommand(SendMessage, () => !string.IsNullOrWhiteSpace(MessageText));
         SendThreadReplyCommand = new RelayCommand(SendThreadReply, () => ActiveThreadRoot is not null && !string.IsNullOrWhiteSpace(ThreadMessageText));
@@ -59,6 +65,7 @@ public sealed class ChatPanelViewModel : ObservableObject, IDisposable
 
     public string CurrentUsername => _chat.Username;
     public bool IsHost => _chat.IsHost;
+    public Visibility RefreshVisibility => IsHost ? Visibility.Collapsed : Visibility.Visible;
     public int ParticipantCount => Participants.Count;
     public string ParticipantCountLabel => ParticipantCount == 1 ? "1 participant" : $"{ParticipantCount} participants";
     public event Action<Guid>? ScrollToMessageRequested;
@@ -176,9 +183,80 @@ public sealed class ChatPanelViewModel : ObservableObject, IDisposable
         ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(username);
         if (image is null) _avatarSources.Remove(username); else _avatarSources[username] = image;
-        foreach (ParticipantViewModel participant in Participants.Where(p => p.Username == username)) participant.SetAvatarImage(image);
+        ApplyAvatarToExisting(username);
+    }
+
+    // Pulls the controller's user list (pictures, emails) into the avatar caches and applies it.
+    private void RefreshUserInfo()
+    {
+        _avatarSources.Clear();
+        _avatarToolTips.Clear();
+
+        foreach (ControllerUser user in _chat.GetMeetingUsers()
+                     .GroupBy(user => user.Username, StringComparer.Ordinal)
+                     .Select(group => group.First()))
+        {
+            string username = user.Username;
+            if (user.ProfilePicture is { Length: > 0 } bytes && CreateAvatarImage(bytes) is { } image)
+                _avatarSources[username] = image;
+
+            _avatarToolTips[username] = string.IsNullOrWhiteSpace(user.Gmail)
+                ? null
+                : $"{user.Username}\n{user.Gmail}";
+        }
+
+        // Apply to everyone currently shown; users missing from the controller list get their avatar/tooltip cleared.
+        foreach (ParticipantViewModel participant in Participants)
+            ApplyAvatarToExisting(participant.Username);
+        foreach (MessageViewModel message in _messagesById.Values
+                     .Concat(_threadMessagesByParentId.Values.SelectMany(items => items)))
+            ApplyAvatarToExisting(message.SenderUsername);
+    }
+
+    private void ApplyAvatarToExisting(string username)
+    {
+        _avatarSources.TryGetValue(username, out ImageSource? image);
+        _avatarToolTips.TryGetValue(username, out string? toolTip);
+
+        foreach (ParticipantViewModel participant in Participants.Where(p => p.Username == username))
+        {
+            participant.SetAvatarImage(image);
+            participant.SetAvatarToolTip(toolTip);
+        }
+
         foreach (MessageViewModel message in _messagesById.Values.Concat(_threadMessagesByParentId.Values.SelectMany(items => items)))
-            if (message.SenderUsername == username) message.SetAvatarImage(image);
+        {
+            if (message.SenderUsername == username)
+            {
+                message.SetAvatarImage(image);
+                message.SetAvatarToolTip(toolTip);
+            }
+        }
+    }
+
+    private static ImageSource? CreateAvatarImage(byte[] bytes)
+    {
+        try
+        {
+            var bitmap = new BitmapImage();
+            using var stream = new MemoryStream(bytes);
+            bitmap.SetSource(stream.AsRandomAccessStream());
+            return bitmap;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    // MessageViewModel.SenderUsername is set from ChatMessage.SenderName.
+    private string? GetAvatarToolTip(string username) =>
+        _avatarToolTips.TryGetValue(username, out string? toolTip) ? toolTip : null;
+
+    private void OnUserInfoChanged()
+    {
+        if (_disposed) return;
+        RefreshUserInfo();
     }
 
     private void SendMessage()
@@ -414,6 +492,7 @@ public sealed class ChatPanelViewModel : ObservableObject, IDisposable
         MessageViewModel viewModel = new(id, message, CurrentUsername, _chat.HostName,
             ReplyInChat, OpenThread, BeginEdit, DeleteMessage, ToggleReaction, JumpToMessage, parentMessageId);
         if (_avatarSources.TryGetValue(message.SenderName, out ImageSource? image)) viewModel.SetAvatarImage(image);
+        viewModel.SetAvatarToolTip(GetAvatarToolTip(message.SenderName));
         if (parentMessageId is null
             && message.ParentMessageId is Guid replyId
             && _messagesById.TryGetValue(replyId, out MessageViewModel? target))
@@ -443,6 +522,7 @@ public sealed class ChatPanelViewModel : ObservableObject, IDisposable
     {
         ParticipantViewModel participant = new(username, CurrentUsername, _chat.HostName);
         if (_avatarSources.TryGetValue(username, out ImageSource? image)) participant.SetAvatarImage(image);
+        participant.SetAvatarToolTip(GetAvatarToolTip(username));
         return participant;
     }
 
@@ -463,6 +543,7 @@ public sealed class ChatPanelViewModel : ObservableObject, IDisposable
         RebuildParticipants(participants);
         UpdateMentionTargets();
         OnPropertyChanged(nameof(IsHost));
+        OnPropertyChanged(nameof(RefreshVisibility));
         if (StatusMessage.StartsWith("Synchronizing", StringComparison.OrdinalIgnoreCase)
             || StatusMessage.StartsWith("Connected", StringComparison.OrdinalIgnoreCase))
             StatusMessage = $"Connected · {ParticipantCount} {(ParticipantCount == 1 ? "participant" : "participants")}";
@@ -545,7 +626,9 @@ public sealed class ChatPanelViewModel : ObservableObject, IDisposable
         _chat.RequestCompleted -= OnRequestCompleted;
         _chat.RoomReset -= OnRoomReset;
         _chat.ParticipantsChanged -= OnParticipantsChanged;
+        _chat.UserInfoChanged -= OnUserInfoChanged;
         _pendingRequests.Clear();
         _avatarSources.Clear();
+        _avatarToolTips.Clear();
     }
 }

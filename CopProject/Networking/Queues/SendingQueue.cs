@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Dheeraj Ram
+// Roll Number = 142301015
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,6 +12,9 @@ using Networking.Packets;
 
 namespace Networking.Queues;
 
+/// <summary>
+/// Priority-based sending queue with anti-starvation scheduling.
+/// </summary>
 public class SendingQueue : Queue
 {
     public const int DefaultMediumWeightRatio = 3;
@@ -29,6 +35,12 @@ public class SendingQueue : Queue
     private int _highBurstCount;
     private int _mediumServedCount;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SendingQueue"/> class.
+    /// </summary>
+    /// <param name="mediumWeightRatio">Number of medium-priority packets served before yielding.</param>
+    /// <param name="maxHighBurst">Maximum consecutive high-priority packets allowed before yielding.</param>
+    /// <param name="maxStarvationLimit">Maximum consecutive higher-priority dispatches before forcing low-priority dispatch.</param>
     public SendingQueue(int mediumWeightRatio = DefaultMediumWeightRatio,
                         int maxHighBurst = DefaultMaxHighBurst,
                         int maxStarvationLimit = DefaultMaxStarvationLimit)
@@ -48,6 +60,11 @@ public class SendingQueue : Queue
         _mediumServedCount = 0;
     }
 
+    /// <summary>
+    /// Normalizes an integer priority value to a <see cref="Priority"/> enum value.
+    /// </summary>
+    /// <param name="priority">The raw priority integer.</param>
+    /// <returns>The normalized <see cref="Priority"/>.</returns>
     public static Priority NormalizePriority(int priority)
     {
         if (priority >= (int)Priority.High)
@@ -63,6 +80,10 @@ public class SendingQueue : Queue
         return Priority.Medium;
     }
 
+    /// <summary>
+    /// Enqueues a packet into the appropriate priority sub-queue.
+    /// </summary>
+    /// <param name="packet">The packet to enqueue.</param>
     public override void Enqueue(Packet packet)
     {
         if (packet == null)
@@ -91,6 +112,10 @@ public class SendingQueue : Queue
         SignalItemAdded();
     }
 
+    /// <summary>
+    /// Dequeues the next packet according to priority and fairness policies.
+    /// </summary>
+    /// <returns>The dequeued packet, or null if the queue is empty.</returns>
     public override Packet? Dequeue()
     {
         lock (_dequeueLock)
@@ -143,6 +168,10 @@ public class SendingQueue : Queue
         }
     }
 
+    /// <summary>
+    /// Peeks at the next packet that would be dequeued.
+    /// </summary>
+    /// <returns>The next packet, or null if the queue is empty.</returns>
     public override Packet? Peek()
     {
         lock (_dequeueLock)
@@ -179,6 +208,9 @@ public class SendingQueue : Queue
         }
     }
 
+    /// <summary>
+    /// Clears all packets from all priority queues and resets counters.
+    /// </summary>
     public override void Clear()
     {
         lock (_dequeueLock)
@@ -195,11 +227,13 @@ public class SendingQueue : Queue
         }
     }
 
+    /// <inheritdoc/>
     public override int Size()
     {
         return _highQueue.Count + _mediumQueue.Count + _lowQueue.Count;
     }
 
+    /// <inheritdoc/>
     public override bool IsEmpty()
     {
         return _highQueue.IsEmpty && _mediumQueue.IsEmpty && _lowQueue.IsEmpty;

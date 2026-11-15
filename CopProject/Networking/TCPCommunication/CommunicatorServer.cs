@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Bharath
+// Roll Number = 112301013
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,6 +18,9 @@ using Utils;
 
 namespace Networking.TCPCommunication;
 
+/// <summary>
+/// Server-side communicator managing client connections, routing, multicast groups, and broadcasts.
+/// </summary>
 public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisposable
 {
     public const int NetworkingModuleId = 13;
@@ -54,6 +60,10 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CommunicatorServer"/> class bound to the specified endpoint.
+    /// </summary>
+    /// <param name="ipEndPoint">The local endpoint to bind to, or null to assign an available port dynamically.</param>
     public CommunicatorServer(IPEndPoint? ipEndPoint)
     {
         _isRunningLock = new object();
@@ -109,7 +119,9 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
-
+    /// <summary>
+    /// Listens for and accepts incoming TCP client connections.
+    /// </summary>
     public void AcceptClientConnections()
     {
         TcpListener? listener = _tcpClientRequestListener;
@@ -140,6 +152,10 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
 
     }
 
+    /// <summary>
+    /// Finds and returns an available local IP endpoint.
+    /// </summary>
+    /// <returns>A free <see cref="IPEndPoint"/> on the local machine.</returns>
     public IPEndPoint GetFreeIPEndPoint()
     {
         IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
@@ -151,6 +167,11 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         return new IPEndPoint(ipAddress, port);
     }
 
+    /// <summary>
+    /// Adds a connected client and starts listening for its incoming messages.
+    /// </summary>
+    /// <param name="clientIp">The client IP endpoint.</param>
+    /// <param name="tcpClient">The connected TCP client instance.</param>
     public void AddClient(IPEndPoint clientIp, TcpClient tcpClient)
     {
         try
@@ -170,6 +191,10 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <summary>
+    /// Removes a client connection and closes its resources and group subscriptions.
+    /// </summary>
+    /// <param name="clientIp">The client IP endpoint to remove.</param>
     public void RemoveClient(IPEndPoint clientIp)
     {
         try
@@ -201,6 +226,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <inheritdoc/>
     public void OnUserJoined(ControllerUser user)
     {
         if (user == null)
@@ -211,6 +237,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         Trace.TraceInformation($"[Networking] CommunicatorServer.OnUserJoined: User '{user.Username}' ({user.Gmail}) joined at {user.Ip}:{user.Port}");
     }
 
+    /// <inheritdoc/>
     public void OnUserLeft(ControllerUser user)
     {
         if (user == null)
@@ -230,6 +257,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <inheritdoc/>
     public void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
     {
         try
@@ -243,6 +271,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <inheritdoc/>
     public void AddSubscriber(int module, IMessageListener messageListener)
     {
         try
@@ -255,6 +284,8 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
             Trace.TraceError($"[Networking] CommunicatorServer.AddSubscriber: Failed to add subscriber for module {module}. Exception: {e.Message}");
         }
     }
+
+    /// <inheritdoc/>
     public void RemoveSubscriber(int module)
     {
         try
@@ -268,6 +299,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <inheritdoc/>
     public void SendMessageLossy(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
     {
         try
@@ -281,6 +313,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <inheritdoc/>
     public void AddLossySubscriber(int module, IMessageListenerLossy messageListener)
     {
         try
@@ -294,6 +327,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <inheritdoc/>
     public void RemoveLossySubscriber(int module)
     {
         try
@@ -307,7 +341,11 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
-
+    /// <summary>
+    /// Derives a multicast IP address from a multicast group identifier.
+    /// </summary>
+    /// <param name="multicastGroup">The multicast group identifier.</param>
+    /// <returns>The calculated multicast <see cref="IPAddress"/>.</returns>
     public static IPAddress GetMulticastAddress(int multicastGroup)
     {
         int normalized = Math.Abs(multicastGroup);
@@ -324,6 +362,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         return new IPAddress(new byte[] { 239, 255, high, low });
     }
 
+    /// <inheritdoc/>
     public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
         if (clientIp.Address.IsIPv4MappedToIPv6)
@@ -347,6 +386,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <inheritdoc/>
     public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
         if (clientIp.Address.IsIPv4MappedToIPv6)
@@ -379,13 +419,20 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
-
-
+    /// <inheritdoc/>
     public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority)
     {
         MulticastMessage(multicastGroup, message, module, priority, null);
     }
 
+    /// <summary>
+    /// Sends a reliable message to all members of a multicast group, optionally excluding a specific client.
+    /// </summary>
+    /// <param name="multicastGroup">Multicast group identifier.</param>
+    /// <param name="message">Payload data to send.</param>
+    /// <param name="module">Target module identifier.</param>
+    /// <param name="priority">Message priority level.</param>
+    /// <param name="excludeClient">Client endpoint to exclude from distribution, or null.</param>
     public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority, IPEndPoint? excludeClient)
     {
         if (_multicastGroupMap.TryGetValue(multicastGroup, out ConcurrentDictionary<IPEndPoint, byte>? group))
@@ -401,6 +448,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <inheritdoc/>
     public void MulticastMessageLossy(int multicastGroup, byte[] message, int module, int priority)
     {
         if (_thisIpEndPoint == null)
@@ -421,11 +469,19 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <inheritdoc/>
     public void BroadcastMessage(byte[] message, int module, int priority)
     {
         BroadcastMessage(message, module, priority, null);
     }
 
+    /// <summary>
+    /// Broadcasts a reliable message to all connected clients, optionally excluding a specific client.
+    /// </summary>
+    /// <param name="message">Payload data to broadcast.</param>
+    /// <param name="module">Target module identifier.</param>
+    /// <param name="priority">Message priority level.</param>
+    /// <param name="excludeClient">Client endpoint to exclude from broadcast, or null.</param>
     public void BroadcastMessage(byte[] message, int module, int priority, IPEndPoint? excludeClient)
     {
         foreach (IPEndPoint clientEp in _clientToTcpListenerMap.Keys)
@@ -438,6 +494,7 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <inheritdoc/>
     public void BroadcastMessageLossy(byte[] message, int module, int priority)
     {
         if (_thisIpEndPoint == null)
@@ -470,17 +527,25 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         return addrA.Equals(addrB);
     }
 
+    /// <summary>
+    /// Handles incoming network control messages such as broadcasts and multicast management.
+    /// </summary>
     public class NetworkMessageListener : IMessageListener
     {
         private readonly CommunicatorServer _server;
         private readonly Serializer<NetworkMessage> _serializer;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NetworkMessageListener"/> class.
+        /// </summary>
+        /// <param name="server">The owning server communicator instance.</param>
         public NetworkMessageListener(CommunicatorServer server)
         {
             _server = server;
             _serializer = new Serializer<NetworkMessage>();
         }
 
+        /// <inheritdoc/>
         public void OnMessageReceived(byte[] message)
         {
             try
@@ -512,10 +577,15 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
         }
     }
 
+    /// <inheritdoc/>
     public int ListenPort => _thisIpEndPoint?.Port ?? 0;
 
+    /// <inheritdoc/>
     public IPAddress ListenIpAddress => _thisIpEndPoint?.Address ?? IPAddress.Any;
 
+    /// <summary>
+    /// Disposes server listeners, client connections, and message queues.
+    /// </summary>
     public void Dispose()
     {
         lock (_isRunningLock)

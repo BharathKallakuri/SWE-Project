@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Diagnostics;
+using System.Text.Json.Serialization;
 
 namespace Chat;
 
@@ -156,6 +157,7 @@ public static class ChatProtocol
         ArgumentNullException.ThrowIfNull(chatroom);
         ArgumentNullException.ThrowIfNull(operation);
 
+        Trace.TraceInformation("[Chat] Applying server operation {0}.", operation.GetType().Name);
         switch (operation)
         {
             case MessageAdded added:
@@ -189,6 +191,9 @@ public static class ChatProtocol
                     reaction.ThreadParentMessageId);
 
             default:
+                Trace.TraceWarning(
+                    "[Chat] Cannot apply unsupported operation type '{0}'.",
+                    operation.GetType().Name);
                 return RoomResult.Forbidden;
         }
     }

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author = Bharath
+// Roll Number = 112301013
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -10,6 +13,9 @@ using Networking.Queues;
 
 namespace Networking.Sockets;
 
+/// <summary>
+/// Monitors the client sending queue and transmits packets to the server over TCP.
+/// </summary>
 public class SendingQueueListenerClient : IDisposable
 {
     private SendingQueue _sendingQueue;
@@ -32,6 +38,11 @@ public class SendingQueueListenerClient : IDisposable
 
     TcpClient _clientSocket;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SendingQueueListenerClient"/> class and starts the sending thread.
+    /// </summary>
+    /// <param name="sendingQueue">The sending queue containing outgoing packets.</param>
+    /// <param name="clientSocket">The connected TCP client.</param>
     public SendingQueueListenerClient(SendingQueue sendingQueue, TcpClient clientSocket)
     {
         _isRunningLock = new object();
@@ -43,6 +54,10 @@ public class SendingQueueListenerClient : IDisposable
         _listeningThread.Start();
         Trace.TraceInformation("[Networking] SendingQueueListenerClient: Started listening thread.");
     }
+
+    /// <summary>
+    /// Dequeues packets and writes framed byte data to the network stream.
+    /// </summary>
     public void ListenOnQueue()
     {
         while (IsRunning)
@@ -69,6 +84,9 @@ public class SendingQueueListenerClient : IDisposable
         }
     }
 
+    /// <summary>
+    /// Stops the sending thread.
+    /// </summary>
     public void Dispose()
     {
         lock (_isRunningLock)
