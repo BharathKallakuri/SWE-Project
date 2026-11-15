@@ -34,7 +34,7 @@ public class WhiteboardSnapshotStoreTests
     }
 
     [Fact]
-    public async Task ListAsync_ReturnsSessionSnapshots()
+    public async Task ListAsync_ReturnSessionSnapshots()
     {
         var storage = new InMemoryStorage();
         var store = new WhiteboardSnapshotStore(storage);
@@ -61,7 +61,7 @@ public class WhiteboardSnapshotStoreTests
     }
 
     [Fact]
-    public async Task LoadAsync_SnapshotDoesNotExist_Throws()
+    public async Task LoadAsync_SnapshotDoesNotExist()
     {
         var store = new WhiteboardSnapshotStore(new InMemoryStorage());
 
@@ -69,7 +69,7 @@ public class WhiteboardSnapshotStoreTests
     }
 
     [Fact]
-    public async Task ListAsync_StorageCannotListKeys_Throws()
+    public async Task ListAsync_StorageCannotListKeys()
     {
         var storage = new InMemoryStorage { FailGetAllKeys = true };
         var store = new WhiteboardSnapshotStore(storage);
