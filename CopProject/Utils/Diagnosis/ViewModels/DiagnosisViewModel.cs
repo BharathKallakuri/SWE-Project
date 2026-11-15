@@ -3,6 +3,7 @@
 
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using Utils.Diagnosis.Services;
 
 namespace Utils.Diagnosis.ViewModels;
@@ -73,12 +74,15 @@ public sealed class DiagnosisViewModel : INotifyPropertyChanged
     /// from the Insights service.
     /// </summary>
     /// <remarks>
-    /// Updates the status and report properties throughout the operation
-    /// and handles any exceptions encountered during diagnosis.
+    /// Updates the status and report properties and handles any execptions
     /// </remarks>
     public async Task RunAsync()
     {
-        if (IsBusy) return;
+        if (IsBusy)
+        {
+            Trace.TraceWarning("[Utils.Diagnosis.ViewModels][RunAsync] Diagnosis is already in progress.");
+            return;
+        }
 
         IsBusy = true;
         Status = "Analyzing log...";
@@ -91,6 +95,8 @@ public sealed class DiagnosisViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
+            Trace.TraceError($"[Utils.Diagnosis.ViewModels][RunAsync] Diagnosis failed: {ex}");
+
             Status = "Diagnosis failed.";
             Report = ex.Message;
         }
