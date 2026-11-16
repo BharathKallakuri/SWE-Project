@@ -14,6 +14,7 @@ concurrency:
 
 permissions:
   contents: read
+  checks: write
 
 jobs:
   build-and-test:
@@ -41,6 +42,24 @@ jobs:
       - name: Test dotnet projects
         # env:
         #   COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
-        run: dotnet test CopProject --configuration Release --no-build --verbosity normal
+        run: >
+          dotnet test CopProject --configuration Release --no-build --verbosity normal
+          --logger "trx"
+          --results-directory ./test-results
 
+      - name: Publish Test Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Unit Tests (.NET)
+          path: 'test-results/**/*.trx'
+          reporter: dotnet-trx
+          fail-on-error: false
 
+      - name: Upload unit test results artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: unit-test-results-${{ github.sha }}
+          path: test-results/
+          retention-days: 60

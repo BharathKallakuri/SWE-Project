@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Author: Rajdeep
+// Roll no.: 112301045
+
+using System;
 using System.Linq;
 using Chat;
 
@@ -148,8 +151,7 @@ public class ChatMessageTests
     [Fact]
     public void CloneCopiesMutableStateAndReactionSets()
     {
-        ChatMessage message = new()
-        {
+        ChatMessage message = new() {
             Timestamp = DateTimeOffset.Parse("2026-01-01T12:00:00+00:00"),
             SenderName = "guest",
             Content = "Original",

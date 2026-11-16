@@ -1,6 +1,6 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿/// Owners  : Raagam Hitesh Parmar  Sangam     Karthik Krishna M
+/// Roll No : 112301024             112201006  112301014
+/// LICENSE : MIT
 
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -20,7 +20,6 @@ namespace Whiteboard.Network.Messages;
 [JsonDerivedType(typeof(ReqUndo), "req_undo")]
 [JsonDerivedType(typeof(ReqRedo), "req_redo")]
 [JsonDerivedType(typeof(ReqRestoreSnapshot), "req_restore_snapshot")]
-[ExcludeFromCodeCoverage]
 public abstract record ClientMessage
 {
     private ClientMessage() { }
@@ -37,7 +36,6 @@ public abstract record ClientMessage
     /// Or when the client believes its state is out of sync from the server.
     /// TODO How does client know that?
     /// </summary>
-    [ExcludeFromCodeCoverage]
     public sealed record ReqUpdate() : ClientMessage;
 
     /// <summary>
@@ -46,7 +44,6 @@ public abstract record ClientMessage
     /// </summary>
     /// <param name="Id">GUID of the added item</param>
     /// <param name="Item">Added item</param>
-    [ExcludeFromCodeCoverage]
     public sealed record ReqAddItem(Guid Id, ItemDto Item) : ClientMessage;
 
     /// <summary>
@@ -54,7 +51,6 @@ public abstract record ClientMessage
     /// and requests the server to approve the deletion.
     /// </summary>
     /// <param name="Id">GUID of the deleted item</param>
-    [ExcludeFromCodeCoverage]
     public sealed record ReqDeleteItem(Guid Id) : ClientMessage;
 
     /// <summary>
@@ -63,21 +59,18 @@ public abstract record ClientMessage
     /// </summary>
     /// <param name="Id">GUID of the updated item</param>
     /// <param name="Item">Updated item</param>
-    [ExcludeFromCodeCoverage]
     public sealed record ReqUpdateItem(Guid Id, ItemDto Item) : ClientMessage;
 
     /// <summary>
     /// Requests undo of the requesting user's most recent
     /// available action.
     /// </summary>
-    [ExcludeFromCodeCoverage]
     public sealed record ReqUndo() : ClientMessage;
 
     /// <summary>
     /// Requests redo of the requesting user's most recently
     /// undone action that remains available.
     /// </summary>
-    [ExcludeFromCodeCoverage]
     public sealed record ReqRedo() : ClientMessage;
 
     /// <summary>

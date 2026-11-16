@@ -1,12 +1,12 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿/// Owners  : Raagam Hitesh Parmar  Sangam
+/// Roll No : 112301024             112201006
+/// LICENSE : MIT
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Whiteboard.Network.Dtos;
-using System.Collections.Generic;
 
 namespace Whiteboard.Network.Messages;
 
@@ -19,7 +19,6 @@ namespace Whiteboard.Network.Messages;
 [JsonDerivedType(typeof(ResDeleteItem), "res_delete_item")]
 [JsonDerivedType(typeof(ResUpdateItem), "res_update_item")]
 [JsonDerivedType(typeof(ResHistory), "res_history")]
-[ExcludeFromCodeCoverage]
 public abstract record ServerMessage
 {
     private ServerMessage() { }
@@ -28,7 +27,6 @@ public abstract record ServerMessage
     /// Sent when a client requested a complete whiteboard update (unicast).
     /// </summary>
     /// <param name="Whiteboard">Entire whiteboard state from the server</param>
-    [ExcludeFromCodeCoverage]
     public sealed record ResUpdate(WhiteboardDto Whiteboard) : ServerMessage;
 
     /// <summary>
@@ -36,14 +34,12 @@ public abstract record ServerMessage
     /// </summary>
     /// <param name="Id">GUID of the added item</param>
     /// <param name="Item">Item added</param>
-    [ExcludeFromCodeCoverage]
     public sealed record ResAddItem(Guid Id, ItemDto Item) : ServerMessage;
 
     /// <summary>
     /// Sent when a server deletes an item from its state (broadcast).
     /// </summary>
     /// <param name="Id">GUID of the deleted item</param>
-    [ExcludeFromCodeCoverage]
     public sealed record ResDeleteItem(Guid Id) : ServerMessage;
 
     /// <summary>
@@ -51,7 +47,6 @@ public abstract record ServerMessage
     /// </summary>
     /// <param name="Id">GUID of the updated item</param>
     /// <param name="Item">Updated item</param>
-    [ExcludeFromCodeCoverage]
     public sealed record ResUpdateItem(Guid Id, ItemDto Item) : ServerMessage;
 
     /// <summary>
@@ -65,7 +60,6 @@ public abstract record ServerMessage
     /// <param name="Redo">
     /// Available redo entries. The last entry is the next action to redo.
     /// </param>
-    [ExcludeFromCodeCoverage]
     public sealed record ResHistory(
         string UserId,
         List<HistoryEntryDto> Undo,

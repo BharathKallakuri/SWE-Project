@@ -1,6 +1,6 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿/// Owners  : Raagam Hitesh Parmar 
+/// Roll No : 112301024
+/// LICENSE : MIT
 
 using System;
 using System.Collections.Generic;
@@ -19,7 +19,6 @@ namespace Whiteboard.Network.Dtos;
 /// <param name="CreatedDateTime">Date and time of creation</param>
 /// <param name="LastModifiedDateTime">Date and time of last modification</param>
 /// <param name="Orientation">Orientation (rotation) of the item in degrees</param>
-[ExcludeFromCodeCoverage]
 public record ItemMetadata(
     Guid Id,
     double Zindex,
@@ -35,7 +34,6 @@ public record ItemMetadata(
 /// <param name="FillColor">Fill color</param>
 /// <param name="BorderColor">Border color</param>
 /// <param name="BorderWidth">Border Width</param>
-[ExcludeFromCodeCoverage]
 public record ShapeStyle(
     string FillColor,
     string BorderColor,
@@ -66,26 +64,16 @@ public record ShapeStyle(
 [JsonDerivedType(typeof(Polygon), "polygon")]
 [JsonDerivedType(typeof(Rectangle), "rectangle")]
 [JsonDerivedType(typeof(Square), "square")]
-[ExcludeFromCodeCoverage]
 public abstract record ItemPayload
 {
-    [ExcludeFromCodeCoverage]
     public sealed record Freehand(List<Point2D> Points, string StrokeColor, double StrokWidth) : ItemPayload;
-    [ExcludeFromCodeCoverage]
     public sealed record Line(Point2D Begin, Point2D End, string Color, double Width) : ItemPayload;
-    [ExcludeFromCodeCoverage]
     public sealed record Textbox(Point2D Center, string Content, string FontFamily, int FontSize, string FontColor) : ItemPayload;
-    [ExcludeFromCodeCoverage]
     public sealed record Circle(ShapeStyle Style, Point2D Center, double Radius) : ItemPayload;
-    [ExcludeFromCodeCoverage]
     public sealed record Ellipse(ShapeStyle Style, Point2D Center, double Width, double Height) : ItemPayload;
-    [ExcludeFromCodeCoverage]
     public sealed record EqTriangle(ShapeStyle Style, Point2D Center, double SideLength) : ItemPayload;
-    [ExcludeFromCodeCoverage]
     public sealed record Polygon(ShapeStyle Style, List<Point2D> Vertices) : ItemPayload;
-    [ExcludeFromCodeCoverage]
     public sealed record Rectangle(ShapeStyle Style, Point2D Center, double Width, double Height) : ItemPayload;
-    [ExcludeFromCodeCoverage]
     public sealed record Square(ShapeStyle Style, Point2D Center, double SideLength) : ItemPayload;
 }
 
@@ -94,7 +82,6 @@ public abstract record ItemPayload
 /// </summary>
 /// <param name="Metadata">Item Metadata</param>
 /// <param name="Payload">Item Payload</param>
-[ExcludeFromCodeCoverage]
 public record ItemDto(
     ItemMetadata Metadata,
     ItemPayload Payload

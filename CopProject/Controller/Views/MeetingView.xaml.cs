@@ -1,4 +1,7 @@
+// Author = Balabadra Lepakshi Kalyan
+// Roll Number = 112301003
 using System;
+using System.Diagnostics;
 using System.Linq;
 using Windows.Foundation;
 using Microsoft.UI;
@@ -10,7 +13,7 @@ using Microsoft.UI.Xaml.Shapes;
 using Controller.ViewModels;
 
 namespace Controller.Views;
-
+// Connects the ViewModel to the view and subscribes to chart update notifications.
 public sealed partial class MeetingView : UserControl
 {
     private MeetingViewModel? _viewModel;
@@ -29,6 +32,7 @@ public sealed partial class MeetingView : UserControl
             {
                 _viewModel.ChartUpdated += DrawCharts;
             }
+            Trace.TraceInformation("[Controller]: ViewModel assigned.");
             this.Bindings.Update();
             DrawCharts();
         }
@@ -36,6 +40,7 @@ public sealed partial class MeetingView : UserControl
 
     public MeetingView()
     {
+        Trace.TraceInformation("[Controller]: Initializing MeetingView component.");
         InitializeComponent();
     }
 
@@ -57,6 +62,7 @@ public sealed partial class MeetingView : UserControl
     private void MiniChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => DrawCharts();
     private void BigChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => DrawCharts();
 
+    // Draws the participant activity graph, including axes, time labels, data points, and live updates.
     private void DrawGraph(Canvas canvas, bool isBig)
     {
         if (ViewModel == null) return;
@@ -79,6 +85,8 @@ public sealed partial class MeetingView : UserControl
         {
             points.Add(new Models.ParticipantDataPoint { Seconds = 0, TimeLabel = "00:00", Count = Math.Max(1, ViewModel.Participants) });
         }
+
+        Trace.TraceInformation($"[Controller]: DrawGraph rendering {(isBig ? "big" : "mini")} chart with {points.Count} point(s).");
 
         double maxSec = Math.Max(60, Math.Max(currentSec, points.Max(p => p.Seconds)));
         if (maxSec <= 120) maxSec = 120;
@@ -173,9 +181,33 @@ public sealed partial class MeetingView : UserControl
         canvas.Children.Add(currentDot);
     }
 
-    private void GraphCard_Tapped(object sender, TappedRoutedEventArgs e) => ViewModel?.MaximizeGraph();
-    private void MaximizeGraph_Click(object sender, RoutedEventArgs e) => ViewModel?.MaximizeGraph();
-    private void AuditCard_Tapped(object sender, TappedRoutedEventArgs e) => ViewModel?.MaximizeAudit();
-    private void MaximizeAudit_Click(object sender, RoutedEventArgs e) => ViewModel?.MaximizeAudit();
-    private void CloseMaximized_Click(object sender, RoutedEventArgs e) => ViewModel?.ShowNormal();
+    private void GraphCard_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        Trace.TraceInformation("[Controller]: GraphCard tapped.");
+        ViewModel?.MaximizeGraph();
+    }
+
+    private void MaximizeGraph_Click(object sender, RoutedEventArgs e)
+    {
+        Trace.TraceInformation("[Controller]: MaximizeGraph button clicked.");
+        ViewModel?.MaximizeGraph();
+    }
+
+    private void AuditCard_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        Trace.TraceInformation("[Controller]: AuditCard tapped.");
+        ViewModel?.MaximizeAudit();
+    }
+
+    private void MaximizeAudit_Click(object sender, RoutedEventArgs e)
+    {
+        Trace.TraceInformation("[Controller]: MaximizeAudit button clicked.");
+        ViewModel?.MaximizeAudit();
+    }
+
+    private void CloseMaximized_Click(object sender, RoutedEventArgs e)
+    {
+        Trace.TraceInformation("[Controller]: CloseMaximized button clicked.");
+        ViewModel?.ShowNormal();
+    }
 }

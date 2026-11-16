@@ -1,4 +1,8 @@
-﻿using System.Net;
+﻿// Author: Zeeshan
+// Roll no.: 112301040
+
+using System.Diagnostics;
+using System.Net;
 using System.Text.Json;
 using Networking;
 
@@ -34,6 +38,10 @@ public sealed class ChatClient : IMessageListener, IDisposable
         _communicator = communicator;
         _serverAddress = serverAddress;
         _communicator.AddSubscriber(ChatConstants.ModuleId, this);
+        Trace.TraceInformation(
+            "[Chat] Client '{0}' subscribed for room '{1}'.",
+            Username,
+            Chatroom.RoomName);
     }
 
     /// <summary>
@@ -71,8 +79,7 @@ public sealed class ChatClient : IMessageListener, IDisposable
     /// </summary>
     public int Version
     {
-        get
-        {
+        get {
             lock (_syncRoot)
             {
                 return _version;
@@ -171,6 +178,7 @@ public sealed class ChatClient : IMessageListener, IDisposable
 
         _communicator.RemoveSubscriber(ChatConstants.ModuleId);
         _disposed = true;
+        Trace.TraceInformation("[Chat] Client '{0}' unsubscribed from chat updates.", Username);
     }
 
     private Guid SendRequest(ChatClientRequest request)
@@ -179,7 +187,26 @@ public sealed class ChatClient : IMessageListener, IDisposable
         Guid requestId = Guid.NewGuid();
         ChatClientRequestEnvelope envelope = new(requestId, request, Username);
         byte[] payload = JsonSerializer.SerializeToUtf8Bytes(envelope);
-        _communicator.SendMessage(_serverAddress, payload, ChatConstants.ModuleId, priority: 1);
+        try
+        {
+            _communicator.SendMessage(_serverAddress, payload, ChatConstants.ModuleId, priority: 1);
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceError(
+                "[Chat] Client '{0}' failed to send {1} request {2}: {3}",
+                Username,
+                request.GetType().Name,
+                requestId,
+                exception);
+            throw;
+        }
+
+        Trace.TraceInformation(
+            "[Chat] Client '{0}' sent {1} request {2}.",
+            Username,
+            request.GetType().Name,
+            requestId);
         return requestId;
     }
 
@@ -187,9 +214,20 @@ public sealed class ChatClient : IMessageListener, IDisposable
     public void OnMessageReceived(byte[] message)
     {
         ArgumentNullException.ThrowIfNull(message);
-        ChatServerMessage? serverMessage = JsonSerializer.Deserialize<ChatServerMessage>(message);
+        ChatServerMessage? serverMessage;
+        try
+        {
+            serverMessage = JsonSerializer.Deserialize<ChatServerMessage>(message);
+        }
+        catch (JsonException exception)
+        {
+            Trace.TraceError("[Chat] Client '{0}' could not deserialize a server message: {1}", Username, exception);
+            throw;
+        }
+
         if (serverMessage is null)
         {
+            Trace.TraceWarning("[Chat] Client '{0}' received an empty server message.", Username);
             throw new InvalidDataException("The received chat server message was empty.");
         }
 
@@ -201,6 +239,7 @@ public sealed class ChatClient : IMessageListener, IDisposable
                     switch (updateEnvelope.Update)
                     {
                         case ChatServerReset:
+                            Trace.TraceInformation("[Chat] Client '{0}' is resetting its local room.", Username);
                             Chatroom.ClearMessages();
                             _version = 0;
                             RoomReset?.Invoke();
@@ -209,6 +248,11 @@ public sealed class ChatClient : IMessageListener, IDisposable
                         case ChatServerOperationBatch batch:
                             if (batch.FromVersion != _version)
                             {
+                                Trace.TraceWarning(
+                                    "[Chat] Client '{0}' expected version {1} but received batch from version {2}; requesting reset.",
+                                    Username,
+                                    _version,
+                                    batch.FromVersion);
                                 SendRequest(new Reset());
                                 return;
                             }
@@ -218,6 +262,11 @@ public sealed class ChatClient : IMessageListener, IDisposable
                                 RoomResult operationResult = ChatProtocol.ApplyOperation(Chatroom, operation);
                                 if (operationResult != RoomResult.Ok)
                                 {
+                                    Trace.TraceError(
+                                        "[Chat] Client '{0}' could not apply server operation {1}: {2}.",
+                                        Username,
+                                        operation.GetType().Name,
+                                        operationResult);
                                     throw new InvalidDataException(
                                         $"The server sent an operation that could not be applied: {operationResult}.");
                                 }
@@ -228,26 +277,52 @@ public sealed class ChatClient : IMessageListener, IDisposable
 
                             if (_version != batch.ToVersion)
                             {
+                                Trace.TraceWarning(
+                                    "[Chat] Client '{0}' reached version {1} but server batch ended at {2}; requesting reset.",
+                                    Username,
+                                    _version,
+                                    batch.ToVersion);
                                 SendRequest(new Reset());
                                 return;
                             }
 
+                            Trace.TraceInformation(
+                                "[Chat] Client '{0}' applied synchronization batch through version {1}.",
+                                Username,
+                                _version);
                             break;
 
                         default:
+                            Trace.TraceError(
+                                "[Chat] Client '{0}' received unsupported update type '{1}'.",
+                                Username,
+                                updateEnvelope.Update.GetType().Name);
                             throw new InvalidDataException(
                                 $"Unsupported chat server update: {updateEnvelope.Update.GetType().Name}.");
                     }
 
                     Chatroom.SetParticipants(updateEnvelope.Participants);
                     ParticipantsChanged?.Invoke(Chatroom.Participants);
-                    break;
+                    return;
 
                 case ChatServerRequestResult result:
+                    if (result.Result != RoomResult.Ok)
+                    {
+                        Trace.TraceWarning(
+                            "[Chat] Server completed request {0} for client '{1}' with result {2}.",
+                            result.RequestId,
+                            Username,
+                            result.Result);
+                    }
+
                     RequestCompleted?.Invoke(result.RequestId, result.Result);
                     break;
 
                 default:
+                    Trace.TraceError(
+                        "[Chat] Client '{0}' received unsupported server message type '{1}'.",
+                        Username,
+                        serverMessage.GetType().Name);
                     throw new InvalidDataException($"Unsupported chat server message: {message.GetType().Name}.");
             }
         }

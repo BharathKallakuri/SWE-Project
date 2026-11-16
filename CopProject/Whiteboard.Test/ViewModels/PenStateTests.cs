@@ -1,11 +1,16 @@
 ﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
-using Windows.UI;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Whiteboard.Interfaces;
 using Whiteboard.Items.Shapes;
+using Whiteboard.Services;
 using Whiteboard.Test.Mocks;
 using Whiteboard.ViewModels;
+using Windows.UI;
+using Xunit;
 
 namespace Whiteboard.Test.ViewModels;
 
@@ -135,7 +140,7 @@ public class PenStateTests
     /// Ensure the core functionality of drawing, sending to client and clearing preview works
     /// </summary>
     [Fact]
-    public void PointerReleased_WithAtLeastTwoPoints_SubmitsAndClearsPreview()
+    public async Task PointerReleased_WithAtLeastTwoPoints_SubmitsAndClearsPreview()
     {
         PenState state = new(_client, _preview, _toolbar);
 
@@ -145,8 +150,7 @@ public class PenStateTests
 
         Assert.Equal(1, _preview.ClearCount);
 
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
-        Assert.True(wasAdded, "Item was not added in due time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
 
         Assert.Single(_client.AddedItems);
         IFreehand submitted = Assert.IsAssignableFrom<IFreehand>(_client.AddedItems[0]);
@@ -214,5 +218,87 @@ public class PenStateTests
         state.PointerCaptureLost(new Point2D(10, 10));
 
         Assert.Equal(0, _preview.ClearCount);
+    }
+
+    private class MockShapeRecognitionService : IShapeRecognitionService
+    {
+        public bool IsEnabled { get; set; } = true;
+        public double ConfidenceThreshold { get; set; } = 0.65;
+        public IItem? RecognizedShapeToReturn { get; set; }
+        public bool ThrowException { get; set; }
+
+        public Task<IItem?> TryRecognizeShapeAsync(IFreehand freehand, CancellationToken cancellationToken = default)
+        {
+            if (ThrowException)
+            {
+                throw new InvalidOperationException("Simulated API/Network error");
+            }
+
+            return Task.FromResult(RecognizedShapeToReturn);
+        }
+    }
+
+    [Fact]
+    public async Task PointerReleased_WithSmartShapeEnabled_ReplacesStrokeWithRecognizedShape()
+    {
+        Circle circle = new() { Center = new Point2D(50, 50), Radius = 20 };
+        MockShapeRecognitionService mockService = new() {
+            IsEnabled = true,
+            RecognizedShapeToReturn = circle
+        };
+
+        PenState state = new(_client, _preview, _toolbar, mockService);
+
+        state.PointerPressed(new Point2D(10, 10));
+        state.PointerMoved(new Point2D(20, 20));
+        state.PointerReleased(new Point2D(30, 30));
+
+        await (state.DrawingTask ?? Task.CompletedTask);
+
+        Assert.Single(_client.DeletedItemIds);
+        Assert.Equal(_client.AddedItems[0].Id, _client.DeletedItemIds[0]);
+        Assert.Same(circle, _client.AddedItems[1]);
+    }
+
+    [Fact]
+    public async Task PointerReleased_WithSmartShapeDisabled_KeepsFreehandOnly()
+    {
+        Circle circle = new() { Center = new Point2D(50, 50), Radius = 20 };
+        MockShapeRecognitionService mockService = new() {
+            IsEnabled = false,
+            RecognizedShapeToReturn = circle
+        };
+
+        PenState state = new(_client, _preview, _toolbar, mockService);
+
+        state.PointerPressed(new Point2D(10, 10));
+        state.PointerMoved(new Point2D(20, 20));
+        state.PointerReleased(new Point2D(30, 30));
+
+        await (state.DrawingTask ?? Task.CompletedTask);
+
+        Assert.Empty(_client.DeletedItemIds);
+        Assert.Single(_client.AddedItems);
+        Assert.IsAssignableFrom<IFreehand>(_client.AddedItems[0]);
+    }
+
+    [Fact]
+    public async Task PointerReleased_WithSmartShapeException_KeepsFreehandWithoutCrashing()
+    {
+        MockShapeRecognitionService mockService = new() {
+            IsEnabled = true,
+            ThrowException = true
+        };
+
+        PenState state = new(_client, _preview, _toolbar, mockService);
+
+        state.PointerPressed(new Point2D(10, 10));
+        state.PointerMoved(new Point2D(20, 20));
+        state.PointerReleased(new Point2D(30, 30));
+
+        await (state.DrawingTask ?? Task.CompletedTask);
+
+        Assert.Empty(_client.DeletedItemIds);
+        Assert.Single(_client.AddedItems);
     }
 }

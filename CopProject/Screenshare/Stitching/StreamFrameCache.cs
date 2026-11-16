@@ -1,4 +1,8 @@
-﻿using System.Drawing;
+﻿// Author = Aryan
+// Roll Number = 112301041
+
+using System.Drawing;
+using System.Diagnostics;
 
 namespace ScreenShare;
 
@@ -17,6 +21,8 @@ public class StreamFrameCache : IDisposable
 
         // make a copy so that caller retains ownership of its bitmap.
         Bitmap copy = new Bitmap(frame);
+        int width = copy.Width;
+        int height = copy.Height;
 
         lock (_cacheLock)
         {
@@ -46,10 +52,17 @@ public class StreamFrameCache : IDisposable
         {
             if (_disposed)
             {
+                Trace.TraceWarning(
+                    "[Screenshare] StreamFrameCache.Get: Cache already disposed. Stream: {0}.", streamId);
                 throw new ObjectDisposedException(nameof(StreamFrameCache));
             }
 
-            return _frames.TryGetValue(streamId, out Bitmap? frame) ? new Bitmap(frame) : null;
+            if (!_frames.TryGetValue(streamId, out Bitmap? frame))
+            {
+                return null;
+            }
+
+            return new Bitmap(frame);
         }
     }
 
@@ -61,6 +74,8 @@ public class StreamFrameCache : IDisposable
         {
             if (_disposed)
             {
+                Trace.TraceWarning(
+                    "[Screenshare] StreamFrameCache.Remove: Cache already disposed. Stream: {0}.", streamId);
                 throw new ObjectDisposedException(nameof(StreamFrameCache));
             }
 

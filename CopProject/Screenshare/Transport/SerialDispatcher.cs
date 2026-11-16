@@ -1,4 +1,7 @@
-﻿using System.Collections.Concurrent;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace ScreenShare;
@@ -20,6 +23,7 @@ internal sealed class SerialDispatcher : IDisposable
     {
         _thread = new Thread(Run) { IsBackground = true, Name = name };
         _thread.Start();
+        Trace.TraceInformation("[Screenshare] SerialDispatcher: started thread '{0}'.", _thread.Name);
     }
 
     /// <summary>
@@ -58,6 +62,7 @@ internal sealed class SerialDispatcher : IDisposable
             return;
         }
 
+        Trace.TraceInformation("[Screenshare] SerialDispatcher.Dispose: finishing queued work on '{0}' and stopping.", _thread.Name);
         _queue.CompleteAdding();
 
         if (Thread.CurrentThread != _thread)
@@ -77,7 +82,7 @@ internal sealed class SerialDispatcher : IDisposable
             catch (Exception e)
             {
                 // one bad message must not stop every stream
-                Trace.WriteLine($"[ScreenShare] {_thread.Name}: work item failed: {e}");
+                Trace.TraceError("[Screenshare] SerialDispatcher.Run: work item failed on '{0}': {1}", _thread.Name, e);
             }
             finally
             {

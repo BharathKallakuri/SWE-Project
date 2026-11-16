@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿// Author = Vishesh Srivastava, Ankit Gupta
+// Roll Number = 112301037, 112301010
+
+using System.Diagnostics;
 using System.Globalization;
 using Incidents;
 using Incidents.ViewModels;
@@ -70,6 +73,9 @@ public sealed partial class MiniMapView : UserControl
         };
     }
 
+    /// <summary>
+    /// Attaches the mini-map to the incident details page.
+    /// </summary>
     public static void AttachTo(IncidentDetailsPage page)
     {
         page.Loaded += async (sender, e) => {
@@ -147,6 +153,9 @@ public sealed partial class MiniMapView : UserControl
         MapView.NavigateToString(MapPage);
     }
 
+    /// <summary>
+    /// Converts a map click into a selected incident location.
+    /// </summary>
     private async void WebMessageReceived(
         CoreWebView2 sender,
         CoreWebView2WebMessageReceivedEventArgs args)
@@ -189,6 +198,9 @@ public sealed partial class MiniMapView : UserControl
         await UpdatePinAsync();
     }
 
+    /// <summary>
+    /// Updates the marker once the map is ready.
+    /// </summary>
     private async Task UpdatePinAsync()
     {
         if (!_isMapReady || !Coordinates.IsValid(_latitude, _longitude))

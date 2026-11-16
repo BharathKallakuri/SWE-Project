@@ -1,4 +1,9 @@
-﻿namespace ScreenShare;
+﻿// Author = Sanjaysiva A
+// Roll Number = 112301030
+
+using System.Diagnostics;
+
+namespace ScreenShare;
 
 /// <summary>
 /// Values for interacting with Networking module
@@ -14,6 +19,14 @@ public static class ScreenShareModule
 
     public static int PriorityFor(IScreenShareMessage message)
     {
-        return message.Kind == ScreenShareMessageKind.Data ? DataPriority : ControlPriority;
+        if (message == null)
+        {
+            Trace.TraceWarning("[Screenshare] ScreenShareModule.PriorityFor: null Message, defaulting to ControlPriority.");
+            return ControlPriority;
+        }
+
+        int priority = message.Kind == ScreenShareMessageKind.Data ? DataPriority : ControlPriority;
+        Trace.TraceInformation("[Screenshare] ScreenShareModule.PriorityFor: Assigned priority {0} for message kind {1}.", priority, message.Kind);
+        return priority;
     }
 }

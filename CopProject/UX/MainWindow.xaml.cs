@@ -1,4 +1,6 @@
-﻿using System;
+// Authors: Aashritha.Y, Kalyani (UX part)
+// Roll numbers: 112301038, 112301016
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Collections.ObjectModel;
@@ -74,6 +76,7 @@ public sealed partial class MainWindow : Window
     // CLOUD TEAM: created on first visit to the Cloud page and kept, so the connection
     // and the notification list survive pressing Back and coming back.
     private NotificationServiceViewModel? _cloudViewModel;
+    private NotificationServiceViewModel? _cloudMeetingViewModel;
 
 
     public MainWindow()
@@ -446,8 +449,38 @@ public sealed partial class MainWindow : Window
         var idBox = new TextBox { Header = "Meeting ID", PlaceholderText = "e.g. 192.168.1.5" };
         var portBox = new TextBox { Header = "Port", PlaceholderText = "e.g. 5000" };
         var error = new TextBlock { Foreground = new SolidColorBrush(Colors.Red) };
-        ContentDialog dialog = MakeDialog("Join meeting", new StackPanel { Spacing = 10, Children = { idBox, portBox, error } }, "Join");
-        while (await dialog.ShowAsync() == ContentDialogResult.Primary)
+
+        var joinBtn = new Button { Content = "Join", Width = 90 };
+        var cancelBtn = new Button { Content = "Cancel", Width = 90 };
+        var buttonPanel = new StackPanel 
+        { 
+            Orientation = Orientation.Horizontal, 
+            HorizontalAlignment = HorizontalAlignment.Right, 
+            Spacing = 10, 
+            Children = { joinBtn, cancelBtn } 
+        };
+
+        var content = new StackPanel { Spacing = 10, Children = { idBox, portBox, error, buttonPanel } };
+
+        // PrimaryButtonText and CloseButtonText are empty so WinUI doesn't lock the dialog
+        var dialog = new ContentDialog
+        {
+            Title = "Join meeting",
+            Content = content,
+            XamlRoot = Root.XamlRoot
+        };
+
+        bool isCancelled = false;
+
+        // Cancel Button: ALWAYS active, immediately closes the dialog
+        cancelBtn.Click += (s, args) =>
+        {
+            isCancelled = true;
+            dialog.Hide();
+        };
+
+        // Join Button: Runs connection on a BACKGROUND thread without freezing the UI
+        joinBtn.Click += async (s, args) =>
         {
             string id = idBox.Text.Trim();
             string port = portBox.Text.Trim();
@@ -455,27 +488,41 @@ public sealed partial class MainWindow : Window
             if (id.Length == 0)
             {
                 error.Text = "Please enter the meeting ID.";
-                continue;
+                return;
             }
 
             if (!int.TryParse(port, out int number) || number < 1 || number > 65535)
             {
                 error.Text = "Port must be a number between 1 and 65535.";
-                continue;
+                return;
             }
 
-            // CONTROLLER TEAM: connect to the meeting using this id and port.
-            bool joined = _meetingService.JoinMeeting(id, number);
+            error.Text = "Connecting...";
+            joinBtn.IsEnabled = false; // Only disable Join, Cancel remains clickable.
+
+            // Run the network join on a BACKGROUND thread.
+            bool joined = await Task.Run(() => _meetingService.JoinMeeting(id, number));
+
+            if (isCancelled)
+            {
+                return; // User clicked Cancel while connecting
+            }
+
+            joinBtn.IsEnabled = true;
+
             if (!joined)
             {
-                error.Text = _meetingService.LastErrorMessage ?? ("Could not connect to meeting at " + id + ":" + port);
-                continue;
+                error.Text = _meetingService.LastErrorMessage ?? ($"Could not connect to meeting at {id}:{port}.");
+                return;
             }
 
+            // Success: Close dialog and transition
+            dialog.Hide();
             _session.StartMeeting(new MeetingInfo(id, port, IsHost: false));
             StartMeeting(id, port, false);
-            return;
-        }
+        };
+
+        await dialog.ShowAsync();
     }
 
     private void StartMeeting(string id, string port, bool host)
@@ -512,12 +559,18 @@ public sealed partial class MainWindow : Window
         BoardPanel.Visibility = Vis(which == "board");
         FileSyncView.Visibility = Vis(which == "filesync");
         IncidentsPanel.Visibility = Vis(which == "incidents");
+        CloudMeetingPanel.Visibility = Vis(which == "cloud");
+        DiagnosisPanel.Visibility = Vis(which == "diagnosis");
+        LocationPanel.Visibility = Vis(which == "location");
 
         HomeBtn.IsChecked = which == "home";
         ShareBtn.IsChecked = which == "share";
         BoardBtn.IsChecked = which == "board";
         FileSyncBtn.IsChecked = which == "filesync";
         IncidentsBtn.IsChecked = which == "incidents";
+        CloudBtn.IsChecked = which == "cloud";
+        DiagnosisBtn.IsChecked = which == "diagnosis";
+        LocationBtn.IsChecked = which == "location";
     }
 
     private void HomeBtn_Click(object sender, RoutedEventArgs e)
@@ -533,6 +586,58 @@ public sealed partial class MainWindow : Window
     private void BoardBtn_Click(object sender, RoutedEventArgs e)
     {
         ShowPanel("board");
+    }
+    private async void CloudBtn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (_cloudMeetingViewModel is null)
+            {
+                _cloudMeetingViewModel =
+                    new NotificationServiceViewModel(
+                        MessengerFactory.GetMessenger);
+        
+                CloudMeetingHost.Children.Add(
+                    new NotificationServiceView(_cloudMeetingViewModel));
+            }
+            ShowPanel("cloud");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load meeting Cloud", ex.Message);
+        }
+    }
+    private void DiagnosisBtn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (DiagnosisMeetingFrame.Content is not DiagnosisPage)
+            {
+                DiagnosisMeetingFrame.Navigate(typeof(DiagnosisPage));
+            }
+            ShowPanel("diagnosis");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Unable to load meeting Diagnosis: {ex}");
+        }
+    }
+    private async void LocationBtn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            IncidentPageContext context = await GetIncidentContextAsync();
+            var geocoding = new NominatimGeocodingService(new HttpClient());
+            var map = new LocationMapView(new MapService(context.IncidentController, geocoding));
+            map.IncidentSelected += LocationIncidentSelected;
+            map.LocationSelected += LocationSelectedOnMap;
+            LocationMeetingHost.Content = map;
+            ShowPanel("location");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync("Unable to load location", ex.Message);
+        }
     }
 
     private void FileSyncBtn_Click(object sender, RoutedEventArgs e)
@@ -702,7 +807,7 @@ public sealed partial class MainWindow : Window
                 }
 
                 _chatClient = new ChatClient(username, room, controller.Communicator, new IPEndPoint(address, port));
-                _chatAdapter = new ChatClientAdapter(_chatClient, DispatcherQueue);
+                _chatAdapter = new ChatClientAdapter(_chatClient, DispatcherQueue, controller);
             }
 
             _chatViewModel = new ChatPanelViewModel(_chatAdapter);
@@ -712,6 +817,7 @@ public sealed partial class MainWindow : Window
         catch (Exception exception)
         {
             DisposeChatSession();
+            MeetingChatPanel.ShowChatServerStartupError();
             System.Diagnostics.Trace.WriteLine($"[Chat] Could not start the chat session: {exception}");
         }
     }
@@ -754,7 +860,8 @@ public sealed partial class MainWindow : Window
                 ? WhiteboardSession.StartHost(_userId, controller.Communicator, portNumber)
                 : WhiteboardSession.StartClient(_userId, controller.Communicator, _meetingId, portNumber);
 
-            _whiteboardViewModel = new WhiteBoardViewModel(_whiteboardSession, DispatcherQueue);
+            string sessionId = string.IsNullOrWhiteSpace(_meetingId) ? "default-session" : _meetingId;
+            _whiteboardViewModel = new WhiteBoardViewModel(_whiteboardSession, sessionId, DispatcherQueue);
             WhiteboardViewControl.ViewModel = _whiteboardViewModel;
             _meetingService.RegisterNotificationHandler(_whiteboardSession);
         }

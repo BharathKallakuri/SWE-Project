@@ -11,19 +11,25 @@
               <Include>
                 <ModulePath>.*\\filesynchroniser\.dll$</ModulePath>
                 <ModulePath>.*\\chat\.dll$</ModulePath>
+                <ModulePath>.*\\ui\.dll$</ModulePath>
                 <ModulePath>.*\\networking\.dll$</ModulePath>
                 <ModulePath>.*\\cloud\.dll$</ModulePath>
+                <ModulePath>.*\\cloud\.crash\.ui\.dll$</ModulePath>
                 <ModulePath>.*\\incident\.dll$</ModulePath>
                 <ModulePath>.*\\location\.dll$</ModulePath>
                 <ModulePath>.*\\whiteboard\.dll$</ModulePath>
-                <ModulePath>.*\\cloud.networking.server\.dll$</ModulePath>
-                <ModulePath>.*\\cloud.ui\.dll$</ModulePath>
+                <ModulePath>.*\\cloud\.networking\.server\.dll$</ModulePath>
+                <ModulePath>.*\\cloud\.ui\.dll$</ModulePath>
+                <ModulePath>.*\\controller\.dll$</ModulePath>
+                <ModulePath>.*\\screenshare\.dll$</ModulePath>
+                <ModulePath>.*\\insights\.dll$</ModulePath>
+                <ModulePath>.*\\diagnosis\.ui\.dll$</ModulePath>
+                <ModulePath>.*\\ux\.(dll|exe)$</ModulePath>
               </Include>
             </ModulePaths>
             <Sources>
               <Exclude>
                 <Source>.*\\obj\\.*</Source>
-                <Source>.*\.xaml\.cs$</Source>
                 <Source>.*\.g\.cs$</Source>
                 <Source>.*\.g\.i\.cs$</Source>
                 <Source>.*\.razor\.g\.cs$</Source>

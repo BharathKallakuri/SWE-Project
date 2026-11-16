@@ -1,7 +1,11 @@
+// Author = Balabadra Lepakshi Kalyan
+// Roll Number = 112301003
 using System;
+using System.Diagnostics;
 
 namespace Controller.Models;
 
+//class for security audit event logging
 public sealed class SecurityAuditEvent
 {
     public string Time { get; set; } = DateTime.Now.ToString("HH:mm:ss");

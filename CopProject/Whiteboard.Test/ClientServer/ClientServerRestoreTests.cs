@@ -1,4 +1,4 @@
-/// Author : Karthik Krishna M
+﻿/// Author : Karthik Krishna M
 /// Roll Number : 112301014
 /// LICENSE : MIT
 
@@ -20,7 +20,7 @@ public class ClientServerRestoreTests
     public void ClientRestoreState_UpdatesServerAndOtherClients()
     {
         var factory = new MockCommunicatorFactory();
-       
+
         IWhiteboardServer server = WhiteboardFactory.GetServerWhiteboard(factory.GetServerCommunicator());
         IWhiteboardClient client1 = WhiteboardFactory.CreateClientWhiteboard(factory.CreateClientCommunicator(), factory.ServerEndPoint, "User1");
         IWhiteboardClient client2 = WhiteboardFactory.CreateClientWhiteboard(factory.CreateClientCommunicator(), factory.ServerEndPoint, "User2");
