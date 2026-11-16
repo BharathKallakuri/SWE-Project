@@ -5,9 +5,10 @@ name: Line and branch coverage
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number }}
+  group: pr-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 permissions:
@@ -69,7 +70,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: unit-test-results-pr-${{ github.event.pull_request.number }}
+          name: unit-test-results-pr-${{ github.event.pull_request.number || github.run_id }}
           path: coverage/
           retention-days: 60
 
@@ -94,12 +95,12 @@ jobs:
         id: upload-html
         uses: actions/upload-artifact@v7
         with:
-          name: code-quality-and-coverage-report-pr-${{ github.event.pull_request.number }}
+          name: code-quality-and-coverage-report-pr-${{ github.event.pull_request.number || github.run_id }}
           path: coverage-report/
           retention-days: 60
 
       - name: Comment on PR
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ github.token }}
           HTML_URL: ${{ steps.upload-html.outputs.artifact-url }}
