@@ -1,16 +1,12 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Items.Shapes;
 using Whiteboard.Services;
 using WhiteboardSuggestion.Core;
 using Windows.UI;
-using Xunit;
 
 namespace Whiteboard.Test.Services;
 
@@ -42,8 +38,7 @@ public class ShapeRecognitionServiceTests
             points.Add(new Point2D(i * 10, i * 10));
         }
 
-        return new FreehandItem
-        {
+        return new FreehandItem {
             Points = points,
             StrokeColor = Color.FromArgb(255, 12, 34, 56),
             StrokeWidth = 4,
@@ -159,8 +154,7 @@ public class ShapeRecognitionServiceTests
     [Fact]
     public async Task TryRecognizeShapeAsync_WhenDisabled_ReturnsNull()
     {
-        MockShapeSuggestionService mockService = new()
-        {
+        MockShapeSuggestionService mockService = new() {
             ResultToReturn = new ShapeSuggestionResult.Circle(new(50, 50), 20, 0.99)
         };
         ShapeRecognitionService service = new(mockService) { IsEnabled = false };
@@ -181,8 +175,7 @@ public class ShapeRecognitionServiceTests
     [Fact]
     public async Task TryRecognizeShapeAsync_WhenPointsLessThan2_ReturnsNull()
     {
-        MockShapeSuggestionService mockService = new()
-        {
+        MockShapeSuggestionService mockService = new() {
             ResultToReturn = new ShapeSuggestionResult.Circle(new(50, 50), 20, 0.99)
         };
         ShapeRecognitionService service = new(mockService) { IsEnabled = true };
@@ -195,12 +188,10 @@ public class ShapeRecognitionServiceTests
     [Fact]
     public async Task TryRecognizeShapeAsync_WhenConfidenceBelowThreshold_ReturnsNull()
     {
-        MockShapeSuggestionService mockService = new()
-        {
+        MockShapeSuggestionService mockService = new() {
             ResultToReturn = new ShapeSuggestionResult.Circle(new(50, 50), 20, 0.50) // below default 0.65
         };
-        ShapeRecognitionService service = new(mockService)
-        {
+        ShapeRecognitionService service = new(mockService) {
             IsEnabled = true,
             ConfidenceThreshold = 0.65
         };
@@ -212,12 +203,10 @@ public class ShapeRecognitionServiceTests
     [Fact]
     public async Task TryRecognizeShapeAsync_WhenConfidenceAboveThreshold_ReturnsItem()
     {
-        MockShapeSuggestionService mockService = new()
-        {
+        MockShapeSuggestionService mockService = new() {
             ResultToReturn = new ShapeSuggestionResult.Circle(new(50, 50), 20, 0.85)
         };
-        ShapeRecognitionService service = new(mockService)
-        {
+        ShapeRecognitionService service = new(mockService) {
             IsEnabled = true,
             ConfidenceThreshold = 0.65
         };
@@ -230,8 +219,7 @@ public class ShapeRecognitionServiceTests
     [Fact]
     public async Task TryRecognizeShapeAsync_WhenServiceThrows_ReturnsNullGracefully()
     {
-        MockShapeSuggestionService mockService = new()
-        {
+        MockShapeSuggestionService mockService = new() {
             ExceptionToThrow = new InvalidOperationException("API Key invalid or network down")
         };
         ShapeRecognitionService service = new(mockService) { IsEnabled = true };

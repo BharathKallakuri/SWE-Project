@@ -3,8 +3,8 @@
 
 using System.Drawing;
 using System.Net;
-using ScreenShare;
 using Screenshare.Tests.Fakes;
+using ScreenShare;
 
 namespace Screenshare.Tests;
 

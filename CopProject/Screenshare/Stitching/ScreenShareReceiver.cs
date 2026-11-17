@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using System.Drawing;
-using ScreenShare;
 
 namespace ScreenShare;
 

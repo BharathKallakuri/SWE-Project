@@ -1,5 +1,4 @@
 ﻿using ScreenShare;
-using Xunit;
 
 namespace Screenshare.Tests;
 

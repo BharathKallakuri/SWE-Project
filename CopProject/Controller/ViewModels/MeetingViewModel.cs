@@ -1,11 +1,9 @@
-// Author = Balabadra Lepakshi Kalyan
+﻿// Author = Balabadra Lepakshi Kalyan
 // Roll Number = 112301003
-using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
-using Microsoft.UI.Xaml;
 using Controller.Models;
+using Microsoft.UI.Xaml;
 
 namespace Controller.ViewModels;
 // Manages meeting-related UI data, participant information, graphs, and security audit logs.
@@ -15,7 +13,7 @@ public sealed class MeetingViewModel : ObservableObject
     readonly DispatcherTimer? timer;
     private DateTime? _meetingStartedTime;
     private readonly HashSet<string> _activeUsernames = new(StringComparer.OrdinalIgnoreCase);
-    
+
     // Initializes meeting event handlers and updates the dashboard when meeting activities occur.
     public MeetingViewModel(MeetingSession session)
     {
@@ -24,15 +22,13 @@ public sealed class MeetingViewModel : ObservableObject
 
         try
         {
-            timer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(1) 
+            timer = new DispatcherTimer {
+                Interval = TimeSpan.FromSeconds(1)
             };
 
-            timer.Tick += (s, e) =>
-            {
+            timer.Tick += (s, e) => {
                 DateTime start = session.MeetingStartTime ?? _meetingStartedTime ?? DateTime.Now;
-                var elapsed = DateTime.Now - start;
+                TimeSpan elapsed = DateTime.Now - start;
 
                 DurationText = $"{(int)elapsed.TotalMinutes:D2}:{elapsed.Seconds:D2}";
                 OnPropertyChanged(nameof(DurationText));
@@ -44,35 +40,31 @@ public sealed class MeetingViewModel : ObservableObject
             Trace.TraceWarning($"[Controller]: DispatcherTimer initialization bypassed: {ex.Message}");
         }
 
-        session.MeetingStarted += info =>
-        {
+        session.MeetingStarted += info => {
             Trace.TraceInformation($"[Controller]: MeetingStarted event received for meeting {info.Id}.");
             _activeUsernames.Clear();
             _meetingStartedTime = session.MeetingStartTime ?? DateTime.Now;
-            
+
             string user = !string.IsNullOrWhiteSpace(session.CurrentUserId) ? session.CurrentUserId : "Host";
-            AuditLogs.Insert(0, new SecurityAuditEvent 
-            { 
+            AuditLogs.Insert(0, new SecurityAuditEvent {
                 User = user,
-                Activity = "Meeting created & started", 
+                Activity = info.IsHost ? "Meeting created & started" : "Joined meeting",
                 Status = "Success"
             });
 
-            AuditLogs.Insert(0, new SecurityAuditEvent 
-            {
-                User = user, 
-                Activity = "User logged in", 
-                Status = "Success" 
+            AuditLogs.Insert(0, new SecurityAuditEvent {
+                User = user,
+                Activity = "User logged in",
+                Status = "Success"
             });
 
             _activeUsernames.Add(user);
 
             GraphPoints.Clear();
-            GraphPoints.Add(new ParticipantDataPoint 
-            { 
-                Seconds = 0, 
-                TimeLabel = "00:00", 
-                Count = Math.Max(1, session.ParticipantCount) 
+            GraphPoints.Add(new ParticipantDataPoint {
+                Seconds = 0,
+                TimeLabel = "00:00",
+                Count = Math.Max(1, session.ParticipantCount)
             });
 
             timer?.Start();
@@ -80,17 +72,16 @@ public sealed class MeetingViewModel : ObservableObject
             ChartUpdated?.Invoke();
         };
 
-        session.MeetingEnded += () =>
-        {
+        session.MeetingEnded += () => {
             Trace.TraceInformation("[Controller]: MeetingEnded event received.");
             string user = !string.IsNullOrWhiteSpace(session.CurrentUserId) ? session.CurrentUserId : "Host";
-            AuditLogs.Insert(0, new SecurityAuditEvent 
-            {
-                User = user, 
-                Activity = "Meeting ended", 
-                Status = "Info" 
+            AuditLogs.Insert(0, new SecurityAuditEvent {
+                User = user,
+                Activity = "Meeting ended",
+                Status = "Info"
             });
 
+            ParticipantList.Clear();
             timer?.Stop();
             _meetingStartedTime = null;
             _activeUsernames.Clear();
@@ -98,8 +89,7 @@ public sealed class MeetingViewModel : ObservableObject
             ChartUpdated?.Invoke();
         };
 
-        session.ParticipantCountChanged += count =>
-        {
+        session.ParticipantCountChanged += count => {
             Trace.TraceInformation($"[Controller]: ParticipantCountChanged event received: count = {count}.");
             DateTime start = session.MeetingStartTime ?? _meetingStartedTime ?? DateTime.Now;
             double sec = Math.Max(0, (DateTime.Now - start).TotalSeconds);
@@ -110,46 +100,25 @@ public sealed class MeetingViewModel : ObservableObject
             ChartUpdated?.Invoke();
         };
 
-        session.ParticipantsChanged += list =>
-        {
-            Trace.TraceInformation($"[Controller]: ParticipantsChanged event received: {list.Count} participant(s).");
-            ParticipantList.Clear();
-            var newUsers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var p in list)
+        session.ParticipantsChanged += list => {
+            void UpdateList()
             {
-                ParticipantList.Add(p);
-                if (!string.IsNullOrWhiteSpace(p.Username))
+                ParticipantList.Clear();
+                foreach (ParticipantInfo p in list)
                 {
-                    newUsers.Add(p.Username);
+                    ParticipantList.Add(p);
                 }
+                Refresh();
             }
-
-            // detecting newly joined participants
-            foreach (var username in newUsers)
+            var queue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+            if (queue != null)
             {
-                if (!_activeUsernames.Contains(username))
-                {
-                    _activeUsernames.Add(username);
-                    Trace.TraceInformation($"[Controller]: Detected participant join: {username}.");
-                    AuditLogs.Insert(0, new SecurityAuditEvent { User = username, Activity = "Joined meeting", Status = "Success" });
-                }
+                queue.TryEnqueue(UpdateList);
             }
-
-            // detecting participants who left
-            var leftUsers = _activeUsernames.Where(u => !newUsers.Contains(u)).ToList();
-            foreach (var username in leftUsers)
+            else
             {
-                _activeUsernames.Remove(username);
-                Trace.TraceInformation($"[Controller]: Detected participant departure: {username}.");
-                AuditLogs.Insert(0, new SecurityAuditEvent { User = username, Activity = "Left meeting", Status = "Info" });
+                UpdateList();
             }
-
-            if (SelectedParticipant != null)
-            {
-                SelectedParticipant = ParticipantList.FirstOrDefault(p => p.Username == SelectedParticipant.Username);
-            }
-            Refresh();
         };
 
         if (session.InMeeting)
@@ -158,7 +127,7 @@ public sealed class MeetingViewModel : ObservableObject
             _meetingStartedTime = session.MeetingStartTime ?? DateTime.Now;
             string user = !string.IsNullOrWhiteSpace(session.CurrentUserId) ? session.CurrentUserId : "Host";
             _activeUsernames.Add(user);
-            foreach (var p in session.ActiveParticipants)
+            foreach (ParticipantInfo p in session.ActiveParticipants)
             {
                 if (!string.IsNullOrWhiteSpace(p.Username))
                 {
@@ -177,8 +146,7 @@ public sealed class MeetingViewModel : ObservableObject
     // Calculates the total elapsed meeting time for duration tracking.
     public double ElapsedSeconds
     {
-        get
-        {
+        get {
             DateTime? start = session.MeetingStartTime ?? _meetingStartedTime;
             if (start.HasValue)
             {
@@ -199,9 +167,12 @@ public sealed class MeetingViewModel : ObservableObject
     public ParticipantInfo? SelectedParticipant
     {
         get => _selectedParticipant;
-        set
-        {
-            if (_selectedParticipant == value) return;
+        set {
+            if (_selectedParticipant == value)
+            {
+                return;
+            }
+
             _selectedParticipant = value;
             Trace.TraceInformation($"[Controller]: Selected participant changed to '{_selectedParticipant?.DisplayName ?? "None"}'.");
             OnPropertyChanged();
@@ -221,8 +192,7 @@ public sealed class MeetingViewModel : ObservableObject
     public string? AlertMessage
     {
         get => _alertMessage;
-        set
-        {
+        set {
             _alertMessage = value;
             Trace.TraceWarning($"[Controller]: Alert banner updated: '{_alertMessage}'.");
             OnPropertyChanged();
@@ -236,8 +206,7 @@ public sealed class MeetingViewModel : ObservableObject
     public int MaximizedView
     {
         get => _maximizedView;
-        set
-        {
+        set {
             _maximizedView = value;
             Trace.TraceInformation($"[Controller]: MaximizedView changed to {_maximizedView}.");
             OnPropertyChanged();

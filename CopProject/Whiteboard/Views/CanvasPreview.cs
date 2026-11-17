@@ -2,7 +2,6 @@
 /// LICENSE : MIT
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -10,15 +9,14 @@ using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 using Windows.Foundation;
 using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
-using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
 using XamlLine = Microsoft.UI.Xaml.Shapes.Line;
+using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
 using XamlPolyline = Microsoft.UI.Xaml.Shapes.Polyline;
 using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
 
 namespace Whiteboard.Views;
 
 /// <inheritdoc/>
-[ExcludeFromCodeCoverage]
 public class CanvasPreview : ICanvasPreview
 {
     /// <summary>

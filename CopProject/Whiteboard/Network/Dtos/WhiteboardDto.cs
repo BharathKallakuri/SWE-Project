@@ -3,7 +3,6 @@
 /// LICENSE : MIT
 
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Whiteboard.Network.Dtos;
 
@@ -11,7 +10,6 @@ namespace Whiteboard.Network.Dtos;
 /// Describes a serializable representation of the whiteboard state
 /// </summary>
 /// <param name="Items">List of items in the whiteboard</param>
-[ExcludeFromCodeCoverage]
 public record WhiteboardDto(
     List<ItemDto> Items
  );

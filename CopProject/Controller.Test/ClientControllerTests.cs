@@ -1,13 +1,9 @@
 ﻿// Author : Bala Krishna
 // Roll No : 112301015
-using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
-using Controller;
 using Controller.Models;
 using Utils;
-using Xunit;
 
 namespace Controller.Test;
 
@@ -27,6 +23,7 @@ public class ClientControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void JoinMeetingWithInvalidIp()
     {
         var clientUser = new ControllerUser("Client", "client@test.com", null, "10.10.10.10", 9991, isHost: false);
@@ -119,6 +116,7 @@ public class ClientControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void MeetingService_CreateAndManageSession()
     {
         var service = new ControllerMeetingService();

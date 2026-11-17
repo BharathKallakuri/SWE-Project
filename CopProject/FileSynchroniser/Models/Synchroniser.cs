@@ -2,12 +2,8 @@
 
 // Roll no : 112301019
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security;
 using System.Diagnostics;
+using System.Security;
 
 namespace FileSynchroniser.Models;
 

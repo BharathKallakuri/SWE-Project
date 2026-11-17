@@ -1,8 +1,7 @@
-// Author: Rajat
+﻿// Author: Rajat
 // Roll no.: 112301044
 
 using Microsoft.UI.Xaml;
-using Chat;
 using UI.ViewModels;
 
 namespace Chat.UI.Test;
@@ -12,8 +11,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void RefreshButton_IsShownForClient_AndHiddenForHost()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel client = ClientPanel.Create();
             using HostPanel host = HostPanel.Create();
 
@@ -27,8 +25,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void SendMessageCommand_CannotExecute_WhenMessageIsEmptyOrWhitespace()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             ChatPanelViewModel viewModel = panel.ViewModel;
 
@@ -43,8 +40,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ReceivingMessageAdded_AddsMessageToConversation()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
 
             panel.Server.AddMessage("hostuser", "first message", out Guid firstId, timestamp: DateTimeOffset.UtcNow.AddMinutes(-2));
@@ -60,8 +56,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ReceivingOutOfOrderBatch_RequestsFullReset()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Communicator.ClearSent();
 
@@ -75,8 +70,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ReceivingReset_ClearsMessages_AndClosesThread()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "root message", out Guid rootId);
             panel.Server.AddMessage("hostuser", "thread reply", out _, threadParentMessageId: rootId);
@@ -95,8 +89,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ParticipantsUpdate_PopulatesParticipantList()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
 
             panel.Server.AddMessage("hostuser", "hello", out _);
@@ -111,8 +104,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void OpeningThread_ShowsReplies_AndClosingReturnsToRoom()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "root", out Guid rootId);
             panel.Server.AddMessage("hostuser", "a reply", out _, threadParentMessageId: rootId);
@@ -136,8 +128,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void Client_CannotEditOrDeleteOthersMessages_UnlessHost()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel client = ClientPanel.Create();
             client.Server.AddMessage(ClientPanel.HostName, "host says", out _);
             MessageViewModel message = Assert.Single(client.ViewModel.Messages);
@@ -152,8 +143,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void Host_CanEditAndDeleteOtherParticipantsMessages()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using HostPanel panel = HostPanel.Create();
             panel.Controller.AddUser("bob");
             panel.Server.RegisterClient("bob");
@@ -173,8 +163,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void MessageCreate_UsesControllerProfilePictureAndEmail_AsAvatarAndTooltip()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create(TestImages.OnePixelPng);
 
             panel.Server.AddMessage(ClientPanel.CurrentUser, "with picture", out _);
@@ -188,8 +177,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void Avatar_PicksUpLateJoiningParticipantsPicture_WhenControllerNotified()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("bob", "before join", out _);
             Assert.Null(Assert.Single(panel.ViewModel.Messages).AvatarImageSource);
@@ -205,8 +193,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void MessageWithoutControllerRecord_ShowsInitials_AndNoTooltip()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
 
             panel.Server.AddMessage("mystery", "who am i", out _);
@@ -221,8 +208,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void RefreshButton_SendsProtocolResetRequest_WhenClickedByClient()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Communicator.ClearSent();
 
@@ -237,8 +223,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void SendMessageCommand_SendsMessage_AndClearsText_WhenServerConfirms()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             ChatPanelViewModel viewModel = panel.ViewModel;
             viewModel.MessageText = "hello everyone";
@@ -262,8 +247,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void SendMessageCommand_ShowsError_WhenNotFound()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             ChatPanelViewModel viewModel = panel.ViewModel;
             viewModel.MessageText = "hello";
@@ -281,8 +265,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void SendMessageCommand_SendsMentionAll_WhenAllMentionSelected()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
 
             // ChAI and @all are always present in the mention targets.
@@ -300,8 +283,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void MentionTarget_TogglesSelectAndDeselect_UpdatesSelection()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
 
             MentionTargetViewModel host = Assert.Single(panel.ViewModel.MentionTargets, t => t.Username == ClientPanel.HostName);
@@ -318,8 +300,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void MentionSearch_NarrowsResults_AndIsCaseInsensitive()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
 
             panel.ViewModel.MentionSearchText = "HOST";
@@ -336,8 +317,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ClickingReply_ShowsReplyBanner_AndCancelHidesIt()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "a question", out _);
             MessageViewModel message = Assert.Single(panel.ViewModel.Messages);
@@ -358,8 +338,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ClickingEdit_OpensEditComposer_AndPrefillsCurrentText()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage(ClientPanel.CurrentUser, "before edit", out Guid messageId);
             MessageViewModel message = Assert.Single(panel.ViewModel.Messages);
@@ -377,8 +356,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void SavingEdit_SendsEditRequest_AndClosesEditor_WhenServerConfirms()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage(ClientPanel.CurrentUser, "before edit", out Guid messageId);
             MessageViewModel message = Assert.Single(panel.ViewModel.Messages);
@@ -402,8 +380,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void EditingCancel_ClearsEditingState()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage(ClientPanel.CurrentUser, "before edit", out _);
             MessageViewModel message = Assert.Single(panel.ViewModel.Messages);
@@ -420,8 +397,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ClosingThread_ClearsEditingState_AndThreadMessages()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage(ClientPanel.CurrentUser, "root", out Guid rootId);
             panel.Server.AddMessage("hostuser", "thread reply", out _, threadParentMessageId: rootId);
@@ -442,8 +418,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ClickingDelete_SendsDeleteRequest()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage(ClientPanel.CurrentUser, "delete me", out Guid messageId);
             panel.Communicator.ClearSent();
@@ -459,8 +434,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ClickingReaction_SendsToggleReactionRequest()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "react to this", out Guid messageId);
             panel.Communicator.ClearSent();
@@ -477,8 +451,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ReplyPreview_ShowsReferencedMessageContent()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "the referenced message", out Guid referencedId);
             panel.Server.AddMessage(
@@ -498,8 +471,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ReplyPreview_Updates_WhenTargetIsEdited()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "original text", out Guid referencedId);
             panel.Server.AddMessage(
@@ -519,8 +491,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ReplyPreview_ShowsDeletionNotice_WhenTargetIsDeleted()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "original text", out Guid referencedId);
             panel.Server.AddMessage(
@@ -539,8 +510,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ReplyPreview_TruncatesLongContent()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             string longContent = new string('x', 200);
             panel.Server.AddMessage("hostuser", longContent, out Guid referencedId);
@@ -560,8 +530,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void JumpToReply_RaisesScrollToMessageRequested()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "original text", out Guid referencedId);
             panel.Server.AddMessage(
@@ -584,8 +553,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void Initialize_RequestsSynchronizationOfChatHistory()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create(); // Create() runs Initialize()
 
             ChatClientRequestBody request = Assert.Single(panel.Communicator.ReadRequests());
@@ -597,8 +565,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void Initialize_CalledTwice_OnlySynchronizesOnce()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Communicator.ClearSent();
 
@@ -612,8 +579,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void SyncCommand_SendsSynchronizationRequest()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Communicator.ClearSent();
 
@@ -627,8 +593,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ReactionToggled_IsAppliedToExistingMessage()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "react to this", out Guid messageId);
 
@@ -644,8 +609,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ThreadReply_CanBeEditedAndDeleted_ByItsAuthor()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "root", out Guid rootId);
             panel.Server.AddMessage(ClientPanel.CurrentUser, "my reply", out Guid replyId, threadParentMessageId: rootId);
@@ -670,8 +634,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void MessagesWithIdenticalTimestamps_AreOrderedById()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             DateTimeOffset timestamp = DateTimeOffset.UtcNow.AddMinutes(-5);
             panel.Server.AddMessage("hostuser", "first", out Guid firstId, timestamp: timestamp);
@@ -687,8 +650,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ParticipantsRefresh_PreservesSelectedMentions()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             MentionTargetViewModel host = panel.ViewModel.MentionTargets.Single(target => target.Username == ClientPanel.HostName);
             host.ToggleCommand.Execute(null);
@@ -704,8 +666,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ThreadReply_CanExecuteOnlyWithText_AndSendsWithParentId()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "root", out Guid rootId);
             MessageViewModel root = panel.ViewModel.Messages.Single(message => message.Id == rootId);
@@ -741,8 +702,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void SendMessage_WithAllAndUser_Mentions_ExcludesAllFromUsernames()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             MentionTargetViewModel all = panel.ViewModel.MentionTargets.Single(target => target.Username == "@all");
             MentionTargetViewModel host = panel.ViewModel.MentionTargets.Single(target => target.Username == ClientPanel.HostName);
@@ -769,8 +729,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ParticipantsRefresh_WhileSynchronizing_ShowsConnectedSummary()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             Assert.StartsWith("Synchronizing", panel.ViewModel.StatusMessage, StringComparison.OrdinalIgnoreCase);
 
@@ -783,8 +742,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void ReplyInChat_FromOpenThread_ClosesThread_AndSetsReplyTarget()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage("hostuser", "root", out Guid rootId);
             panel.Server.AddMessage("hostuser", "other message", out Guid otherId);
@@ -803,8 +761,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void SaveEdit_WithWhitespace_CannotExecute_AndSendsNothing()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Server.AddMessage(ClientPanel.CurrentUser, "before edit", out _);
             MessageViewModel message = Assert.Single(panel.ViewModel.Messages);
@@ -822,8 +779,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void SetUserAvatar_ClearsThenRestores_AvatarForParticipantAndMessage()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create(TestImages.OnePixelPng);
             panel.Server.AddMessage(ClientPanel.CurrentUser, "with picture", out _);
             MessageViewModel message = Assert.Single(panel.ViewModel.Messages);
@@ -845,8 +801,7 @@ public class ChatPanelViewModelTests
     [Fact]
     public void RequestCompleted_ForbiddenAndUnknownResults_ShowStatus()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using ClientPanel panel = ClientPanel.Create();
             panel.Communicator.ClearSent();
 

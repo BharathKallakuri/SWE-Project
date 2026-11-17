@@ -1,4 +1,4 @@
-// Author = Sumit
+﻿// Author = Sumit
 // Roll Number = 112301032
 
 using Controller;
@@ -52,17 +52,35 @@ internal sealed class FakeControllerService : IControllerService
 
     public int ListenPort => Communicator?.ListenPort ?? 0;
 
-    public bool StartMeeting() => throw new NotSupportedException();
+    public bool StartMeeting()
+    {
+        throw new NotSupportedException();
+    }
 
-    public bool EndMeeting() => throw new NotSupportedException();
+    public bool EndMeeting()
+    {
+        throw new NotSupportedException();
+    }
 
-    public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user) => throw new NotSupportedException();
+    public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user)
+    {
+        throw new NotSupportedException();
+    }
 
-    public void LeaveMeeting(ControllerUser user) => throw new NotSupportedException();
+    public void LeaveMeeting(ControllerUser user)
+    {
+        throw new NotSupportedException();
+    }
 
-    public int GetActiveUserCount() => throw new NotSupportedException();
+    public int GetActiveUserCount()
+    {
+        throw new NotSupportedException();
+    }
 
-    public List<ControllerUser> GetActiveUsers() => throw new NotSupportedException();
+    public List<ControllerUser> GetActiveUsers()
+    {
+        throw new NotSupportedException();
+    }
 
     public void Dispose()
     {

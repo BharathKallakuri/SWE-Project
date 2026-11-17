@@ -1,9 +1,7 @@
 ﻿// Author: M Sreenath Karthick
 // Roll Number: 112301042
 
-using System;
 using System.Diagnostics.CodeAnalysis;
-using Incidents;
 
 namespace Incidents.Views;
 

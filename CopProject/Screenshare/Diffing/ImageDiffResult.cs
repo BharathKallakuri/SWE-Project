@@ -4,7 +4,6 @@
 // to capture whether we need to transfer full frame or partial or nothing
 
 using System.Drawing;
-using System.Diagnostics;
 
 namespace ScreenShare;
 

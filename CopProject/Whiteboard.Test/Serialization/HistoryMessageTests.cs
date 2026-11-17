@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -10,13 +10,11 @@
 ****/
 
 
-using System;
 using Whiteboard.Items.Shapes;
 using Whiteboard.Network.Dtos;
 using Whiteboard.Network.Mappers;
 using Whiteboard.Network.Messages;
 using Whiteboard.Network.Serializations;
-using Xunit;
 
 namespace Whiteboard.Test.Serialization;
 
@@ -40,7 +38,7 @@ public class HistoryMessageTests
         request = request with { UserId = "Host" };
 
         var serializer = new ClientMessageByteSerializer();
-        var restored = serializer.Deserialize(serializer.Serialize(request));
+        ClientMessage restored = serializer.Deserialize(serializer.Serialize(request));
 
         Assert.Equal("Host", restored.UserId);
 
@@ -60,8 +58,8 @@ public class HistoryMessageTests
     [Fact]
     public void HistoryMessagePreservesEntriesAndOrder()
     {
-        var first = ItemMapper.ToDto(new Square());
-        var second = ItemMapper.ToDto(new Square());
+        ItemDto first = ItemMapper.ToDto(new Square());
+        ItemDto second = ItemMapper.ToDto(new Square());
 
         // An addition has no previous state; a deletion has no next state.
         var message = new ServerMessage.ResHistory(
@@ -73,7 +71,7 @@ public class HistoryMessageTests
             []);
 
         var serializer = new ServerMessageByteSerializer();
-        var restored = Assert.IsType<ServerMessage.ResHistory>(
+        ServerMessage.ResHistory restored = Assert.IsType<ServerMessage.ResHistory>(
             serializer.Deserialize(serializer.Serialize(message)));
 
         Assert.Equal("Client", restored.UserId);

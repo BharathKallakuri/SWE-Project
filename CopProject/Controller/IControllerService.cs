@@ -1,8 +1,8 @@
-// K.Bala Krishna
+﻿// K.Bala Krishna
 // 112301015
 
-using Utils;
 using Networking;
+using Utils;
 
 namespace Controller;
 
@@ -39,11 +39,11 @@ public interface IControllerService : IDisposable
 
     // Gets the port this controller is listening on.
     int ListenPort { get; }
-    
+
     // Meeting connection and current user identity (for ScreenShare and other modules).
     ICommunicator? Communicator { get; }
     ControllerUser? CurrentUser { get; }
-    
+
     // Registration for external module notification handlers.
     void RegisterNotificationHandler(IUserNotificationHandler handler);
     void UnregisterNotificationHandler(IUserNotificationHandler handler);

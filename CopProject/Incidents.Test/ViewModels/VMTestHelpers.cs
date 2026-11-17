@@ -1,11 +1,7 @@
 ﻿// Author: M Sreenath Karthick
 // Roll Number: 112301042
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
-using Incidents;
 using Incidents.ViewModels;
 
 namespace Incidents.Test.ViewModels;

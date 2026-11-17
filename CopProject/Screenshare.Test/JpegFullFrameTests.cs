@@ -60,7 +60,7 @@ public class JpegFullFrameTests
 
         byte[] jpeg = JpegEncoder.Encode(screen, 75);
 
-        Assert.True(StartsWith(jpeg,s_jpegStart));
+        Assert.True(StartsWith(jpeg, s_jpegStart));
         using MemoryStream stream = new(jpeg);
         using Bitmap decoded = new(stream);
         Assert.Equal((640, 360), (decoded.Width, decoded.Height));
@@ -119,7 +119,7 @@ public class JpegFullFrameTests
         // text would be smaller as PNG, but PNG isn't tried again until the recheck
         for (int i = 0; i < ScreenPacketizer.PngRecheckInterval; i++)
         {
-            Assert.True(StartsWith(FullFramePacket(packetizer, TextScreen()).FullFrameData!,s_jpegStart));
+            Assert.True(StartsWith(FullFramePacket(packetizer, TextScreen()).FullFrameData!, s_jpegStart));
         }
 
         Assert.True(StartsWith(FullFramePacket(packetizer, TextScreen()).FullFrameData!, s_pngStart));
@@ -163,7 +163,7 @@ public class JpegFullFrameTests
 
         Assert.True(packet.IsFullFrame);
         Assert.Equal(1, packet.FrameNumber);
-        Assert.True(StartsWith(packet.FullFrameData!,s_jpegStart));
+        Assert.True(StartsWith(packet.FullFrameData!, s_jpegStart));
     }
 
     [Fact]
@@ -194,7 +194,7 @@ public class JpegFullFrameTests
         ImageDiffer differ = new();
         using Bitmap before = ColourfulScreen();
         using Bitmap smallChange = new(before);
-        using (Graphics g = Graphics.FromImage(smallChange)){ g.FillRectangle(Brushes.Red, 0, 0, 10, 10); }
+        using (Graphics g = Graphics.FromImage(smallChange)) { g.FillRectangle(Brushes.Red, 0, 0, 10, 10); }
         using Bitmap bigChange = new(before);
         using (Graphics g = Graphics.FromImage(bigChange))
         {

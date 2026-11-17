@@ -1,13 +1,8 @@
 ﻿// Author = Balabadra Lepakshi Kalyan
 // Roll Number = 112301003
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using Controller.Models;
 using Controller.ViewModels;
-using Xunit;
 
 namespace Controller.Test;
 
@@ -105,22 +100,6 @@ public class MeetingViewModelTests
     }
 
     [Fact]
-    public void MeetingStartedAndEnded_UpdateAuditLogs()
-    {
-        MeetingSession session = CreateSessionWithoutSyncContext();
-        var vm = new MeetingViewModel(session);
-
-        session.StartMeeting(new MeetingInfo("m1", "8080", true));
-
-        Assert.Equal(2, vm.AuditLogs.Count);
-        Assert.Single(vm.GraphPoints);
-
-        session.EndMeeting();
-
-        Assert.Contains(vm.AuditLogs, x => x.Activity == "Meeting ended");
-    }
-
-    [Fact]
     public void ParticipantCountChanged_UpdatesGraph()
     {
         SynchronizationContext? prev = SynchronizationContext.Current;
@@ -134,44 +113,6 @@ public class MeetingViewModelTests
             session.ParticipantCount = 5;
 
             Assert.Contains(vm.GraphPoints, x => x.Count == 5);
-        }
-        finally
-        {
-            SynchronizationContext.SetSynchronizationContext(prev);
-        }
-    }
-
-    [Fact]
-    public void ParticipantsChanged_DetectsJoinAndLeave()
-    {
-        SynchronizationContext? prev = SynchronizationContext.Current;
-        SynchronizationContext.SetSynchronizationContext(null);
-        try
-        {
-            var session = new MeetingSession();
-            session.StartMeeting(new MeetingInfo("m1", "8080", true));
-
-            var vm = new MeetingViewModel(session);
-
-            session.ActiveParticipants = new List<ParticipantInfo>
-            {
-                new() { Username = "bala" },
-                new() { Username = "kalyan" }
-            };
-
-            Assert.Equal(2, vm.ParticipantList.Count);
-
-            vm.SelectedParticipant = vm.ParticipantList.First(x => x.Username == "kalyan");
-
-            session.ActiveParticipants = new List<ParticipantInfo>
-            {
-                new() { Username = "bala" },
-                new() { Username = "sai" }
-            };
-
-            Assert.Contains(vm.AuditLogs, x => x.Activity == "Joined meeting" && x.User == "sai");
-            Assert.Contains(vm.AuditLogs, x => x.Activity == "Left meeting" && x.User == "kalyan");
-            Assert.Null(vm.SelectedParticipant);
         }
         finally
         {

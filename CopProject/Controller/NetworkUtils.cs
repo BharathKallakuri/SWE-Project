@@ -1,4 +1,4 @@
-// Author : Saideep.
+﻿// Author : Saideep.
 // Roll No : 112301018.
 using System.Net;
 using System.Net.Sockets;
@@ -9,12 +9,12 @@ namespace Controller;
 /// provides utility methods for resolving local machine's network IP address.
 ///</summary>
 public static class NetworkUtils
-{   
+{
     ///<summary>
     ///Returns the local machine's IP address on the network.
     ///</summary>
-    
-       
+
+
     public static string GetLocalIpAddress()
     {
         try

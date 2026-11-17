@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -10,13 +10,11 @@
 ****/
 
 
-using System;
 using Whiteboard.Actions;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Items.Shapes;
 using Whiteboard.Models;
-using Xunit;
 
 namespace Whiteboard.Test.Actions;
 
@@ -39,7 +37,7 @@ public class ActionTests
         action.Perform(board);
         Assert.Equal(2, board.Items.Count);
 
-        var inverse = action.CreateInverse();
+        IWhiteboardAction inverse = action.CreateInverse();
         Assert.Equal("Host", inverse.UserId);
 
         inverse.Perform(board);
@@ -79,7 +77,7 @@ public class ActionTests
         // One missing item should prevent the whole deletion.
         Assert.Throws<InvalidOperationException>(() => action.Perform(board));
         Assert.True(board.Items.ContainsKey(item.Id));
-        Assert.Throws<InvalidOperationException>(() => action.CreateInverse());
+        Assert.Throws<InvalidOperationException>(action.CreateInverse);
     }
 
     /// <summary>
@@ -104,7 +102,7 @@ public class ActionTests
         stroke.Points.Clear();
         erase.CreateInverse().Perform(board);
 
-        var restored = Assert.IsType<FreehandItem>(board.Items[stroke.Id]);
+        FreehandItem restored = Assert.IsType<FreehandItem>(board.Items[stroke.Id]);
         Assert.Equal(2, restored.Points.Count);
         Assert.Equal(3, restored.StrokeWidth);
     }

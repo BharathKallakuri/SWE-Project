@@ -1,4 +1,4 @@
-// Author : Saideep.
+﻿// Author : Saideep.
 // Roll No : 112301018.
 using System.Diagnostics;
 using System.Text;
@@ -38,11 +38,11 @@ public sealed class HostController : IControllerService
     ///</summary>
     public void RegisterNotificationHandler(IUserNotificationHandler handler)
     {
-        if(handler != null && !_notificationHandlers.Contains(handler))
+        if (handler != null && !_notificationHandlers.Contains(handler))
         {
             _notificationHandlers.Add(handler);
         }
-        
+
     }
 
     ///<summary>
@@ -50,7 +50,7 @@ public sealed class HostController : IControllerService
     ///</summary>
     public void UnregisterNotificationHandler(IUserNotificationHandler handler)
     {
-        if(handler != null && _notificationHandlers.Contains(handler))
+        if (handler != null && _notificationHandlers.Contains(handler))
         {
             _notificationHandlers.Remove(handler);
         }
@@ -90,7 +90,7 @@ public sealed class HostController : IControllerService
             Trace.TraceWarning("[Controller]: StartMeeting failed: could not transition session to Active.");
             return false;
         }
-        foreach(var handler in _notificationHandlers)
+        foreach (IUserNotificationHandler handler in _notificationHandlers)
         {
             handler.OnUserJoined(_hostUser);
         }
@@ -110,7 +110,7 @@ public sealed class HostController : IControllerService
             Trace.TraceWarning("[Controller]: EndMeeting failed.");
             return false;
         }
-        
+
         // Broadcast end notification to all participants
         string payload = JsonSerializer.Serialize(_hostUser);
         Broadcast(Protocol.FormatNotification(Protocol.NotifySessionEnded, payload));
@@ -125,7 +125,7 @@ public sealed class HostController : IControllerService
     {
         Trace.TraceWarning("[Controller]: JoinMeeting called on HostController. Use a ClientController to join remote meetings.");
         return false;
-    }   
+    }
 
     ///<summary>
     /// Not applicable on host side. Host can only end meeting.
@@ -138,12 +138,18 @@ public sealed class HostController : IControllerService
     ///<summary>
     /// Gets the active user count of a session.
     ///</summary>
-    public int GetActiveUserCount() => _sessionManager.GetActiveUserCount();
+    public int GetActiveUserCount()
+    {
+        return _sessionManager.GetActiveUserCount();
+    }
 
     ///<summary>
     /// Gets the list of active users in the session.
     ///</summary>
-    public List<ControllerUser> GetActiveUsers() => _sessionManager.GetActiveUsers();
+    public List<ControllerUser> GetActiveUsers()
+    {
+        return _sessionManager.GetActiveUsers();
+    }
 
     private void Broadcast(string message)
     {
@@ -160,7 +166,7 @@ public sealed class HostController : IControllerService
         List<ControllerUser> allUsers = _sessionManager.GetActiveUsers();
         string payload = $"{JsonSerializer.Serialize(e.User)}{Protocol.Separator}{JsonSerializer.Serialize(allUsers)}";
         Broadcast(Protocol.FormatNotification(Protocol.NotifyUserJoined, payload));
-        foreach(var handler in _notificationHandlers)
+        foreach (IUserNotificationHandler handler in _notificationHandlers)
         {
             handler.OnUserJoined(e.User);
         }
@@ -176,7 +182,7 @@ public sealed class HostController : IControllerService
         List<ControllerUser> allUsers = _sessionManager.GetActiveUsers();
         string payload = $"{JsonSerializer.Serialize(e.User)}{Protocol.Separator}{JsonSerializer.Serialize(allUsers)}";
         Broadcast(Protocol.FormatNotification(Protocol.NotifyUserLeft, payload));
-        foreach(var handler in _notificationHandlers)
+        foreach (IUserNotificationHandler handler in _notificationHandlers)
         {
             handler.OnUserLeft(e.User);
         }
@@ -204,7 +210,11 @@ public sealed class HostController : IControllerService
     ///</summary>
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         _disposed = true;
 
         _sessionManager.UserJoined -= OnUserJoined;

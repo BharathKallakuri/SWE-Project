@@ -1,11 +1,6 @@
 ﻿// Author: Shreesh Amit Chembeti
 // Roll Number: 112301046
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Incidents;
-
 namespace Incidents;
 
 /// <summary>

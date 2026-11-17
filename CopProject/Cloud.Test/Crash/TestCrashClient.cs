@@ -46,8 +46,7 @@ public class TestCrashClient
 
         public override string Message
         {
-            get
-            {
+            get {
                 Inner = _report();
                 return "again";
             }
@@ -322,8 +321,7 @@ public class TestCrashClient
 
         InMemoryStorage storage = new();
         int created = 0;
-        CosmosCrashUploader uploader = new(() =>
-        {
+        CosmosCrashUploader uploader = new(() => {
             created++;
             return Task.FromResult<Cloud.Persistence.IStorage>(storage);
         });

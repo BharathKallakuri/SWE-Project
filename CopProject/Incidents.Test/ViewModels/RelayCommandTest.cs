@@ -1,9 +1,7 @@
 ﻿// Author: M Sreenath Karthick
 // Roll Number: 112301042
 
-using System;
 using Incidents.ViewModels.Utils;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Incidents.Test.ViewModels;
 

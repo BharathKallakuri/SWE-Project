@@ -1,4 +1,5 @@
 ﻿/// Owner   : Sasi Kiran
+/// Roll no : 112301033
 /// LICENSE : MIT
 
 using System.Threading.Tasks;
@@ -79,7 +80,7 @@ public class ShapeEllipseState : ViewModelStateBase
         if (_ellipse.Width > 0 && _ellipse.Height > 0)
         {
             IEllipse item = _ellipse;
-            Task.Run(() => WhiteboardClient.AddItem(item));
+            DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
         }
 
         _ellipse = null;

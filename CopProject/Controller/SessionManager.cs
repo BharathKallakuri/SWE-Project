@@ -120,7 +120,7 @@ public class SessionManager
     public bool JoinSession(ControllerUser user)
     {
         int newCount;
-        bool isDuplicate = false ;
+        bool isDuplicate = false;
 
         lock (_lock)
         {
@@ -131,7 +131,7 @@ public class SessionManager
 
             if (_session.ContainsUser(user.UserKey))
             {
-                isDuplicate = true ;
+                isDuplicate = true;
             }
 
             else if (!_session.AddUser(user))
@@ -140,8 +140,8 @@ public class SessionManager
             }
             newCount = _session.UserCount;
         }
-        
-        if(isDuplicate)
+
+        if (isDuplicate)
         {
             DuplicateUserDetected?.Invoke(this, user);
             return false;
@@ -187,7 +187,7 @@ public class SessionManager
             if (!HasActiveSession())
             {
                 return 0;
-            } 
+            }
             return _session?.UserCount ?? 0;
         }
     }
@@ -202,7 +202,7 @@ public class SessionManager
             if (!HasActiveSession())
             {
                 return new List<ControllerUser>();
-            } 
+            }
             return _session?.GetUsers() ?? new List<ControllerUser>();
         }
     }

@@ -3,7 +3,6 @@
 
 using System.Net;
 using ScreenShare;
-using Xunit;
 
 namespace Screenshare.Tests;
 

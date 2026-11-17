@@ -1,4 +1,4 @@
-// Author: Hariram S
+﻿// Author: Hariram S
 // Roll Number: 112614008
 
 using WhiteboardSuggestion.Core;
@@ -20,7 +20,7 @@ public sealed class ShapeSuggestionParserTests
     public void Parse_Line_ReturnsEndpoints()
     {
         string json = CreateResponse("Line", startX: 10, startY: 20, endX: 30, endY: 40);
-        var result = Assert.IsType<ShapeSuggestionResult.Line>(ShapeSuggestionParser.Parse(json));
+        ShapeSuggestionResult.Line result = Assert.IsType<ShapeSuggestionResult.Line>(ShapeSuggestionParser.Parse(json));
         Assert.Equal((10.0, 20.0), result.Start);
         Assert.Equal((30.0, 40.0), result.End);
     }
@@ -29,7 +29,7 @@ public sealed class ShapeSuggestionParserTests
     public void Parse_Polygon_RemovesConsecutiveAndClosingDuplicates()
     {
         const string vertices = """[{"x":0,"y":0},{"x":0,"y":0},{"x":10,"y":0},{"x":10,"y":10},{"x":0,"y":10},{"x":0,"y":0}]""";
-        var result = Assert.IsType<ShapeSuggestionResult.Polygon>(
+        ShapeSuggestionResult.Polygon result = Assert.IsType<ShapeSuggestionResult.Polygon>(
             ShapeSuggestionParser.Parse(CreateResponse("Polygon", vertices: vertices)));
         Assert.Equal(new[] { (0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0) }, result.Vertices);
     }
@@ -37,7 +37,7 @@ public sealed class ShapeSuggestionParserTests
     [Fact]
     public void Parse_Circle_ReturnsCenterAndRadius()
     {
-        var result = Assert.IsType<ShapeSuggestionResult.Circle>(
+        ShapeSuggestionResult.Circle result = Assert.IsType<ShapeSuggestionResult.Circle>(
             ShapeSuggestionParser.Parse(CreateResponse("Circle", centerX: 100, centerY: 80, radius: 25)));
         Assert.Equal((100.0, 80.0), result.Center);
         Assert.Equal(25.0, result.Radius);
@@ -46,7 +46,7 @@ public sealed class ShapeSuggestionParserTests
     [Fact]
     public void Parse_Ellipse_ReturnsCenterAndRadii()
     {
-        var result = Assert.IsType<ShapeSuggestionResult.Ellipse>(
+        ShapeSuggestionResult.Ellipse result = Assert.IsType<ShapeSuggestionResult.Ellipse>(
             ShapeSuggestionParser.Parse(CreateResponse("Ellipse", centerX: 100, centerY: 80, radiusX: 40, radiusY: 20)));
         Assert.Equal((100.0, 80.0), result.Center);
         Assert.Equal(40.0, result.RadiusX);

@@ -2,15 +2,10 @@
 
 // Roll no ; 112301019
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Security;
 using System.Text;
 using FileSynchroniser.Models;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [assembly: DoNotParallelize]
 

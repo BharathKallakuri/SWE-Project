@@ -51,8 +51,7 @@ public sealed class CrashGroupItem
     /// </summary>
     public string ShortExceptionType
     {
-        get
-        {
+        get {
             int lastDot = Group.ExceptionType.LastIndexOf('.');
             return lastDot < 0 ? Group.ExceptionType : Group.ExceptionType[(lastDot + 1)..];
         }

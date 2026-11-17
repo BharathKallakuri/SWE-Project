@@ -1,13 +1,10 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
-using System;
-using System.Threading;
 using Whiteboard.Interfaces;
 using Whiteboard.Test.Mocks;
 using Whiteboard.ViewModels;
 using Windows.UI;
-using Xunit;
 
 namespace Whiteboard.Test.ViewModels;
 
@@ -62,7 +59,7 @@ public class LineStateTests
     }
 
     [Fact]
-    public void PointerPressed_SecondClickWithLength_SubmitsLineAndClearsPreview()
+    public async Task PointerPressed_SecondClickWithLength_SubmitsLineAndClearsPreview()
     {
         LineState state = new(_client, _preview, _toolbar);
         Point2D start = new(10, 20);
@@ -74,8 +71,7 @@ public class LineStateTests
 
         Assert.Equal(1, _preview.ClearCount);
 
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
-        Assert.True(wasAdded, "Item was not added in time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
 
         Assert.Single(_client.AddedItems);
         ILine submitted = Assert.IsAssignableFrom<ILine>(_client.AddedItems[0]);
@@ -101,7 +97,7 @@ public class LineStateTests
     }
 
     [Fact]
-    public void PointerReleased_DragSignificantDistance_SubmitsLine()
+    public async Task PointerReleased_DragSignificantDistance_SubmitsLine()
     {
         LineState state = new(_client, _preview, _toolbar);
         Point2D start = new(10, 20);
@@ -113,8 +109,7 @@ public class LineStateTests
 
         Assert.Equal(1, _preview.ClearCount);
 
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
-        Assert.True(wasAdded, "Item was not added in time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
 
         Assert.Single(_client.AddedItems);
         ILine submitted = Assert.IsAssignableFrom<ILine>(_client.AddedItems[0]);
@@ -127,7 +122,7 @@ public class LineStateTests
     }
 
     [Fact]
-    public void PointerReleased_ClickAtSameLocation_DoesNotSubmitPrematurely()
+    public async Task PointerReleased_ClickAtSameLocation_DoesNotSubmitPrematurely()
     {
         LineState state = new(_client, _preview, _toolbar);
         Point2D start = new(10, 20);
@@ -144,13 +139,12 @@ public class LineStateTests
         state.PointerPressed(end);
 
         Assert.Equal(1, _preview.ClearCount);
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
-        Assert.True(wasAdded, "Item was not added in time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
         Assert.Single(_client.AddedItems);
     }
 
     [Fact]
-    public void PointerCaptureLost_DoesNotResetClickMoveClick()
+    public async Task PointerCaptureLost_DoesNotResetClickMoveClick()
     {
         LineState state = new(_client, _preview, _toolbar);
         Point2D start = new(10, 20);
@@ -166,8 +160,7 @@ public class LineStateTests
         state.PointerPressed(end);
 
         Assert.Equal(1, _preview.ClearCount);
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
-        Assert.True(wasAdded, "Item was not added in time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
         Assert.Single(_client.AddedItems);
     }
 

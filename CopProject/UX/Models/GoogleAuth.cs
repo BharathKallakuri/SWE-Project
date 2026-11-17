@@ -1,4 +1,4 @@
-// Authors: Aashritha.Y, Kalyani
+﻿// Authors: Aashritha.Y, Kalyani
 // Roll numbers: 112301038, 112301016
 using System;
 using System.Buffers.Text;
@@ -14,11 +14,12 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace UX.Models;
+
 public record GoogleUser(string Name, string Email, string Picture);
 public static class GoogleAuth
 {
-    const string ClientId = "474271673658-9m47i1unkejgq0e9opirjeupk78ofn4o.apps.googleusercontent.com";
-    const string ClientSecret = "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";
+    const string ClientId = "575590038834-64p0s206s48c9igjgs8uirhtm9h96rob.apps.googleusercontent.com";
+    const string ClientSecret = "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";
     private static readonly HttpClient s_http = new();
     public static async Task<GoogleUser> SignInAsync()
     {
@@ -85,8 +86,7 @@ public static class GoogleAuth
     }
     static async Task<string> GetAccessTokenAsync(string code, string redirect, string verifier)
     {
-        var form = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
+        var form = new FormUrlEncodedContent(new Dictionary<string, string> {
             ["code"] = code,
             ["client_id"] = ClientId,
             ["client_secret"] = ClientSecret,

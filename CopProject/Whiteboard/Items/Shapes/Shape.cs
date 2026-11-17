@@ -1,7 +1,6 @@
 ﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
-using Microsoft.UI;
 using Whiteboard.Interfaces.Shapes;
 using Windows.UI;
 

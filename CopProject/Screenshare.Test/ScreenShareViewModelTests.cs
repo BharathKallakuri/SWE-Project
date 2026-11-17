@@ -1,17 +1,16 @@
-// Author = Sumit
+﻿// Author = Sumit
 // Roll Number = 112301032
 
-using System.ComponentModel;
+using Screenshare.Tests.Fakes;
 using ScreenShare.Models;
 using ScreenShare.ViewModels;
-using Screenshare.Tests.Fakes;
 
 namespace Screenshare.Tests;
 
 public class ScreenShareViewModelTests
 {
-    private static readonly TimeSpan FeedDelay = TimeSpan.FromMilliseconds(150);
-    private static readonly TimeSpan FpsInterval = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan s_feedDelay = TimeSpan.FromMilliseconds(150);
+    private static readonly TimeSpan s_fpsInterval = TimeSpan.FromSeconds(1);
 
     private readonly FakeScreenShareFeed _feed = new();
     private readonly FakeUiScheduler _ui = new();
@@ -22,8 +21,7 @@ public class ScreenShareViewModelTests
 
     public ScreenShareViewModelTests()
     {
-        _vm = new ScreenShareViewModel(_feed, _ui, _clock, (width, height) =>
-        {
+        _vm = new ScreenShareViewModel(_feed, _ui, _clock, (width, height) => {
             FakeTileSurface surface = new(width, height);
             _surfaces.Add(surface);
             return surface;
@@ -31,11 +29,14 @@ public class ScreenShareViewModelTests
         _vm.PropertyChanged += (_, e) => _changed.Add(e.PropertyName);
     }
 
-    private FakeUiTimer FeedTimer => _ui.Timer(FeedDelay);
+    private FakeUiTimer FeedTimer => _ui.Timer(s_feedDelay);
 
-    private FakeUiTimer FpsTimer => _ui.Timer(FpsInterval);
+    private FakeUiTimer FpsTimer => _ui.Timer(s_fpsInterval);
 
-    private ParticipantTile Tile(string id) => _vm.Tiles.Single(t => t.Id == id);
+    private ParticipantTile Tile(string id)
+    {
+        return _vm.Tiles.Single(t => t.Id == id);
+    }
 
     private static ScreenFrame Frame(byte shade = 0)
     {
@@ -207,7 +208,7 @@ public class ScreenShareViewModelTests
         Join("aryan");
         Show("aryan");
         SendFrame("aryan", Frame());
-        _clock.Advance(FpsInterval);
+        _clock.Advance(s_fpsInterval);
 
         _vm.Zoom("aryan");
 
@@ -360,7 +361,7 @@ public class ScreenShareViewModelTests
         SendFrame("aryan", Frame());
         SendFrame("aryan", Frame());
 
-        _clock.Advance(FpsInterval);
+        _clock.Advance(s_fpsInterval);
         FpsTimer.Fire();
 
         Assert.Equal("2.0 fps", _vm.ZoomedTile!.FpsText);

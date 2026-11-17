@@ -4,7 +4,6 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using ScreenShare;
-using Xunit;
 
 namespace Screenshare.Tests;
 

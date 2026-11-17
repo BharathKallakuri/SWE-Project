@@ -1,8 +1,7 @@
-/// Author : Karthik Krishna M
+﻿/// Author : Karthik Krishna M
 /// Roll Number : 112301014
 /// LICENSE : MIT
 
-using System.Collections.Generic;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
@@ -10,7 +9,6 @@ using Whiteboard.Network.Dtos;
 using Whiteboard.Network.Mappers;
 using Whiteboard.Server;
 using Whiteboard.Test.Mocks.Networking;
-using Xunit;
 
 namespace Whiteboard.Test.ClientServer;
 
@@ -20,7 +18,7 @@ public class ClientServerRestoreTests
     public void ClientRestoreState_UpdatesServerAndOtherClients()
     {
         var factory = new MockCommunicatorFactory();
-       
+
         IWhiteboardServer server = WhiteboardFactory.GetServerWhiteboard(factory.GetServerCommunicator());
         IWhiteboardClient client1 = WhiteboardFactory.CreateClientWhiteboard(factory.CreateClientCommunicator(), factory.ServerEndPoint, "User1");
         IWhiteboardClient client2 = WhiteboardFactory.CreateClientWhiteboard(factory.CreateClientCommunicator(), factory.ServerEndPoint, "User2");
