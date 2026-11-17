@@ -1,8 +1,6 @@
 ﻿// Author = Sumit
 // Roll Number = 112301032
 
-using System;
-using Xunit;
 using ScreenShare;
 
 namespace Screenshare.Tests;
@@ -41,8 +39,7 @@ public class ScreenShareOptionsTests
     [InlineData(nameof(ScreenShareOptions.FullFrameJpegQuality), 101)]
     public void Validate_ThrowsError_WhenPerformanceOptionIsInvalid(string option, int value)
     {
-        var options = option switch
-        {
+        ScreenShareOptions options = option switch {
             nameof(ScreenShareOptions.ThumbnailHeight) => new ScreenShareOptions { ThumbnailHeight = value },
             nameof(ScreenShareOptions.ThumbnailFramesPerSecond) => new ScreenShareOptions { ThumbnailFramesPerSecond = value },
             nameof(ScreenShareOptions.ThumbnailTileSize) => new ScreenShareOptions { ThumbnailTileSize = value },

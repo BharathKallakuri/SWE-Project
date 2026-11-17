@@ -219,8 +219,7 @@ public class ControllerMeetingSessionTests
 
     private FakeControllerService Controller(bool isHost = false)
     {
-        return new FakeControllerService
-        {
+        return new FakeControllerService {
             CurrentUser = User(isHost: isHost),
             Communicator = isHost ? _network.Server : _network.AddClient(),
         };

@@ -2,10 +2,8 @@
 // Roll Number = 112301032
 
 using System.ComponentModel;
-using ScreenShare.Models;
 using Screenshare.Tests.Fakes;
-using Windows.ApplicationModel.VoiceCommands;
-using Windows.UI.ViewManagement;
+using ScreenShare.Models;
 
 namespace Screenshare.Tests;
 

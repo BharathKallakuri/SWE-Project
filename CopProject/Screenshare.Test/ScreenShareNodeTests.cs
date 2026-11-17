@@ -4,14 +4,14 @@
 using System.Drawing;
 using System.Net;
 using Networking;
-using ScreenShare;
 using Screenshare.Tests.Fakes;
+using ScreenShare;
 
 namespace Screenshare.Tests;
 
 public class ScreenShareNodeTests : IDisposable
 {
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan s_timeout = TimeSpan.FromSeconds(5);
 
     private readonly FakeNetwork _network = new();
     private readonly ManualTimeProvider _clock = new();
@@ -64,7 +64,7 @@ public class ScreenShareNodeTests : IDisposable
     private void Settle()
     {
         Assert.True(
-            SpinWait.SpinUntil(() => _nodes.All(n => n.IsIdle) && _nodes.All(n => n.IsIdle), Timeout),
+            SpinWait.SpinUntil(() => _nodes.All(n => n.IsIdle) && _nodes.All(n => n.IsIdle), s_timeout),
             "ScreenShare work did not settle");
     }
 
@@ -355,7 +355,7 @@ public class ScreenShareNodeTests : IDisposable
         Settle();
 
         aryan.StartSharing();
-        Assert.True(SpinWait.SpinUntil(() => MessagesFrom(aryan).OfType<ScreenDataPacket>().Any(), Timeout));
+        Assert.True(SpinWait.SpinUntil(() => MessagesFrom(aryan).OfType<ScreenDataPacket>().Any(), s_timeout));
         aryan.StopSharing();
 
         Assert.False(aryan.IsSharing);
@@ -484,7 +484,7 @@ public class ScreenShareNodeTests : IDisposable
         Assert.False(aryan.IsSharing);
         Assert.False(session.HasParticipantLeftListeners);
         Assert.False(session.HasMeetingEndedListeners);
-        Assert.Throws<ObjectDisposedException>(() => aryan.StartSharing());
+        Assert.Throws<ObjectDisposedException>(aryan.StartSharing);
     }
 
     [Fact]
@@ -745,7 +745,7 @@ public class ScreenShareNodeTests : IDisposable
         Settle();
         Capture(aryan);
 
-        List<SentMessage> data = _network.Log.Where(m => IsData(m)).ToList();
+        List<SentMessage> data = _network.Log.Where(IsData).ToList();
         Assert.NotEmpty(data);
         Assert.All(data, m => Assert.False(m.Lossy));
     }
@@ -805,7 +805,7 @@ public class ScreenShareNodeTests : IDisposable
         Settle();
         Capture(aryan);
 
-        Assert.All(_network.Log.Where(m => IsData(m)), m => Assert.True(m.Lossy));
+        Assert.All(_network.Log.Where(IsData), m => Assert.True(m.Lossy));
         using Bitmap? frame = sumit.GetFrame("aryan");
         Assert.NotNull(frame);
     }
@@ -848,7 +848,7 @@ public class ScreenShareNodeTests : IDisposable
 
         sumit.RunMaintenance();
 
-        Assert.True(SpinWait.SpinUntil(() => sumit.IsIdle, Timeout));
+        Assert.True(SpinWait.SpinUntil(() => sumit.IsIdle, s_timeout));
     }
 
     // a connection that has already been closed: unsubscribing fails
@@ -863,17 +863,64 @@ public class ScreenShareNodeTests : IDisposable
 
         public int ListenPort => _inner.ListenPort;
         public IPAddress ListenIpAddress => _inner.ListenIpAddress;
-        public void AddSubscriber(int module, IMessageListener subscriber) => _inner.AddSubscriber(module, subscriber);
-        public void RemoveSubscriber(int module) => throw new ObjectDisposedException("communicator");
-        public void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority) => _inner.SendMessage(iPEndPoint, message, module, priority);
-        public void BroadcastMessage(byte[] message, int module, int priority) => _inner.BroadcastMessage(message, module, priority);
-        public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp) => throw new NotSupportedException();
-        public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp) => throw new NotSupportedException();
-        public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority) => throw new NotSupportedException();
-        public void AddLossySubscriber(int module, IMessageListenerLossy subscriber) => _inner.AddLossySubscriber(module, subscriber);
-        public void RemoveLossySubscriber(int module) => throw new ObjectDisposedException("communicator");
-        public void SendMessageLossy(IPEndPoint iPEndPoint, byte[] message, int module, int priority) => throw new NotSupportedException();
-        public void BroadcastMessageLossy(byte[] message, int module, int priority) => throw new NotSupportedException();
-        public void MulticastMessageLossy(int multicastGroup, byte[] message, int module, int priority) => throw new NotSupportedException();
+        public void AddSubscriber(int module, IMessageListener subscriber)
+        {
+            _inner.AddSubscriber(module, subscriber);
+        }
+
+        public void RemoveSubscriber(int module)
+        {
+            throw new ObjectDisposedException("communicator");
+        }
+
+        public void SendMessage(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
+        {
+            _inner.SendMessage(iPEndPoint, message, module, priority);
+        }
+
+        public void BroadcastMessage(byte[] message, int module, int priority)
+        {
+            _inner.BroadcastMessage(message, module, priority);
+        }
+
+        public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddLossySubscriber(int module, IMessageListenerLossy subscriber)
+        {
+            _inner.AddLossySubscriber(module, subscriber);
+        }
+
+        public void RemoveLossySubscriber(int module)
+        {
+            throw new ObjectDisposedException("communicator");
+        }
+
+        public void SendMessageLossy(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void BroadcastMessageLossy(byte[] message, int module, int priority)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void MulticastMessageLossy(int multicastGroup, byte[] message, int module, int priority)
+        {
+            throw new NotSupportedException();
+        }
     }
 }

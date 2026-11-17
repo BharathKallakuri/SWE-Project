@@ -43,7 +43,7 @@ public class FpsCounterTest
         double fps = counter.Sample(TimeSpan.FromSeconds(2));
 
         Assert.Equal(5, fps);
-        Assert.Equal(5,counter.FramesPerSecond);
+        Assert.Equal(5, counter.FramesPerSecond);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class FpsCounterTest
         FpsCounter counter = new();
         _ = counter.Sample(TimeSpan.FromSeconds(0));
 
-        for(int i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++)
         {
             counter.RecordFrame();
         }
@@ -85,7 +85,7 @@ public class FpsCounterTest
         Assert.Equal(10, fps2);
         Assert.Equal(10, counter.FramesPerSecond);
 
-        for(int i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++)
         {
             counter.RecordFrame();
         }

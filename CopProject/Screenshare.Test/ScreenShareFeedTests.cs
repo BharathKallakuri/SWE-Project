@@ -1,16 +1,17 @@
-// Author = Sumit
+﻿// Author = Sumit
 // Roll Number = 112301032
 
 using System.Collections.Concurrent;
+using System.Drawing;
+using Screenshare.Tests.Fakes;
 using ScreenShare;
 using ScreenShare.Models;
-using Screenshare.Tests.Fakes;
 
 namespace Screenshare.Tests;
 
 public class ScreenShareFeedTests : IDisposable
 {
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan s_timeout = TimeSpan.FromSeconds(5);
 
     private readonly FakeNetwork _network = new();
     private readonly ManualTimeProvider _clock = new();
@@ -59,7 +60,7 @@ public class ScreenShareFeedTests : IDisposable
     private void Settle()
     {
         Assert.True(
-            SpinWait.SpinUntil(() => _nodes.All(n => n.IsIdle) && _nodes.All(n => n.IsIdle), Timeout),
+            SpinWait.SpinUntil(() => _nodes.All(n => n.IsIdle) && _nodes.All(n => n.IsIdle), s_timeout),
             "ScreenShare work did not settle");
     }
 
@@ -162,7 +163,7 @@ public class ScreenShareFeedTests : IDisposable
         quiet.RequestFeeds(new Dictionary<string, int> { ["aryan"] = 480 });
         Settle();
         Capture(_aryan);
-        using (var picture = _sumit.GetFrame("aryan"))
+        using (Bitmap? picture = _sumit.GetFrame("aryan"))
         {
             // Sumit's node still got the picture; the quiet feed just had nobody to tell
             Assert.NotNull(picture);
@@ -240,7 +241,7 @@ public class ScreenShareFeedTests : IDisposable
         Capture(_aryan);
 
         Assert.Equal(2, SubscribesFromSumit());
-        using var picture = _sumit.GetFrame("aryan");
+        using Bitmap? picture = _sumit.GetFrame("aryan");
         Assert.NotNull(picture);
     }
 

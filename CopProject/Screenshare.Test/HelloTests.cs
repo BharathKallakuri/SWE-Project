@@ -9,7 +9,7 @@ namespace Screenshare.Tests;
 public class HelloTests
 {
     [Fact]
-   public void Hello_StoreViewer()
+    public void Hello_StoreViewer()
     {
         Participant viewer = new("Sumit", new IPEndPoint(IPAddress.Loopback, 5000));
         Hello hello = new Hello(viewer);
