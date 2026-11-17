@@ -1,8 +1,6 @@
 ﻿//Author : Saideep.
 // Roll No : 112301018.
-using Controller;
 using Utils;
-using Xunit;
 
 namespace Controller.Test;
 
@@ -25,6 +23,7 @@ class TestNotificationHandler : IUserNotificationHandler
 public class HostControllerTests
 {
     [Fact]
+    [Obsolete]
     public void StartMeeting()
     {
         var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
@@ -41,6 +40,7 @@ public class HostControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void StartAlreadyStartedMeeting()
     {
         var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
@@ -52,6 +52,7 @@ public class HostControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void EndMeeting()
     {
         var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
@@ -64,6 +65,7 @@ public class HostControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void EndMeetingWithoutAnActiveMeeting()
     {
         var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
@@ -74,6 +76,7 @@ public class HostControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void JoinAndLeaveMeeting()
     {
         var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
@@ -85,6 +88,7 @@ public class HostControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void NotificationHandlers()
     {
         var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
@@ -98,6 +102,7 @@ public class HostControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void CreateWithFactory()
     {
         var host = (HostController)ControllerFactory.CreateHost("Sai", "saideep@smail.iitpkd.ac.in");
@@ -107,6 +112,7 @@ public class HostControllerTests
         host.Dispose();
     }
     [Fact]
+    [Obsolete]
     public void ParticipantJoinedAndLeft()
     {
         var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);

@@ -1,14 +1,8 @@
 ﻿// Author: M Sreenath Karthick
 // Roll Number: 112301042
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Incidents.Test.Implementations;
-using Incidents;
 using Incidents.ViewModels;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.UI.Xaml;
 
 namespace Incidents.Test.ViewModels;

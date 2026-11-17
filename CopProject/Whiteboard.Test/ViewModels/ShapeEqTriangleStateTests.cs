@@ -1,7 +1,6 @@
 ﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
-using System.Threading.Tasks;
 using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 using Whiteboard.Items.Shapes;

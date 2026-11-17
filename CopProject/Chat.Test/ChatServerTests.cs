@@ -8,7 +8,6 @@ using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Chat;
 using Controller;
 using Insights.AI;
 using Networking;

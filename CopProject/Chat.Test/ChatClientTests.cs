@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text.Json;
-using Chat;
 using Networking;
 
 namespace Chat.Test;

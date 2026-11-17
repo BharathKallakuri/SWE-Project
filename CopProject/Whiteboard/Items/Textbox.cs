@@ -2,9 +2,6 @@
 //roll number : 112301034
 // License : MIT
 
-using System.Reflection.Metadata.Ecma335;
-using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
 using Windows.UI;
 

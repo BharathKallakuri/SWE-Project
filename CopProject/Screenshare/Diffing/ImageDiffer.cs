@@ -1,13 +1,10 @@
 ﻿// Author = Aryan
 // Roll Number = 112301041
 
-using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using ScreenShare;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ScreenShare;
 

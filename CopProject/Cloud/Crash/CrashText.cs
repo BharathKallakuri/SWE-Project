@@ -51,9 +51,9 @@ public static partial class CrashText
             {
                 builder ??= new StringBuilder(value, 0, i, value.Length);
             }
-            else if (builder is not null)
+            else
             {
-                builder.Append(value, i, length);
+                builder?.Append(value, i, length);
             }
 
             i += length - 1;

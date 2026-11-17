@@ -10,13 +10,11 @@
 ****/
 
 
-using System;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Items.Shapes;
 using Whiteboard.Services;
 using Windows.UI;
-using Xunit;
 
 namespace Whiteboard.Test.Services;
 

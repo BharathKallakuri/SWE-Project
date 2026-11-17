@@ -4,8 +4,8 @@
 using System.Net;
 using System.Text;
 using Controller.Models;
-using ScreenShare;
 using Screenshare.Tests.Fakes;
+using ScreenShare;
 using Utils;
 
 namespace Screenshare.Tests;
@@ -219,8 +219,7 @@ public class ControllerMeetingSessionTests
 
     private FakeControllerService Controller(bool isHost = false)
     {
-        return new FakeControllerService
-        {
+        return new FakeControllerService {
             CurrentUser = User(isHost: isHost),
             Communicator = isHost ? _network.Server : _network.AddClient(),
         };

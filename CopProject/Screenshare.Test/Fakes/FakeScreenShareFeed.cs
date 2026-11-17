@@ -1,4 +1,4 @@
-// Author = Sumit
+﻿// Author = Sumit
 // Roll Number = 112301032
 
 using ScreenShare.Interfaces;
@@ -63,9 +63,18 @@ internal sealed class FakeScreenShareFeed : IScreenShareFeed
         IsSharing = false;
     }
 
-    public void RaiseJoined(string id, string name) => ParticipantJoined?.Invoke(id, name);
+    public void RaiseJoined(string id, string name)
+    {
+        ParticipantJoined?.Invoke(id, name);
+    }
 
-    public void RaiseLeft(string id) => ParticipantLeft?.Invoke(id);
+    public void RaiseLeft(string id)
+    {
+        ParticipantLeft?.Invoke(id);
+    }
 
-    public void RaiseFrame(string id, ScreenFrame frame) => FrameReady?.Invoke(id, frame);
+    public void RaiseFrame(string id, ScreenFrame frame)
+    {
+        FrameReady?.Invoke(id, frame);
+    }
 }

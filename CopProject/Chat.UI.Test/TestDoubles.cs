@@ -3,7 +3,6 @@
 
 using System.Net;
 using System.Text.Json;
-using Chat;
 using Controller;
 using Insights.AI;
 using Microsoft.UI.Dispatching;

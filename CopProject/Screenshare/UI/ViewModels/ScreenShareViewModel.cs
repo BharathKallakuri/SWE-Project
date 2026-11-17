@@ -182,7 +182,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        var tile = _createSurface == null
+        ParticipantTile tile = _createSurface == null
             ? new ParticipantTile(id, name)
             : new ParticipantTile(id, name, _createSurface);
         _byId[id] = tile;

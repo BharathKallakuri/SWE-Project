@@ -1,4 +1,4 @@
-// Author: Hariram S
+﻿// Author: Hariram S
 // Roll Number: 112614008
 
 using System.Text.Json;
@@ -141,8 +141,7 @@ public sealed class GeminiShapeSuggestionService : IShapeSuggestionService
             {pointsJson}
             """;
 
-            var config = new GenerateContentConfig
-            {
+            var config = new GenerateContentConfig {
                 ResponseJsonSchema = JsonNode.Parse(ResponseSchemaJson),
                 ResponseMimeType = "application/json",
                 Temperature = 0.1
@@ -222,8 +221,7 @@ public sealed class GeminiShapeSuggestionService : IShapeSuggestionService
     // covered with the injectable delegate constructor; live calls are integration tests.
     private static Func<string, string, GenerateContentConfig, Task<string?>> CreateGenerator(Client client)
     {
-        return async (model, prompt, config) =>
-        {
+        return async (model, prompt, config) => {
             GenerateContentResponse response = await client.Models.GenerateContentAsync(
                 model: model,
                 contents: prompt,

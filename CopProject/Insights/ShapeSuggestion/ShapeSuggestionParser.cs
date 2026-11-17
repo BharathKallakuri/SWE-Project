@@ -1,4 +1,4 @@
-// Author: Hariram S
+﻿// Author: Hariram S
 // Roll Number: 112614008
 
 using System.Diagnostics;
@@ -33,8 +33,7 @@ public static class ShapeSuggestionParser
             double confidence = ReadConfidence(root);
             string resultType = GetString(root, "type");
 
-            ShapeSuggestionResult result = resultType.Trim().ToLowerInvariant() switch
-            {
+            ShapeSuggestionResult result = resultType.Trim().ToLowerInvariant() switch {
                 "unknown" => new ShapeSuggestionResult.Unknown(confidence),
                 "line" => ParseLine(root, confidence),
                 "polygon" => ParsePolygon(root, confidence),
@@ -91,7 +90,7 @@ public static class ShapeSuggestionParser
                 return InvalidGeometry(confidence, "polygon contained an invalid vertex");
             }
 
-            var point = (X: x, Y: y);
+            (double X, double Y) point = (X: x, Y: y);
             if (vertices.Count == 0 || vertices[^1] != point)
             {
                 vertices.Add(point);

@@ -2,7 +2,6 @@
 /// Roll no : 112301033
 /// LICENSE : MIT
 
-using System.Threading.Tasks;
 using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 using Whiteboard.Items.Shapes;

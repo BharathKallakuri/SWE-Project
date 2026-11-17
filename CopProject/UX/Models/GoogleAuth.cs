@@ -1,4 +1,4 @@
-// Authors: Aashritha.Y, Kalyani
+﻿// Authors: Aashritha.Y, Kalyani
 // Roll numbers: 112301038, 112301016
 using System;
 using System.Buffers.Text;
@@ -14,6 +14,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace UX.Models;
+
 public record GoogleUser(string Name, string Email, string Picture);
 public static class GoogleAuth
 {
@@ -85,8 +86,7 @@ public static class GoogleAuth
     }
     static async Task<string> GetAccessTokenAsync(string code, string redirect, string verifier)
     {
-        var form = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
+        var form = new FormUrlEncodedContent(new Dictionary<string, string> {
             ["code"] = code,
             ["client_id"] = ClientId,
             ["client_secret"] = ClientSecret,

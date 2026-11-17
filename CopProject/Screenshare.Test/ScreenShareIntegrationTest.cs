@@ -3,7 +3,6 @@
 
 using System.Drawing;
 using ScreenShare;
-using Xunit;
 
 namespace Screenshare.Tests;
 

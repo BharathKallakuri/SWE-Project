@@ -6,13 +6,11 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using Chat;
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using UI.ViewModels;
 using Windows.System;
-using Windows.UI;
 
 namespace UI.Views;
 
@@ -26,7 +24,7 @@ public sealed partial class ChatPanel : UserControl
     private int _emojiInputVersion;
 
     private const uint InputKeyboard = 1;
-    private const uint KeyUp = 0x0002;
+    private new const uint KeyUp = 0x0002;
     private const ushort VkLeftWindows = 0x5B;
     private const ushort VkPeriod = 0xBE;
 

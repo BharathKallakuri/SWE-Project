@@ -2,15 +2,9 @@
 
 // Roll no : 112301019
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
-using System.Linq;
 using System.Text;
 using FileSynchroniser.Models;
 using FileSynchroniser.ViewModels;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Utils;
 using static FileSynchroniser.ViewModels.UiDispatcher;

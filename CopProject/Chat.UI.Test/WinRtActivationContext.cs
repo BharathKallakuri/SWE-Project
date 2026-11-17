@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Xml.Linq;
-using Microsoft.UI.Xaml.Hosting;
 
 namespace Chat.UI.Test;
 

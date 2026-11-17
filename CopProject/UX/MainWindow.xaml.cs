@@ -1,33 +1,30 @@
-// Authors: Aashritha.Y, Kalyani (UX part)
+﻿// Authors: Aashritha.Y, Kalyani (UX part)
 // Roll numbers: 112301038, 112301016
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Chat;
-using Cloud.Persistence;
 using Cloud.Crash;
+using Cloud.Networking;
+using Cloud.Persistence;
+using Cloud.UI.ViewModels;
 using Cloud.UI.Views;
 using Controller;
 using Controller.Models;
 using Controller.ViewModels;
-using Cloud.Networking;
-using Cloud.UI.ViewModels;
-using Cloud.UI.Views;
 using FileSynchroniser.Models;
-using FileSynchroniser.Views;
 using FileSynchroniser.Network;
+using FileSynchroniser.Views;
 using Incidents;
 using Incidents.Views;
 using LocationTracker.Services;
 using LocationTracker.Views;
-using Utils;
-using Utils.Diagnosis.Views;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -36,11 +33,12 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
-using Whiteboard.Services;
-using Whiteboard.ViewModels;
 using UI.Services;
 using UI.ViewModels;
+using Utils.Diagnosis.Views;
 using UX.Models;
+using Whiteboard.Services;
+using Whiteboard.ViewModels;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
@@ -97,10 +95,8 @@ public sealed partial class MainWindow : Window
         _session.ParticipantCountChanged += count => {
             DispatcherQueue.TryEnqueue(() => SetParticipants(count));
         };
-        _session.MeetingEnded += () =>
-        {
-            DispatcherQueue.TryEnqueue(async () =>
-            {
+        _session.MeetingEnded += () => {
+            DispatcherQueue.TryEnqueue(async () => {
                 if (_inMeeting)
                 {
                     _inMeeting = false;
@@ -296,54 +292,51 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    
+
     private async void EditProfile_Click(object sender, RoutedEventArgs e)
     {
         string? newPicture = null;
-    
-        var pic = new PersonPicture
-        {
+
+        var pic = new PersonPicture {
             Width = 80,
             Height = 80,
             DisplayName = _userId
         };
-    
+
         SetPicture(pic, _picture);
-    
-        var changePic = new Button
-        {
+
+        var changePic = new Button {
             Content = "Change picture",
             HorizontalAlignment = HorizontalAlignment.Center
         };
-    
-        changePic.Click += async (_, _) =>
-        {
+
+        changePic.Click += async (_, _) => {
             string? path = await PickPictureAsync();
-    
+
             if (path != null)
             {
                 newPicture = path;
                 SetPicture(pic, path);
             }
         };
-    
+
         ContentDialog dialog = MakeDialog(
             "Edit profile",
-            new StackPanel
-            {
+            new StackPanel {
                 Spacing = 10,
                 Children = { pic, changePic }
             },
             "Save");
-    
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary){
+
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+        {
             return;
         }
-    
+
         if (newPicture != null)
         {
             _picture = ProfileStore.CopyPicture(newPicture);
-    
+
             ProfileStore.Save(
                 _userEmail,
                 _userId,
@@ -354,9 +347,9 @@ public sealed partial class MainWindow : Window
             if (_inMeeting)
             {
                 _meetingService.UpdateProfilePicture(picBytes);
-            }    
+            }
         }
-    
+
         ShowProfile();
     }
 
@@ -429,12 +422,13 @@ public sealed partial class MainWindow : Window
         ShowScreen("diagnosis");
     }
 
-    
+
     private void DiagnosisBack_Click(object sender, RoutedEventArgs e)
     {
         ShowScreen(_inMeeting ? "meeting" : "dash");
     }
 
+    [Obsolete]
     private void Start_Click(object sender, RoutedEventArgs e)
     {
         // CONTROLLER TEAM: the real meeting ID and port come from the controller.
@@ -452,19 +446,17 @@ public sealed partial class MainWindow : Window
 
         var joinBtn = new Button { Content = "Join", Width = 90 };
         var cancelBtn = new Button { Content = "Cancel", Width = 90 };
-        var buttonPanel = new StackPanel 
-        { 
-            Orientation = Orientation.Horizontal, 
-            HorizontalAlignment = HorizontalAlignment.Right, 
-            Spacing = 10, 
-            Children = { joinBtn, cancelBtn } 
+        var buttonPanel = new StackPanel {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Spacing = 10,
+            Children = { joinBtn, cancelBtn }
         };
 
         var content = new StackPanel { Spacing = 10, Children = { idBox, portBox, error, buttonPanel } };
 
         // PrimaryButtonText and CloseButtonText are empty so WinUI doesn't lock the dialog
-        var dialog = new ContentDialog
-        {
+        var dialog = new ContentDialog {
             Title = "Join meeting",
             Content = content,
             XamlRoot = Root.XamlRoot
@@ -473,15 +465,13 @@ public sealed partial class MainWindow : Window
         bool isCancelled = false;
 
         // Cancel Button: ALWAYS active, immediately closes the dialog
-        cancelBtn.Click += (s, args) =>
-        {
+        cancelBtn.Click += (s, args) => {
             isCancelled = true;
             dialog.Hide();
         };
 
         // Join Button: Runs connection on a BACKGROUND thread without freezing the UI
-        joinBtn.Click += async (s, args) =>
-        {
+        joinBtn.Click += async (s, args) => {
             string id = idBox.Text.Trim();
             string port = portBox.Text.Trim();
 
@@ -596,7 +586,7 @@ public sealed partial class MainWindow : Window
                 _cloudMeetingViewModel =
                     new NotificationServiceViewModel(
                         MessengerFactory.GetMessenger);
-        
+
                 CloudMeetingHost.Children.Add(
                     new NotificationServiceView(_cloudMeetingViewModel));
             }
@@ -849,7 +839,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        if (! int.TryParse(_meetingPort, out int portNumber))
+        if (!int.TryParse(_meetingPort, out int portNumber))
         {
             return;
         }

@@ -2,8 +2,6 @@
 // Roll no.: 112301044
 
 using System.Net;
-using Chat;
-using Controller;
 using Insights.AI;
 using UI.ViewModels;
 using GlobalAdapter = global::UI.Services.ChatClientAdapter;

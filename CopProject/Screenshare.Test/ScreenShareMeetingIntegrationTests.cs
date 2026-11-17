@@ -1,11 +1,11 @@
-// Author = Sumit
+﻿// Author = Sumit
 // Roll Number = 112301032
 
 using Controller;
 using Controller.Models;
+using Screenshare.Tests.Fakes;
 using ScreenShare;
 using ScreenShare.Interfaces;
-using Screenshare.Tests.Fakes;
 using Utils;
 
 namespace Screenshare.Tests;
@@ -25,8 +25,7 @@ public sealed class ScreenShareMeetingIntegrationTests : IDisposable
 
     public ScreenShareMeetingIntegrationTests()
     {
-        _controller = new FakeControllerService
-        {
+        _controller = new FakeControllerService {
             CurrentUser = new ControllerUser("Sumit", "sumit@gmail.com", null, "10.0.0.5", 6000, true),
             Communicator = _network.Server,
         };

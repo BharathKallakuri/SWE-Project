@@ -2,7 +2,6 @@
 /// Roll Number : 112301014
 /// LICENSE : MIT
 
-using System.Collections.Generic;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
@@ -10,7 +9,6 @@ using Whiteboard.Network.Dtos;
 using Whiteboard.Network.Mappers;
 using Whiteboard.Server;
 using Whiteboard.Test.Mocks.Networking;
-using Xunit;
 
 namespace Whiteboard.Test.ClientServer;
 

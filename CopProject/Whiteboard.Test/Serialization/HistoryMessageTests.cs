@@ -10,13 +10,11 @@
 ****/
 
 
-using System;
 using Whiteboard.Items.Shapes;
 using Whiteboard.Network.Dtos;
 using Whiteboard.Network.Mappers;
 using Whiteboard.Network.Messages;
 using Whiteboard.Network.Serializations;
-using Xunit;
 
 namespace Whiteboard.Test.Serialization;
 

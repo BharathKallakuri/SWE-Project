@@ -5,7 +5,6 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 using Whiteboard.Items;

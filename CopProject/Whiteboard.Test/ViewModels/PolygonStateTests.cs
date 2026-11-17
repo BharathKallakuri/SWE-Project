@@ -1,15 +1,11 @@
 ﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 using Whiteboard.Test.Mocks;
 using Whiteboard.ViewModels;
 using Windows.UI;
-using Xunit;
 
 namespace Whiteboard.Test.ViewModels;
 

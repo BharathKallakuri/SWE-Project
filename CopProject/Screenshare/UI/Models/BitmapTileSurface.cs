@@ -1,17 +1,20 @@
-// Author = Sumit
+﻿// Author = Sumit
 // Roll Number = 112301032
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-
 namespace ScreenShare.Models;
+
 
 /// <summary>
 /// a tile surface backed by a WinUI WriteableBitmap. UI thread only.
 /// not covered by unit tests: a WriteableBitmap needs the running WinUI app (see the skipped
 /// BitMapTileSurfaceTests); the tile logic around it is tested with FakeTileSurface.
 /// </summary>
+/// 
+[ExcludeFromCodeCoverage]
 internal sealed class BitmapTileSurface : ITileSurface
 {
     private readonly WriteableBitmap _bitmap;

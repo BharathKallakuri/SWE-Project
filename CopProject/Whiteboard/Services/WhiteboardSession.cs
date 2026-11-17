@@ -8,7 +8,6 @@ using System.Net;
 using Networking;
 using Utils;
 using Whiteboard.Client;
-using Whiteboard.Interfaces;
 using Whiteboard.Server;
 
 namespace Whiteboard.Services;

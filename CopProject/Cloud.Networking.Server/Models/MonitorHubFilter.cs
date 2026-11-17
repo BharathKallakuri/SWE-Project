@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http.Connections.Features;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging.Abstractions;
 

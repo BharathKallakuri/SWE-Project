@@ -11,9 +11,6 @@
 
 
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Whiteboard.Actions;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
@@ -21,7 +18,6 @@ using Whiteboard.Models;
 using Whiteboard.Network.Dtos;
 using Whiteboard.Services;
 using Windows.UI;
-using Xunit;
 using RectangleItem = Whiteboard.Items.Shapes.Rectangle;
 using SquareItem = Whiteboard.Items.Shapes.Square;
 

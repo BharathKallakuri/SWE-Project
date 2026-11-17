@@ -2,8 +2,6 @@
 // Roll no.: 112301045
 
 using System;
-using System.Linq;
-using Chat;
 
 namespace Chat.Test;
 

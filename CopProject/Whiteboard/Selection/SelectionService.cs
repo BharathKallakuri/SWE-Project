@@ -8,7 +8,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Items.Shapes;

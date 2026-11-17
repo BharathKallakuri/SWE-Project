@@ -1,16 +1,12 @@
 ﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Items.Shapes;
 using Whiteboard.Services;
 using WhiteboardSuggestion.Core;
 using Windows.UI;
-using Xunit;
 
 namespace Whiteboard.Test.Services;
 
