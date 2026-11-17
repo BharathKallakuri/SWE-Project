@@ -144,7 +144,7 @@ public class PolygonState : ViewModelStateBase
                 Zindex = GetNextZIndex()
             };
 
-            Task.Run(() => WhiteboardClient.AddItem(item));
+            DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
         }
 
         Reset();

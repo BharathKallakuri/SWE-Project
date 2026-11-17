@@ -355,10 +355,7 @@ public sealed class ChatClientAdapter : IDisposable
             _client.ParticipantsChanged -= OnParticipantsChanged;
         }
 
-        if (_server is not null)
-        {
-            _server.OperationApplied -= OnOperationApplied;
-        }
+        _server?.OperationApplied -= OnOperationApplied;
 
         if (_controller is not null)
         {

@@ -88,13 +88,13 @@ public sealed class ClientController : IControllerService
     // Not applicable on the client side. Use a HostController to start/end meetings.
     public bool StartMeeting()
     {
-        Trace.TraceWarning("StartMeeting called on Client. Only the host can start meetings.");
+        Trace.TraceWarning("[Controller]: StartMeeting called on Client. Only the host can start meetings.");
         return false;
     }
 
     public bool EndMeeting()
     {
-        Trace.TraceWarning("EndMeeting called on Client. Only the host can end meetings.");
+        Trace.TraceWarning("[Controller]: EndMeeting called on Client. Only the host can end meetings.");
         return false;
     }
 
@@ -103,7 +103,7 @@ public sealed class ClientController : IControllerService
     {
         if (!IPAddress.TryParse(hostIp, out IPAddress? ipAddress))
         {
-            Trace.TraceWarning($"JoinMeeting failed: '{hostIp}' is not a valid IP address.");
+            Trace.TraceWarning($"[Controller]: JoinMeeting failed: '{hostIp}' is not a valid IP address.");
             return false;
         }
         var serverEndPoint = new IPEndPoint(ipAddress, hostPort);
@@ -120,7 +120,7 @@ public sealed class ClientController : IControllerService
         if(comm == null || comm.ListenPort == 0)
         {
             (comm as IDisposable)?.Dispose() ;
-            Trace.TraceWarning($"failed to connect to host at {hostIp}:{hostPort}");
+            Trace.TraceWarning($"[Controller]: failed to connect to host at {hostIp}:{hostPort}");
             return false;
         }
         _communicator = comm;
@@ -141,9 +141,9 @@ public sealed class ClientController : IControllerService
         LastErrorMessage = null;
         string message = Protocol.FormatJoinRequest(user);
         SendToHost(hostIp, hostPort, message);
-        Trace.TraceInformation($"Sent JOIN for user '{user.Username}' to {hostIp}:{hostPort}.");
-        // Wait up to 1 second for host response.
-        JoinResponseEvent.Wait(TimeSpan.FromMilliseconds(1000));
+        Trace.TraceInformation($"[Controller]: Sent JOIN for user '{user.Username}' to {hostIp}:{hostPort}.");
+        // Wait up to 5 second for host response.
+        JoinResponseEvent.Wait(TimeSpan.FromMilliseconds(5000));
         if (!IsJoined)
         {
             if (string.IsNullOrEmpty(LastErrorMessage))
@@ -159,16 +159,16 @@ public sealed class ClientController : IControllerService
     {
         if (_hostIp == null)
         {
-            Trace.TraceWarning("LeaveMeeting called but no host has been joined yet.");
+            Trace.TraceWarning("[Controller]: LeaveMeeting called but no host has been joined yet.");
             return;
         }
         string userKey = _currentUser?.UserKey ?? user.UserKey;
         string message = Protocol.FormatLeaveRequest(userKey);
         SendToHost(_hostIp, _hostPort, message);
-        Trace.TraceInformation($"Sent LEAVE for user '{user.Gmail}' to {_hostIp}:{_hostPort}.");
+        Trace.TraceInformation($"[Controller]: Sent LEAVE for user '{user.Gmail}' to {_hostIp}:{_hostPort}.");
 
         // Allow background SendingQueueListenerClient thread to flush the LEAVE packet before closing socket.
-        Thread.Sleep(150);
+        Thread.Sleep(450);
 
         // Clear remembered host and local tracking.
         _hostIp = null;
@@ -194,7 +194,7 @@ public sealed class ClientController : IControllerService
     {
         if (_communicator == null)
         {
-            Trace.TraceWarning("SendToHost called but communicator is not initialized.");
+            Trace.TraceWarning("[Controller]: SendToHost called but communicator is not initialized.");
             return;
         }
 
@@ -277,11 +277,11 @@ public sealed class ClientController : IControllerService
                 string message = Protocol.FormatLeaveRequest(_currentUser.UserKey);
                 SendToHost(_hostIp, _hostPort, message);
                 Thread.Sleep(150);
-                Trace.TraceInformation($"Dispose: auto-sent LEAVE for '{_currentUser.Username}' to {_hostIp}:{_hostPort}.");
+                Trace.TraceInformation($"[Controller]: Dispose: auto-sent LEAVE for '{_currentUser.Username}' to {_hostIp}:{_hostPort}.");
             }
             catch (Exception ex)
             {
-                Trace.TraceWarning($"Dispose: failed to send LEAVE: {ex.Message}");
+                Trace.TraceWarning($"[Controller]: Dispose: failed to send LEAVE: {ex.Message}");
             }
         }
 
@@ -301,3 +301,4 @@ public sealed class ClientController : IControllerService
         }
     }
 }
+

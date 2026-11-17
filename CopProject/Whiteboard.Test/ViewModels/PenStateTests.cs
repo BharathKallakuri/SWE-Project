@@ -4,12 +4,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.UI;
 using Whiteboard.Interfaces;
 using Whiteboard.Items.Shapes;
 using Whiteboard.Services;
 using Whiteboard.Test.Mocks;
 using Whiteboard.ViewModels;
+using Windows.UI;
 using Xunit;
 
 namespace Whiteboard.Test.ViewModels;
@@ -140,7 +140,7 @@ public class PenStateTests
     /// Ensure the core functionality of drawing, sending to client and clearing preview works
     /// </summary>
     [Fact]
-    public void PointerReleased_WithAtLeastTwoPoints_SubmitsAndClearsPreview()
+    public async Task PointerReleased_WithAtLeastTwoPoints_SubmitsAndClearsPreview()
     {
         PenState state = new(_client, _preview, _toolbar);
 
@@ -150,8 +150,7 @@ public class PenStateTests
 
         Assert.Equal(1, _preview.ClearCount);
 
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
-        Assert.True(wasAdded, "Item was not added in due time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
 
         Assert.Single(_client.AddedItems);
         IFreehand submitted = Assert.IsAssignableFrom<IFreehand>(_client.AddedItems[0]);
@@ -240,11 +239,10 @@ public class PenStateTests
     }
 
     [Fact]
-    public void PointerReleased_WithSmartShapeEnabled_ReplacesStrokeWithRecognizedShape()
+    public async Task PointerReleased_WithSmartShapeEnabled_ReplacesStrokeWithRecognizedShape()
     {
         Circle circle = new() { Center = new Point2D(50, 50), Radius = 20 };
-        MockShapeRecognitionService mockService = new()
-        {
+        MockShapeRecognitionService mockService = new() {
             IsEnabled = true,
             RecognizedShapeToReturn = circle
         };
@@ -255,21 +253,18 @@ public class PenStateTests
         state.PointerMoved(new Point2D(20, 20));
         state.PointerReleased(new Point2D(30, 30));
 
-        // Spin until recognition task finishes replacement
-        bool replaced = SpinWait.SpinUntil(() => _client.DeletedItemIds.Count > 0 && _client.AddedItems.Count == 2, TimeSpan.FromSeconds(3));
+        await (state.DrawingTask ?? Task.CompletedTask);
 
-        Assert.True(replaced);
         Assert.Single(_client.DeletedItemIds);
         Assert.Equal(_client.AddedItems[0].Id, _client.DeletedItemIds[0]);
         Assert.Same(circle, _client.AddedItems[1]);
     }
 
     [Fact]
-    public void PointerReleased_WithSmartShapeDisabled_KeepsFreehandOnly()
+    public async Task PointerReleased_WithSmartShapeDisabled_KeepsFreehandOnly()
     {
         Circle circle = new() { Center = new Point2D(50, 50), Radius = 20 };
-        MockShapeRecognitionService mockService = new()
-        {
+        MockShapeRecognitionService mockService = new() {
             IsEnabled = false,
             RecognizedShapeToReturn = circle
         };
@@ -280,9 +275,7 @@ public class PenStateTests
         state.PointerMoved(new Point2D(20, 20));
         state.PointerReleased(new Point2D(30, 30));
 
-        bool added = SpinWait.SpinUntil(() => _client.AddedItems.Count == 1, TimeSpan.FromSeconds(2));
-        Assert.True(added);
-        Thread.Sleep(50);
+        await (state.DrawingTask ?? Task.CompletedTask);
 
         Assert.Empty(_client.DeletedItemIds);
         Assert.Single(_client.AddedItems);
@@ -290,10 +283,9 @@ public class PenStateTests
     }
 
     [Fact]
-    public void PointerReleased_WithSmartShapeException_KeepsFreehandWithoutCrashing()
+    public async Task PointerReleased_WithSmartShapeException_KeepsFreehandWithoutCrashing()
     {
-        MockShapeRecognitionService mockService = new()
-        {
+        MockShapeRecognitionService mockService = new() {
             IsEnabled = true,
             ThrowException = true
         };
@@ -304,9 +296,7 @@ public class PenStateTests
         state.PointerMoved(new Point2D(20, 20));
         state.PointerReleased(new Point2D(30, 30));
 
-        bool added = SpinWait.SpinUntil(() => _client.AddedItems.Count == 1, TimeSpan.FromSeconds(2));
-        Assert.True(added);
-        Thread.Sleep(50);
+        await (state.DrawingTask ?? Task.CompletedTask);
 
         Assert.Empty(_client.DeletedItemIds);
         Assert.Single(_client.AddedItems);

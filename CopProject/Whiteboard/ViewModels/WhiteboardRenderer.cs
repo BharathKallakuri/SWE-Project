@@ -8,22 +8,22 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
+using Windows.Foundation;
+using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
+using XamlLine = Microsoft.UI.Xaml.Shapes.Line;
+using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
 using XamlPolyline = Microsoft.UI.Xaml.Shapes.Polyline;
 using XamlRectangle = Microsoft.UI.Xaml.Shapes.Rectangle;
-using XamlEllipse = Microsoft.UI.Xaml.Shapes.Ellipse;
-using XamlPolygon = Microsoft.UI.Xaml.Shapes.Polygon;
-using XamlLine = Microsoft.UI.Xaml.Shapes.Line;
-using Windows.Foundation;
 
 namespace Whiteboard.ViewModels;
 
-[ExcludeFromCodeCoverage]
 internal sealed class WhiteboardRenderer : IDisposable
 {
     private readonly IWhiteboard _board;
@@ -70,6 +70,8 @@ internal sealed class WhiteboardRenderer : IDisposable
         {
             RenderAdded(item);
         }
+
+        Trace.TraceInformation($"[Whiteboard][WhiteboardRenderer] Initialized with {_board.Items.Count} items.");
     }
 
     public void Dispose()
@@ -78,6 +80,7 @@ internal sealed class WhiteboardRenderer : IDisposable
         _board.ItemUpdated -= RenderUpdated;
         _board.ItemDeleted -= RemoveDeleted;
         _selectState.SelectionChanged -= RefreshSelectionOutline;
+        Trace.TraceInformation("[Whiteboard][WhiteboardRenderer] Disposed.");
     }
 
     private void RenderAdded(IItem item)
@@ -92,6 +95,7 @@ internal sealed class WhiteboardRenderer : IDisposable
         Canvas.SetZIndex(visual, (int)item.Zindex);
         _visuals[item.Id] = visual;
         _canvas.Children.Add(visual);
+        Trace.TraceInformation($"[Whiteboard][WhiteboardRenderer] Visual added: Item={item.Id}, Type={item.GetType().Name}.");
 
         // A freshly created empty textbox gets focus so the user can start typing
         if (visual is TextBox textBox && item is ITextbox { Content: "" })
@@ -215,6 +219,7 @@ internal sealed class WhiteboardRenderer : IDisposable
             _isResizing = true;
             _resizeHandle?.CapturePointer(e.Pointer);
             e.Handled = true;
+            Trace.TraceInformation("[Whiteboard][WhiteboardRenderer] Resize handle pressed.");
         }
     }
 
@@ -236,8 +241,9 @@ internal sealed class WhiteboardRenderer : IDisposable
         {
             _selectState.EndResize(commit: true);
             _isResizing = false;
-            _resizeHandle.ReleasePointerCapture(e.Pointer);
+            _resizeHandle?.ReleasePointerCapture(e.Pointer);
             e.Handled = true;
+            Trace.TraceInformation("[Whiteboard][WhiteboardRenderer] Resize handle released.");
         }
     }
 
@@ -273,6 +279,7 @@ internal sealed class WhiteboardRenderer : IDisposable
         if (_visuals.Remove(id, out Microsoft.UI.Xaml.UIElement? visual))
         {
             _canvas.Children.Remove(visual);
+            Trace.TraceInformation($"[Whiteboard][WhiteboardRenderer] Visual removed: Item={id}.");
         }
 
         for (int index = _canvas.Children.Count - 1; index >= 0; index--)
@@ -441,7 +448,7 @@ internal sealed class WhiteboardRenderer : IDisposable
             Tag = item.Id
         };
 
-        Canvas.SetLeft(visual, item.Center.X - item.Radius); 
+        Canvas.SetLeft(visual, item.Center.X - item.Radius);
         Canvas.SetTop(visual, item.Center.Y - item.Radius);
         ToolTipService.SetToolTip(visual, new ToolTip(item.CreatedBy, item.CreatedDateTime));
         return visual;

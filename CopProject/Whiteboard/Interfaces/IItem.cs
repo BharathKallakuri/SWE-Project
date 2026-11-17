@@ -1,4 +1,4 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
 using System;
@@ -76,7 +76,6 @@ public interface IItem
 /// </summary>
 /// <param name="X">X-coordinate of the point</param>
 /// <param name="Y">Y-coordinate of the point</param>
-[ExcludeFromCodeCoverage]
 public record Point2D(
     double X,
     double Y
@@ -89,7 +88,6 @@ public record Point2D(
 /// <param name="Top">Y-coordinate of the topmost edge of the rectangle</param>
 /// <param name="Width">Width of the rectangle</param>
 /// <param name="Height">Height of the rectangle</param>
-[ExcludeFromCodeCoverage]
 public record Rect2D(
     double Left,
     double Top,

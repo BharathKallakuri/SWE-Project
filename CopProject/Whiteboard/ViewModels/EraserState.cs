@@ -7,6 +7,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
 
@@ -33,9 +34,11 @@ public class EraserState : IViewModelState
         IItem? item = _whiteboardClient.Canvas.HitTestTopmost(new Point2D(point.X, point.Y));
         if (item is null)
         {
+            Trace.TraceInformation($"[Whiteboard][EraserState] Eraser missed at ({point.X}, {point.Y}).");
             return;
         }
 
+        Trace.TraceInformation($"[Whiteboard][EraserState] Erasing item {item.Id} ({item.GetType().Name}) at ({point.X}, {point.Y}).");
         _whiteboardClient.DeleteItem(item.Id);
     }
 

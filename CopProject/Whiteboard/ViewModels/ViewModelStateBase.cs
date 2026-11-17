@@ -2,6 +2,7 @@
 /// LICENSE : MIT
 
 using System;
+using System.Threading.Tasks;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
 
@@ -12,6 +13,10 @@ namespace Whiteboard.ViewModels;
 /// </summary>
 public abstract class ViewModelStateBase : IViewModelState
 {
+    /// <summary>
+    /// Gets the background task initiated by the last drawing or submission operation, if any.
+    /// </summary>
+    public Task? DrawingTask { get; protected set; }
     /// <summary>
     /// The whiteboard client
     /// </summary>

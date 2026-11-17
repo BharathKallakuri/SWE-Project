@@ -1,8 +1,9 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// Roll No : 112301024
 /// LICENSE : MIT
 
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
@@ -79,6 +80,7 @@ public class LineState : ViewModelStateBase
                 Zindex = GetNextZIndex()
             };
 
+            Trace.TraceInformation($"[Whiteboard][LineState] Line started at ({_startPoint.X}, {_startPoint.Y}).");
             // Preview the line
             Preview.ShowPreview(_line);
         }
@@ -95,7 +97,8 @@ public class LineState : ViewModelStateBase
                 if (HasNonZeroLength(_startPoint, point))
                 {
                     ILine item = _line;
-                    Task.Run(() => WhiteboardClient.AddItem(item));
+                    Trace.TraceInformation($"[Whiteboard][LineState] Line completed: from ({_startPoint.X}, {_startPoint.Y}) to ({point.X}, {point.Y}).");
+                    DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
                 }
             }
 
@@ -136,7 +139,7 @@ public class LineState : ViewModelStateBase
             {
                 _line.End = point;
                 ILine item = _line;
-                Task.Run(() => WhiteboardClient.AddItem(item));
+                DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
                 Reset();
             }
         }

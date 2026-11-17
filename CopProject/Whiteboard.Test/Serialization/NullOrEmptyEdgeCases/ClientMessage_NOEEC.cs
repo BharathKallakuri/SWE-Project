@@ -1,4 +1,4 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// Roll No : 112301024
 /// LICENSE : MIT
 
@@ -20,7 +20,7 @@ public class ClientMessageSerializer_NOEEC
     public void TestString()
     {
         // 1. Act
-        string serialized = ClientMessageStringSerializer.Serialize(null);
+        string serialized = ClientMessageStringSerializer.Serialize(null!);
 
         // 2. Assert
         Assert.Equivalent(serialized, "");
@@ -33,7 +33,7 @@ public class ClientMessageSerializer_NOEEC
     public void TestByte()
     {
         // 1. Act
-        byte[] serialized = new ClientMessageByteSerializer().Serialize(null);
+        byte[] serialized = new ClientMessageByteSerializer().Serialize(null!);
 
         // 2. Assert
         Assert.Empty(serialized);

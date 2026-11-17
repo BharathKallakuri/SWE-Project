@@ -10,11 +10,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using Whiteboard.Interfaces;
 using Whiteboard.Services;
-using System.Diagnostics;
 
 namespace Whiteboard.Actions;
 
@@ -81,7 +81,7 @@ public class DeleteItemsAction : IWhiteboardAction
         // Find and copy every item before deleting any of them.
         foreach (Guid id in _itemIds)
         {
-            if (!whiteboard.Items.TryGetValue(id, out IItem item))
+            if (!whiteboard.Items.TryGetValue(id, out IItem? item) || item is null)
             {
                 Trace.TraceError($"[Whiteboard][DeleteItemsAction][Error] Deletion rejected: item does not exist. User={UserId}, Action={ActionId}, Item={id}");
                 throw new InvalidOperationException(

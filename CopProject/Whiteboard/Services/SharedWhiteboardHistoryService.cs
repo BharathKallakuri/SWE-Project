@@ -12,13 +12,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using Whiteboard.Interfaces;
+using Whiteboard.Network.Dtos;
 using Whiteboard.Network.Mappers;
 using Whiteboard.Network.Serializations;
-using System.Linq;
-using System.IO;
-using Whiteboard.Network.Dtos;
-using System.Diagnostics;
 
 namespace Whiteboard.Services;
 
@@ -416,15 +416,15 @@ public sealed class SharedWhiteboardHistoryService
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
         ArgumentNullException.ThrowIfNull(items);
 
-        IItem[] restoredItems = items.Select(ItemSnapshot.Copy).ToArray(); 
+        IItem[] restoredItems = items.Select(ItemSnapshot.Copy).ToArray();
 
-        if(restoredItems.Select(item => item.Id).Distinct().Count() != restoredItems.Length)
+        if (restoredItems.Select(item => item.Id).Distinct().Count() != restoredItems.Length)
         {
             Trace.TraceError($"[Whiteboard][SharedWhiteboardHistoryService][Error] Restore rejected: snapshot contains duplicate item IDs. User={userId}, Items={restoredItems.Length}");
             throw new InvalidDataException("Snapshot contains duplicate item IDs");
         }
 
-        foreach(Guid id in _canvas.Items.Keys.ToArray())
+        foreach (Guid id in _canvas.Items.Keys.ToArray())
         {
             _canvas.DeleteItem(id);
         }

@@ -1,6 +1,7 @@
 // Author = Balabadra Lepakshi Kalyan
 // Roll Number = 112301003
 using System;
+using System.Diagnostics;
 using System.Windows.Input;
 
 namespace Controller.ViewModels;
@@ -15,5 +16,10 @@ public sealed class RelayCommand : ICommand
     public event EventHandler? CanExecuteChanged { add { } remove { } }
 
     public bool CanExecute(object? parameter) => true;
-    public void Execute(object? parameter) => action();
+
+    public void Execute(object? parameter)
+    {
+        Trace.TraceInformation("[Controller]: Executing command.");
+        action();
+    }
 }

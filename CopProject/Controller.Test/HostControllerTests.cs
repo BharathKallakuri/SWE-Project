@@ -1,4 +1,4 @@
-//Author : Saideep.
+﻿//Author : Saideep.
 // Roll No : 112301018.
 using Controller;
 using Utils;
@@ -11,8 +11,15 @@ class TestNotificationHandler : IUserNotificationHandler
     public ControllerUser? LastJoinedUser;
     public ControllerUser? LastLeftUser;
 
-    public void OnUserJoined(ControllerUser user) => LastJoinedUser = user;
-    public void OnUserLeft(ControllerUser user) => LastLeftUser = user;
+    public void OnUserJoined(ControllerUser user)
+    {
+        LastJoinedUser = user;
+    }
+
+    public void OnUserLeft(ControllerUser user)
+    {
+        LastLeftUser = user;
+    }
 }
 
 public class HostControllerTests
@@ -119,6 +126,6 @@ public class HostControllerTests
         Assert.True(host.ListenPort > 0);
         Assert.NotNull(host.SessionManager);
         host.Dispose();
-        host.Dispose(); 
+        host.Dispose();
     }
 }

@@ -1,14 +1,14 @@
-/// Author : Karthik Krishna M
+﻿/// Author : Karthik Krishna M
 /// Roll Number : 112301014
 /// LICENSE : MIT
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using Cloud.Persistence;
 using Whiteboard.Models;
 using Whiteboard.Network.Dtos;
@@ -47,38 +47,36 @@ public sealed class WhiteboardSnapshotStore
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
         ArgumentNullException.ThrowIfNull(items);
 
-       var snapshot = new WhiteboardSnapshot
-       {
+        var snapshot = new WhiteboardSnapshot {
             SessionId = sessionId,
             SnapshotId = Guid.NewGuid().ToString("N"),
             SavedBy = userId,
             SavedAt = DateTimeOffset.UtcNow,
             Items = items.ToList()
-       };
+        };
 
-       byte[] data = JsonSerializer.SerializeToUtf8Bytes(snapshot);
-       string key = GetSnapshotKey(sessionId, snapshot.SnapshotId);
+        byte[] data = JsonSerializer.SerializeToUtf8Bytes(snapshot);
+        string key = GetSnapshotKey(sessionId, snapshot.SnapshotId);
 
-       Trace.TraceInformation($"[Whiteboard][WhiteboardSnapshotStore][SaveSnapshotAsync][Information] " +
-        $"Saving snapshot {snapshot.SnapshotId} with {snapshot.Items.Count} items");
-        
-       if(!await _storage.Create(key, data))
-       {
+        Trace.TraceInformation($"[Whiteboard][WhiteboardSnapshotStore][SaveSnapshotAsync][Information] " +
+         $"Saving snapshot {snapshot.SnapshotId} with {snapshot.Items.Count} items");
+
+        if (!await _storage.Create(key, data))
+        {
             Trace.TraceError($"[Whiteboard][WhiteboardSnapshotStore][SaveSnapshotAsync][Error] " +
             $"Cloud failed to save snapshot {snapshot.SnapshotId}");
 
             throw new InvalidOperationException("Cloud failed to save whiteboard snapshot");
-       }
+        }
 
-       Trace.TraceInformation($"[Whiteboard][WhiteboardSnapshotStore][SaveSnapshotAsync][Information] " +
-        $"Saved snapshot {snapshot.SnapshotId}.");
+        Trace.TraceInformation($"[Whiteboard][WhiteboardSnapshotStore][SaveSnapshotAsync][Information] " +
+         $"Saved snapshot {snapshot.SnapshotId}.");
 
-       return new WhiteboardSnapshotSummary
-       {
+        return new WhiteboardSnapshotSummary {
             SnapshotId = snapshot.SnapshotId,
             SavedBy = snapshot.SavedBy,
             SavedAt = snapshot.SavedAt
-       };
+        };
     }
 
     public async Task<List<WhiteboardSnapshotSummary>> ListAsync(string sessionId)
@@ -87,9 +85,9 @@ public sealed class WhiteboardSnapshotStore
 
         Trace.TraceInformation("[Whiteboard][WhiteboardSnapshotStore][ListAsync][Information] Listing snapshots");
 
-        var (success, keys) = await _storage.GetAllKeys();
+        (bool success, List<string>? keys) = await _storage.GetAllKeys();
 
-        if(!success)
+        if (!success)
         {
             Trace.TraceError("[Whiteboard][WhiteboardSnapshotStore][ListAsync][Error] Cloud failed to list snapshot keys");
 
@@ -99,11 +97,11 @@ public sealed class WhiteboardSnapshotStore
         string prefix = GetKeyPrefix(sessionId);
         var snapshots = new List<WhiteboardSnapshotSummary>();
 
-        foreach(string key in keys.Where(key => key.StartsWith(prefix, StringComparison.Ordinal)))
+        foreach (string key in keys.Where(key => key.StartsWith(prefix, StringComparison.Ordinal)))
         {
-            var (readSuccess, data) = await _storage.Read(key);
+            (bool readSuccess, byte[]? data) = await _storage.Read(key);
 
-            if(!readSuccess)
+            if (!readSuccess)
             {
                 Trace.TraceWarning("[Whiteboard][WhiteboardSnapshotStore][ListAsync][Warning] Could not read a snapshot; skipping it");
 
@@ -112,15 +110,14 @@ public sealed class WhiteboardSnapshotStore
 
             WhiteboardSnapshot? snapshot = JsonSerializer.Deserialize<WhiteboardSnapshot>(data);
 
-            if(snapshot is null || snapshot.SessionId != sessionId)
+            if (snapshot is null || snapshot.SessionId != sessionId)
             {
                 Trace.TraceWarning("[Whiteboard][WhiteboardSnapshotStore][ListAsync][Warning] " +
                 "Snapshot data was invalid or belonged to another session; skipping it");
                 continue;
             }
 
-            snapshots.Add(new WhiteboardSnapshotSummary
-            {
+            snapshots.Add(new WhiteboardSnapshotSummary {
                 SnapshotId = snapshot.SnapshotId,
                 SavedBy = snapshot.SavedBy,
                 SavedAt = snapshot.SavedAt
@@ -142,7 +139,7 @@ public sealed class WhiteboardSnapshotStore
 
         Trace.TraceInformation("[Whiteboard][WhiteboardSnapshotStore][LoadAsync][Information] Loading selected snapshot");
 
-        var (success, data) = await _storage.Read(GetSnapshotKey(sessionId, snapshotId));
+        (bool success, byte[]? data) = await _storage.Read(GetSnapshotKey(sessionId, snapshotId));
 
         if (!success)
         {
@@ -153,11 +150,11 @@ public sealed class WhiteboardSnapshotStore
 
         WhiteboardSnapshot? snapshot = JsonSerializer.Deserialize<WhiteboardSnapshot>(data);
 
-        if(snapshot is null || snapshot.SessionId != sessionId || snapshot.SnapshotId != snapshotId)
+        if (snapshot is null || snapshot.SessionId != sessionId || snapshot.SnapshotId != snapshotId)
         {
             Trace.TraceError("[Whiteboard][WhiteboardSnapshotStore][LoadAsync][Error] " +
             "Loaded snapshot data was invalid.");
-            
+
             throw new InvalidOperationException("The loaded snapshot is invalid");
         }
 
