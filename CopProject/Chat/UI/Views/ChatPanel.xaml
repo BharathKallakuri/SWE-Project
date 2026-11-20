@@ -216,7 +216,8 @@ Roll no.: 112301044
 
                 <Grid Grid.Row="1">
                     <Grid Visibility="{Binding ConversationVisibility}">
-                        <ListView x:Name="MessagesList" Loaded="MessagesList_Loaded" ItemsSource="{Binding Messages}" ItemTemplate="{StaticResource MessageTemplate}"
+                        <ListView x:Name="MessagesList" Loaded="MessagesList_Loaded" SizeChanged="MessagesList_SizeChanged"
+                                  ItemsSource="{Binding Messages}" ItemTemplate="{StaticResource MessageTemplate}"
                                   SelectionMode="None" IsItemClickEnabled="False" Background="Transparent" BorderThickness="0" Padding="12,14,12,8"
                                   ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListView.ItemContainerStyle>
@@ -242,7 +243,6 @@ Roll no.: 112301044
                                     <TextBlock Text="{Binding ThreadHeaderText}" FontSize="13" FontWeight="SemiBold" Foreground="#1F2937"/>
                                     <TextBlock Text="Replies in this conversation" FontSize="10" Foreground="#6B7280"/>
                                 </StackPanel>
-                                <Button Grid.Column="2" Content="×" Command="{Binding CloseThreadCommand}" FontSize="18" Padding="5,0" MinWidth="28" Background="Transparent" Foreground="#5F6B7A" BorderThickness="0"/>
                             </Grid>
                         </Border>
                         <Border Grid.Row="1" Margin="12,10" Padding="10" CornerRadius="10" Background="#F5F7FA" BorderBrush="#D9E2EC" BorderThickness="1">
@@ -255,7 +255,9 @@ Roll no.: 112301044
                                 <TextBlock Text="{Binding ActiveThreadRoot.DisplayContent}" TextWrapping="Wrap" FontSize="12" Foreground="#1F2937"/>
                             </StackPanel>
                         </Border>
-                        <ListView x:Name="ThreadMessagesList" Grid.Row="2" Loaded="ThreadMessagesList_Loaded" ItemsSource="{Binding ThreadMessages}"
+                        <ListView x:Name="ThreadMessagesList" Grid.Row="2" Loaded="ThreadMessagesList_Loaded"
+                                  SizeChanged="ThreadMessagesList_SizeChanged"
+                                  ItemsSource="{Binding ThreadMessages}"
                                   ItemTemplate="{StaticResource MessageTemplate}" SelectionMode="None" Background="Transparent" BorderThickness="0"
                                   Padding="12,8,12,8" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListView.ItemContainerStyle>
