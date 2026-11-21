@@ -227,4 +227,25 @@ public class ShapeRecognitionServiceTests
         IItem? result = await service.TryRecognizeShapeAsync(CreateSampleFreehand());
         Assert.Null(result);
     }
+
+    [Fact]
+    public async Task TryRecognizeShapeAsync_WhenFreehandOrPointsNull_ReturnsNull()
+    {
+        ShapeRecognitionService service = new(new MockShapeSuggestionService()) { IsEnabled = true };
+
+        Assert.Null(await service.TryRecognizeShapeAsync(null!));
+
+        FreehandItem nullPoints = new() { Points = null! };
+        Assert.Null(await service.TryRecognizeShapeAsync(nullPoints));
+    }
+
+    [Fact]
+    public async Task TryRecognizeShapeAsync_WhenSuggestionResultIsNull_ReturnsNull()
+    {
+        MockShapeSuggestionService mockService = new() { ResultToReturn = null! };
+        ShapeRecognitionService service = new(mockService) { IsEnabled = true };
+
+        IItem? result = await service.TryRecognizeShapeAsync(CreateSampleFreehand());
+        Assert.Null(result);
+    }
 }
