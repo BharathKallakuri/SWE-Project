@@ -5,9 +5,11 @@
 using System.Text.Json;
 using Cloud.Persistence;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Whiteboard.Interfaces;
 using Whiteboard.Models;
 using Whiteboard.Services;
+using Whiteboard.Test.Views;
 
 namespace Whiteboard.Test.Services;
 
@@ -156,6 +158,58 @@ public class CloudExportIntegrationTests
             return Task.FromResult(createResult);
         }
 
+        public Task<(bool Success, byte[] Data)> Read(string key) => Task.FromResult((false, Array.Empty<byte>()));
+        public Task<(bool Success, string Etag)> ReadEtag(string key) => Task.FromResult((false, string.Empty));
+        public Task<bool> Update(string key, byte[] data, string etag) => Task.FromResult(false);
+        public Task<bool> Delete(string key) => Task.FromResult(false);
+        public Task<bool> CreateAll(Dictionary<string, byte[]> items) => Task.FromResult(false);
+        public Task<(bool Success, Dictionary<string, byte[]>)> ReadAll(string[] keys) => Task.FromResult((false, new Dictionary<string, byte[]>()));
+        public Task<(bool Success, List<string>)> GetAllKeys() => Task.FromResult((true, new List<string>()));
+        public Task<(bool Success, Dictionary<string, string>)> ReadAllEtags() => Task.FromResult((false, new Dictionary<string, string>()));
+        public Task<(bool Success, Dictionary<string, string> Etags)> ReadEtags(string[] keys) => Task.FromResult((false, new Dictionary<string, string>()));
+        public Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags) => Task.FromResult(false);
+        public Task<bool> DeleteAll(string[] keys) => Task.FromResult(false);
+        public Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int n) => Task.FromResult((true, new Dictionary<string, byte[]>()));
+    }
+}
+
+[Collection("XamlUi")]
+public class CloudExportUiTests(XamlUiThreadFixture ui)
+{
+    [Fact]
+    public async Task ExportToCloudAsync_DelegatesToCanvasRenderAndSavesPngAndJpeg()
+    {
+        Canvas? canvas = null;
+        await ui.RunAsync(() => canvas = new Canvas());
+
+        var pngData = new CanvasExportData {
+            ImageData = [1, 2, 3],
+            ContentType = "image/png",
+            FileName = "board.png",
+            PixelWidth = 50,
+            PixelHeight = 50,
+            ExportDateTime = DateTime.UtcNow
+        };
+        var storage = new RecordingStorage();
+        var cloudExport = new CloudExport(new StubCanvasRender(pngData), storage);
+
+        Assert.True(await cloudExport.ExportToCloudAsync(canvas!, "b1", "u1", isJpeg: false));
+        Assert.Equal("u1:b1:board.png", storage.LastKey);
+
+        Assert.True(await cloudExport.ExportToCloudAsync(canvas!, "b1", "u1", isJpeg: true));
+    }
+
+    private sealed class StubCanvasRender(CanvasExportData data) : ICanvasRender
+    {
+        public Task<byte[]> RenderToPngAsync(UIElement element) => Task.FromResult(data.ImageData);
+        public Task<byte[]> RenderToJpegAsync(UIElement element) => Task.FromResult(data.ImageData);
+        public Task<CanvasExportData> CreateExportDataAsync(UIElement element, string whiteboardId, bool isJpeg = false) => Task.FromResult(data);
+    }
+
+    private sealed class RecordingStorage : IStorage
+    {
+        public string? LastKey { get; private set; }
+        public Task<bool> Create(string key, byte[] data) { LastKey = key; return Task.FromResult(true); }
         public Task<(bool Success, byte[] Data)> Read(string key) => Task.FromResult((false, Array.Empty<byte>()));
         public Task<(bool Success, string Etag)> ReadEtag(string key) => Task.FromResult((false, string.Empty));
         public Task<bool> Update(string key, byte[] data, string etag) => Task.FromResult(false);
