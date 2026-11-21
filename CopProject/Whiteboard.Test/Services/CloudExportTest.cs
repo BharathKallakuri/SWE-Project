@@ -15,6 +15,7 @@ namespace Whiteboard.Test.Services;
 
 public class CloudExportIntegrationTests
 {
+    [Fact]
     public async Task ExportToCloudAsync_StoreExportData()
     {
         var exportData = new CanvasExportData {
@@ -158,18 +159,65 @@ public class CloudExportIntegrationTests
             return Task.FromResult(createResult);
         }
 
-        public Task<(bool Success, byte[] Data)> Read(string key) => Task.FromResult((false, Array.Empty<byte>()));
-        public Task<(bool Success, string Etag)> ReadEtag(string key) => Task.FromResult((false, string.Empty));
-        public Task<bool> Update(string key, byte[] data, string etag) => Task.FromResult(false);
-        public Task<bool> Delete(string key) => Task.FromResult(false);
-        public Task<bool> CreateAll(Dictionary<string, byte[]> items) => Task.FromResult(false);
-        public Task<(bool Success, Dictionary<string, byte[]>)> ReadAll(string[] keys) => Task.FromResult((false, new Dictionary<string, byte[]>()));
-        public Task<(bool Success, List<string>)> GetAllKeys() => Task.FromResult((true, new List<string>()));
-        public Task<(bool Success, Dictionary<string, string>)> ReadAllEtags() => Task.FromResult((false, new Dictionary<string, string>()));
-        public Task<(bool Success, Dictionary<string, string> Etags)> ReadEtags(string[] keys) => Task.FromResult((false, new Dictionary<string, string>()));
-        public Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags) => Task.FromResult(false);
-        public Task<bool> DeleteAll(string[] keys) => Task.FromResult(false);
-        public Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int n) => Task.FromResult((true, new Dictionary<string, byte[]>()));
+        public Task<(bool Success, byte[] Data)> Read(string key)
+        {
+            return Task.FromResult((false, Array.Empty<byte>()));
+        }
+
+        public Task<(bool Success, string Etag)> ReadEtag(string key)
+        {
+            return Task.FromResult((false, string.Empty));
+        }
+
+        public Task<bool> Update(string key, byte[] data, string etag)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<bool> Delete(string key)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<bool> CreateAll(Dictionary<string, byte[]> items)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<(bool Success, Dictionary<string, byte[]>)> ReadAll(string[] keys)
+        {
+            return Task.FromResult((false, new Dictionary<string, byte[]>()));
+        }
+
+        public Task<(bool Success, List<string>)> GetAllKeys()
+        {
+            return Task.FromResult((true, new List<string>()));
+        }
+
+        public Task<(bool Success, Dictionary<string, string>)> ReadAllEtags()
+        {
+            return Task.FromResult((false, new Dictionary<string, string>()));
+        }
+
+        public Task<(bool Success, Dictionary<string, string> Etags)> ReadEtags(string[] keys)
+        {
+            return Task.FromResult((false, new Dictionary<string, string>()));
+        }
+
+        public Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<bool> DeleteAll(string[] keys)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int n)
+        {
+            return Task.FromResult((true, new Dictionary<string, byte[]>()));
+        }
     }
 }
 
@@ -201,26 +249,84 @@ public class CloudExportUiTests(XamlUiThreadFixture ui)
 
     private sealed class StubCanvasRender(CanvasExportData data) : ICanvasRender
     {
-        public Task<byte[]> RenderToPngAsync(UIElement element) => Task.FromResult(data.ImageData);
-        public Task<byte[]> RenderToJpegAsync(UIElement element) => Task.FromResult(data.ImageData);
-        public Task<CanvasExportData> CreateExportDataAsync(UIElement element, string whiteboardId, bool isJpeg = false) => Task.FromResult(data);
+        public Task<byte[]> RenderToPngAsync(UIElement element)
+        {
+            return Task.FromResult(data.ImageData);
+        }
+
+        public Task<byte[]> RenderToJpegAsync(UIElement element)
+        {
+            return Task.FromResult(data.ImageData);
+        }
+
+        public Task<CanvasExportData> CreateExportDataAsync(UIElement element, string whiteboardId, bool isJpeg = false)
+        {
+            return Task.FromResult(data);
+        }
     }
 
     private sealed class RecordingStorage : IStorage
     {
         public string? LastKey { get; private set; }
         public Task<bool> Create(string key, byte[] data) { LastKey = key; return Task.FromResult(true); }
-        public Task<(bool Success, byte[] Data)> Read(string key) => Task.FromResult((false, Array.Empty<byte>()));
-        public Task<(bool Success, string Etag)> ReadEtag(string key) => Task.FromResult((false, string.Empty));
-        public Task<bool> Update(string key, byte[] data, string etag) => Task.FromResult(false);
-        public Task<bool> Delete(string key) => Task.FromResult(false);
-        public Task<bool> CreateAll(Dictionary<string, byte[]> items) => Task.FromResult(false);
-        public Task<(bool Success, Dictionary<string, byte[]>)> ReadAll(string[] keys) => Task.FromResult((false, new Dictionary<string, byte[]>()));
-        public Task<(bool Success, List<string>)> GetAllKeys() => Task.FromResult((true, new List<string>()));
-        public Task<(bool Success, Dictionary<string, string>)> ReadAllEtags() => Task.FromResult((false, new Dictionary<string, string>()));
-        public Task<(bool Success, Dictionary<string, string> Etags)> ReadEtags(string[] keys) => Task.FromResult((false, new Dictionary<string, string>()));
-        public Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags) => Task.FromResult(false);
-        public Task<bool> DeleteAll(string[] keys) => Task.FromResult(false);
-        public Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int n) => Task.FromResult((true, new Dictionary<string, byte[]>()));
+        public Task<(bool Success, byte[] Data)> Read(string key)
+        {
+            return Task.FromResult((false, Array.Empty<byte>()));
+        }
+
+        public Task<(bool Success, string Etag)> ReadEtag(string key)
+        {
+            return Task.FromResult((false, string.Empty));
+        }
+
+        public Task<bool> Update(string key, byte[] data, string etag)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<bool> Delete(string key)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<bool> CreateAll(Dictionary<string, byte[]> items)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<(bool Success, Dictionary<string, byte[]>)> ReadAll(string[] keys)
+        {
+            return Task.FromResult((false, new Dictionary<string, byte[]>()));
+        }
+
+        public Task<(bool Success, List<string>)> GetAllKeys()
+        {
+            return Task.FromResult((true, new List<string>()));
+        }
+
+        public Task<(bool Success, Dictionary<string, string>)> ReadAllEtags()
+        {
+            return Task.FromResult((false, new Dictionary<string, string>()));
+        }
+
+        public Task<(bool Success, Dictionary<string, string> Etags)> ReadEtags(string[] keys)
+        {
+            return Task.FromResult((false, new Dictionary<string, string>()));
+        }
+
+        public Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<bool> DeleteAll(string[] keys)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int n)
+        {
+            return Task.FromResult((true, new Dictionary<string, byte[]>()));
+        }
     }
 }

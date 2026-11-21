@@ -1,4 +1,4 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// Roll No : 112301024
 /// LICENSE : MIT
 
@@ -125,19 +125,64 @@ public class WhiteBoardViewModelInitializedTests
         }
 
         public Task<(bool Success, byte[] Data)> Read(string key)
-            => Task.FromResult(_items.TryGetValue(key, out byte[]? data) ? (true, data) : (false, Array.Empty<byte>()));
+        {
+            return Task.FromResult(_items.TryGetValue(key, out byte[]? data) ? (true, data) : (false, Array.Empty<byte>()));
+        }
 
-        public Task<(bool Success, string Etag)> ReadEtag(string key) => Task.FromResult((false, string.Empty));
-        public Task<bool> Update(string key, byte[] data, string etag) => Task.FromResult(false);
-        public Task<bool> Delete(string key) => Task.FromResult(_items.Remove(key));
-        public Task<bool> CreateAll(Dictionary<string, byte[]> items) => Task.FromResult(false);
-        public Task<(bool Success, Dictionary<string, byte[]>)> ReadAll(string[] keys) => Task.FromResult((true, new Dictionary<string, byte[]>()));
-        public Task<(bool Success, List<string>)> GetAllKeys() => Task.FromResult((true, _items.Keys.ToList()));
-        public Task<(bool Success, Dictionary<string, string>)> ReadAllEtags() => Task.FromResult((false, new Dictionary<string, string>()));
-        public Task<(bool Success, Dictionary<string, string> Etags)> ReadEtags(string[] keys) => Task.FromResult((false, new Dictionary<string, string>()));
-        public Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags) => Task.FromResult(false);
-        public Task<bool> DeleteAll(string[] keys) => Task.FromResult(false);
-        public Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int n) => Task.FromResult((true, new Dictionary<string, byte[]>()));
+        public Task<(bool Success, string Etag)> ReadEtag(string key)
+        {
+            return Task.FromResult((false, string.Empty));
+        }
+
+        public Task<bool> Update(string key, byte[] data, string etag)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<bool> Delete(string key)
+        {
+            return Task.FromResult(_items.Remove(key));
+        }
+
+        public Task<bool> CreateAll(Dictionary<string, byte[]> items)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<(bool Success, Dictionary<string, byte[]>)> ReadAll(string[] keys)
+        {
+            return Task.FromResult((true, new Dictionary<string, byte[]>()));
+        }
+
+        public Task<(bool Success, List<string>)> GetAllKeys()
+        {
+            return Task.FromResult((true, _items.Keys.ToList()));
+        }
+
+        public Task<(bool Success, Dictionary<string, string>)> ReadAllEtags()
+        {
+            return Task.FromResult((false, new Dictionary<string, string>()));
+        }
+
+        public Task<(bool Success, Dictionary<string, string> Etags)> ReadEtags(string[] keys)
+        {
+            return Task.FromResult((false, new Dictionary<string, string>()));
+        }
+
+        public Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<bool> DeleteAll(string[] keys)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int n)
+        {
+            return Task.FromResult((true, new Dictionary<string, byte[]>()));
+        }
     }
 }
 

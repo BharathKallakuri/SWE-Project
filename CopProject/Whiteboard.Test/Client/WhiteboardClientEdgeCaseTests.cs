@@ -1,4 +1,4 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// Roll No : 112301024
 /// LICENSE : MIT
 
@@ -19,7 +19,7 @@ public class WhiteboardClientEdgeCaseTests
         WhiteboardClient client = new(communicator, new IPEndPoint(IPAddress.Loopback, 9000), "alice");
         communicator.ThrowOnSend = true;
 
-        Assert.Throws<InvalidOperationException>(() => client.RequestSync());
+        Assert.Throws<InvalidOperationException>(client.RequestSync);
     }
 
     [Fact]
@@ -65,7 +65,9 @@ public class WhiteboardClientEdgeCaseTests
         public void SendMessageLossy(IPEndPoint destination, byte[] data, int moduleId, int priority = 0) { }
 
         public void BroadcastMessage(byte[] data, int moduleId, int priority = 0)
-            => throw new InvalidOperationException("broadcast failed");
+        {
+            throw new InvalidOperationException("broadcast failed");
+        }
 
         public void BroadcastMessageLossy(byte[] data, int moduleId, int priority = 0) { }
         public void JoinMulticastGroup(int groupId, IPEndPoint endPoint) { }

@@ -1,4 +1,4 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// Roll No : 112301024
 /// LICENSE : MIT
 
@@ -84,7 +84,10 @@ public class HistoryServiceEdgeCaseTests
         public DateTime ActionDateTime { get; set; } = DateTime.UtcNow;
         public string UserId { get; set; } = userId;
         public void Perform(IWhiteboard canvas) { }
-        public IWhiteboardAction CreateInverse() => null!;
+        public IWhiteboardAction CreateInverse()
+        {
+            return null!;
+        }
     }
 
     private sealed class ReentrantAction(string userId, WhiteboardHistoryService history) : IWhiteboardAction
@@ -92,7 +95,14 @@ public class HistoryServiceEdgeCaseTests
         public Guid ActionId { get; set; } = Guid.NewGuid();
         public DateTime ActionDateTime { get; set; } = DateTime.UtcNow;
         public string UserId { get; set; } = userId;
-        public void Perform(IWhiteboard canvas) => history.Execute(this);
-        public IWhiteboardAction CreateInverse() => this;
+        public void Perform(IWhiteboard canvas)
+        {
+            history.Execute(this);
+        }
+
+        public IWhiteboardAction CreateInverse()
+        {
+            return this;
+        }
     }
 }

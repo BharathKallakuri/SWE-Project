@@ -1,4 +1,4 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// Roll No : 112301024
 /// LICENSE : MIT
 
@@ -48,7 +48,11 @@ public class ItemSnapshotTests
     private sealed class UnsupportedItem : Item
     {
         public override Rect2D BoundingBox => new(0, 0, 0, 0);
-        public override bool HitTest(Point2D point) => false;
+        public override bool HitTest(Point2D point)
+        {
+            return false;
+        }
+
         public override void MoveBy(double dx, double dy) { }
     }
 }

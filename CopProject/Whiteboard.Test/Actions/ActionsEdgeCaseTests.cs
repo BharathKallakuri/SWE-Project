@@ -1,4 +1,4 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// Roll No : 112301024
 /// LICENSE : MIT
 
@@ -46,7 +46,10 @@ public class ActionsEdgeCaseTests
     {
         private readonly Dictionary<Guid, IItem> _items = new();
 
-        public FailingDeleteWhiteboard(IItem item) => _items[item.Id] = item;
+        public FailingDeleteWhiteboard(IItem item)
+        {
+            _items[item.Id] = item;
+        }
 
         public IDictionary<Guid, IItem> Items { get => _items; set { } }
         public event Action<IItem>? ItemAdded { add { } remove { } }
@@ -54,10 +57,29 @@ public class ActionsEdgeCaseTests
         public event Action<IItem>? ItemUpdated { add { } remove { } }
 
         public void AddItem(IItem item) { }
-        public bool DeleteItem(Guid id) => false;
-        public bool EditItem(IItem item) => false;
-        public IItem? HitTestTopmost(Point2D point) => null;
-        public List<IItem> HitTestAll(Point2D point) => [];
-        public List<IItem> InRect(Rect2D rect) => [];
+        public bool DeleteItem(Guid id)
+        {
+            return false;
+        }
+
+        public bool EditItem(IItem item)
+        {
+            return false;
+        }
+
+        public IItem? HitTestTopmost(Point2D point)
+        {
+            return null;
+        }
+
+        public List<IItem> HitTestAll(Point2D point)
+        {
+            return [];
+        }
+
+        public List<IItem> InRect(Rect2D rect)
+        {
+            return [];
+        }
     }
 }

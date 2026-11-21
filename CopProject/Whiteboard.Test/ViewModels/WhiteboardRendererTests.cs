@@ -181,7 +181,11 @@ public class WhiteboardRendererTests(XamlUiThreadFixture ui)
     private sealed class UnknownItem : Item
     {
         public override Rect2D BoundingBox => new(0, 0, 0, 0);
-        public override bool HitTest(Point2D point) => false;
+        public override bool HitTest(Point2D point)
+        {
+            return false;
+        }
+
         public override void MoveBy(double dx, double dy) { }
     }
 }

@@ -1,4 +1,4 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// Roll No : 112301024
 /// LICENSE : MIT
 
@@ -75,7 +75,7 @@ public sealed class XamlUiThreadFixture : IDisposable
 
     public void Dispose()
     {
-        _dispatcherQueue.TryEnqueue(() => _controller.ShutdownQueue());
+        _dispatcherQueue.TryEnqueue(_controller.ShutdownQueue);
         _uiThread.Join(TimeSpan.FromSeconds(5));
     }
 }
