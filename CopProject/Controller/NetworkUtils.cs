@@ -1,21 +1,25 @@
+﻿// Author : Saideep.
+// Roll No : 112301018.
 using System.Net;
 using System.Net.Sockets;
 
 namespace Controller;
 
-// Utility for resolving the local machine's network IP address.
+///<summary>
+/// provides utility methods for resolving local machine's network IP address.
+///</summary>
 public static class NetworkUtils
 {
-    //Returns the local machine's IP address on the network.
-    // Uses a UDP connect trick to determine which interface would be used
-       
+    ///<summary>
+    ///Returns the local machine's IP address on the network.
+    ///</summary>
+
+
     public static string GetLocalIpAddress()
     {
         try
         {
             using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            // Connect to a public address — no data is sent over UDP,
-            // but the OS selects the correct local interface.
             socket.Connect("8.8.8.8", 80);
             return ((IPEndPoint)socket.LocalEndPoint!).Address.ToString();
         }

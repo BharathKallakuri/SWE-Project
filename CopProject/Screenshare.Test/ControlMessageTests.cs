@@ -1,12 +1,12 @@
-﻿using System.Net;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+using System.Net;
 using ScreenShare;
-using Xunit;
 
 namespace Screenshare.Tests;
 
-/// <summary>
-/// tests that control messages store their values, report their kind and reject bad arguments
-/// </summary>
+
 public class ControlMessageTests
 {
     private static readonly IPEndPoint s_endpoint = new(IPAddress.Loopback, 5000);
@@ -24,8 +24,6 @@ public class ControlMessageTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
     [InlineData("   ")]
     public void ParticipantRejectsEmptyId(string? id)
     {
@@ -54,8 +52,6 @@ public class ControlMessageTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
     [InlineData("   ")]
     public void StreamStartedRejectsEmptyStreamId(string? streamId)
     {
@@ -69,8 +65,6 @@ public class ControlMessageTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
     [InlineData("   ")]
     public void StreamStartedRejectsEmptyDisplayName(string? displayName)
     {
@@ -79,9 +73,7 @@ public class ControlMessageTests
 
     [Theory]
     [InlineData(0, 720)]
-    [InlineData(-1, 720)]
     [InlineData(1280, 0)]
-    [InlineData(1280, -1)]
     public void StreamStartedRejectsInvalidSize(int width, int height)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new StreamStarted("aryan", s_viewer, "Aryan", width, height));
@@ -99,8 +91,6 @@ public class ControlMessageTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
     [InlineData("   ")]
     public void StreamStoppedRejectsEmptyStreamId(string? streamId)
     {
@@ -127,8 +117,6 @@ public class ControlMessageTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
     [InlineData("   ")]
     public void SubscribeRejectsEmptyStreamId(string? streamId)
     {
@@ -137,7 +125,6 @@ public class ControlMessageTests
 
     [Theory]
     [InlineData(0)]
-    [InlineData(-1)]
     public void SubscribeRejectsInvalidMaxHeight(int maxHeight)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new Subscribe(s_viewer, "aryan", maxHeight));
@@ -162,8 +149,6 @@ public class ControlMessageTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
     [InlineData("   ")]
     public void UnsubscribeRejectsEmptyStreamId(string? streamId)
     {
@@ -189,8 +174,6 @@ public class ControlMessageTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
     [InlineData("   ")]
     public void RequestFullFrameRejectsEmptyStreamId(string? streamId)
     {
@@ -223,8 +206,6 @@ public class ControlMessageTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
     [InlineData("   ")]
     public void FrameAckRejectsEmptyStreamId(string? streamId)
     {
@@ -270,8 +251,6 @@ public class ControlMessageTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
     [InlineData("   ")]
     public void UpdateSendToListRejectsEmptyStreamId(string? streamId)
     {

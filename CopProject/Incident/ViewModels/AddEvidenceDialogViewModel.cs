@@ -1,15 +1,12 @@
 ﻿// Author: M Sreenath Karthick
 // Roll Number: 112301042
 
-using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 using Incidents.ViewModels.Utils;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
-using System.IO;
 
 namespace Incidents.ViewModels;
 

@@ -1,8 +1,13 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+﻿//owner : U Sai Vignesh
+//roll number : 112301034
+// License : MIT
+
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
 
@@ -19,14 +24,21 @@ public class EraserState : IViewModelState
         _whiteboardClient = whiteboardClient;
     }
 
+    /// <summary>
+    /// The eraser must receive presses on textboxes so they can be erased.
+    /// </summary>
+    public bool HandlesPointerOnTextbox => true;
+
     public void PointerPressed(Point2D point)
     {
         IItem? item = _whiteboardClient.Canvas.HitTestTopmost(new Point2D(point.X, point.Y));
         if (item is null)
         {
+            Trace.TraceInformation($"[Whiteboard][EraserState] Eraser missed at ({point.X}, {point.Y}).");
             return;
         }
 
+        Trace.TraceInformation($"[Whiteboard][EraserState] Erasing item {item.Id} ({item.GetType().Name}) at ({point.X}, {point.Y}).");
         _whiteboardClient.DeleteItem(item.Id);
     }
 

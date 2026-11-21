@@ -1,14 +1,15 @@
-﻿using System;
+﻿//owner : U Sai Vignesh
+//roll number : 112301034
+// License : MIT
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Whiteboard.Interfaces;
 
 namespace Whiteboard.Models;
 
-[ExcludeFromCodeCoverage]
-// Temporary exclusion from code coverage
 public class WhiteboardCanvas : IWhiteboard
 {
     public IDictionary<Guid, IItem> Items { get; set; } = new ConcurrentDictionary<Guid, IItem>();
@@ -56,7 +57,7 @@ public class WhiteboardCanvas : IWhiteboard
         return true;
     }
 
-    // Optional compatibility helper if older call-sites still use RemoveItem
+
     public bool RemoveItem(IItem item)
     {
         if (item is null)

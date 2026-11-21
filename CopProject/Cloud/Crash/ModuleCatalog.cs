@@ -1,4 +1,8 @@
-﻿namespace Cloud.Crash;
+﻿// Author = Gundamaraju Hemanth Kashyap
+
+// Roll Number = 112301009
+
+namespace Cloud.Crash;
 
 /// <summary>
 /// Maps assembly names of the project's own modules to module display names.
@@ -10,8 +14,7 @@ public static class ModuleCatalog
     /// </summary>
     public const string UnknownModule = "Unknown";
 
-    private static readonly Dictionary<string, string> s_modulesByAssembly = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly Dictionary<string, string> s_modulesByAssembly = new(StringComparer.OrdinalIgnoreCase) {
         ["Auth"] = "Authentication",
         ["Chat"] = "Chat",
         ["Cloud"] = "Cloud",

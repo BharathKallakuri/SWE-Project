@@ -1,10 +1,7 @@
-// Author: Rajat
+﻿// Author: Rajat
 // Roll no.: 112301044
 
 using System.Net;
-using System.Text.Json;
-using Chat;
-using Controller;
 using UI.Services;
 using Utils;
 
@@ -36,7 +33,7 @@ public class ChatClientAdapterTests
         out Chatroom room)
     {
         room = new("meeting", "hostuser");
-        CommunicatorSetup(room, controller, out RecordingCommunicator communicator);
+        CommunicatorSetup(controller, out RecordingCommunicator communicator);
         server = new(
             room,
             controller,
@@ -44,7 +41,7 @@ public class ChatClientAdapterTests
         return new ChatClientAdapter(server, controller, DispatcherThread.Queue);
     }
 
-    private static void CommunicatorSetup(Chatroom room, RecordingController controller, out RecordingCommunicator communicator)
+    private static void CommunicatorSetup(RecordingController controller, out RecordingCommunicator communicator)
     {
         communicator = new RecordingCommunicator();
         controller.Communicator = communicator;
@@ -68,8 +65,9 @@ public class ChatClientAdapterTests
     [Fact]
     public void HostConstructor_NullServerControllerOrDispatcher_Throws()
     {
-        RecordingController controller = new("hostuser");
-        controller.Communicator = new RecordingCommunicator();
+        RecordingController controller = new("hostuser") {
+            Communicator = new RecordingCommunicator()
+        };
         ChatServer server = new(
             new Chatroom("meeting", "hostuser"),
             controller,
@@ -83,8 +81,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void ClientAdapter_ReportsClientIdentity_AndIsNotHost()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             ChatClientAdapter adapter = ClientAdapter(null, null, out ChatClient client);
             using (adapter)
             {
@@ -101,8 +98,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void HostAdapter_ReportsHostIdentity_AndIsHost()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingController controller = new("hostuser");
             ChatClientAdapter adapter = HostAdapter(controller, out ChatServer server, out _);
             using (adapter)
@@ -120,8 +116,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void GetMeetingUsers_ReturnsControllerUsers_WhenAttached()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingController controller = new("alice");
             controller.AddUser("bob", TestImages.OnePixelPng);
             ChatClientAdapter adapter = ClientAdapter(null, controller, out _);
@@ -138,8 +133,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void GetMeetingUsers_ReturnsEmptyList_WhenNoControllerAttached()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             ChatClientAdapter adapter = ClientAdapter(null, null, out _); // no controller passed
             using (adapter)
             {
@@ -153,8 +147,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void Sync_OnClient_SendsSyncRequestOverWire()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingCommunicator communicator = new();
             ChatClientAdapter adapter = ClientAdapter(communicator, null, out _);
             using (adapter)
@@ -177,8 +170,7 @@ public class ChatClientAdapterTests
         List<IReadOnlySet<string>> raised = new();
         ChatClientAdapter adapter = null!;
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             adapter = HostAdapter(controller, out _, out _);
             adapter.ParticipantsChanged += participants => raised.Add(participants);
             adapter.Sync();
@@ -186,8 +178,7 @@ public class ChatClientAdapterTests
 
         DispatcherThread.Flush(); // the host raises participants on the dispatcher queue
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using (adapter)
             {
                 Assert.Single(raised);
@@ -199,8 +190,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void Reset_OnClient_SendsResetRequestOverWire()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingCommunicator communicator = new();
             ChatClientAdapter adapter = ClientAdapter(communicator, null, out _);
             using (adapter)
@@ -219,8 +209,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void Reset_OnHost_IsNoOp()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingController controller = new("hostuser");
             ChatClientAdapter adapter = HostAdapter(controller, out _, out Chatroom room);
             using (adapter)
@@ -238,8 +227,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void SendMessage_OnClient_SendsRequestOverWire()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingCommunicator communicator = new();
             ChatClientAdapter adapter = ClientAdapter(communicator, null, out _);
             using (adapter)
@@ -265,8 +253,7 @@ public class ChatClientAdapterTests
         Chatroom room = null!;
         Guid requestId = Guid.Empty;
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             adapter = HostAdapter(controller, out _, out room);
             adapter.RequestCompleted += (id, result) => completions.Add((id, result));
             requestId = adapter.SendMessage("hello from host", new Mentions());
@@ -274,8 +261,7 @@ public class ChatClientAdapterTests
 
         DispatcherThread.Flush(); // host completion is enqueued
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using (adapter)
             {
                 Assert.Contains(room.GetMessagesSnapshot(), message => message.Message.Content == "hello from host");
@@ -293,24 +279,21 @@ public class ChatClientAdapterTests
         ChatClientAdapter adapter = null!;
         Chatroom room = null!;
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             adapter = HostAdapter(controller, out _, out room);
             adapter.SendMessage("before edit", new Mentions());
         });
 
         DispatcherThread.Flush();
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             Guid roomMessageId = room.GetMessagesSnapshot().Single().Id;
             adapter.EditMessage(roomMessageId, "after edit");
         });
 
         DispatcherThread.Flush();
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using (adapter)
             {
                 Assert.Equal("after edit", room.GetMessagesSnapshot().Single().Message.Content);
@@ -325,24 +308,21 @@ public class ChatClientAdapterTests
         ChatClientAdapter adapter = null!;
         Chatroom room = null!;
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             adapter = HostAdapter(controller, out _, out room);
             adapter.SendMessage("delete me", new Mentions());
         });
 
         DispatcherThread.Flush();
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             Guid roomMessageId = room.GetMessagesSnapshot().Single().Id;
             adapter.DeleteMessage(roomMessageId);
         });
 
         DispatcherThread.Flush();
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using (adapter)
             {
                 (Guid Id, ChatMessage Message, Guid? ThreadParentMessageId) only =
@@ -359,24 +339,21 @@ public class ChatClientAdapterTests
         ChatClientAdapter adapter = null!;
         Chatroom room = null!;
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             adapter = HostAdapter(controller, out _, out room);
             adapter.SendMessage("react me", new Mentions());
         });
 
         DispatcherThread.Flush();
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             Guid roomMessageId = room.GetMessagesSnapshot().Single().Id;
             adapter.ToggleReaction(roomMessageId, "👍");
         });
 
         DispatcherThread.Flush();
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using (adapter)
             {
                 Assert.Contains("hostuser", room.GetMessagesSnapshot().Single().Message.Reactions["👍"]);
@@ -387,8 +364,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void EditMessage_OnClient_SendsRequestOverWire()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingCommunicator communicator = new();
             ChatClientAdapter adapter = ClientAdapter(communicator, null, out _);
             Guid messageId = Guid.NewGuid();
@@ -410,8 +386,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void DeleteMessage_OnClient_SendsRequestOverWire()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingCommunicator communicator = new();
             ChatClientAdapter adapter = ClientAdapter(communicator, null, out _);
             Guid messageId = Guid.NewGuid();
@@ -432,8 +407,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void ToggleReaction_OnClient_SendsRequestOverWire()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingCommunicator communicator = new();
             ChatClientAdapter adapter = ClientAdapter(communicator, null, out _);
             Guid messageId = Guid.NewGuid();
@@ -457,8 +431,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void ClientEvents_AreRaisedOnTheUiThread()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingCommunicator communicator = new();
             ChatClientAdapter adapter = ClientAdapter(communicator, null, out ChatClient client);
             using (adapter)
@@ -490,8 +463,9 @@ public class ChatClientAdapterTests
         });
     }
 
-    private static ChatServerUpdateEnvelope MakeBatch() =>
-        new ChatServerUpdateEnvelope(
+    private static ChatServerUpdateEnvelope MakeBatch()
+    {
+        return new ChatServerUpdateEnvelope(
             new ChatServerOperationBatch(0, 1, new ChatOperation[]
             {
                 new MessageAdded(
@@ -504,15 +478,17 @@ public class ChatClientAdapterTests
                     })
             }),
             new[] { "hostuser", "alice" });
+    }
 
     private static void SendToClient(RecordingCommunicator communicator, ChatServerMessage message)
-        => communicator.SendToSubscriber(message);
+    {
+        communicator.SendToSubscriber(message);
+    }
 
     [Fact]
     public void ParticipantsChanged_ReceivesIndependentSnapshot()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingCommunicator communicator = new();
             ChatClientAdapter adapter = ClientAdapter(communicator, null, out _);
             using (adapter)
@@ -541,8 +517,7 @@ public class ChatClientAdapterTests
         int userInfo = 0;
         ChatClientAdapter adapter = null!;
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             adapter = HostAdapter(controller, out _, out _);
             adapter.ParticipantsChanged += p => participants.Add(p);
             adapter.UserInfoChanged += () => userInfo++;
@@ -552,8 +527,7 @@ public class ChatClientAdapterTests
 
         DispatcherThread.Flush(); // host participants are enqueued deliberately
 
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             using (adapter)
             {
                 Assert.Single(participants);
@@ -566,8 +540,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void UserInfoChanged_FiresWithoutParticipantsChanged_OnClientAdapter()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingController controller = new("alice");
             ChatClientAdapter adapter = ClientAdapter(new RecordingCommunicator(), controller, out _);
             using (adapter)
@@ -590,8 +563,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void Dispose_Twice_DoesNotThrow_AndEventsAreIgnoredAfterwards()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingCommunicator communicator = new();
             RecordingController controller = new("alice");
             ChatClientAdapter adapter = ClientAdapter(communicator, controller, out _);
@@ -610,8 +582,7 @@ public class ChatClientAdapterTests
     [Fact]
     public void Operations_ThrowObjectDisposedException_AfterDispose()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             RecordingCommunicator communicator = new();
             ChatClientAdapter adapter = ClientAdapter(communicator, null, out _);
             adapter.Dispose();

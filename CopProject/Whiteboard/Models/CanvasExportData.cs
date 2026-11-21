@@ -1,14 +1,16 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿/// Author : Karthik Krishna M
+/// Roll Number : 112301014
+/// LICENSE : MIT
+
+using System;
 
 namespace Whiteboard.Models;
 
-[ExcludeFromCodeCoverage]
 public class CanvasExportData
 {
-    public byte[] ImageData { get; set; }
-    public string ContentType { get; set; }
-    public string FileName { get; set; }
+    public byte[] ImageData { get; set; } = [];
+    public string ContentType { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
     public int PixelWidth { get; set; }
     public int PixelHeight { get; set; }
     public DateTime ExportDateTime { get; set; }

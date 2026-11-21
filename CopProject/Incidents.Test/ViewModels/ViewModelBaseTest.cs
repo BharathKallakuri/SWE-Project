@@ -3,7 +3,6 @@
 
 using System.ComponentModel;
 using Incidents.ViewModels.Utils;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Incidents.Test.ViewModels;
 

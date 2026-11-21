@@ -1,12 +1,9 @@
 ﻿// Author: M Sreenath Karthick
 // Roll Number: 112301042
 
-using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Policy;
 using Incidents.ViewModels;
-using Incidents.ViewModels.Utils;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -19,7 +16,7 @@ namespace Incidents.Views;
 [ExcludeFromCodeCoverage]
 public sealed partial class IncidentDetailsPage : Page
 {
-    private IncidentDetailsPageViewModel? ViewModel => DataContext as IncidentDetailsPageViewModel;
+    public IncidentDetailsPageViewModel? ViewModel => DataContext as IncidentDetailsPageViewModel;
     private IncidentPageContext? _context;
 
     /// <summary>

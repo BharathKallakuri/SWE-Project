@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -10,20 +10,17 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Items.Shapes;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Whiteboard.Services;
 
 /// <summary>
 /// Creates independent copies of items for undo and redo.
 /// </summary>
-[ExcludeFromCodeCoverage]
-// Temporary exclusion from code coverage
 public static class ItemSnapshot
 {
     /// <summary>
@@ -44,7 +41,9 @@ public static class ItemSnapshot
 
             Line item => new Line {
                 Begin = CopyPoint(item.Begin),
-                End = CopyPoint(item.End)
+                End = CopyPoint(item.End),
+                Color = item.Color,
+                Width = item.Width
             },
 
             Textbox item => new Textbox {
@@ -113,7 +112,8 @@ public static class ItemSnapshot
     /// <summary>
     /// Copies a point, or returns null if it is missing.
     /// </summary>
-    private static Point2D CopyPoint(Point2D point)
+    [return: NotNullIfNotNull(nameof(point))]
+    private static Point2D? CopyPoint(Point2D? point)
     {
         return point is null
             ? null
@@ -123,8 +123,10 @@ public static class ItemSnapshot
     /// <summary>
     /// Copies the list and its points so later edits do not affect history.
     /// </summary>
-    private static List<Point2D> CopyPoints(List<Point2D> points)
+    [return: NotNullIfNotNull(nameof(points))]
+    private static List<Point2D>? CopyPoints(List<Point2D>? points)
     {
-        return points?.Select(CopyPoint).ToList();
+        return points?.Select(p => new Point2D(p.X, p.Y)).ToList();
     }
 }
+

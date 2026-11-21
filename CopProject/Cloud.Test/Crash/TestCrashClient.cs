@@ -1,4 +1,8 @@
-﻿using System.Runtime.CompilerServices;
+﻿// Author = Gundamaraju Hemanth Kashyap
+
+// Roll Number = 112301009
+
+using System.Runtime.CompilerServices;
 using Cloud.Crash;
 
 namespace Cloud.Test.Crash;
@@ -42,8 +46,7 @@ public class TestCrashClient
 
         public override string Message
         {
-            get
-            {
+            get {
                 Inner = _report();
                 return "again";
             }
@@ -318,8 +321,7 @@ public class TestCrashClient
 
         InMemoryStorage storage = new();
         int created = 0;
-        CosmosCrashUploader uploader = new(() =>
-        {
+        CosmosCrashUploader uploader = new(() => {
             created++;
             return Task.FromResult<Cloud.Persistence.IStorage>(storage);
         });

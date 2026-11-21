@@ -1,14 +1,15 @@
-using System;
+﻿// K.Bala Krishna,K.Saideep
+// 112301015,112301018
+
 using System.Diagnostics;
-using System.Linq;
-using System.Net;
-using System.Threading;
-using Controller;
-using Controller.ViewModels;
 using Utils;
 
 namespace Controller.Models;
 
+/// <summary>
+/// Manages the lifecycle of meetings, handling host creation, client connections, 
+/// participant list updates, and forwarding events between the network layer and the UI.
+/// </summary>
 public sealed class ControllerMeetingService
 {
     private MeetingSession? _session;
@@ -19,6 +20,7 @@ public sealed class ControllerMeetingService
     private readonly List<IUserNotificationHandler> _registeredHandlers = new();
     public string? LastErrorMessage { get; private set; }
 
+    // Manages external listeners wanting participant updates.
     public void RegisterNotificationHandler(IUserNotificationHandler handler)
     {
         if (handler != null && !_registeredHandlers.Contains(handler))
@@ -44,6 +46,8 @@ public sealed class ControllerMeetingService
         _session.MeetingEnded += OnMeetingEnded;
     }
 
+    // Sets up a new meeting session acting as the host.
+    [Obsolete]
     public (string Id, string Port) CreateMeeting()
     {
         CleanupController();
@@ -54,17 +58,17 @@ public sealed class ControllerMeetingService
         string localIp = NetworkUtils.GetLocalIpAddress();
         var hostUser = new ControllerUser(username, email, _session?.CurrentUserProfilePicture, localIp, 0, isHost: true);
 
-        var host = ControllerFactory.CreateHost(hostUser);
+        IControllerService host = ControllerFactory.CreateHost(hostUser);
         _activeController = host;
         _isHost = true;
-        foreach (var handler in _registeredHandlers)
+        foreach (IUserNotificationHandler handler in _registeredHandlers)
         {
             host.RegisterNotificationHandler(handler);
         }
         bool started = host.StartMeeting();
         if (!started)
         {
-            Trace.TraceWarning("HostController failed to start meeting.");
+            Trace.TraceWarning("[Controller]: HostController failed to start meeting.");
         }
 
         string id = localIp;
@@ -73,6 +77,7 @@ public sealed class ControllerMeetingService
         return (id, port);
     }
 
+    // Connects to a remote host meeting session as a participant.
     public bool JoinMeeting(string hostIp, int hostPort)
     {
         CleanupController();
@@ -82,7 +87,7 @@ public sealed class ControllerMeetingService
         string email = !string.IsNullOrWhiteSpace(_session?.CurrentUserEmail) ? _session.CurrentUserEmail : $"{username}@smail.iitpkd.ac.in";
 
         var clientUser = new ControllerUser(username, email, _session?.CurrentUserProfilePicture, NetworkUtils.GetLocalIpAddress(), 0, isHost: false);
-        var client = ControllerFactory.CreateClient(clientUser);
+        IControllerService client = ControllerFactory.CreateClient(clientUser);
 
         string targetHost = hostIp.Trim();
         if (targetHost.Equals("localhost", StringComparison.OrdinalIgnoreCase))
@@ -99,7 +104,7 @@ public sealed class ControllerMeetingService
         }
 
         _activeController = client;
-        foreach (var handler in _registeredHandlers)
+        foreach (IUserNotificationHandler handler in _registeredHandlers)
         {
             client.RegisterNotificationHandler(handler);
         }
@@ -109,20 +114,23 @@ public sealed class ControllerMeetingService
         return true;
     }
 
+    // Updates the local user's profile picture
     public void UpdateProfilePicture(byte[]? picture)
     {
         if (_activeController != null)
         {
-            if (_activeController.CurrentUser != null)
-            {
-                _activeController.CurrentUser.ProfilePicture = picture;
-            }
+            _activeController.CurrentUser?.ProfilePicture = picture;
             UpdateActiveParticipants();
         }
     }
+
+    // Triggered when a meeting officially starts, hooks up events and counts.
     private void OnMeetingStarted(MeetingInfo info)
     {
-        if (_session == null) return;
+        if (_session == null)
+        {
+            return;
+        }
 
         if (info.IsHost)
         {
@@ -143,6 +151,7 @@ public sealed class ControllerMeetingService
         }
     }
 
+    // Wires up internal event handlers for controller updates.
     private void HookControllerEvents(IControllerService controller)
     {
         controller.UserJoined += OnUserJoined;
@@ -164,7 +173,7 @@ public sealed class ControllerMeetingService
         controller.UserJoined -= OnUserJoined;
         controller.UserLeft -= OnUserLeft;
         controller.MeetingEnded -= OnRemoteMeetingEnded;
-         if (controller is HostController host)
+        if (controller is HostController host)
         {
             host.SecurityAlertRaised -= OnSecurityAlertRaised;
         }
@@ -187,12 +196,12 @@ public sealed class ControllerMeetingService
         UpdateActiveParticipants();
     }
 
+    // Cleans up active controllers when the meeting is ended locally.
     private void OnRemoteMeetingEnded(object? sender, MeetingEndedEventArgs e)
     {
         if (_session != null && _session.InMeeting)
         {
-            PostToUI(() =>
-            {
+            PostToUI(() => {
                 if (_session.InMeeting)
                 {
                     _session.EndMeeting();
@@ -229,25 +238,28 @@ public sealed class ControllerMeetingService
         }
     }
 
+    // Pulls the latest active participant details and updates the UI session model.
     private void UpdateActiveParticipants()
     {
-        if (_activeController == null || _session == null) return;
-
-        var users = _activeController.GetActiveUsers();
-        var list = users.Select(u => new ParticipantInfo
+        if (_activeController == null || _session == null)
         {
+            return;
+        }
+
+        List<ControllerUser> users = _activeController.GetActiveUsers();
+        var list = users.Select(u => new ParticipantInfo {
             Username = u.Username,
             Email = u.Gmail,
             IsHost = u.IsHost,
             ProfilePicture = u.ProfilePicture
         }).ToList();
 
-        PostToUI(() =>
-        {
+        PostToUI(() => {
             _session.ActiveParticipants = list;
         });
     }
 
+    // Ensures UI-bound state changes post back to the main thread safely.
     private void PostToUI(Action action)
     {
         if (_uiThread != null)
@@ -280,7 +292,7 @@ public sealed class ControllerMeetingService
         if (_session != null)
         {
             _session.EndReason = reason;
-            PostToUI(() => _session.EndMeeting());
+            PostToUI(_session.EndMeeting);
         }
     }
 }

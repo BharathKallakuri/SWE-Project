@@ -1,4 +1,8 @@
-﻿namespace ScreenShare;
+﻿// Author = Aryan
+// Roll Number = 112301041
+
+using System.Diagnostics;
+namespace ScreenShare;
 
 /// <summary>
 /// represents a changed rectangular region of a screen frame
@@ -36,18 +40,21 @@ public sealed class Tile
 
         if (x < 0 || y < 0)
         {
+            Trace.TraceWarning("[Screenshare] Tile.Tile: Negative tile coordinates ({0}, {1}).", x, y);
             throw new ArgumentOutOfRangeException(
                 nameof(x), "Tile coordinates cannot be negative.");
         }
 
         if (width <= 0 || height <= 0)
         {
+            Trace.TraceWarning("[Screenshare] Tile.Tile: Invalid tile dimensions {0}x{1}.", width, height);
             throw new ArgumentOutOfRangeException(
                 nameof(width), "Tile dimensions must be positive.");
         }
 
         if (data.Length == 0)
         {
+            Trace.TraceWarning("[Screenshare] Tile.Tile: Empty tile image data at ({0}, {1}).", x, y);
             throw new ArgumentException(
                 "Tile image data cannot be empty.", nameof(data));
         }

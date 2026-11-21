@@ -1,12 +1,19 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar, Sasi Kiran, Sangam,    Karthik Krishna M, Vignesh
+/// Roll No : 112301024,            112301033,  112201006, 112301014,         112301034
 /// LICENSE : MIT
 
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
 using Whiteboard.Client;
 using Whiteboard.Interfaces;
+using Whiteboard.Models;
+using Whiteboard.Network.Dtos;
+using Whiteboard.Network.Mappers;
 using Whiteboard.Services;
 using Whiteboard.Views;
 
@@ -16,30 +23,55 @@ public enum WhiteboardTool
 {
     Pen,
     Square,
+    Rectangle,
     Circle,
+    Ellipse,
     EqTriangle,
-    Eraser
+    Textbox,
+    Eraser,
+    Line,
+    Polygon,
+    Select
 }
 
-[ExcludeFromCodeCoverage]
-// Temporary exclusion from code coverage
 public partial class WhiteBoardViewModel : IDisposable
 {
-    private IViewModelState _penState;
-    private IViewModelState _squareState;
-    private IViewModelState _circleState;
-    private IViewModelState _eqTriangleState;
-    private IViewModelState _eraserState;
+    private IViewModelState _penState = null!;
+    private IViewModelState _squareState = null!;
+    private IViewModelState _rectangleState = null!;
+    private IViewModelState _circleState = null!;
+    private IViewModelState _ellipseState = null!;
+    private IViewModelState _eqTriangleState = null!;
+    private TextboxState _textboxState = null!;
+    private IViewModelState _eraserState = null!;
+    private IViewModelState _lineState = null!;
+    private IViewModelState _polygonState = null!;
+    private SelectState _selectState = null!;
     private readonly IWhiteboardClient _whiteboardClient;
     private readonly WhiteboardSession? _session;
     private readonly DispatcherQueue? _dispatcherQueue;
-    private WhiteboardRenderer _renderer;
+    private readonly IShapeRecognitionService _shapeRecognitionService;
+    private WhiteboardRenderer _renderer = null!;
 
-    private IViewModelState _currentState;
+    private IViewModelState _currentState = null!;
     private bool _isInitialized;
 
     public WhiteboardTool SelectedTool { get; private set; } = WhiteboardTool.Pen;
 
+    private readonly string _sessionId;
+    private WhiteboardSnapshotStore? _snapshotStore;
+
+    /// <summary>
+    /// Whether a pointer press that lands on a rendered textbox should be forwarded
+    /// to the current tool (e.g. eraser) instead of being left to the textbox.
+    /// </summary>
+    public bool HandlesPointerOnTextbox
+    {
+        get {
+            EnsureInitialized();
+            return _currentState.HandlesPointerOnTextbox;
+        }
+    }
 
     /// <summary>
     /// Gets undo availability last received for this user.
@@ -60,20 +92,45 @@ public partial class WhiteBoardViewModel : IDisposable
         remove => _whiteboardClient.HistoryChanged -= value;
     }
 
-    public WhiteBoardViewModel(IWhiteboardClient whiteboardClient)
+    /// <summary>
+    /// Gets or sets whether automatic shape recognition is enabled for strokes drawn with the Pen tool.
+    /// </summary>
+    public bool IsSmartShapeEnabled
     {
-        ArgumentNullException.ThrowIfNull(whiteboardClient);
-
-        _whiteboardClient = whiteboardClient;
+        get => _shapeRecognitionService.IsEnabled;
+        set => _shapeRecognitionService.IsEnabled = value;
     }
 
-    public WhiteBoardViewModel(WhiteboardSession session, DispatcherQueue? dispatcherQueue = null)
+    /// <summary>
+    /// Gets the shape recognition service associated with this view model.
+    /// </summary>
+    public IShapeRecognitionService ShapeRecognitionService => _shapeRecognitionService;
+
+    public WhiteBoardViewModel(IWhiteboardClient whiteboardClient, string sessionId, IShapeRecognitionService? shapeRecognitionService = null)
+    {
+        ArgumentNullException.ThrowIfNull(whiteboardClient);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+
+        _whiteboardClient = whiteboardClient;
+        _sessionId = sessionId;
+        _shapeRecognitionService = shapeRecognitionService ?? new ShapeRecognitionService();
+    }
+
+    public WhiteBoardViewModel(WhiteboardSession session, DispatcherQueue? dispatcherQueue = null, IShapeRecognitionService? shapeRecognitionService = null)
+        : this(session, "default-session", dispatcherQueue, shapeRecognitionService)
+    {
+    }
+
+    public WhiteBoardViewModel(WhiteboardSession session, string sessionId, DispatcherQueue? dispatcherQueue = null, IShapeRecognitionService? shapeRecognitionService = null)
     {
         ArgumentNullException.ThrowIfNull(session);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
 
         _session = session;
         _dispatcherQueue = dispatcherQueue;
         _whiteboardClient = session.Client;
+        _sessionId = sessionId;
+        _shapeRecognitionService = shapeRecognitionService ?? new ShapeRecognitionService();
 
         _session.UserLeft += OnSessionUserLeft;
     }
@@ -94,19 +151,26 @@ public partial class WhiteBoardViewModel : IDisposable
     {
         if (_isInitialized)
         {
+            Trace.TraceWarning("[Whiteboard][WhiteBoardViewModel][Warning] InitializeViewModel called when already initialized.");
             throw new InvalidOperationException("The whiteboard view model has already been initialized.");
         }
 
         CanvasPreview preview = new(canvas);
-        _penState = new PenState(_whiteboardClient, preview, toolbarInfo);
+        _penState = new PenState(_whiteboardClient, preview, toolbarInfo, _shapeRecognitionService);
         _squareState = new ShapeSquareState(_whiteboardClient, preview, toolbarInfo);
+        _rectangleState = new ShapeRectangleState(_whiteboardClient, preview, toolbarInfo);
         _circleState = new ShapeCircleState(_whiteboardClient, preview, toolbarInfo);
+        _ellipseState = new ShapeEllipseState(_whiteboardClient, preview, toolbarInfo);
         _eraserState = new EraserState(_whiteboardClient);
         _eqTriangleState = new ShapeEqTriangleState(_whiteboardClient, preview, toolbarInfo);
-        _renderer = new WhiteboardRenderer(_whiteboardClient.Canvas, canvas);
-
+        _textboxState = new TextboxState(_whiteboardClient, preview, toolbarInfo);
+        _lineState = new LineState(_whiteboardClient, preview, toolbarInfo);
+        _polygonState = new PolygonState(_whiteboardClient, preview, toolbarInfo);
+        _selectState = new SelectState(_whiteboardClient, preview, toolbarInfo);
+        _renderer = new WhiteboardRenderer(_whiteboardClient.Canvas, canvas, _textboxState, _selectState);
         _currentState = _penState;
         _isInitialized = true;
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Initialized view model for User={_whiteboardClient.UserId}, SessionId={_sessionId}.");
     }
 
     /// <summary>
@@ -114,6 +178,7 @@ public partial class WhiteBoardViewModel : IDisposable
     /// </summary>
     public void Undo()
     {
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Undo requested by User={_whiteboardClient.UserId}.");
         _whiteboardClient.Undo();
     }
 
@@ -122,6 +187,7 @@ public partial class WhiteBoardViewModel : IDisposable
     /// </summary>
     public void Redo()
     {
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Redo requested by User={_whiteboardClient.UserId}.");
         _whiteboardClient.Redo();
     }
 
@@ -132,22 +198,54 @@ public partial class WhiteBoardViewModel : IDisposable
     {
         EnsureInitialized();
 
+        // Save any text typed into a textbox before leaving the current tool
+        _textboxState.CommitPendingEdits();
+
         IViewModelState selectedState = tool switch {
             WhiteboardTool.Pen => _penState,
             WhiteboardTool.Square => _squareState,
+            WhiteboardTool.Rectangle => _rectangleState,
             WhiteboardTool.Circle => _circleState,
+            WhiteboardTool.Ellipse => _ellipseState,
             WhiteboardTool.EqTriangle => _eqTriangleState,
+            WhiteboardTool.Textbox => _textboxState,
             WhiteboardTool.Eraser => _eraserState,
+            WhiteboardTool.Line => _lineState,
+            WhiteboardTool.Polygon => _polygonState,
+            WhiteboardTool.Select => _selectState,
             _ => throw new ArgumentOutOfRangeException(nameof(tool))
         };
 
-        _currentState = selectedState;
-        SelectedTool = tool;
+        // Leaving the select tool deselects the item
+        if (tool != WhiteboardTool.Select)
+        {
+            _selectState.ClearSelection();
+        }
+
+        if (!ReferenceEquals(_currentState, selectedState))
+        {
+            _currentState.Reset();
+            _currentState = selectedState;
+            SelectedTool = tool;
+            Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Selected tool {tool} for User={_whiteboardClient.UserId}.");
+        }
+    }
+
+    /// <summary>
+    /// Resets the currently active drawing state and clears any live preview.
+    /// </summary>
+    public void ResetCurrentState()
+    {
+        EnsureInitialized();
+        _currentState.Reset();
     }
 
     public void PointerPressed(Point2D point)
     {
         EnsureInitialized();
+
+        // Interacting with the canvas ends any in-progress text edit
+        _textboxState.CommitPendingEdits();
         _currentState.PointerPressed(point);
     }
 
@@ -163,6 +261,12 @@ public partial class WhiteBoardViewModel : IDisposable
         _currentState.PointerReleased(point);
     }
 
+    public void PointerDoubleTapped(Point2D point)
+    {
+        EnsureInitialized();
+        _currentState.PointerDoubleTapped(point);
+    }
+
     public void PointerCaptureLost(Point2D point)
     {
         EnsureInitialized();
@@ -175,6 +279,7 @@ public partial class WhiteBoardViewModel : IDisposable
     /// <param name="username">Username of the leaving user</param>
     public void OnUserLeft(string username)
     {
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] OnUserLeft: User={username}.");
         if (_isInitialized && _whiteboardClient.UserId == username)
         {
             _currentState.PointerCaptureLost(new Point2D(0, 0));
@@ -186,6 +291,7 @@ public partial class WhiteBoardViewModel : IDisposable
     /// </summary>
     public void OnMeetingEnded()
     {
+        Trace.TraceInformation("[Whiteboard][WhiteBoardViewModel] OnMeetingEnded received.");
         if (_isInitialized)
         {
             _currentState.PointerCaptureLost(new Point2D(0, 0));
@@ -208,5 +314,41 @@ public partial class WhiteBoardViewModel : IDisposable
         {
             throw new InvalidOperationException("The whiteboard view model has not been initialized.");
         }
+    }
+
+    private async Task<WhiteboardSnapshotStore> GetSnapshotStoreAsync()
+    {
+        _snapshotStore ??= await WhiteboardSnapshotStore.CreateAsync();
+        return _snapshotStore;
+    }
+
+    public async Task SaveSnapshotAsync()
+    {
+        List<ItemDto> items = _whiteboardClient.Canvas.Items.Values.Select(ItemMapper.ToDto).ToList();
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Saving snapshot for Session={_sessionId}, User={_whiteboardClient.UserId}, Items={items.Count}.");
+
+        WhiteboardSnapshotStore store = await GetSnapshotStoreAsync();
+
+        await store.SaveSnapshotAsync(_sessionId, _whiteboardClient.UserId, items);
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Snapshot saved successfully for Session={_sessionId}.");
+    }
+
+    public async Task<List<WhiteboardSnapshotSummary>> ListSnapshotsAsync()
+    {
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Listing snapshots for Session={_sessionId}.");
+        WhiteboardSnapshotStore store = await GetSnapshotStoreAsync();
+        return await store.ListAsync(_sessionId);
+    }
+
+    public async Task RestoreSnapshotAsync(string snapshotId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(snapshotId);
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Restoring snapshot {snapshotId} for Session={_sessionId}.");
+
+        WhiteboardSnapshotStore store = await GetSnapshotStoreAsync();
+        WhiteboardSnapshot snapshot = await store.LoadAsync(_sessionId, snapshotId);
+
+        _whiteboardClient.RestoreSnapshot(new WhiteboardDto(snapshot.Items));
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Restored snapshot {snapshotId} with {snapshot.Items.Count} items.");
     }
 }

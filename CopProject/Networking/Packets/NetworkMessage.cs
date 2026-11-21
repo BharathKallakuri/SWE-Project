@@ -1,8 +1,13 @@
-﻿using System.Net;
+﻿// Author = Srikar
+// Roll Number = 142301013
+
 using System.Text.Json.Serialization;
 
 namespace Networking.Packets;
 
+/// <summary>
+/// Base record for network control and distribution messages.
+/// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(BroadcastPacket), typeDiscriminator: "broadcast")]
 [JsonDerivedType(typeof(MulticastPacket), typeDiscriminator: "multicast")]

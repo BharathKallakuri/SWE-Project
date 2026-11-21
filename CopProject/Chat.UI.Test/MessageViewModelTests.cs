@@ -1,11 +1,10 @@
-// Author: Rajat
+﻿// Author: Rajat
 // Roll no.: 112301044
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using Windows.UI.Text;
-using Chat;
 using UI.ViewModels;
+using Windows.UI.Text;
 
 namespace Chat.UI.Test;
 
@@ -18,8 +17,7 @@ public class MessageViewModelTests
         Mentions? mentions = null,
         Guid? replyToMessageId = null)
     {
-        ChatMessage message = new()
-        {
+        ChatMessage message = new() {
             Timestamp = DateTimeOffset.UtcNow,
             SenderName = sender,
             Content = "hello there",
@@ -43,8 +41,7 @@ public class MessageViewModelTests
     [Fact]
     public void OwnMessage_AlignsRight_AndHidesLeftAvatar()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel own = CreateMessage("alice", currentUser: "alice");
 
             Assert.True(own.IsOwnMessage);
@@ -57,8 +54,7 @@ public class MessageViewModelTests
     [Fact]
     public void OtherUsersMessage_AlignsLeft_AndHidesRightAvatar()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel other = CreateMessage("hostuser", currentUser: "alice");
 
             Assert.False(other.IsOwnMessage);
@@ -71,8 +67,7 @@ public class MessageViewModelTests
     [Fact]
     public void OtherUsersMessage_CannotBeEditedOrDeleted_ByRegularParticipant()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel other = CreateMessage("hostuser", currentUser: "alice", hostName: "hostuser");
 
             Assert.False(other.CanEdit);
@@ -83,8 +78,7 @@ public class MessageViewModelTests
     [Fact]
     public void CurrentUser_CanEditAndDelete_OwnMessages()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel own = CreateMessage("alice", currentUser: "alice");
 
             Assert.True(own.CanEdit);
@@ -95,8 +89,7 @@ public class MessageViewModelTests
     [Fact]
     public void Host_CanEditAndDelete_RegularParticipantsMessages()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel fromAlice = CreateMessage("alice", currentUser: "hostuser", hostName: "hostuser");
 
             Assert.True(fromAlice.IsCurrentUserHost);
@@ -108,8 +101,7 @@ public class MessageViewModelTests
     [Fact]
     public void MessageMentioningCurrentUser_ShowsMentionLabel()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             Mentions mentions = new();
             mentions.Usernames.Add("alice");
             MessageViewModel message = CreateMessage("hostuser", currentUser: "alice", mentions: mentions);
@@ -123,8 +115,7 @@ public class MessageViewModelTests
     [Fact]
     public void MessageNotMentioningCurrentUser_HidesMentionLabel()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel message = CreateMessage("hostuser", currentUser: "alice");
 
             Assert.False(message.IsMentioned);
@@ -135,8 +126,7 @@ public class MessageViewModelTests
     [Fact]
     public void DeletingMessage_DisablesActions_AndShowsDeletionNotice()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel message = CreateMessage("alice", currentUser: "alice");
 
             message.ApplyDeletion("hostuser");
@@ -154,8 +144,7 @@ public class MessageViewModelTests
     [Fact]
     public void DeletingMessage_ByRegularParticipant_NamesTheDeleter()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel message = CreateMessage("alice", currentUser: "alice");
 
             message.ApplyDeletion("bob");
@@ -167,8 +156,7 @@ public class MessageViewModelTests
     [Fact]
     public void Reactions_AddAndRemove_AsToggled()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             List<string> reactionsSent = new();
             MessageViewModel message = CreateReactionMessage(reactionsSent.Add);
 
@@ -192,8 +180,7 @@ public class MessageViewModelTests
     [Fact]
     public void MentionLabel_ForOtherParticipants_ListsRecipients()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             Mentions mentions = new();
             mentions.Usernames.Add("bob");
             mentions.Usernames.Add(ChatConstants.AiAssistantUsername);
@@ -211,8 +198,7 @@ public class MessageViewModelTests
     [Fact]
     public void MentionLabel_WithoutMentions_IsEmptyAndHidden()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel message = CreateMessage("hostuser", currentUser: "alice");
 
             Assert.False(message.HasMentions);
@@ -224,8 +210,7 @@ public class MessageViewModelTests
     [Fact]
     public void SendCustomReaction_WithSingleEmoji_TogglesReactionAndClearsText()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             List<string> reactions = new();
             MessageViewModel message = CreateReactionMessage(reactions.Add);
 
@@ -242,8 +227,7 @@ public class MessageViewModelTests
     [Fact]
     public void SendCustomReaction_WithSymbolRangeEmoji_IsAccepted()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             List<string> reactions = new();
             MessageViewModel message = CreateReactionMessage(reactions.Add);
 
@@ -259,8 +243,7 @@ public class MessageViewModelTests
     [Fact]
     public void SendCustomReaction_RejectsMultipleCharsAndNonEmoji()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             List<string> reactions = new();
             MessageViewModel message = CreateReactionMessage(reactions.Add);
 
@@ -279,8 +262,7 @@ public class MessageViewModelTests
     [Fact]
     public void ToggleReactionCommand_GatingAndIgnoresBadParameters()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             List<string> reactions = new();
             MessageViewModel message = CreateReactionMessage(reactions.Add);
 
@@ -302,8 +284,7 @@ public class MessageViewModelTests
     [Fact]
     public void ReactionPicker_Toggles_AndDeletionDisablesIt()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel message = CreateMessage("alice", currentUser: "alice");
 
             Assert.False(message.IsReactionPickerOpen);
@@ -335,10 +316,8 @@ public class MessageViewModelTests
     [Fact]
     public void ThreadedMessage_SeedsReplyCountFromExistingReplies()
     {
-        DispatcherThread.Run(() =>
-        {
-            ChatMessageWithThreads threaded = new()
-            {
+        DispatcherThread.Run(() => {
+            ChatMessageWithThreads threaded = new() {
                 Timestamp = DateTimeOffset.UtcNow,
                 SenderName = "hostuser",
                 Content = "root",
@@ -376,8 +355,7 @@ public class MessageViewModelTests
     [Fact]
     public void SingularReply_UsesSingularLabel()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel message = CreateMessage("hostuser", currentUser: "alice");
             Assert.Equal("0 replies", message.ReplyCountLabel);
 
@@ -391,10 +369,8 @@ public class MessageViewModelTests
     [Fact]
     public void ThreadReply_HidesThreadAffordances()
     {
-        DispatcherThread.Run(() =>
-        {
-            ChatMessage message = new()
-            {
+        DispatcherThread.Run(() => {
+            ChatMessage message = new() {
                 Timestamp = DateTimeOffset.UtcNow,
                 SenderName = "alice",
                 Content = "thread reply",
@@ -423,8 +399,7 @@ public class MessageViewModelTests
     [Fact]
     public void ApplyEdit_UpdatesContent_And_IsIgnoredWhenDeleted()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel message = CreateMessage("alice", currentUser: "alice");
             Assert.False(message.IsEdited);
             Assert.Equal(string.Empty, message.EditedLabel);
@@ -446,8 +421,7 @@ public class MessageViewModelTests
     [Fact]
     public void DeletedMessage_PresentsDeletedContentStyling()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel message = CreateMessage("alice", currentUser: "alice");
 
             message.ApplyDeletion("hostuser");
@@ -463,8 +437,7 @@ public class MessageViewModelTests
     [Fact]
     public void JumpHighlight_ChangesBubbleAndBorder_AndIsIdempotent()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel message = CreateMessage("alice", currentUser: "alice");
             Brush brushBefore = message.BubbleBrush;
 
@@ -485,8 +458,7 @@ public class MessageViewModelTests
     [Fact]
     public void JumpToReply_IsUnavailable_WithoutReplyTarget()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MessageViewModel plain = CreateMessage("alice", currentUser: "alice");
             Assert.False(plain.JumpToReplyCommand.CanExecute(null));
 
@@ -497,8 +469,7 @@ public class MessageViewModelTests
 
     private static MessageViewModel CreateReactionMessage(Action<string> onReaction)
     {
-        ChatMessage message = new()
-        {
+        ChatMessage message = new() {
             Timestamp = DateTimeOffset.UtcNow,
             SenderName = "alice",
             Content = "react here",

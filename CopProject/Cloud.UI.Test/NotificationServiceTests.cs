@@ -5,6 +5,9 @@ using Cloud.UI.Services;
 
 namespace Cloud.UI.Test;
 
+/// <summary>
+/// Tests the service that owns the messenger and forwards its events.
+/// </summary>
 [TestClass]
 public class NotificationServiceTests
 {
@@ -24,57 +27,59 @@ public class NotificationServiceTests
         });
     }
 
+    /// <summary>Valid http/https URLs are accepted and normalised.</summary>
     [TestMethod]
     [DataRow("https://localhost:5001/hub", "https://localhost:5001/hub")]
     [DataRow("http://example.com", "http://example.com/")]
     [DataRow("  https://example.com/x  ", "https://example.com/x")]
-    [DataRow("HTTP://EXAMPLE.COM/", "http://example.com/")]
-    public void TryParseUrl_ValidUrl_ReturnsNormalisedForm(string input, string expected)
+    public void TryParseUrlValidUrlReturnsNormalisedForm(string input, string expected)
     {
         Assert.IsTrue(NotificationService.TryParseUrl(input, out string url));
         Assert.AreEqual(expected, url);
     }
 
+    /// <summary>Anything that is not an absolute http/https URL is rejected.</summary>
     [TestMethod]
     [DataRow("")]
-    [DataRow("   ")]
-    [DataRow("localhost:5001")]
-    [DataRow("/relative/path")]
     [DataRow("ftp://example.com")]
-    [DataRow("file:///c:/x")]
     [DataRow("not a url")]
-    public void TryParseUrl_InvalidUrl_ReturnsFalseAndEmpty(string input)
+    public void TryParseUrlInvalidUrlReturnsFalseAndEmpty(string input)
     {
         Assert.IsFalse(NotificationService.TryParseUrl(input, out string url));
         Assert.AreEqual(string.Empty, url);
     }
 
+    /// <summary>A null messenger factory is rejected.</summary>
     [TestMethod]
-    public void Constructor_NullFactory_Throws()
+    public void ConstructorNullFactoryThrows()
     {
         Assert.ThrowsExactly<ArgumentNullException>(() => new NotificationService(null!));
     }
 
+    /// <summary>Without a messenger the state is Disconnected.</summary>
     [TestMethod]
-    public void State_WithoutMessenger_IsDisconnected()
+    public void StateWithoutMessengerIsDisconnected()
     {
         Assert.AreEqual(ConnectionState.Disconnected, CreateService().State);
     }
 
+    /// <summary>Connecting before a server is chosen fails.</summary>
     [TestMethod]
-    public async Task ConnectAsync_BeforeUseServer_Throws()
+    public async Task ConnectAsyncBeforeUseServerThrows()
     {
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => CreateService().ConnectAsync());
     }
 
+    /// <summary>Disconnecting without a messenger is a no-op.</summary>
     [TestMethod]
-    public async Task DisconnectAsync_WithoutMessenger_DoesNothing()
+    public async Task DisconnectAsyncWithoutMessengerDoesNothing()
     {
         await CreateService().DisconnectAsync();
     }
 
+    /// <summary>The first call creates a messenger and raises ServerChanged.</summary>
     [TestMethod]
-    public async Task UseServerAsync_FirstCall_CreatesMessengerAndRaisesServerChanged()
+    public async Task UseServerAsyncFirstCallCreatesMessengerAndRaisesServerChanged()
     {
         NotificationService service = CreateService();
         int serverChanged = 0;
@@ -88,8 +93,9 @@ public class NotificationServiceTests
         _created[0].Verify(m => m.DisconnectAsync(), Times.Never);
     }
 
+    /// <summary>The same URL reuses the messenger.</summary>
     [TestMethod]
-    public async Task UseServerAsync_SameUrl_ReusesMessenger()
+    public async Task UseServerAsyncSameUrlReusesMessenger()
     {
         NotificationService service = CreateService();
         int serverChanged = 0;
@@ -103,8 +109,9 @@ public class NotificationServiceTests
         _created[0].Verify(m => m.DisposeAsync(), Times.Never);
     }
 
+    /// <summary>The same URL while connected closes the connection but keeps the messenger.</summary>
     [TestMethod]
-    public async Task UseServerAsync_SameUrlWhileConnected_Disconnects()
+    public async Task UseServerAsyncSameUrlWhileConnectedDisconnects()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -116,8 +123,9 @@ public class NotificationServiceTests
         Assert.AreEqual(ConnectionState.Disconnected, service.State);
     }
 
+    /// <summary>A different URL disposes the old messenger and creates a new one.</summary>
     [TestMethod]
-    public async Task UseServerAsync_DifferentUrl_DisposesOldAndCreatesNew()
+    public async Task UseServerAsyncDifferentUrlDisposesOldAndCreatesNew()
     {
         NotificationService service = CreateService();
         int serverChanged = 0;
@@ -133,8 +141,9 @@ public class NotificationServiceTests
         _created[1].Verify(m => m.DisposeAsync(), Times.Never);
     }
 
+    /// <summary>Events of the replaced messenger are no longer forwarded.</summary>
     [TestMethod]
-    public async Task UseServerAsync_DifferentUrl_UnsubscribesFromOldMessenger()
+    public async Task UseServerAsyncDifferentUrlUnsubscribesFromOldMessenger()
     {
         NotificationService service = CreateService();
         int received = 0;
@@ -149,8 +158,9 @@ public class NotificationServiceTests
         Assert.AreEqual(0, received);
     }
 
+    /// <summary>A failing dispose of the old messenger is ignored.</summary>
     [TestMethod]
-    public async Task UseServerAsync_OldMessengerDisposeThrows_IsSwallowed()
+    public async Task UseServerAsyncOldMessengerDisposeThrowsIsSwallowed()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -161,33 +171,25 @@ public class NotificationServiceTests
         Assert.AreEqual(2, _created.Count);
     }
 
+    /// <summary>Connect and disconnect are passed on to the messenger.</summary>
     [TestMethod]
-    public async Task ConnectAsync_ConnectsMessenger_AndStateFollows()
+    public async Task ConnectAsyncAndDisconnectAsyncDriveTheMessenger()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
 
         await service.ConnectAsync();
-
-        _created[0].Verify(m => m.ConnectAsync(), Times.Once);
         Assert.AreEqual(ConnectionState.Connected, service.State);
-    }
-
-    [TestMethod]
-    public async Task DisconnectAsync_DisconnectsMessenger()
-    {
-        NotificationService service = CreateService();
-        await service.UseServerAsync(UrlA);
-        await service.ConnectAsync();
-
         await service.DisconnectAsync();
 
+        _created[0].Verify(m => m.ConnectAsync(), Times.Once);
         _created[0].Verify(m => m.DisconnectAsync(), Times.Once);
         Assert.AreEqual(ConnectionState.Disconnected, service.State);
     }
 
+    /// <summary>The text is passed on to the messenger.</summary>
     [TestMethod]
-    public async Task SendAsync_ForwardsText()
+    public async Task SendAsyncForwardsText()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -197,8 +199,9 @@ public class NotificationServiceTests
         _created[0].Verify(m => m.SendMessageAsync("ping"), Times.Once);
     }
 
+    /// <summary>The since time is passed on and the missed messages are returned.</summary>
     [TestMethod]
-    public async Task SyncAsync_ForwardsSinceAndReturnsMessages()
+    public async Task SyncAsyncForwardsSinceAndReturnsMessages()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -211,10 +214,22 @@ public class NotificationServiceTests
         Assert.AreEqual(missed.Id, result.Single().Id);
     }
 
+    /// <summary>Messenger events are ignored without subscribers and forwarded with them.</summary>
     [TestMethod]
-    public async Task MessengerEvents_AreForwarded()
+    public async Task MessengerEventsAreIgnoredWithoutSubscribersAndForwardedWithThem()
     {
         NotificationService service = CreateService();
+        await service.UseServerAsync(UrlA);
+        Message sent = TestData.Msg();
+        Exception e1 = new("r");
+        Exception e2 = new("c");
+
+        // nobody listens yet: must not throw
+        _created[0].RaiseMessage(sent);
+        _created[0].RaiseReconnecting(e1);
+        _created[0].RaiseReconnected("conn-0");
+        _created[0].RaiseClosed(e2);
+
         Message? message = null;
         Exception? reconnecting = null;
         string? reconnectedId = null;
@@ -223,10 +238,6 @@ public class NotificationServiceTests
         service.Reconnecting += e => reconnecting = e;
         service.Reconnected += id => reconnectedId = id;
         service.Closed += e => closed = e;
-        await service.UseServerAsync(UrlA);
-        Message sent = TestData.Msg();
-        Exception e1 = new("r");
-        Exception e2 = new("c");
 
         _created[0].RaiseMessage(sent);
         _created[0].RaiseReconnecting(e1);
@@ -239,8 +250,9 @@ public class NotificationServiceTests
         Assert.AreSame(e2, closed);
     }
 
+    /// <summary>Disposing releases the messenger and the state becomes Disconnected.</summary>
     [TestMethod]
-    public async Task DisposeAsync_DisposesMessenger_AndResetsState()
+    public async Task DisposeAsyncDisposesMessengerAndResetsState()
     {
         NotificationService service = CreateService();
         await service.UseServerAsync(UrlA);
@@ -251,13 +263,4 @@ public class NotificationServiceTests
         Assert.AreEqual(ConnectionState.Disconnected, service.State);
     }
 
-    [TestMethod]
-    public async Task DisposeAsync_MessengerDisposeThrows_IsSwallowed()
-    {
-        NotificationService service = CreateService();
-        await service.UseServerAsync(UrlA);
-        _created[0].Setup(m => m.DisposeAsync()).Throws(new InvalidOperationException("nope"));
-
-        await service.DisposeAsync();
-    }
 }

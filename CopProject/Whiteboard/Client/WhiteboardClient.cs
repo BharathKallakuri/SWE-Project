@@ -1,8 +1,10 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿/// Owners  : Raagam Hitesh Parmar  Sangam     Karthik Krishna M
+/// Roll No : 112301024             112201006  112301014
+/// LICENSE : MIT
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using Networking;
@@ -12,7 +14,6 @@ using Whiteboard.Network.Dtos;
 using Whiteboard.Network.Mappers;
 using Whiteboard.Network.Messages;
 using Whiteboard.Network.Serializations;
-using System.Collections.Generic;
 
 namespace Whiteboard.Client;
 
@@ -66,21 +67,30 @@ public class WhiteboardClient : IWhiteboardClient
     /// <param name="msg">Client message to send</param>
     private void SendToServer(ClientMessage message)
     {
-        // History follows the actor, which can differ from an item's creator.
-        ClientMessage request = message with { UserId = UserId };
+        try
+        {
+            // History follows the actor, which can differ from an item's creator.
+            ClientMessage request = message with { UserId = UserId };
 
-        byte[] bytes =
-            new ClientMessageByteSerializer().Serialize(request);
+            byte[] bytes =
+                new ClientMessageByteSerializer().Serialize(request);
 
-        _communicator.SendMessage(
-            _serverEndpoint,
-            bytes,
-            Constants.WhiteboardModuleId,
-            priority: Constants.WhiteboardModulePriority);
+            _communicator.SendMessage(
+                _serverEndpoint,
+                bytes,
+                Constants.WhiteboardModuleId,
+                priority: Constants.WhiteboardModulePriority);
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceError($"[Whiteboard][WhiteboardClient][Error] Request serialization or send failed. User={UserId}. {exception}");
+            throw;
+        }
     }
 
     public void RequestSync()
     {
+        Trace.TraceInformation($"[Whiteboard][WhiteboardClient] Canvas synchronization requested. User={UserId}");
         SendToServer(new ClientMessage.ReqUpdate());
     }
 
@@ -89,12 +99,14 @@ public class WhiteboardClient : IWhiteboardClient
         ArgumentNullException.ThrowIfNull(item);
 
         Canvas.AddItem(item);
+        Trace.TraceInformation($"[Whiteboard][WhiteboardClient] Add requested. User={UserId}, Item={item.Id}");
         SendToServer(new ClientMessage.ReqAddItem(item.Id, ItemMapper.ToDto(item)));
     }
 
     public void DeleteItem(Guid id)
     {
         Canvas.DeleteItem(id);
+        Trace.TraceInformation($"[Whiteboard][WhiteboardClient] Delete requested. User={UserId}, Item={id}");
         SendToServer(new ClientMessage.ReqDeleteItem(id));
     }
 
@@ -103,18 +115,21 @@ public class WhiteboardClient : IWhiteboardClient
         ArgumentNullException.ThrowIfNull(item);
 
         Canvas.EditItem(item);
+        Trace.TraceInformation($"[Whiteboard][WhiteboardClient] Edit requested. User={UserId}, Item={item.Id}");
         SendToServer(new ClientMessage.ReqUpdateItem(item.Id, ItemMapper.ToDto(item)));
     }
 
     /// <inheritdoc/>
     public void Undo()
     {
+        Trace.TraceInformation($"[Whiteboard][WhiteboardClient] Undo requested. User={UserId}, Undo={_undo.Count}, Redo={_redo.Count}");
         SendToServer(new ClientMessage.ReqUndo());
     }
 
     /// <inheritdoc/>
     public void Redo()
     {
+        Trace.TraceInformation($"[Whiteboard][WhiteboardClient] Redo requested. User={UserId}, Undo={_undo.Count}, Redo={_redo.Count}");
         SendToServer(new ClientMessage.ReqRedo());
     }
 
@@ -124,53 +139,82 @@ public class WhiteboardClient : IWhiteboardClient
     /// <param name="message">Serialized server message.</param>
     public void OnMessageReceived(byte[] message)
     {
-        ServerMessage response =
-            new ServerMessageByteSerializer().Deserialize(message);
-
-        switch (response)
+        try
         {
-            case ServerMessage.ResUpdate(var state):
-                {
-                    // Convert first, before removing the current state.
-                    IItem[] items = state.Items
-                        .Select(ItemMapper.FromDto)
-                        .ToArray();
+            ServerMessage response =
+                new ServerMessageByteSerializer().Deserialize(message);
 
-                    // Delete through the model so the renderer removes stale visuals.
-                    // Clearing the dictionary directly would not raise deletion events.
-                    foreach (Guid id in Canvas.Items.Keys.ToArray())
+            switch (response)
+            {
+                case ServerMessage.ResUpdate(var state):
                     {
-                        Canvas.DeleteItem(id);
+                        // Convert first, before removing the current state.
+                        IItem[] items = state.Items
+                            .Select(ItemMapper.FromDto)
+                            .ToArray();
+
+                        // Apply the new state as a diff rather than delete-all/add-all.
+                        // Re-adding every item would destroy and rebuild every visual,
+                        // e.g. a textbox the user is currently typing into.
+                        HashSet<Guid> incomingIds = items.Select(item => item.Id).ToHashSet();
+
+                        // Delete through the model so the renderer removes stale visuals.
+                        foreach (Guid id in Canvas.Items.Keys.ToArray())
+                        {
+                            if (!incomingIds.Contains(id))
+                            {
+                                Canvas.DeleteItem(id);
+                            }
+                        }
+
+                        foreach (IItem item in items)
+                        {
+                            if (!Canvas.EditItem(item))
+                            {
+                                Canvas.AddItem(item);
+                            }
+                        }
+
+                        Trace.TraceInformation($"[Whiteboard][WhiteboardClient] Server canvas applied. User={UserId}, Items={items.Length}");
+                        break;
                     }
 
-                    foreach (IItem item in items)
-                    {
-                        Canvas.AddItem(item);
-                    }
+                // History states are broadcast; only apply the current user's state.
+                case ServerMessage.ResHistory(
+                    var userId,
+                    var undo,
+                    var redo)
+                    when string.Equals(
+                        userId,
+                        UserId,
+                        StringComparison.Ordinal):
 
+                    _undo = undo;
+                    _redo = redo;
+                    Trace.TraceInformation($"[Whiteboard][WhiteboardClient] Personal history updated. User={UserId}, Undo={_undo.Count}, Redo={_redo.Count}");
+                    HistoryChanged();
                     break;
-                }
 
-            // History states are broadcast; only apply the current user's state.
-            case ServerMessage.ResHistory(
-                var userId,
-                var undo,
-                var redo)
-                when string.Equals(
-                    userId,
-                    UserId,
-                    StringComparison.Ordinal):
+                // Other users' history broadcasts are expected and need no warning.
+                case ServerMessage.ResHistory:
+                    break;
 
-                _undo = undo;
-                _redo = redo;
-                HistoryChanged();
-                break;
+                default:
+                    Trace.TraceWarning($"[Whiteboard][WhiteboardClient][Warning] Empty or unsupported server response ignored. User={UserId}");
+                    break;
+            }
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceError($"[Whiteboard][WhiteboardClient][Error] Server response processing failed. User={UserId}. {exception}");
+            throw;
         }
     }
 
     public void RestoreSnapshot(WhiteboardDto whiteboard)
     {
         ArgumentNullException.ThrowIfNull(whiteboard);
+        Trace.TraceInformation($"[Whiteboard][WhiteboardClient] Snapshot restoration requested. User={UserId}, Items={whiteboard.Items.Count}");
         SendToServer(new ClientMessage.ReqRestoreSnapshot(whiteboard));
     }
 }

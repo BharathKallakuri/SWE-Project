@@ -1,4 +1,7 @@
-﻿namespace ScreenShare;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+namespace ScreenShare;
 
 /// <summary>
 /// sent by a client to the host once its ScreenShare is listening. the host replies with

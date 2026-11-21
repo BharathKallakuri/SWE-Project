@@ -37,6 +37,11 @@ public sealed partial class NotificationServiceView : UserControl
         InitializeComponent();
 
         ViewModel.NotificationReceived += OnNotificationReceived;
+        Trace.TraceInformation("Notification Service view created; connecting automatically.");
+
+        // Connect (and sync) as soon as the view exists. It cannot throw:
+        // the commands report failures through the view model's error text.
+        _ = ViewModel.ConnectCommand.ExecuteAsync();
     }
 
     /// <summary>The view model the XAML binds to.</summary>
@@ -54,9 +59,7 @@ public sealed partial class NotificationServiceView : UserControl
 
     private void ServerUrlBox_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        // Enter connects, or switches to the typed server when already connected.
-        ICommand command = ViewModel.ConnectCommand.CanExecute(null) ? ViewModel.ConnectCommand : ViewModel.ReconnectCommand;
-        RunOnEnter(e, command);
+        RunOnEnter(e, ViewModel.ConnectCommand);
     }
 
     private void MessageBox_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -99,7 +102,7 @@ public sealed partial class NotificationServiceView : UserControl
         catch (Exception ex)
         {
             // The notification is already in the list; a failed popup must never crash the app.
-            Debug.WriteLine($"Notification alert failed: {ex}");
+            Trace.TraceError($"Notification alert failed: {ex}");
         }
         finally
         {

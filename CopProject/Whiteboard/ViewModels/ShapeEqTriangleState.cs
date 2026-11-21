@@ -1,4 +1,5 @@
-﻿/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Sasi Kiran
+/// Roll no : 112301033
 /// LICENSE : MIT
 
 using System;
@@ -80,7 +81,7 @@ public class ShapeEqTriangleState : ViewModelStateBase
         if (_triangle.SideLength > 0)
         {
             IEqTriangle item = _triangle;
-            Task.Run(() => WhiteboardClient.AddItem(item));
+            DrawingTask = Task.Run(() => WhiteboardClient.AddItem(item));
         }
 
         _triangle = null;

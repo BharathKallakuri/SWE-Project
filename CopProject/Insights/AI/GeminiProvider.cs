@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
-using Trace = System.Diagnostics.Trace;
+﻿// Authors:
+// Adwaith Nath R - Roll Number: 112614010
+// Hariram S - Roll Number: 112614008
+
 using Google.GenAI;
 using Google.GenAI.Types;
+using Trace = System.Diagnostics.Trace;
 
 namespace Insights.AI;
 
@@ -159,10 +162,8 @@ public class GeminiProvider : IInsightsProvider, ILogAnalysisProvider
                 ? $"Latest user question:\n{userMessage}"
                 : $"Chat context:\n{chatContext}\n\nLatest user question:\n{userMessage}";
 
-            GenerateContentConfig config = new()
-            {
-                SystemInstruction = new Content
-                {
+            GenerateContentConfig config = new() {
+                SystemInstruction = new Content {
                     Parts = new List<Part>
                     {
                         new()

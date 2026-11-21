@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿// Author = Gundamaraju Hemanth Kashyap
+
+// Roll Number = 112301009
+
+using System.Diagnostics;
 
 namespace Cloud.Crash;
 
@@ -53,8 +57,7 @@ public sealed class CrashHandler : IDisposable
     /// </summary>
     public static CrashHandler? Current
     {
-        get
-        {
+        get {
             lock (s_installLock)
             {
                 return s_current;
@@ -92,8 +95,9 @@ public sealed class CrashHandler : IDisposable
             }
 
             Trace.TraceInformation("CrashHandler.Install: creating and attaching the crash handler.");
-            handler = new CrashHandler(new LocalCrashStore(), new CosmosCrashUploader());
-            handler.UserId = userId;
+            handler = new CrashHandler(new LocalCrashStore(), new CosmosCrashUploader()) {
+                UserId = userId
+            };
             handler.Attach();
             s_current = handler;
         }

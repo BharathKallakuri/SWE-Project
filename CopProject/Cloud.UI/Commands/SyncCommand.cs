@@ -1,13 +1,14 @@
 ﻿// Author = Simeon Kandan Sonar
 // Roll Number = 112301031 
 
+using System.Diagnostics;
 using Cloud.Networking;
 using Cloud.UI.Services;
 using Cloud.UI.ViewModels;
 
 namespace Cloud.UI.Commands;
 
-/// <summary>Fetches the messages missed since the newest one already shown.</summary>
+/// <summary>Fetches the messages missed since the newest one received by the previous sync.</summary>
 public sealed class SyncCommand : NotificationCommand
 {
     public SyncCommand(NotificationServiceViewModel viewModel, NotificationService service)
@@ -20,7 +21,16 @@ public sealed class SyncCommand : NotificationCommand
         return ViewModel.State == ConnectionState.Connected;
     }
 
-    protected override async Task RunAsync()
+    protected override Task RunAsync()
+    {
+        return SyncNowAsync();
+    }
+
+    /// <summary>
+    /// The sync itself, without the availability checks, so <see cref="ConnectCommand"/>
+    /// (which is still busy when it syncs) can reuse it.
+    /// </summary>
+    internal async Task SyncNowAsync()
     {
         IReadOnlyList<Message> missed = await Service.SyncAsync(ViewModel.LastMessageTime);
 
@@ -32,8 +42,15 @@ public sealed class SyncCommand : NotificationCommand
             {
                 added++;
             }
+
+            // only a sync moves the starting point (messages that are already shown are skipped above)
+            if (message.Timestamp > ViewModel.LastMessageTime)
+            {
+                ViewModel.LastMessageTime = message.Timestamp;
+            }
         }
 
+        Trace.TraceInformation($"Sync finished: {added} new of {missed.Count} returned.");
         ViewModel.LastSyncText = $"Last synced {DateTime.Now:t} · {added} new";
     }
 }

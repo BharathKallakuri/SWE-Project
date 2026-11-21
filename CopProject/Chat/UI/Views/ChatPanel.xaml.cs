@@ -5,14 +5,13 @@ using System.Collections.Specialized;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
-using Microsoft.UI.Dispatching;
+using Chat;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using UI.ViewModels;
 using Windows.System;
-using Windows.UI;
 
 namespace UI.Views;
 
@@ -29,7 +28,7 @@ public sealed partial class ChatPanel : UserControl
     private const double NearBottomThreshold = 90;
 
     private const uint InputKeyboard = 1;
-    private const uint KeyUp = 0x0002;
+    private new const uint KeyUp = 0x0002;
     private const ushort VkLeftWindows = 0x5B;
     private const ushort VkPeriod = 0xBE;
 
@@ -73,6 +72,22 @@ public sealed partial class ChatPanel : UserControl
         InitializeComponent();
     }
 
+    public async void ShowChatServerStartupError()
+    {
+        if (XamlRoot is null)
+        {
+            return;
+        }
+
+        ContentDialog dialog = new() {
+            Title = "Chat unavailable",
+            Content = ChatServer.StartupFailureMessage,
+            CloseButtonText = "OK",
+            XamlRoot = XamlRoot
+        };
+        await dialog.ShowAsync();
+    }
+
     public ChatPanelViewModel? ViewModel
     {
         get => _viewModel;
@@ -82,10 +97,7 @@ public sealed partial class ChatPanel : UserControl
                 return;
             }
 
-            if (_viewModel is not null)
-            {
-                _viewModel.ScrollToMessageRequested -= OnScrollToMessageRequested;
-            }
+            _viewModel?.ScrollToMessageRequested -= OnScrollToMessageRequested;
 
             _viewModel = value;
             DataContext = value;
@@ -403,7 +415,7 @@ public sealed partial class ChatPanel : UserControl
         };
     }
 
-    private async void NativeEmojiInput_TextChanged(object sender, TextChangedEventArgs e)
+    private async void NativeEmojiInput_TextChanged(object _, TextChangedEventArgs __)
     {
         if (_pendingReactionMessage is null || string.IsNullOrWhiteSpace(NativeEmojiInput.Text))
         {

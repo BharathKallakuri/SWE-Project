@@ -1,4 +1,4 @@
-// Author: Rajat
+﻿// Author: Rajat
 // Roll no.: 112301044
 
 using Microsoft.UI.Xaml;
@@ -11,7 +11,10 @@ namespace Chat.UI.Test;
 public class AvatarViewModelTests
 {
     // AvatarViewModel is abstract, so exercise it through ParticipantViewModel.
-    private static ParticipantViewModel CreateAvatar(string displayName) => new(displayName, "alice", "hostuser");
+    private static ParticipantViewModel CreateAvatar(string displayName)
+    {
+        return new(displayName, "alice", "hostuser");
+    }
 
     [Theory]
     [InlineData("madonna", "M")]
@@ -19,8 +22,7 @@ public class AvatarViewModelTests
     [InlineData("Jean Luc Picard", "JP")]
     public void Initials_AreDerivedFromDisplayName(string displayName, string expected)
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             ParticipantViewModel avatar = CreateAvatar(displayName);
 
             Assert.Equal(expected, avatar.Initials);
@@ -30,8 +32,7 @@ public class AvatarViewModelTests
     [Fact]
     public void SettingAvatarImage_HidesInitials_AndClearingRestoresThem()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             ParticipantViewModel avatar = CreateAvatar("Ada Lovelace");
             Assert.IsType<SolidColorBrush>(avatar.AvatarBrush);
             Assert.Equal(Visibility.Visible, avatar.InitialsVisibility);
@@ -51,8 +52,7 @@ public class AvatarViewModelTests
     [Fact]
     public void AvatarToolTip_CanBeSetAndCleared()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             ParticipantViewModel avatar = CreateAvatar("Ada Lovelace");
             Assert.Null(avatar.AvatarToolTip);
 
@@ -67,8 +67,7 @@ public class AvatarViewModelTests
     [Fact]
     public void AvatarToolTip_SettingSameValueTwice_IsIdempotent()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             ParticipantViewModel avatar = CreateAvatar("Ada Lovelace");
 
             avatar.SetAvatarToolTip("Ada\nada@example.com");
@@ -81,8 +80,7 @@ public class AvatarViewModelTests
     [Fact]
     public void DifferentDisplayNames_ProduceStableInitialsBrushColors()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             ParticipantViewModel first = CreateAvatar("Ada Lovelace");
             ParticipantViewModel second = CreateAvatar("Ada Lovelace");
 
@@ -106,8 +104,7 @@ public class ParticipantViewModelTests
         string hostUser,
         string expectedLabel)
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             ParticipantViewModel participant = new(username, currentUser, hostUser);
 
             Assert.Equal(expectedLabel, participant.ParticipantRoleLabel);
@@ -120,8 +117,7 @@ public class MentionTargetViewModelTests
     [Fact]
     public void ToggleCommand_InvokesToggleCallback()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             int calls = 0;
             MentionTargetViewModel target = new("bob", "bob", "Participant", _ => calls++, _ => { });
 
@@ -135,8 +131,7 @@ public class MentionTargetViewModelTests
     [Fact]
     public void RemoveCommand_InvokesRemoveCallback()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             int calls = 0;
             MentionTargetViewModel target = new("bob", "bob", "Participant", _ => { }, _ => calls++);
 
@@ -149,8 +144,7 @@ public class MentionTargetViewModelTests
     [Fact]
     public void SetSelected_UpdatesSelectionMark()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             MentionTargetViewModel target = new("bob", "bob", "Participant", _ => { }, _ => { });
             Assert.Equal("+", target.SelectionMark);
 
@@ -173,8 +167,7 @@ public class ReactionViewModelTests
     [Fact]
     public void Properties_ReflectDistinctUsers_AndInvokeToggle()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             List<string> toggled = new();
             ReactionViewModel reaction = new("👍", new[] { "bob", "carol", "bob" }, "alice", toggled.Add);
 
@@ -203,8 +196,7 @@ public class ReactionViewModelTests
     [Fact]
     public void ToggleCommand_IsDisabled_WithoutCallback()
     {
-        DispatcherThread.Run(() =>
-        {
+        DispatcherThread.Run(() => {
             ReactionViewModel reaction = new("👍", new[] { "bob" }, "alice");
 
             Assert.False(reaction.ToggleCommand.CanExecute(null));

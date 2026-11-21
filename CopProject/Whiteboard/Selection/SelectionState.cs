@@ -1,16 +1,17 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+﻿//owner : U Sai Vignesh
+//roll number : 112301034
+// License : MIT
+
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Whiteboard.Interfaces;
 
 namespace Whiteboard.Selection;
 
-[ExcludeFromCodeCoverage]
-// Temporary exclusion from code coverage
 public class SelectionState : ISelectionState
 {
     public HashSet<Guid> SelectedItemIds { get; } = [];

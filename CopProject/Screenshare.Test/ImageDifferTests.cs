@@ -1,5 +1,7 @@
-﻿using System.Drawing;
-using Xunit;
+﻿// Author = Aryan
+// Roll Number = 112301041
+
+using System.Drawing;
 
 namespace Screenshare.Tests;
 

@@ -3,11 +3,9 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Incidents.ViewModels;
-using Incidents.ViewModels.Utils;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using Windows.UI;
 
 namespace Incidents.Views;
 

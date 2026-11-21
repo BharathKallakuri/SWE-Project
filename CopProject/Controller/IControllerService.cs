@@ -1,22 +1,28 @@
-using Utils;
+﻿// K.Bala Krishna
+// 112301015
+
 using Networking;
+using Utils;
+
 namespace Controller;
 
-// The UX layer depends on this abstraction, not on concrete Host/Client classes.
-// Each session is uniquely identified by the host's IP:port pair.
+///<summary>
+/// Defines the core contract for meeting control, participant tracking, and event handling.
+/// The UX layer depends on this abstraction, not on concrete Host/Client classes.
+///</summary>
 
 public interface IControllerService : IDisposable
 {
-    // Event Fired when a user joins a session.
+    // Event triggered when a user joins a session.
     event EventHandler<UserJoinedEventArgs>? UserJoined;
-    // Event Fired when a user leaves a session.
+    // Event triggered when a user leaves a session.
     event EventHandler<UserLeftEventArgs>? UserLeft;
-    // Event Fired when the Meeting is Ended. 
+    // Event triggered when the Meeting is Ended. 
     event EventHandler<MeetingEndedEventArgs>? MeetingEnded;
-    // returns True if the meeting was created and started successfully.
+    // Returns True if the meeting was created and started successfully.
     bool StartMeeting();
 
-    // returns True if the meeting was ended successfully.
+    // Returns True if the meeting was ended successfully.
     bool EndMeeting();
 
     // Joins an existing meeting on a remote host.
@@ -33,11 +39,11 @@ public interface IControllerService : IDisposable
 
     // Gets the port this controller is listening on.
     int ListenPort { get; }
-    
-     // Meeting connection and current user identity (for ScreenShare and other modules)
+
+    // Meeting connection and current user identity (for ScreenShare and other modules).
     ICommunicator? Communicator { get; }
     ControllerUser? CurrentUser { get; }
-    
+
     // Registration for external module notification handlers.
     void RegisterNotificationHandler(IUserNotificationHandler handler);
     void UnregisterNotificationHandler(IUserNotificationHandler handler);

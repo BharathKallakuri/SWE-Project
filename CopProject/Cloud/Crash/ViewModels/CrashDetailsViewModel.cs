@@ -1,4 +1,8 @@
-﻿using System.Collections.ObjectModel;
+﻿// Author = Gundamaraju Hemanth Kashyap
+
+// Roll Number = 112301009
+
+using System.Collections.ObjectModel;
 using System.Globalization;
 
 namespace Cloud.Crash.ViewModels;
@@ -94,8 +98,7 @@ public sealed class CrashDetailsViewModel : ViewModelBase
     public CrashReportItem? SelectedReport
     {
         get => _selectedReport;
-        set
-        {
+        set {
             if (value is not null && SetProperty(ref _selectedReport, value))
             {
                 OnPropertyChanged(nameof(SelectedReportText));
@@ -120,8 +123,7 @@ public sealed class CrashDetailsViewModel : ViewModelBase
     /// </summary>
     public string SelectedFramesText
     {
-        get
-        {
+        get {
             CrashExceptionInfo? root = SelectedReport is null ? null : CrashFingerprinter.GetRootCause(SelectedReport.Report);
 
             if (root is null)
@@ -152,8 +154,7 @@ public sealed class CrashDetailsViewModel : ViewModelBase
     public string ErrorMessage
     {
         get => _errorMessage;
-        private set
-        {
+        private set {
             if (SetProperty(ref _errorMessage, value))
             {
                 OnPropertyChanged(nameof(HasError));

@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Xml.Linq;
-using Microsoft.UI.Xaml.Hosting;
 
 namespace Chat.UI.Test;
 
@@ -19,32 +18,31 @@ namespace Chat.UI.Test;
 internal static class WinRtActivationContext
 {
     private const uint ActctxWithWindowsVersion = 0;
-    private static readonly XNamespace FragmentNamespace = "http://schemas.microsoft.com/appx/manifest/foundation/windows10";
-    private static readonly object Gate = new();
+    private static readonly XNamespace s_fragmentNamespace = "http://schemas.microsoft.com/appx/manifest/foundation/windows10";
+    private static readonly object s_gate = new();
     [ThreadStatic]
-    private static bool _threadActivated;
-    private static IntPtr _handle = new(-1);
+    private static bool s_threadActivated;
+    private static IntPtr s_handle = new(-1);
 
     /// <summary>Creates the activation context once and pushes it onto the calling thread.</summary>
     public static void EnsureActivated()
     {
-        if (_threadActivated)
+        if (s_threadActivated)
         {
             return;
         }
 
-        if (_handle == new IntPtr(-1))
+        if (s_handle == new IntPtr(-1))
         {
-            lock (Gate)
+            lock (s_gate)
             {
-                if (_handle == new IntPtr(-1))
+                if (s_handle == new IntPtr(-1))
                 {
                     string manifestPath = BuildManifest();
-                    ACTCTX context = new()
-                    {
-                        cbSize = Marshal.SizeOf<ACTCTX>(),
-                        dwFlags = ActctxWithWindowsVersion,
-                        lpSource = manifestPath
+                    ACTCTX context = new() {
+                        _cbSize = Marshal.SizeOf<ACTCTX>(),
+                        _dwFlags = ActctxWithWindowsVersion,
+                        _lpSource = manifestPath
                     };
 
                     IntPtr handle = CreateActCtxW(ref context);
@@ -54,18 +52,18 @@ internal static class WinRtActivationContext
                             "Could not create the Windows App SDK activation context.");
                     }
 
-                    _handle = handle;
+                    s_handle = handle;
                 }
             }
         }
 
-        if (!ActivateActCtx(_handle, out _))
+        if (!ActivateActCtx(s_handle, out _))
         {
             throw new Win32Exception(Marshal.GetLastWin32Error(),
                 "Could not activate the Windows App SDK activation context.");
         }
 
-        _threadActivated = true;
+        s_threadActivated = true;
     }
 
     private static string BuildManifest()
@@ -85,16 +83,16 @@ internal static class WinRtActivationContext
         foreach (string fragment in fragments)
         {
             XDocument document = XDocument.Load(fragment);
-            foreach (XElement server in document.Descendants(FragmentNamespace + "InProcessServer"))
+            foreach (XElement server in document.Descendants(s_fragmentNamespace + "InProcessServer"))
             {
-                string path = (string?)server.Element(FragmentNamespace + "Path") ?? string.Empty;
+                string path = (string?)server.Element(s_fragmentNamespace + "Path") ?? string.Empty;
                 if (path.Length == 0)
                 {
                     continue;
                 }
 
                 builder.Append("    <asmv3:file name='").Append(path).Append("'>\n");
-                foreach (XElement activatableClass in server.Elements(FragmentNamespace + "ActivatableClass"))
+                foreach (XElement activatableClass in server.Elements(s_fragmentNamespace + "ActivatableClass"))
                 {
                     string classId = (string?)activatableClass.Attribute("ActivatableClassId") ?? string.Empty;
                     string threadingModel = ((string?)activatableClass.Attribute("ThreadingModel"))?.ToLowerInvariant() ?? "both";
@@ -126,15 +124,15 @@ internal static class WinRtActivationContext
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct ACTCTX
     {
-        public int cbSize;
-        public uint dwFlags;
-        public string? lpSource;
-        public ushort wProcessorArchitecture;
-        public ushort wLangId;
-        public string? lpAssemblyDirectory;
-        public string? lpResourceName;
-        public string? lpApplicationName;
-        public IntPtr hModule;
+        public int _cbSize;
+        public uint _dwFlags;
+        public string? _lpSource;
+        public ushort _wProcessorArchitecture;
+        public ushort _wLangId;
+        public string? _lpAssemblyDirectory;
+        public string? _lpResourceName;
+        public string? _lpApplicationName;
+        public IntPtr _hModule;
     }
 
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
