@@ -102,6 +102,8 @@ public sealed partial class ChatPanel : UserControl
                 _threadNearBottom = true;
                 ScrollMainConversationToLatest();
             }
+
+            UpdateJumpButtons();
         }
     }
 
@@ -137,6 +139,8 @@ public sealed partial class ChatPanel : UserControl
             _mainScrollReady = true;
             ScrollMainConversationToLatest();
         }
+
+        UpdateJumpButtons();
     }
 
     private void ThreadMessagesList_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -147,6 +151,8 @@ public sealed partial class ChatPanel : UserControl
             _threadScrollReady = true;
             ScrollThreadToLatest();
         }
+
+        UpdateJumpButtons();
     }
 
     private ScrollViewer? EnsureMainScrollViewer()
@@ -184,6 +190,8 @@ public sealed partial class ChatPanel : UserControl
             _mainNearBottom =
                 _mainScrollViewer.ScrollableHeight - _mainScrollViewer.VerticalOffset < NearBottomThreshold;
         }
+
+        UpdateJumpButtons();
     }
 
     private void ThreadScrollViewer_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
@@ -193,7 +201,27 @@ public sealed partial class ChatPanel : UserControl
             _threadNearBottom =
                 _threadScrollViewer.ScrollableHeight - _threadScrollViewer.VerticalOffset < NearBottomThreshold;
         }
+
+        UpdateJumpButtons();
     }
+
+    // The wheel is not reliable on every PC, so offer an explicit way back to
+    // the newest message whenever the reader is more than a notch away from it.
+    private void UpdateJumpButtons()
+    {
+        MainJumpToLatestButton.Visibility = ShouldShowJumpButton(_mainScrollViewer, _mainNearBottom)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        ThreadJumpToLatestButton.Visibility = ShouldShowJumpButton(_threadScrollViewer, _threadNearBottom)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private static bool ShouldShowJumpButton(ScrollViewer? scroller, bool nearBottom)
+        => scroller is not null
+           && !nearBottom
+           && scroller.ScrollableHeight > NearBottomThreshold;
 
     private void OnMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
@@ -211,6 +239,12 @@ public sealed partial class ChatPanel : UserControl
         {
             ScrollMainConversationToLatest();
         }
+        else
+        {
+            // A new message arrived while the reader was away from the bottom:
+            // keep the jump button available (and refresh it if extent changed).
+            UpdateJumpButtons();
+        }
     }
 
     private void OnThreadMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -227,16 +261,38 @@ public sealed partial class ChatPanel : UserControl
         {
             ScrollThreadToLatest();
         }
+        else
+        {
+            UpdateJumpButtons();
+        }
     }
 
     private void ScrollMainConversationToLatest()
     {
+        _mainNearBottom = true;
+        UpdateJumpButtons();
         ScrollToBottom(EnsureMainScrollViewer());
     }
 
     private void ScrollThreadToLatest()
     {
+        _threadNearBottom = true;
+        UpdateJumpButtons();
         ScrollToBottom(EnsureThreadScrollViewer());
+    }
+
+    private void MainJumpToLatestButton_Click(object sender, RoutedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        ScrollMainConversationToLatest();
+    }
+
+    private void ThreadJumpToLatestButton_Click(object sender, RoutedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        ScrollThreadToLatest();
     }
 
     private void ScrollToBottom(ScrollViewer? scroller)

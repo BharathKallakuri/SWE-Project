@@ -231,6 +231,12 @@ Roll no.: 112301044
                         <TextBlock Text="No messages yet. Start the conversation." Visibility="{Binding EmptyConversationVisibility}"
                                    Foreground="#6B7280" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"
                                    TextAlignment="Center" TextWrapping="Wrap" MaxWidth="230"/>
+                        <Button x:Name="MainJumpToLatestButton" Content="↓" Visibility="Collapsed"
+                                Click="MainJumpToLatestButton_Click"
+                                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,16,14"
+                                Width="34" Height="34" Padding="0" CornerRadius="17"
+                                Background="#0F5FC2" Foreground="White" BorderThickness="0" FontSize="18"
+                                ToolTipService.ToolTip="Jump to latest message"/>
                     </Grid>
 
                     <Grid Visibility="{Binding ThreadPanelVisibility}">
@@ -268,6 +274,12 @@ Roll no.: 112301044
                                 </Style>
                             </ListView.ItemContainerStyle>
                         </ListView>
+                        <Button x:Name="ThreadJumpToLatestButton" Grid.Row="2" Content="↓" Visibility="Collapsed"
+                                Click="ThreadJumpToLatestButton_Click"
+                                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,16,14"
+                                Width="34" Height="34" Padding="0" CornerRadius="17"
+                                Background="#0F5FC2" Foreground="White" BorderThickness="0" FontSize="18"
+                                ToolTipService.ToolTip="Jump to latest reply"/>
                     </Grid>
                 </Grid>
 
