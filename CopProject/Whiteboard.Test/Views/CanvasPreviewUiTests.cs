@@ -65,6 +65,8 @@ public class CanvasPreviewUiTests(XamlUiThreadFixture ui)
             Assert.Empty(canvas.Children);
 
             preview.ShowPreview(new Polygon { Vertices = [] });
+            preview.ShowPreview(new Polygon { Vertices = [new Point2D(10, 10), new Point2D(40, 10)], BorderColor = s_black, BorderWidth = 2 });
+            Assert.Single(canvas.Children);
             preview.ShowPreview(new FreehandItem { Points = [] });
             preview.ClearPreview();
             Assert.Empty(canvas.Children);
