@@ -1,11 +1,9 @@
 ﻿// Author: M Sreenath Karthick
 // Roll Number: 112301042
 
-using System;
-using Incidents;
-using Incidents.Views;
 using Cloud.Persistence;
 using FileSynchroniser.Models;
+using Incidents.Views;
 using Microsoft.UI.Xaml;
 
 namespace Incidents.UIharness;

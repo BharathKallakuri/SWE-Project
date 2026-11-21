@@ -1,4 +1,7 @@
-﻿namespace Chat;
+﻿// Author: Zeeshan
+// Roll no.: 112301040
+
+namespace Chat;
 
 /// <summary>
 /// Represents a message that can own a single-level thread of replies.
@@ -65,8 +68,7 @@ public class ChatMessageWithThreads : ChatMessage, IChatMessageWithThreads
 
     internal ChatMessageWithThreads DeepCloneWithoutThreadMessages()
     {
-        ChatMessageWithThreads clone = new()
-        {
+        ChatMessageWithThreads clone = new() {
             Timestamp = Timestamp,
             SenderName = SenderName,
             Mentions = Mentions.Clone(),

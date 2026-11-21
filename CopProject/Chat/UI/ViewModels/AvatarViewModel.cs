@@ -1,7 +1,10 @@
+﻿// Author: Rajat
+// Roll no.: 112301044
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 using UI.Helpers;
+using Windows.UI;
 
 namespace UI.ViewModels;
 
@@ -12,7 +15,7 @@ namespace UI.ViewModels;
 /// </summary>
 public abstract class AvatarViewModel : ObservableObject
 {
-    private static readonly Color[] AvatarPalette =
+    private static readonly Color[] s_avatarPalette =
     [
         Color.FromArgb(255, 72, 107, 145),
         Color.FromArgb(255, 65, 126, 111),
@@ -24,6 +27,7 @@ public abstract class AvatarViewModel : ObservableObject
 
     private ImageSource? _avatarImageSource;
     private Brush _avatarBrush;
+    private string? _avatarToolTip;
 
     protected AvatarViewModel(string displayName)
     {
@@ -39,6 +43,9 @@ public abstract class AvatarViewModel : ObservableObject
     public string Initials { get; }
 
     public ImageSource? AvatarImageSource => _avatarImageSource;
+
+    /// <summary>Tooltip shown when hovering the avatar; typically the person's name and email. Null when unknown.</summary>
+    public string? AvatarToolTip => _avatarToolTip;
 
     /// <summary>
     /// Brush used by the circular avatar. It is an ImageBrush when a profile image
@@ -63,8 +70,7 @@ public abstract class AvatarViewModel : ObservableObject
 
         AvatarBrush = image is null
             ? new SolidColorBrush(GetAvatarColor(DisplayName))
-            : new ImageBrush
-            {
+            : new ImageBrush {
                 ImageSource = image,
                 Stretch = Stretch.UniformToFill
             };
@@ -73,15 +79,34 @@ public abstract class AvatarViewModel : ObservableObject
         OnPropertyChanged(nameof(InitialsVisibility));
     }
 
+    /// <summary>
+    /// Sets or clears the tooltip shown when hovering this avatar.
+    /// </summary>
+    public void SetAvatarToolTip(string? toolTip)
+    {
+        toolTip = string.IsNullOrWhiteSpace(toolTip) ? null : toolTip;
+        if (_avatarToolTip == toolTip)
+        {
+            return;
+        }
+
+        _avatarToolTip = toolTip;
+        OnPropertyChanged(nameof(AvatarToolTip));
+    }
+
     private static string GetInitials(string name)
     {
         string[] parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
         if (parts.Length == 0)
+        {
             return "?";
+        }
 
         if (parts.Length == 1)
+        {
             return parts[0][..1].ToUpperInvariant();
+        }
 
         return $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant();
     }
@@ -91,8 +116,10 @@ public abstract class AvatarViewModel : ObservableObject
         // String.GetHashCode is process-randomized; use a stable small hash instead.
         int hash = 17;
         foreach (char character in name)
+        {
             hash = unchecked(hash * 31 + character);
+        }
 
-        return AvatarPalette[(hash & 0x7fffffff) % AvatarPalette.Length];
+        return s_avatarPalette[(hash & 0x7fffffff) % s_avatarPalette.Length];
     }
 }

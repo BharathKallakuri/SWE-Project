@@ -1,6 +1,6 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿/// Owners  : Raagam Hitesh Parmar 
+/// Roll No : 112301024
+/// LICENSE : MIT
 
 using System;
 using System.Diagnostics;
@@ -8,7 +8,6 @@ using System.Net;
 using Networking;
 using Utils;
 using Whiteboard.Client;
-using Whiteboard.Interfaces;
 using Whiteboard.Server;
 
 namespace Whiteboard.Services;
@@ -65,6 +64,7 @@ public sealed partial class WhiteboardSession : IDisposable, IUserNotificationHa
         int hostPort = serverCommunicator.ListenPort != 0 ? serverCommunicator.ListenPort : port;
         IPEndPoint serverEndPoint = new(hostAddress, hostPort);
 
+        Trace.TraceInformation($"[Whiteboard][WhiteboardSession] Starting host session for User={userId} on {serverEndPoint}.");
         IWhiteboardServer server = WhiteboardFactory.GetServerWhiteboard(serverCommunicator);
         ICommunicator hostClientComm = CommunicatorFactory.CreateClientCommunicator(serverEndPoint);
         IWhiteboardClient client = WhiteboardFactory.CreateClientWhiteboard(hostClientComm, serverEndPoint, userId);
@@ -91,6 +91,7 @@ public sealed partial class WhiteboardSession : IDisposable, IUserNotificationHa
             : (IPAddress.TryParse(hostIp, out IPAddress? parsed) ? parsed : IPAddress.Loopback);
 
         IPEndPoint endPoint = new(ip, port);
+        Trace.TraceInformation($"[Whiteboard][WhiteboardSession] Starting client session for User={userId} connecting to {endPoint}.");
         IWhiteboardClient client = WhiteboardFactory.CreateClientWhiteboard(clientCommunicator, endPoint, userId);
 
         return new WhiteboardSession(client, server: null, hostClientCommunicator: null);
@@ -119,7 +120,7 @@ public sealed partial class WhiteboardSession : IDisposable, IUserNotificationHa
             return;
         }
 
-        Trace.WriteLine($"[WhiteboardSession] User joined: {user.Username}");
+        Trace.TraceInformation($"[Whiteboard][WhiteboardSession] User joined: {user.Username}");
         UserJoined?.Invoke(user);
     }
 
@@ -130,7 +131,7 @@ public sealed partial class WhiteboardSession : IDisposable, IUserNotificationHa
             return;
         }
 
-        Trace.WriteLine($"[WhiteboardSession] User left: {user.Username}");
+        Trace.TraceInformation($"[Whiteboard][WhiteboardSession] User left: {user.Username}");
         UserLeft?.Invoke(user.Username);
     }
 
@@ -142,6 +143,7 @@ public sealed partial class WhiteboardSession : IDisposable, IUserNotificationHa
         }
 
         _disposed = true;
+        Trace.TraceInformation("[Whiteboard][WhiteboardSession] Session disposed.");
 
         (Client as IDisposable)?.Dispose();
         (Server as IDisposable)?.Dispose();

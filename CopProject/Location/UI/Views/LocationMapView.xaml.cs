@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿// Author = Vishesh Srivastava, Ankit Gupta
+// Roll Number = 112301037, 112301010
+
+using System.Diagnostics;
 using System.Text.Json;
 using Incidents;
 using LocationTracker.Interfaces;
@@ -135,6 +138,9 @@ public sealed partial class LocationMapView : UserControl
         await ShowSearchLocationAsync();
     }
 
+    /// <summary>
+    /// Moves the map to the latest address search result.
+    /// </summary>
     private async Task ShowSearchLocationAsync()
     {
         if (MapView.CoreWebView2 is null || _pendingSearchLocation is null)
@@ -170,6 +176,9 @@ public sealed partial class LocationMapView : UserControl
         }
     }
 
+    /// <summary>
+    /// Loads incidents after the map finishes navigating.
+    /// </summary>
     private async void MapView_NavigationCompleted(
         WebView2 sender,
         CoreWebView2NavigationCompletedEventArgs args)

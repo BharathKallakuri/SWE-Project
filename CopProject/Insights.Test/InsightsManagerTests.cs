@@ -1,5 +1,9 @@
-﻿using Insights.AI;
+﻿// Authors:
+// Adwaith Nath R - Roll Number: 112614010
+// Hariram S - Roll Number: 112614008
+
 using Google.GenAI.Types;
+using Insights.AI;
 using Xunit;
 
 namespace Insights.Test;
@@ -137,8 +141,7 @@ public class InsightsManagerTests
     [Fact]
     public async Task DiagnoseLogAsync_UsesActiveProviderAndReturnsFormattedDiagnosis()
     {
-        var provider = new FakeInsightsProvider("TestModel")
-        {
+        var provider = new FakeInsightsProvider("TestModel") {
             StructuredResponse = """
             {
                 "summary": "Database connection failed.",
@@ -190,8 +193,7 @@ public class InsightsManagerTests
     [Fact]
     public async Task DiagnoseLogAsync_WhenProviderFails_RethrowsException()
     {
-        var provider = new FakeInsightsProvider("TestModel")
-        {
+        var provider = new FakeInsightsProvider("TestModel") {
             StructuredException = new InvalidOperationException("Gemini request failed.")
         };
 
@@ -206,8 +208,7 @@ public class InsightsManagerTests
     [Fact]
     public async Task DiagnoseLogAsync_WhenNoFailureAndNoRecommendations_ReturnsCorrectMessage()
     {
-        var provider = new FakeInsightsProvider("TestModel")
-        {
+        var provider = new FakeInsightsProvider("TestModel") {
             StructuredResponse = """
             {
                 "summary": "No errors found in the application log.",
@@ -236,14 +237,20 @@ public class InsightsManagerTests
     {
         public string ModelName => "ThrowingProvider";
 
-        public Task<string> AnalyzeTrafficIncidentAsync(string textDescription) =>
-            Task.FromException<string>(new InvalidOperationException("provider failed"));
+        public Task<string> AnalyzeTrafficIncidentAsync(string textDescription)
+        {
+            return Task.FromException<string>(new InvalidOperationException("provider failed"));
+        }
 
-        public Task<string> AnalyzeImageAsync(byte[] imageData, string prompt) =>
-            Task.FromException<string>(new InvalidOperationException("provider failed"));
+        public Task<string> AnalyzeImageAsync(byte[] imageData, string prompt)
+        {
+            return Task.FromException<string>(new InvalidOperationException("provider failed"));
+        }
 
-        public Task<string> GenerateChatResponseAsync(string userMessage, string? chatContext = null) =>
-            Task.FromException<string>(new InvalidOperationException("provider failed"));
+        public Task<string> GenerateChatResponseAsync(string userMessage, string? chatContext = null)
+        {
+            return Task.FromException<string>(new InvalidOperationException("provider failed"));
+        }
     }
 
     private class FakeInsightsProvider : IInsightsProvider, ILogAnalysisProvider

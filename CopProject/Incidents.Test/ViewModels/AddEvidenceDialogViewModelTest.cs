@@ -1,11 +1,7 @@
 ﻿// Author: M Sreenath Karthick
 // Roll Number: 112301042
 
-using System;
-using Incidents;
 using Incidents.ViewModels;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.IO;
 
 namespace Incidents.Test.ViewModels;
 

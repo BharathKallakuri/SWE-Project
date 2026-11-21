@@ -1,3 +1,6 @@
+﻿// Author: Hariram S
+// Roll Number: 112614008
+
 using Google.GenAI.Types;
 using WhiteboardSuggestion.Core;
 using Xunit;
@@ -40,8 +43,7 @@ public sealed class GeminiShapeSuggestionServiceTests
         string? model = null;
         string? prompt = null;
         GenerateContentConfig? config = null;
-        var service = GeminiShapeSuggestionService.CreateForTesting((m, p, c) =>
-        {
+        var service = GeminiShapeSuggestionService.CreateForTesting((m, p, c) => {
             model = m;
             prompt = p;
             config = c;
@@ -49,7 +51,7 @@ public sealed class GeminiShapeSuggestionServiceTests
         }, "test-model");
 
         var request = new StrokeRecognitionRequest(new[] { (10.0, 20.0), (30.0, 40.0) });
-        var result = Assert.IsType<ShapeSuggestionResult.Line>(await service.SuggestShapeAsync(request));
+        ShapeSuggestionResult.Line result = Assert.IsType<ShapeSuggestionResult.Line>(await service.SuggestShapeAsync(request));
 
         Assert.Equal((10.0, 20.0), result.Start);
         Assert.Equal("test-model", model);
@@ -62,29 +64,29 @@ public sealed class GeminiShapeSuggestionServiceTests
     [Fact]
     public async Task SuggestShapeAsync_NullRequest_ThrowsArgumentNullException()
     {
-        var service = CreateService(ValidLineResponse);
+        GeminiShapeSuggestionService service = CreateService(ValidLineResponse);
         await Assert.ThrowsAsync<ArgumentNullException>(() => service.SuggestShapeAsync(null!));
     }
 
     [Fact]
     public async Task SuggestShapeAsync_NullPoints_ThrowsArgumentException()
     {
-        var service = CreateService(ValidLineResponse);
+        GeminiShapeSuggestionService service = CreateService(ValidLineResponse);
         await Assert.ThrowsAsync<ArgumentException>(() => service.SuggestShapeAsync(new StrokeRecognitionRequest(null!)));
     }
 
     [Fact]
     public async Task SuggestShapeAsync_RequiresAtLeastTwoPoints()
     {
-        var service = CreateService(ValidLineResponse);
-        await Assert.ThrowsAsync<ArgumentException>(() => service.SuggestShapeAsync(new StrokeRecognitionRequest(Array.Empty<(double, double)>() )));
+        GeminiShapeSuggestionService service = CreateService(ValidLineResponse);
+        await Assert.ThrowsAsync<ArgumentException>(() => service.SuggestShapeAsync(new StrokeRecognitionRequest(Array.Empty<(double, double)>())));
         await Assert.ThrowsAsync<ArgumentException>(() => service.SuggestShapeAsync(new StrokeRecognitionRequest(new[] { (1.0, 2.0) })));
     }
 
     [Fact]
     public async Task SuggestShapeAsync_RejectsNonFiniteCoordinates()
     {
-        var service = CreateService(ValidLineResponse);
+        GeminiShapeSuggestionService service = CreateService(ValidLineResponse);
         await Assert.ThrowsAsync<ArgumentException>(() => service.SuggestShapeAsync(
             new StrokeRecognitionRequest(new[] { (double.NaN, 2.0), (3.0, 4.0) })));
         await Assert.ThrowsAsync<ArgumentException>(() => service.SuggestShapeAsync(
@@ -94,7 +96,7 @@ public sealed class GeminiShapeSuggestionServiceTests
     [Fact]
     public async Task SuggestShapeAsync_EmptyResponse_ThrowsFormatException()
     {
-        var service = CreateService(null);
+        GeminiShapeSuggestionService service = CreateService(null);
         await Assert.ThrowsAsync<FormatException>(() => service.SuggestShapeAsync(CreateRequest()));
     }
 
@@ -107,9 +109,13 @@ public sealed class GeminiShapeSuggestionServiceTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.SuggestShapeAsync(CreateRequest()));
     }
 
-    private static GeminiShapeSuggestionService CreateService(string? response) =>
-        GeminiShapeSuggestionService.CreateForTesting((_, _, _) => Task.FromResult(response), "test-model");
+    private static GeminiShapeSuggestionService CreateService(string? response)
+    {
+        return GeminiShapeSuggestionService.CreateForTesting((_, _, _) => Task.FromResult(response), "test-model");
+    }
 
-    private static StrokeRecognitionRequest CreateRequest() =>
-        new(new[] { (1.0, 2.0), (3.0, 4.0) });
+    private static StrokeRecognitionRequest CreateRequest()
+    {
+        return new(new[] { (1.0, 2.0), (3.0, 4.0) });
+    }
 }

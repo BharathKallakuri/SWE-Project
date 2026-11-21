@@ -2,12 +2,8 @@
 
 // Roll no : 112301019
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Net;
-using System.Threading.Tasks;
 using FileSynchroniser.Models;
 using FileSynchroniser.Network;
 using FileSynchroniser.ViewModels;

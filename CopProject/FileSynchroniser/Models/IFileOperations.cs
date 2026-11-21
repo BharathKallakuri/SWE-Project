@@ -2,9 +2,6 @@
 
 // Roll no : 112301019
 
-using System;
-using System.Collections.Generic;
-
 namespace FileSynchroniser.Models;
 
 /// <summary>

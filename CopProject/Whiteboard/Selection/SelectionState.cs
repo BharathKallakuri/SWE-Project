@@ -1,4 +1,5 @@
 ﻿//owner : U Sai Vignesh
+//roll number : 112301034
 // License : MIT
 
 // Licensed to the .NET Foundation under one or more agreements.
@@ -7,13 +8,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Whiteboard.Interfaces;
 
 namespace Whiteboard.Selection;
 
-[ExcludeFromCodeCoverage]
-// Temporary exclusion from code coverage
 public class SelectionState : ISelectionState
 {
     public HashSet<Guid> SelectedItemIds { get; } = [];

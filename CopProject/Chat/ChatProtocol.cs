@@ -1,4 +1,8 @@
-﻿using System.Text.Json.Serialization;
+﻿// Author: Rajdeep
+// Roll no.: 112301045
+
+using System.Diagnostics;
+using System.Text.Json.Serialization;
 
 namespace Chat;
 
@@ -6,7 +10,9 @@ namespace Chat;
 /// Base type for actions and synchronization requests sent by a client.
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$request")]
-[JsonDerivedType(typeof(Sync), "sync")] [JsonDerivedType(typeof(Reset), "reset")] [JsonDerivedType(typeof(SendMessage), "send")]
+[JsonDerivedType(typeof(Sync), "sync")]
+[JsonDerivedType(typeof(Reset), "reset")]
+[JsonDerivedType(typeof(SendMessage), "send")]
 [JsonDerivedType(typeof(EditMessage), "edit")]
 [JsonDerivedType(typeof(DeleteMessage), "delete")]
 [JsonDerivedType(typeof(ToggleReaction), "toggleReaction")]
@@ -156,6 +162,7 @@ public static class ChatProtocol
         ArgumentNullException.ThrowIfNull(chatroom);
         ArgumentNullException.ThrowIfNull(operation);
 
+        Trace.TraceInformation("[Chat] Applying server operation {0}.", operation.GetType().Name);
         switch (operation)
         {
             case MessageAdded added:
@@ -189,6 +196,9 @@ public static class ChatProtocol
                     reaction.ThreadParentMessageId);
 
             default:
+                Trace.TraceWarning(
+                    "[Chat] Cannot apply unsupported operation type '{0}'.",
+                    operation.GetType().Name);
                 return RoomResult.Forbidden;
         }
     }

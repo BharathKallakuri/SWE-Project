@@ -2,10 +2,7 @@
 
 // Roll no : 112301019
 
-using System;
-using System.Timers;
 using FileSynchroniser.ViewModels;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using static FileSynchroniser.ViewModels.UiDispatcher;
 

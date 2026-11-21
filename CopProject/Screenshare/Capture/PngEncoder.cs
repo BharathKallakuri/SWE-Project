@@ -1,4 +1,7 @@
-﻿using System.Drawing;
+﻿// Author = Aryan
+// Roll Number = 112301041
+using System.Diagnostics;
+using System.Drawing;
 using System.Drawing.Imaging;
 
 namespace ScreenShare;
@@ -27,7 +30,10 @@ public static class PngEncoder
 
         using var stream = new MemoryStream();
         bitmap.Save(stream, s_codec, null);
-        return stream.ToArray();
+
+        byte[] encodedData = stream.ToArray();
+
+        return encodedData;
     }
 
     /// <summary>
@@ -51,8 +57,13 @@ public static class PngEncoder
             }
 
             // another thread may still be initializing GDI+ codec list
+            Trace.TraceWarning(
+                "[Screenshare] PngEncoder.FindPngCodec: PNG encoder not found on attempt {0}. Retrying in {1} ms.",
+                attempt,
+                10 * attempt);
             sleep(10 * attempt);
         }
+        Trace.TraceError("[Screenshare]  PngEncoder.FindPngCodec PNG encoder lookup failed after {0} attempts.", LookupAttempts);
 
         throw new InvalidOperationException("GDI+ has no PNG encoder");
     }

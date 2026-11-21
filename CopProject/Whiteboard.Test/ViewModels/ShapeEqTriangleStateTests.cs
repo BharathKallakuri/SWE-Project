@@ -129,7 +129,7 @@ public class ShapeEqTriangleStateTests
     /// Ensure the core functionality of triangle, sending to client and clearing preview works
     /// </summary>
     [Fact]
-    public void PointerReleased_WithPositiveSide_SubmitsAndClearsPreview()
+    public async Task PointerReleased_WithPositiveSide_SubmitsAndClearsPreview()
     {
         ShapeEqTriangleState state = new(_client, _preview, _toolbar);
         state.PointerPressed(new Point2D(10, 10));
@@ -139,8 +139,7 @@ public class ShapeEqTriangleStateTests
 
         Assert.Equal(1, _preview.ClearCount);
 
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
-        Assert.True(wasAdded, "Item was not added in time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
 
         Assert.Single(_client.AddedItems);
         IEqTriangle submitted = Assert.IsAssignableFrom<IEqTriangle>(_client.AddedItems[0]);

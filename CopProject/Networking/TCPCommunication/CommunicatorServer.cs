@@ -1,16 +1,10 @@
 ﻿// Author = Bharath
 // Roll Number = 112301013
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 using Networking.Packets;
 using Networking.Queues;
 using Networking.Sockets;
@@ -180,7 +174,12 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
             {
                 clientIp = new IPEndPoint(clientIp.Address.MapToIPv4(), clientIp.Port);
             }
-
+            Socket serverSocket = tcpClient.Client;
+            serverSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+            serverSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);
+            serverSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 10);
+            serverSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 3);
+            serverSocket.NoDelay = true;
             _clientToTcpListenerMap[clientIp] = tcpClient;
             _clientToSocketListenerMap[clientIp] = new SocketListener(_receivingQueue, tcpClient);
             Trace.TraceInformation($"[Networking] CommunicatorServer.AddClient: Successfully connected client {clientIp}");

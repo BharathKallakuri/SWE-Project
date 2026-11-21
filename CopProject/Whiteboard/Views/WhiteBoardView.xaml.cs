@@ -1,26 +1,26 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+﻿/// Owner   : Raagam Hitesh Parmar, Sasi Kiran, Sangam,    Karthik Krishna M, Vignesh
+/// Roll No : 112301024,            112301033,  112201006, 112301014,         112301034
+/// LICENSE : MIT
 
 using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Whiteboard.Interfaces;
-using Whiteboard.ViewModels;
 using Whiteboard.Models;
+using Whiteboard.ViewModels;
 using Windows.Foundation;
 using Windows.UI;
 
 namespace Whiteboard.Views;
 
-[ExcludeFromCodeCoverage]
 public sealed partial class WhiteBoardView : UserControl
 {
     private WhiteBoardViewModel? _viewModel;
@@ -49,17 +49,20 @@ public sealed partial class WhiteBoardView : UserControl
             _viewModel?.HistoryChanged -= UpdateHistoryButtons;
 
             _viewModel = value;
+            Trace.TraceInformation($"[Whiteboard][WhiteBoardView] ViewModel set (IsNotNull={_viewModel is not null}).");
 
             if (_viewModel is not null)
             {
                 _viewModel.InitializeViewModel(WhiteboardCanvas, _toolbarInfo);
                 _viewModel.HistoryChanged += UpdateHistoryButtons;
                 UpdateHistoryButtons();
+                ButtonSmartShape?.IsChecked = _viewModel.IsSmartShapeEnabled;
             }
             else
             {
                 WhiteboardCanvas.Children.Clear();
                 UpdateHistoryButtons();
+                ButtonSmartShape?.IsChecked = false;
             }
         }
     }
@@ -97,6 +100,7 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] View loaded.");
         if (_viewModel is not null)
         {
             _viewModel.HistoryChanged += UpdateHistoryButtons;
@@ -119,6 +123,7 @@ public sealed partial class WhiteBoardView : UserControl
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] View unloaded.");
         _viewModel?.HistoryChanged -= UpdateHistoryButtons;
     }
 
@@ -142,6 +147,7 @@ public sealed partial class WhiteBoardView : UserControl
     /// <param name="e">Event details.</param>
     private void ButtonUndo_Click(object sender, RoutedEventArgs e)
     {
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] Undo button clicked.");
         _viewModel?.Undo();
     }
 
@@ -152,6 +158,7 @@ public sealed partial class WhiteBoardView : UserControl
     /// <param name="e">Event details.</param>
     private void ButtonRedo_Click(object sender, RoutedEventArgs e)
     {
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] Redo button clicked.");
         _viewModel?.Redo();
     }
 
@@ -159,6 +166,14 @@ public sealed partial class WhiteBoardView : UserControl
     private void ButtonPen_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         _viewModel?.SelectTool(WhiteboardTool.Pen);
+    }
+
+    private void ButtonSmartShape_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (_viewModel is not null && sender is ToggleButton toggle)
+        {
+            _viewModel.IsSmartShapeEnabled = toggle.IsChecked ?? false;
+        }
     }
 
     private void ButtonSquare_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -414,7 +429,7 @@ public sealed partial class WhiteBoardView : UserControl
         }
 
         float factor = CanvasScrollViewer.ZoomFactor;
-        int zoomPercent = (int) Math.Round(factor * 100);
+        int zoomPercent = (int)Math.Round(factor * 100);
 
         _isUpdatingZoomFromScrollViewer = true;
         try
@@ -550,6 +565,12 @@ public sealed partial class WhiteBoardView : UserControl
 
     private async void ButtonSaveSnapshot_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] Save snapshot button clicked.");
         try
         {
             await _viewModel.SaveSnapshotAsync();
@@ -557,12 +578,19 @@ public sealed partial class WhiteBoardView : UserControl
         }
         catch (Exception ex)
         {
+            Trace.TraceError($"[Whiteboard][WhiteBoardView][Error] Save snapshot failed: {ex.Message}");
             await ShowMessageAsync("Save failed", ex.Message);
         }
     }
 
     private async void ButtonRestoreSnapshot_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] Restore snapshot button clicked.");
         try
         {
             List<WhiteboardSnapshotSummary> snapshots = await _viewModel.ListSnapshotsAsync();
@@ -577,13 +605,16 @@ public sealed partial class WhiteBoardView : UserControl
 
             foreach (WhiteboardSnapshotSummary snapshot in snapshots)
             {
-                var menuItem = new MenuFlyoutItem
-                {
+                var menuItem = new MenuFlyoutItem {
                     Text = snapshot.ToString()
                 };
 
-                menuItem.Click += async (_, _) =>
-                {
+                menuItem.Click += async (_, _) => {
+                    if (_viewModel is null)
+                    {
+                        return;
+                    }
+
                     try
                     {
                         await _viewModel.RestoreSnapshotAsync(snapshot.SnapshotId);
@@ -607,8 +638,7 @@ public sealed partial class WhiteBoardView : UserControl
 
     private async Task ShowMessageAsync(string title, string message)
     {
-        var dialog = new ContentDialog
-        {
+        var dialog = new ContentDialog {
             Title = title,
             Content = message,
             CloseButtonText = "OK",

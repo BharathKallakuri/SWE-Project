@@ -1,12 +1,6 @@
 ﻿// Author: Shreesh Amit Chembeti
 // Roll Number: 112301046
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security;
-
 namespace Incidents.Test.Implementations;
 
 using FileSynchroniser.Models;

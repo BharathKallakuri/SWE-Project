@@ -1,15 +1,12 @@
-/// Author : Karthik Krishna M
+﻿/// Author : Karthik Krishna M
 /// Roll Number : 112301014
 /// LICENSE : MIT
 
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Whiteboard.Interfaces;
 using Whiteboard.Items;
 using Whiteboard.Models;
+using Whiteboard.Network.Dtos;
 using Whiteboard.Services;
-using Xunit;
 
 namespace Whiteboard.Test.History;
 
@@ -48,13 +45,13 @@ public class SharedWhiteboardHistoryRestoreTests
         Assert.Contains("User1", histories);
         Assert.Contains("User2", histories);
 
-        foreach (var state in histories.Values)
+        foreach ((string UserId, List<HistoryEntryDto> Undo, List<HistoryEntryDto> Redo) state in histories.Values)
         {
             Assert.Empty(state.Undo);
             Assert.Empty(state.Redo);
         }
 
-        var restoredCanvas = Assert.IsType<FreehandItem>(canvas.Items[restoredItem.Id]);
+        FreehandItem restoredCanvas = Assert.IsType<FreehandItem>(canvas.Items[restoredItem.Id]);
 
         restoredItem.Points[0] = new Point2D(999, 999);
 
@@ -80,7 +77,7 @@ public class SharedWhiteboardHistoryRestoreTests
         Assert.Single(canvas.Items);
         Assert.Contains(newItem.Id, canvas.Items.Keys);
 
-        var user1History = history.GetHistorySnapshots().Single(state => state.UserId == "User1");
+        (string UserId, List<HistoryEntryDto> Undo, List<HistoryEntryDto> Redo) user1History = history.GetHistorySnapshots().Single(state => state.UserId == "User1");
 
         Assert.Single(user1History.Undo);
     }

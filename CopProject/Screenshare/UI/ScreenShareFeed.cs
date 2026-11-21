@@ -1,4 +1,8 @@
-﻿using System.Drawing;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+using System.Diagnostics;
+using System.Drawing;
 using ScreenShare.Interfaces;
 using ScreenShare.Models;
 
@@ -15,7 +19,7 @@ public sealed class ScreenShareFeed : IScreenShareFeed, IDisposable
 {
     private readonly ScreenShareNode _node;
     private readonly object _subscriptionLock = new();
-    private HashSet<string> _subscribed = new();
+    private Dictionary<string, int> _subscribed = new();   // stream id -> height asked for
     private bool _disposed;
 
     public event Action<string, string>? ParticipantJoined;
@@ -52,6 +56,8 @@ public sealed class ScreenShareFeed : IScreenShareFeed, IDisposable
             _subscribed.Clear();
         }
 
+        Trace.TraceInformation("[Screenshare] ScreenShareFeed.Dispose: no longer passing on the node's events.");
+
         _node.StreamAdded -= OnStreamAdded;
         _node.StreamRemoved -= OnStreamRemoved;
         _node.FrameUpdated -= OnFrameUpdated;
@@ -70,18 +76,20 @@ public sealed class ScreenShareFeed : IScreenShareFeed, IDisposable
     }
 
     /// <summary>
-    /// subscribes to the streams that became visible and unsubscribes from the ones that
-    /// did not stay visible. the requested resolution is ignored for now: every stream is
-    /// sent at ScreenShareOptions.MaxHeight.
+    /// subscribes to the streams that became visible, unsubscribes from the ones that did not
+    /// stay visible, and re-subscribes a tile whose size changed. the height picks the stream:
+    /// a grid tile gets the sharer's small stream, a zoomed tile the full one.
     /// </summary>
+    /// <param name="idToResolution">each visible stream and the tile's height in pixels</param>
     public void RequestFeeds(IReadOnlyDictionary<string, int> idToResolution)
     {
         ArgumentNullException.ThrowIfNull(idToResolution);
 
-        var wanted = new HashSet<string>(idToResolution.Keys);
-        wanted.Remove(_node.LocalParticipant.Id);
+        Dictionary<string, int> wanted = idToResolution
+            .Where(pair => pair.Key != _node.LocalParticipant.Id)
+            .ToDictionary(pair => pair.Key, pair => pair.Value);
 
-        List<string> toSubscribe;
+        List<KeyValuePair<string, int>> toSubscribe;
         List<string> toUnsubscribe;
         lock (_subscriptionLock)
         {
@@ -90,9 +98,20 @@ public sealed class ScreenShareFeed : IScreenShareFeed, IDisposable
                 return;
             }
 
-            toSubscribe = wanted.Except(_subscribed).ToList();
-            toUnsubscribe = _subscribed.Except(wanted).ToList();
+            toSubscribe = wanted
+                .Where(pair => !_subscribed.TryGetValue(pair.Key, out int height) || height != pair.Value)
+                .ToList();
+            toUnsubscribe = _subscribed.Keys.Where(id => !wanted.ContainsKey(id)).ToList();
             _subscribed = wanted;
+        }
+
+        if (toSubscribe.Count > 0 || toUnsubscribe.Count > 0)
+        {
+            Trace.TraceInformation(
+                "[Screenshare] ScreenShareFeed.RequestFeeds: {0} subscribed or resized, {1} unsubscribed; {2} visible.",
+                toSubscribe.Count,
+                toUnsubscribe.Count,
+                wanted.Count);
         }
 
         foreach (string id in toUnsubscribe)
@@ -100,9 +119,9 @@ public sealed class ScreenShareFeed : IScreenShareFeed, IDisposable
             _node.Unsubscribe(id);
         }
 
-        foreach (string id in toSubscribe)
+        foreach ((string id, int height) in toSubscribe)
         {
-            _node.Subscribe(id);
+            _node.Subscribe(id, height);
         }
     }
 

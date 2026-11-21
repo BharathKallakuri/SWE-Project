@@ -1,7 +1,6 @@
 ﻿// Author: M Sreenath Karthick
 // Roll Number: 112301042
 
-using System;
 using System.Windows.Input;
 
 namespace Incidents.ViewModels.Utils;

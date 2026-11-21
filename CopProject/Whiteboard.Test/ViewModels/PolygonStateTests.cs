@@ -1,14 +1,11 @@
-/// Owner   : Raagam Hitesh Parmar
+﻿/// Owner   : Raagam Hitesh Parmar
 /// LICENSE : MIT
 
-using System;
-using System.Threading;
 using Whiteboard.Interfaces;
 using Whiteboard.Interfaces.Shapes;
 using Whiteboard.Test.Mocks;
 using Whiteboard.ViewModels;
 using Windows.UI;
-using Xunit;
 
 namespace Whiteboard.Test.ViewModels;
 
@@ -59,7 +56,7 @@ public class PolygonStateTests
     }
 
     [Fact]
-    public void PointerDoubleTapped_WithThreeOrMoreVertices_SubmitsPolygon()
+    public async Task PointerDoubleTapped_WithThreeOrMoreVertices_SubmitsPolygon()
     {
         PolygonState state = new(_client, _preview, _toolbar);
         Point2D p1 = new(0, 0);
@@ -73,8 +70,7 @@ public class PolygonStateTests
 
         Assert.Equal(1, _preview.ClearCount);
 
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
-        Assert.True(wasAdded, "Item was not added in time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
 
         Assert.Single(_client.AddedItems);
         IPolygon submitted = Assert.IsAssignableFrom<IPolygon>(_client.AddedItems[0]);
@@ -99,7 +95,7 @@ public class PolygonStateTests
     }
 
     [Fact]
-    public void PointerPressed_ClickNearStartWithThreeVertices_ClosesAndSubmits()
+    public async Task PointerPressed_ClickNearStartWithThreeVertices_ClosesAndSubmits()
     {
         PolygonState state = new(_client, _preview, _toolbar);
         Point2D p1 = new(10, 10);
@@ -112,8 +108,7 @@ public class PolygonStateTests
         // Click very close to start (within 8px)
         state.PointerPressed(new Point2D(12, 11));
 
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
-        Assert.True(wasAdded, "Item was not added in time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
 
         Assert.Single(_client.AddedItems);
         IPolygon submitted = Assert.IsAssignableFrom<IPolygon>(_client.AddedItems[0]);
@@ -121,7 +116,7 @@ public class PolygonStateTests
     }
 
     [Fact]
-    public void PointerCaptureLost_DoesNotResetPolygonSession()
+    public async Task PointerCaptureLost_DoesNotResetPolygonSession()
     {
         PolygonState state = new(_client, _preview, _toolbar);
         Point2D p1 = new(10, 10);
@@ -140,13 +135,12 @@ public class PolygonStateTests
         state.PointerDoubleTapped(p3);
 
         Assert.Equal(1, _preview.ClearCount);
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
-        Assert.True(wasAdded, "Item was not added in time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
         Assert.Single(_client.AddedItems);
     }
 
     [Fact]
-    public void PointerPressed_DuplicateAdjacentClicks_Ignored()
+    public async Task PointerPressed_DuplicateAdjacentClicks_Ignored()
     {
         PolygonState state = new(_client, _preview, _toolbar);
         Point2D p1 = new(10, 10);
@@ -160,8 +154,7 @@ public class PolygonStateTests
         state.PointerPressed(p3);
         state.PointerDoubleTapped(p3);
 
-        bool wasAdded = _client.ItemAddedEvent.Wait(TimeSpan.FromSeconds(15));
-        Assert.True(wasAdded, "Item was not added in time.");
+        await (state.DrawingTask ?? Task.CompletedTask);
         Assert.Single(_client.AddedItems);
         IPolygon submitted = Assert.IsAssignableFrom<IPolygon>(_client.AddedItems[0]);
         Assert.Equal(3, submitted.Vertices.Count);

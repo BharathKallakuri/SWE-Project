@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// Author: Rajat
+// Roll no.: 112301044
+
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -14,7 +16,9 @@ public abstract class ObservableObject : INotifyPropertyChanged
         [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(storage, value))
+        {
             return false;
+        }
 
         storage = value;
 

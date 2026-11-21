@@ -1,16 +1,15 @@
-// Author = Balabadra Lepakshi Kalyan
+﻿// Author = Balabadra Lepakshi Kalyan
 // Roll Number = 112301003
-using System;
 using System.Diagnostics;
-using System.Linq;
-using Windows.Foundation;
+using Controller.Models;
+using Controller.ViewModels;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-using Controller.ViewModels;
+using Windows.Foundation;
 
 namespace Controller.Views;
 // Connects the ViewModel to the view and subscribes to chart update notifications.
@@ -21,17 +20,10 @@ public sealed partial class MeetingView : UserControl
     public MeetingViewModel ViewModel
     {
         get => _viewModel!;
-        set
-        {
-            if (_viewModel != null)
-            {
-                _viewModel.ChartUpdated -= DrawCharts;
-            }
+        set {
+            _viewModel?.ChartUpdated -= DrawCharts;
             _viewModel = value;
-            if (_viewModel != null)
-            {
-                _viewModel.ChartUpdated += DrawCharts;
-            }
+            _viewModel?.ChartUpdated += DrawCharts;
             Trace.TraceInformation("[Controller]: ViewModel assigned.");
             this.Bindings.Update();
             DrawCharts();
@@ -46,8 +38,7 @@ public sealed partial class MeetingView : UserControl
 
     private void DrawCharts()
     {
-        DispatcherQueue.TryEnqueue(() =>
-        {
+        DispatcherQueue.TryEnqueue(() => {
             if (MiniChartCanvas != null && MiniChartCanvas.ActualWidth > 0)
             {
                 DrawGraph(MiniChartCanvas, isBig: false);
@@ -59,18 +50,32 @@ public sealed partial class MeetingView : UserControl
         });
     }
 
-    private void MiniChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => DrawCharts();
-    private void BigChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => DrawCharts();
+    private void MiniChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        DrawCharts();
+    }
+
+    private void BigChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        DrawCharts();
+    }
 
     // Draws the participant activity graph, including axes, time labels, data points, and live updates.
     private void DrawGraph(Canvas canvas, bool isBig)
     {
-        if (ViewModel == null) return;
+        if (ViewModel == null)
+        {
+            return;
+        }
+
         canvas.Children.Clear();
 
         double w = canvas.ActualWidth;
         double h = canvas.ActualHeight;
-        if (w < 50 || h < 30) return;
+        if (w < 50 || h < 30)
+        {
+            return;
+        }
 
         double left = isBig ? 45 : 30;
         double right = 15;
@@ -89,11 +94,26 @@ public sealed partial class MeetingView : UserControl
         Trace.TraceInformation($"[Controller]: DrawGraph rendering {(isBig ? "big" : "mini")} chart with {points.Count} point(s).");
 
         double maxSec = Math.Max(60, Math.Max(currentSec, points.Max(p => p.Seconds)));
-        if (maxSec <= 120) maxSec = 120;
-        else if (maxSec <= 300) maxSec = 300;
-        else if (maxSec <= 900) maxSec = 900;
-        else if (maxSec <= 1800) maxSec = 1800;
-        else maxSec = Math.Max(3600, Math.Ceiling(maxSec / 1800.0) * 1800.0);
+        if (maxSec <= 120)
+        {
+            maxSec = 120;
+        }
+        else if (maxSec <= 300)
+        {
+            maxSec = 300;
+        }
+        else if (maxSec <= 900)
+        {
+            maxSec = 900;
+        }
+        else if (maxSec <= 1800)
+        {
+            maxSec = 1800;
+        }
+        else
+        {
+            maxSec = Math.Max(3600, Math.Ceiling(maxSec / 1800.0) * 1800.0);
+        }
 
         int maxCount = Math.Max(4, points.Max(p => p.Count) + 1);
 
@@ -131,7 +151,7 @@ public sealed partial class MeetingView : UserControl
         var linePoints = new PointCollection();
         for (int i = 0; i < points.Count; i++)
         {
-            var p = points[i];
+            ParticipantDataPoint p = points[i];
             double x = left + Math.Min(pw, (p.Seconds / maxSec) * pw);
             double y = top + ph - (p.Count / (double)maxCount) * ph;
 
@@ -155,8 +175,7 @@ public sealed partial class MeetingView : UserControl
             linePoints.Add(new Point(currentX + 1, currentY));
         }
 
-        var polyline = new Polyline
-        {
+        var polyline = new Polyline {
             Points = linePoints,
             Stroke = new SolidColorBrush(ColorHelper.FromArgb(255, 15, 95, 194)),
             StrokeThickness = 2
@@ -164,7 +183,7 @@ public sealed partial class MeetingView : UserControl
         canvas.Children.Add(polyline);
 
         // Event dots
-        foreach (var p in points)
+        foreach (ParticipantDataPoint? p in points)
         {
             double x = left + Math.Min(pw, (p.Seconds / maxSec) * pw);
             double y = top + ph - (p.Count / (double)maxCount) * ph;
