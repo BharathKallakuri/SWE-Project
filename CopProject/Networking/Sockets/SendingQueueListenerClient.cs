@@ -32,17 +32,27 @@ public class SendingQueueListenerClient : IDisposable
     private Thread _listeningThread;
 
     TcpClient _clientSocket;
+    private readonly Func<bool>? _ensureConnected;
+    private readonly Func<NetworkStream?>? _getStream;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SendingQueueListenerClient"/> class and starts the sending thread.
     /// </summary>
     /// <param name="sendingQueue">The sending queue containing outgoing packets.</param>
     /// <param name="clientSocket">The connected TCP client.</param>
-    public SendingQueueListenerClient(SendingQueue sendingQueue, TcpClient clientSocket)
+    /// <param name="ensureConnected">Optional callback to verify or restore server connectivity.</param>
+    /// <param name="getStream">Optional callback to retrieve the active network stream.</param>
+    public SendingQueueListenerClient(
+        SendingQueue sendingQueue,
+        TcpClient clientSocket,
+        Func<bool>? ensureConnected = null,
+        Func<NetworkStream?>? getStream = null)
     {
         _isRunningLock = new object();
         this._sendingQueue = sendingQueue;
         this._clientSocket = clientSocket;
+        this._ensureConnected = ensureConnected;
+        this._getStream = getStream;
         _isRunning = true;
         _packetSerializer = new();
         _listeningThread = new(ListenOnQueue) { IsBackground = true };
@@ -51,7 +61,7 @@ public class SendingQueueListenerClient : IDisposable
     }
 
     /// <summary>
-    /// Dequeues packets and writes framed byte data to the network stream.
+    /// Dequeues packets and writes framed byte data to the network stream with automatic reconnection retry.
     /// </summary>
     public void ListenOnQueue()
     {
@@ -66,15 +76,42 @@ public class SendingQueueListenerClient : IDisposable
             Packet packet = _sendingQueue.Dequeue()!;
             byte[] data = _packetSerializer.PacketToBytes(packet);
 
-            try
+            int maxAttempts = 30; // 30 attempts x 2000ms = 60 seconds of network resiliency
+            int delay = 2000;
+
+            for (int attempt = 1; attempt <= maxAttempts && IsRunning; attempt++)
             {
-                NetworkStream stream = _clientSocket.GetStream();
-                stream.Write(data, 0, data.Length);
-                Trace.TraceInformation($"[Networking] SendingQueueListenerClient: Sent {data.Length} bytes (Priority {packet.Priority}, Module {packet.Module}) to server.");
-            }
-            catch (Exception e)
-            {
-                Trace.TraceError($"[Networking] SendingQueueListenerClient.ListenOnQueue: Error sending data to server. Exception: {e.Message}");
+                try
+                {
+                    if (_ensureConnected != null && !_ensureConnected())
+                    {
+                        Thread.Sleep(delay);
+                        continue;
+                    }
+
+                    NetworkStream? stream = _getStream != null ? _getStream() : _clientSocket.GetStream();
+                    if (stream == null)
+                    {
+                        Thread.Sleep(delay);
+                        continue;
+                    }
+
+                    stream.Write(data, 0, data.Length);
+                    Trace.TraceInformation($"[Networking] SendingQueueListenerClient: Sent {data.Length} bytes (Priority {packet.Priority}, Module {packet.Module}) to server.");
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Trace.TraceWarning($"[Networking] SendingQueueListenerClient.ListenOnQueue: Send attempt {attempt}/{maxAttempts} failed: {e.Message}");
+                    if (attempt < maxAttempts)
+                    {
+                        Thread.Sleep(delay);
+                    }
+                    else
+                    {
+                        Trace.TraceError($"[Networking] SendingQueueListenerClient.ListenOnQueue: 60-second retry window expired. Packet could not be delivered to server.");
+                    }
+                }
             }
         }
     }

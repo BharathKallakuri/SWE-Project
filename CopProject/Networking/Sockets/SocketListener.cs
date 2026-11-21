@@ -35,6 +35,11 @@ public class SocketListener : IDisposable
     private PacketSerializer _packetSerializer = new PacketSerializer();
 
     /// <summary>
+    /// Callback invoked when the socket stream disconnects or encounters a fatal error while running.
+    /// </summary>
+    public Action<TcpClient>? OnDisconnected { get; set; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="SocketListener"/> class and starts reading from the client stream.
     /// </summary>
     /// <param name="receivingQueue">The target receiving queue for incoming packets.</param>
@@ -80,6 +85,13 @@ public class SocketListener : IDisposable
         catch (Exception e)
         {
             Trace.TraceError($"[Networking] Error in {GetType().Name}: {e.Message}");
+        }
+        finally
+        {
+            if (IsRunning)
+            {
+                OnDisconnected?.Invoke(_tcpClient);
+            }
         }
 
     }

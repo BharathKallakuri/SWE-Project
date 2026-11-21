@@ -269,4 +269,84 @@ public class SocketListenerTests
         queue.Enqueue(null!);
         Thread.Sleep(100);
     }
+
+    /// <summary>
+    /// Checks that SocketListener fires OnDisconnected when stream ends unexpectedly.
+    /// </summary>
+    [TestMethod]
+    public void SocketListener_OnDisconnected_FiresWhenConnectionClosed()
+    {
+        int port = GetAvailablePort();
+        using TcpListener server = new(IPAddress.Loopback, port);
+        server.Start();
+
+        using TcpClient client = new();
+        client.Connect(IPAddress.Loopback, port);
+        using TcpClient serverAccepted = server.AcceptTcpClient();
+
+        ReceivingQueue rxQueue = new();
+        bool disconnectedFired = false;
+        using ManualResetEventSlim signal = new(false);
+
+        using SocketListener listener = new(rxQueue, serverAccepted);
+        listener.OnDisconnected = _ =>
+        {
+            disconnectedFired = true;
+            signal.Set();
+        };
+
+        // Abruptly close client end
+        client.Close();
+
+        bool signalled = signal.Wait(3000);
+        Assert.IsTrue(signalled);
+        Assert.IsTrue(disconnectedFired);
+    }
+
+    /// <summary>
+    /// Checks that SendingQueueListenerServer transparently migrates to an active reconnected socket on the same IP.
+    /// </summary>
+    [TestMethod]
+    public void SendingQueueListenerServer_DestinationPortMigrated_SendsToNewPort()
+    {
+        int port1 = GetAvailablePort();
+        using TcpListener server1 = new(IPAddress.Loopback, port1);
+        server1.Start();
+
+        using TcpClient client1 = new();
+        client1.Connect(IPAddress.Loopback, port1);
+        using TcpClient accepted1 = server1.AcceptTcpClient();
+        IPEndPoint oldEp = new(IPAddress.Loopback, port1);
+
+        int port2 = GetAvailablePort();
+        using TcpListener server2 = new(IPAddress.Loopback, port2);
+        server2.Start();
+
+        using TcpClient client2 = new();
+        client2.Connect(IPAddress.Loopback, port2);
+        using TcpClient accepted2 = server2.AcceptTcpClient();
+        IPEndPoint newEp = new(IPAddress.Loopback, port2);
+
+        SendingQueue queue = new();
+        ConcurrentDictionary<IPEndPoint, TcpClient> map = new();
+
+        // Close old connection so it is not connected
+        accepted1.Close();
+        map[oldEp] = accepted1;
+        // Register new connection on the same IP
+        map[newEp] = accepted2;
+
+        using SendingQueueListenerServer listener = new(queue, map);
+
+        // Send to oldEp; listener should migrate to newEp
+        listener.SendDataToClient(new byte[] { 1, 2, 3, 4 }, oldEp);
+
+        // Verify data was received on client2 stream
+        NetworkStream stream2 = client2.GetStream();
+        byte[] readBuffer = new byte[10];
+        stream2.ReadTimeout = 2000;
+        int bytesRead = stream2.Read(readBuffer, 0, 4);
+        Assert.AreEqual(4, bytesRead);
+        Assert.AreEqual(1, readBuffer[0]);
+    }
 }
