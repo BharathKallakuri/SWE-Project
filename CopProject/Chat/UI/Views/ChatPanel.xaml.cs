@@ -172,10 +172,7 @@ public sealed partial class ChatPanel : UserControl
         if (_mainScrollViewer is null)
         {
             _mainScrollViewer = FindChild<ScrollViewer>(MessagesList);
-            if (_mainScrollViewer is not null)
-            {
-                _mainScrollViewer.ViewChanged += MainScrollViewer_ViewChanged;
-            }
+            _mainScrollViewer?.ViewChanged += MainScrollViewer_ViewChanged;
         }
 
         return _mainScrollViewer;
@@ -186,10 +183,7 @@ public sealed partial class ChatPanel : UserControl
         if (_threadScrollViewer is null)
         {
             _threadScrollViewer = FindChild<ScrollViewer>(ThreadMessagesList);
-            if (_threadScrollViewer is not null)
-            {
-                _threadScrollViewer.ViewChanged += ThreadScrollViewer_ViewChanged;
-            }
+            _threadScrollViewer?.ViewChanged += ThreadScrollViewer_ViewChanged;
         }
 
         return _threadScrollViewer;
@@ -231,9 +225,11 @@ public sealed partial class ChatPanel : UserControl
     }
 
     private static bool ShouldShowJumpButton(ScrollViewer? scroller, bool nearBottom)
-        => scroller is not null
-           && !nearBottom
-           && scroller.ScrollableHeight > NearBottomThreshold;
+    {
+        return scroller is not null
+               && !nearBottom
+               && scroller.ScrollableHeight > NearBottomThreshold;
+    }
 
     private void OnMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
