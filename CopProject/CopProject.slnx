@@ -10,7 +10,6 @@
     <Project Path="Authentication/Auth.csproj" />
     <Project Path="Chat.Test/Chat.Test.csproj" />
     <Project Path="Chat.UI.Test/Chat.UI.Test.csproj" />
-    <Project Path="Chat.Console/Chat.Console.csproj" />
     <Project Path="Chat/Chat.csproj" />
     <Project Path="Chat/UI/UI.csproj" />
     <Project Path="Cloud.Networking.ClientConsole/Cloud.Networking.ClientConsole.csproj" />
@@ -20,8 +19,8 @@
         <Platform Project="x64" />
     </Project>
     <Project Path="Cloud.Test/Cloud.Test.csproj" />
-    <Project Path="Cloud.UI/Cloud.UI.csproj" />
     <Project Path="Cloud.UI.Test/Cloud.UI.Test.csproj" />
+    <Project Path="Cloud.UI/Cloud.UI.csproj" />
     <Project Path="Cloud/Cloud.csproj" />
     <Project Path="Cloud/Functions/Cloud.Crash.Functions.csproj" Id="c97b5d7d-1346-5655-5529-b74411be984d" />
     <Project Path="Cloud/UI/Cloud.Crash.UI.csproj" Id="ae8f9a28-511d-948e-16b6-5e1dc3f66d1a" />
@@ -52,6 +51,7 @@
     <Project Path="Networking/Networking.csproj" />
     <Project Path="Screenshare.Test/Screenshare.Test.csproj" />
     <Project Path="Screenshare/Screenshare.csproj" />
+    <Project Path="Utils/Diagnosis/Diagnosis.UI.csproj" />
     <Project Path="Utils/Utils.csproj" />
     <Project Path="UX/UX.csproj">
         <Platform Project="x64" />

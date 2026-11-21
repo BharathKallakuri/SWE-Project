@@ -1,4 +1,4 @@
-// Author : Saideep.
+﻿// Author : Saideep.
 // Roll No : 112301018.
 using Utils;
 
@@ -50,6 +50,6 @@ public class MeetingEndedEventArgs : SessionEventArgs
 
     public MeetingEndedEventArgs(ControllerUser host)
     {
-        Host=host;
+        Host = host;
     }
 }

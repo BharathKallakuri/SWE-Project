@@ -5,14 +5,16 @@ name: Line and branch coverage
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number }}
+  group: pr-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 permissions:
   contents: read
-  pull-requests: write   # To post the coverage comment.
+  pull-requests: write
+  checks: write
 
 env:
   # These variables are set to 80 as fallback, if their corresponding
@@ -50,7 +52,27 @@ jobs:
           dotnet test CopProject --configuration Release --no-build
           --settings CopProject/ci.runsettings
           --collect:"XPlat Code Coverage"
+          --logger "trx"
           --results-directory ./coverage
+
+      # Publishes interactive test report in GitHub Checks showing which tests passed or failed
+      - name: Publish Test Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Unit Tests (.NET)
+          path: 'coverage/**/*.trx'
+          reporter: dotnet-trx
+          fail-on-error: false
+
+      # Upload raw TRX test results as an artifact
+      - name: Upload unit test results artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: unit-test-results-pr-${{ github.event.pull_request.number || github.run_id }}
+          path: coverage/
+          retention-days: 60
 
       - name: Install ReportGenerator
         # run: dotnet tool install --global dotnet-reportgenerator-globaltool
@@ -58,7 +80,7 @@ jobs:
           dotnet tool install --global dotnet-reportgenerator-globaltool
           echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
-      - name: Generate coverage report
+      - name: Generate coverage and code quality report
         run: >
           reportgenerator
           -reports:"coverage/**/coverage.cobertura.xml"
@@ -68,16 +90,17 @@ jobs:
       - name: Add summary to the run page
         run: cat coverage-report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
 
+      # Upload full HTML coverage & cyclomatic complexity report artifact
       - name: Upload HTML report
         id: upload-html
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-report-pr-${{ github.event.pull_request.number }}
+          name: code-quality-and-coverage-report-pr-${{ github.event.pull_request.number || github.run_id }}
           path: coverage-report/
           retention-days: 60
 
       - name: Comment on PR
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ github.token }}
           HTML_URL: ${{ steps.upload-html.outputs.artifact-url }}
@@ -85,11 +108,13 @@ jobs:
         run: |
           {
             echo "<!-- coverage-report -->"
-            echo "## Code coverage report"
+            echo "## Code Coverage & Quality Report"
             echo
             cat coverage-report/SummaryGithub.md
             echo
-            echo "**Full HTML report:** [download artifact (zip)]($HTML_URL)"
+            echo "**Full HTML report (Coverage & Cyclomatic Complexity):** [download artifact (zip)]($HTML_URL)"
+            echo
+            echo "*To see **which tests passed or failed**, view the [Checks tab](https://github.com/${{ github.repository }}/pull/$PR_NUMBER/checks) on this PR.*"
           } > comment.md
 
           COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("<!-- coverage-report -->")) | .id' | tail -n 1)
@@ -116,4 +141,3 @@ jobs:
             echo "Branch coverage threshold error: ${COVERAGE}% is below the required ${BRANCH_COVERAGE_THRESHOLD}%"
             exit 1
           fi
-

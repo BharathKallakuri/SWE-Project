@@ -1,4 +1,4 @@
-// Author : Saideep.
+﻿// Author : Saideep.
 // Roll No : 112301018.
 using System.Diagnostics;
 using System.Text;
@@ -38,11 +38,11 @@ public sealed class HostController : IControllerService
     ///</summary>
     public void RegisterNotificationHandler(IUserNotificationHandler handler)
     {
-        if(handler != null && !_notificationHandlers.Contains(handler))
+        if (handler != null && !_notificationHandlers.Contains(handler))
         {
             _notificationHandlers.Add(handler);
         }
-        
+
     }
 
     ///<summary>
@@ -50,7 +50,7 @@ public sealed class HostController : IControllerService
     ///</summary>
     public void UnregisterNotificationHandler(IUserNotificationHandler handler)
     {
-        if(handler != null && _notificationHandlers.Contains(handler))
+        if (handler != null && _notificationHandlers.Contains(handler))
         {
             _notificationHandlers.Remove(handler);
         }
@@ -80,22 +80,22 @@ public sealed class HostController : IControllerService
         SessionInfo? session = _sessionManager.CreateSession(_hostUser);
         if (session == null)
         {
-            Trace.TraceWarning("StartMeeting failed: a session already exists.");
+            Trace.TraceWarning("[Controller]: StartMeeting failed: a session already exists.");
             return false;
         }
 
         bool started = _sessionManager.StartSession(_hostUser);
         if (!started)
         {
-            Trace.TraceWarning("StartMeeting failed: could not transition session to Active.");
+            Trace.TraceWarning("[Controller]: StartMeeting failed: could not transition session to Active.");
             return false;
         }
-        foreach(var handler in _notificationHandlers)
+        foreach (IUserNotificationHandler handler in _notificationHandlers)
         {
             handler.OnUserJoined(_hostUser);
         }
 
-        Trace.TraceInformation($"Meeting started by host '{_hostUser.Username}'.");
+        Trace.TraceInformation($"[Controller]: Meeting started by host '{_hostUser.Username}'.");
         return true;
     }
 
@@ -107,14 +107,14 @@ public sealed class HostController : IControllerService
         bool ended = _sessionManager.EndSession(_hostUser.UserKey);
         if (!ended)
         {
-            Trace.TraceWarning("EndMeeting failed.");
+            Trace.TraceWarning("[Controller]: EndMeeting failed.");
             return false;
         }
-        
+
         // Broadcast end notification to all participants
         string payload = JsonSerializer.Serialize(_hostUser);
         Broadcast(Protocol.FormatNotification(Protocol.NotifySessionEnded, payload));
-        Trace.TraceInformation($"Meeting ended by host '{_hostUser.Username}'.");
+        Trace.TraceInformation($"[Controller]: Meeting ended by host '{_hostUser.Username}'.");
         return true;
     }
 
@@ -123,27 +123,33 @@ public sealed class HostController : IControllerService
     ///</summary>
     public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user)
     {
-        Trace.TraceWarning("JoinMeeting called on HostController. Use a ClientController to join remote meetings.");
+        Trace.TraceWarning("[Controller]: JoinMeeting called on HostController. Use a ClientController to join remote meetings.");
         return false;
-    }   
+    }
 
     ///<summary>
     /// Not applicable on host side. Host can only end meeting.
     ///</summary>
     public void LeaveMeeting(ControllerUser user)
     {
-        Trace.TraceWarning("LeaveMeeting called on HostController. Use a ClientController to leave remote meetings.");
+        Trace.TraceWarning("[Controller]: LeaveMeeting called on HostController. Use a ClientController to leave remote meetings.");
     }
 
     ///<summary>
     /// Gets the active user count of a session.
     ///</summary>
-    public int GetActiveUserCount() => _sessionManager.GetActiveUserCount();
+    public int GetActiveUserCount()
+    {
+        return _sessionManager.GetActiveUserCount();
+    }
 
     ///<summary>
     /// Gets the list of active users in the session.
     ///</summary>
-    public List<ControllerUser> GetActiveUsers() => _sessionManager.GetActiveUsers();
+    public List<ControllerUser> GetActiveUsers()
+    {
+        return _sessionManager.GetActiveUsers();
+    }
 
     private void Broadcast(string message)
     {
@@ -160,7 +166,7 @@ public sealed class HostController : IControllerService
         List<ControllerUser> allUsers = _sessionManager.GetActiveUsers();
         string payload = $"{JsonSerializer.Serialize(e.User)}{Protocol.Separator}{JsonSerializer.Serialize(allUsers)}";
         Broadcast(Protocol.FormatNotification(Protocol.NotifyUserJoined, payload));
-        foreach(var handler in _notificationHandlers)
+        foreach (IUserNotificationHandler handler in _notificationHandlers)
         {
             handler.OnUserJoined(e.User);
         }
@@ -176,7 +182,7 @@ public sealed class HostController : IControllerService
         List<ControllerUser> allUsers = _sessionManager.GetActiveUsers();
         string payload = $"{JsonSerializer.Serialize(e.User)}{Protocol.Separator}{JsonSerializer.Serialize(allUsers)}";
         Broadcast(Protocol.FormatNotification(Protocol.NotifyUserLeft, payload));
-        foreach(var handler in _notificationHandlers)
+        foreach (IUserNotificationHandler handler in _notificationHandlers)
         {
             handler.OnUserLeft(e.User);
         }
@@ -193,7 +199,7 @@ public sealed class HostController : IControllerService
     private void OnDuplicateUserDetected(object? sender, ControllerUser user)
     {
         string alert = $"Duplicate join rejected: '{user.Gmail}' attempted to join from {user.Ip} while already in meeting.";
-        Trace.TraceWarning(alert);
+        Trace.TraceWarning($"[Controller]: {alert}");
         SecurityAlertRaised?.Invoke(this, alert);
         string rejectMsg = Protocol.FormatNotification(Protocol.NotifyJoinRejected, $"User with email '{user.Gmail}' is already in this meeting on another device.");
         Broadcast(rejectMsg);
@@ -204,7 +210,11 @@ public sealed class HostController : IControllerService
     ///</summary>
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         _disposed = true;
 
         _sessionManager.UserJoined -= OnUserJoined;

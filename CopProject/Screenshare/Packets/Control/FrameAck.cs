@@ -1,4 +1,7 @@
-﻿namespace ScreenShare;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+namespace ScreenShare;
 
 public sealed record FrameAck : IScreenShareMessage
 {

@@ -1,4 +1,7 @@
-﻿namespace Chat;
+﻿// Author: Rajdeep
+// Roll no.: 112301045
+
+namespace Chat;
 
 /// <summary>
 /// Represents a message sent in a chatroom or thread.
@@ -53,8 +56,7 @@ public class ChatMessage : IChatMessage
     /// <inheritdoc />
     public bool IsDeleted
     {
-        get
-        {
+        get {
             lock (_syncRoot)
             {
                 return DeletedByUser is not null;
@@ -131,8 +133,7 @@ public class ChatMessage : IChatMessage
 
     internal virtual ChatMessage DeepClone()
     {
-        ChatMessage clone = new()
-        {
+        ChatMessage clone = new() {
             Timestamp = Timestamp,
             SenderName = SenderName,
             Mentions = Mentions.Clone(),

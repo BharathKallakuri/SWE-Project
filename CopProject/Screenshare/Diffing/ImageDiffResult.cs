@@ -1,4 +1,7 @@
-﻿// to capture whether we need to transfer full frame or partial or nothing
+﻿// Author = Aryan
+// Roll Number = 112301041
+
+// to capture whether we need to transfer full frame or partial or nothing
 
 using System.Drawing;
 
@@ -17,16 +20,26 @@ public sealed class ImageDiffResult : IDisposable
 
     public Bitmap? FullFrame { get; }
 
+    /// <summary>
+    /// for a delta with many changed tiles, the whole new picture too, so the sender can send
+    /// it as one image instead when that is smaller  null otherwise
+    /// </summary>
+    public Bitmap? WholeFrame { get; }
+
+
     private ImageDiffResult(
         bool isUnchanged,
         bool isFullFrame,
         List<Tile> changedTiles,
-        Bitmap? fullFrame)
+        Bitmap? fullFrame,
+        Bitmap? wholeFrame = null)
     {
         IsUnchanged = isUnchanged;
         IsFullFrame = isFullFrame;
         ChangedTiles = changedTiles;
         FullFrame = fullFrame;
+        WholeFrame = wholeFrame;
+
     }
 
     public static ImageDiffResult Unchanged()
@@ -38,13 +51,15 @@ public sealed class ImageDiffResult : IDisposable
             fullFrame: null);
     }
 
-    public static ImageDiffResult Delta(List<Tile> changedTiles)
+    /// <param name="wholeFrame">the whole new picture, for a big delta; owned by the result</param>
+    public static ImageDiffResult Delta(List<Tile> changedTiles, Bitmap? wholeFrame = null)
     {
         return new ImageDiffResult(
             isUnchanged: false,
             isFullFrame: false,
             changedTiles: changedTiles,
-            fullFrame: null);
+            fullFrame: null,
+            wholeFrame: wholeFrame);
     }
 
     public static ImageDiffResult CreateFullFrame(Bitmap frame)
@@ -59,5 +74,6 @@ public sealed class ImageDiffResult : IDisposable
     public void Dispose()
     {
         FullFrame?.Dispose();
+        WholeFrame?.Dispose();
     }
 }

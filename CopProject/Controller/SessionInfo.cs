@@ -53,7 +53,7 @@ public sealed class SessionInfo
             if (State == SessionState.Ended)
             {
                 return false;
-            } 
+            }
             State = SessionState.Ended;
             return true;
         }
@@ -113,8 +113,7 @@ public sealed class SessionInfo
     /// </summary>
     public int UserCount
     {
-        get
-        {
+        get {
             lock (_lock)
             {
                 return _users.Count;
@@ -138,6 +137,6 @@ public sealed class SessionInfo
     ///</summary>
     public bool IsHost(string userKey)
     {
-        return HostUser.UserKey== userKey;
+        return HostUser.UserKey == userKey;
     }
 }

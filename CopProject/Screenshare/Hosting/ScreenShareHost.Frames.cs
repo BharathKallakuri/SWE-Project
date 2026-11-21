@@ -1,15 +1,24 @@
-﻿using System.Drawing;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+using System.Diagnostics;
 using System.Net;
 
 namespace ScreenShare;
 
-// frames, acks, flow control and the host's copy of each stream.
+// frames, acks, flow control and full-frame requests.
 // the other half, streams and viewers, is in ScreenShareHost.cs.
+//
+// the host only forwards: it never decodes a frame, so relaying stays cheap with many streams.
+// a viewer that needs a full frame gets the sharer's next one;
+// the host asks the sharer for it, at most once per interval per stream.
 internal sealed partial class ScreenShareHost
 {
+    /// <summary>the least time between two full-frame requests to the same sharer</summary>
+    internal static readonly TimeSpan FullFrameRequestInterval = TimeSpan.FromSeconds(1);
+
     /// <summary>
     /// drops viewers that have left frames unacknowledged for longer than the viewer timeout,
-    /// e.g. a client that crashed without leaving the meeting
     /// </summary>
     public void RemoveTimedOutViewers()
     {
@@ -24,8 +33,28 @@ internal sealed partial class ScreenShareHost
             foreach (ViewerState viewer in timedOut)
             {
                 stream.Viewers.Remove(viewer.Viewer.Endpoint);
+                Trace.TraceInformation("[ScreenShare] Removed the Timedout userendpoint {0} for" +
+                    " user {1}", viewer.Viewer.Endpoint, viewer.Viewer.Id);
+            }
+
+            if (timedOut.Count > 0)
+            {
+                TellSharerWhoWatches(stream);
             }
         }
+    }
+
+    /// <summary>
+    /// sends the sharer the stream's current viewers, so it pauses a stream nobody watches
+    /// (e.g. the full stream while every tile is small) and resumes it when someone does
+    /// </summary>
+    private void TellSharerWhoWatches(HostedStream stream)
+    {
+        Trace.TraceInformation(
+            "[Screenshare] ScreenShareHost.TellSharerWhoWatches: {0} has {1} viewer(s).",
+            stream.Started.StreamId,
+            stream.Viewers.Count);
+        Send(stream.Sharer.Endpoint, new UpdateSendToList(stream.Started.StreamId, stream.Viewers.Keys.ToList()));
     }
 
     private void OnData(ScreenDataPacket packet, byte[] bytes)
@@ -35,23 +64,38 @@ internal sealed partial class ScreenShareHost
             return;
         }
 
-        stream.Applier.Apply(packet);
-
         // acknowledge receipt, so the sharer can send its next frame
         Send(stream.Sharer.Endpoint, new FrameAck(_self, packet.StreamId, packet.FrameNumber));
 
+        if (packet.IsFullFrame)
+        {
+            // the request was answered; whoever still needs a full frame may ask again at once
+            stream.FullFrameRequestedAt = null;
+        }
+
+        bool someoneWaiting = false;
         foreach (ViewerState viewer in stream.Viewers.Values)
         {
             if (viewer.NeedsFullFrame)
             {
-                if (packet.IsFullFrame && !IsLagging(viewer))
+                if (IsLagging(viewer))
+                {
+                    continue;
+                }
+
+                if (packet.IsFullFrame)
                 {
                     SendToViewer(viewer, packet, bytes);
                     viewer.NeedsFullFrame = false;
+                    Trace.TraceInformation(
+                        "[Screenshare] ScreenShareHost.OnData: {0} got full frame {1} of {2}.",
+                        viewer.Viewer.Id,
+                        packet.FrameNumber,
+                        packet.StreamId);
                 }
                 else
                 {
-                    TrySendFullFrameFromCache(stream, viewer);
+                    someoneWaiting = true;
                 }
 
                 continue;
@@ -61,10 +105,20 @@ internal sealed partial class ScreenShareHost
             {
                 // stop sending deltas; once it catches up it gets one full frame instead
                 viewer.NeedsFullFrame = true;
+                Trace.TraceWarning(
+                    "[Screenshare] ScreenShareHost.OnData: {0} is {1} frames behind on {2}; pausing it until it catches up.",
+                    viewer.Viewer.Id,
+                    viewer.LastSent - viewer.LastAcked,
+                    packet.StreamId);
                 continue;
             }
 
             SendToViewer(viewer, packet, bytes);
+        }
+
+        if (someoneWaiting)
+        {
+            RequestFullFrame(stream);
         }
     }
 
@@ -80,6 +134,12 @@ internal sealed partial class ScreenShareHost
         {
             viewer.LastAcked = ack.FrameNumber;
             viewer.WaitingSince = _timeProvider.GetUtcNow();
+
+            // a viewer that fell behind has caught up: get it a full frame without waiting
+            if (viewer.NeedsFullFrame && !IsLagging(viewer))
+            {
+                RequestFullFrame(stream);
+            }
         }
     }
 
@@ -91,26 +151,32 @@ internal sealed partial class ScreenShareHost
             return;
         }
 
-        // if the cache cannot serve it now, the next full frame or cached frame will
+        // the viewer lost its picture; it gets the sharer's next full frame
+        Trace.TraceInformation(
+            "[Screenshare] ScreenShareHost.OnFullFrameRequest: {0} asked for a full frame of {1}.",
+            viewer.Viewer.Id,
+            request.StreamId);
         viewer.NeedsFullFrame = true;
-        TrySendFullFrameFromCache(stream, viewer);
+        RequestFullFrame(stream);
     }
 
     /// <summary>
-    /// sends the host's latest picture of the stream as a full frame, if the host has one
-    /// and the viewer is not too far behind
+    /// asks the sharer to send a full frame next, unless the host already asked within
+    /// FullFrameRequestInterval and is still waiting; several viewers joining at once share one
     /// </summary>
-    private void TrySendFullFrameFromCache(HostedStream stream, ViewerState viewer)
+    private void RequestFullFrame(HostedStream stream)
     {
-        if (!viewer.NeedsFullFrame || IsLagging(viewer) || stream.Stitcher.NeedsFullFrame)
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        if (stream.FullFrameRequestedAt is DateTimeOffset last && now - last < FullFrameRequestInterval)
         {
             return;
         }
 
-        (ScreenDataPacket packet, byte[] bytes) = stream.GetCachedFullFrame(_timeProvider.GetUtcNow().UtcDateTime);
-
-        SendToViewer(viewer, packet, bytes);
-        viewer.NeedsFullFrame = false;
+        stream.FullFrameRequestedAt = now;
+        Trace.TraceInformation(
+            "[Screenshare] ScreenShareHost.RequestFullFrame: asking the sharer of {0} for a full frame.",
+            stream.Started.StreamId);
+        Send(stream.Sharer.Endpoint, new RequestFullFrame(_self, stream.Started.StreamId));
     }
 
     private void SendToViewer(ViewerState viewer, ScreenDataPacket packet, byte[] bytes)
@@ -131,61 +197,23 @@ internal sealed partial class ScreenShareHost
     }
 
     /// <summary>
-    /// a running stream: who shares it, who watches it, and the host's copy of its picture
+    /// a running stream: who shares it, who watches it, and whether a full frame was asked for
     /// </summary>
-    private sealed class HostedStream : IDisposable
+    private sealed class HostedStream
     {
-        private (long FrameNumber, ScreenDataPacket Packet, byte[] Bytes)? _cachedFullFrame;
+        public HostedStream(StreamStarted started)
+        {
+            Started = started;
+        }
 
         public StreamStarted Started { get; }
 
         public Participant Sharer => Started.Sharer;
 
-        public ImageStitcher Stitcher { get; } = new();
-
-        public ScreenPacketApplier Applier { get; }
-
         public Dictionary<IPEndPoint, ViewerState> Viewers { get; } = new();
 
-        public HostedStream(StreamStarted started, TimeProvider timeProvider)
-        {
-            Started = started;
-            Applier = new ScreenPacketApplier(started.StreamId, Stitcher, timeProvider);
-        }
-
-        /// <summary>
-        /// encodes the current picture as a full-frame packet, once per frame number,
-        /// so several viewers joining at once share one PNG encode
-        /// </summary>
-        public (ScreenDataPacket Packet, byte[] Bytes) GetCachedFullFrame(DateTime nowUtc)
-        {
-            long frameNumber = Stitcher.LastFrameNumber;
-
-            if (_cachedFullFrame is { } cached && cached.FrameNumber == frameNumber)
-            {
-                return (cached.Packet, cached.Bytes);
-            }
-
-            using Bitmap frame = Stitcher.GetCurrentFrame()!;
-
-            var packet = new ScreenDataPacket(
-                Started.StreamId,
-                frameNumber,
-                nowUtc,
-                frame.Width,
-                frame.Height,
-                DataPacketType.FullFrame,
-                fullFrameData: PngEncoder.Encode(frame));
-            byte[] bytes = ScreenShareCodec.Encode(packet);
-
-            _cachedFullFrame = (frameNumber, packet, bytes);
-            return (packet, bytes);
-        }
-
-        public void Dispose()
-        {
-            Stitcher.Dispose();
-        }
+        /// <summary>when the host last asked the sharer for a full frame; null when none is pending</summary>
+        public DateTimeOffset? FullFrameRequestedAt { get; set; }
     }
 
     /// <summary>

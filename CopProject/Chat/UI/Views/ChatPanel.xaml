@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+Author: Rajat
+Roll no.: 112301044
+-->
 <UserControl
     x:Class="UI.Views.ChatPanel"
     x:Name="ChatPanelRoot"
@@ -212,7 +216,8 @@
 
                 <Grid Grid.Row="1">
                     <Grid Visibility="{Binding ConversationVisibility}">
-                        <ListView x:Name="MessagesList" Loaded="MessagesList_Loaded" ItemsSource="{Binding Messages}" ItemTemplate="{StaticResource MessageTemplate}"
+                        <ListView x:Name="MessagesList" Loaded="MessagesList_Loaded" SizeChanged="MessagesList_SizeChanged"
+                                  ItemsSource="{Binding Messages}" ItemTemplate="{StaticResource MessageTemplate}"
                                   SelectionMode="None" IsItemClickEnabled="False" Background="Transparent" BorderThickness="0" Padding="12,14,12,8"
                                   ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListView.ItemContainerStyle>
@@ -226,6 +231,12 @@
                         <TextBlock Text="No messages yet. Start the conversation." Visibility="{Binding EmptyConversationVisibility}"
                                    Foreground="#6B7280" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"
                                    TextAlignment="Center" TextWrapping="Wrap" MaxWidth="230"/>
+                        <Button x:Name="MainJumpToLatestButton" Content="↓" Visibility="Collapsed"
+                                Click="MainJumpToLatestButton_Click"
+                                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,16,14"
+                                Width="34" Height="34" Padding="0" CornerRadius="17"
+                                Background="#0F5FC2" Foreground="White" BorderThickness="0" FontSize="18"
+                                ToolTipService.ToolTip="Jump to latest message"/>
                     </Grid>
 
                     <Grid Visibility="{Binding ThreadPanelVisibility}">
@@ -238,7 +249,6 @@
                                     <TextBlock Text="{Binding ThreadHeaderText}" FontSize="13" FontWeight="SemiBold" Foreground="#1F2937"/>
                                     <TextBlock Text="Replies in this conversation" FontSize="10" Foreground="#6B7280"/>
                                 </StackPanel>
-                                <Button Grid.Column="2" Content="×" Command="{Binding CloseThreadCommand}" FontSize="18" Padding="5,0" MinWidth="28" Background="Transparent" Foreground="#5F6B7A" BorderThickness="0"/>
                             </Grid>
                         </Border>
                         <Border Grid.Row="1" Margin="12,10" Padding="10" CornerRadius="10" Background="#F5F7FA" BorderBrush="#D9E2EC" BorderThickness="1">
@@ -251,7 +261,9 @@
                                 <TextBlock Text="{Binding ActiveThreadRoot.DisplayContent}" TextWrapping="Wrap" FontSize="12" Foreground="#1F2937"/>
                             </StackPanel>
                         </Border>
-                        <ListView x:Name="ThreadMessagesList" Grid.Row="2" Loaded="ThreadMessagesList_Loaded" ItemsSource="{Binding ThreadMessages}"
+                        <ListView x:Name="ThreadMessagesList" Grid.Row="2" Loaded="ThreadMessagesList_Loaded"
+                                  SizeChanged="ThreadMessagesList_SizeChanged"
+                                  ItemsSource="{Binding ThreadMessages}"
                                   ItemTemplate="{StaticResource MessageTemplate}" SelectionMode="None" Background="Transparent" BorderThickness="0"
                                   Padding="12,8,12,8" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListView.ItemContainerStyle>
@@ -262,6 +274,12 @@
                                 </Style>
                             </ListView.ItemContainerStyle>
                         </ListView>
+                        <Button x:Name="ThreadJumpToLatestButton" Grid.Row="2" Content="↓" Visibility="Collapsed"
+                                Click="ThreadJumpToLatestButton_Click"
+                                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,16,14"
+                                Width="34" Height="34" Padding="0" CornerRadius="17"
+                                Background="#0F5FC2" Foreground="White" BorderThickness="0" FontSize="18"
+                                ToolTipService.ToolTip="Jump to latest reply"/>
                     </Grid>
                 </Grid>
 

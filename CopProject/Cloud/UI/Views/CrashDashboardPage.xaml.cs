@@ -7,7 +7,6 @@ using Cloud.Crash;
 using Cloud.Crash.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Navigation;
 
 namespace Cloud.UI.Views;

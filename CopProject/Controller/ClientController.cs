@@ -1,10 +1,9 @@
-// K.Bala Krishna
+﻿// K.Bala Krishna
 // 112301015
 
 using System.Diagnostics;
 using System.Net;
 using System.Text;
-using System.Text.Json;
 using Networking;
 using Utils;
 
@@ -26,10 +25,10 @@ public sealed class ClientController : IControllerService
     private int _lastKnownUserCount;
     private readonly Dictionary<string, ControllerUser> _knownUsers = new();
     private readonly List<IUserNotificationHandler> _notificationHandlers = new();
-    internal bool InitialSync = false;
+    internal bool _initialSync = false;
     internal readonly ManualResetEventSlim JoinResponseEvent = new(false);
     public string? LastErrorMessage { get; internal set; }
-    internal bool IsJoined = false;
+    internal bool _isJoined = false;
 
     // Events
     public event EventHandler<MeetingEndedEventArgs>? MeetingEnded;
@@ -37,16 +36,23 @@ public sealed class ClientController : IControllerService
     public event EventHandler<UserLeftEventArgs>? UserLeft;
     public event EventHandler<string>? SecurityAlertRaised;
     public event EventHandler<string>? JoinRejected;
-    internal void RaiseSecurityAlert(string alert) => SecurityAlertRaised?.Invoke(this, alert);
-    internal void RaiseJoinRejected(string reason) => JoinRejected?.Invoke(this, reason);
+    internal void RaiseSecurityAlert(string alert)
+    {
+        SecurityAlertRaised?.Invoke(this, alert);
+    }
+
+    internal void RaiseJoinRejected(string reason)
+    {
+        JoinRejected?.Invoke(this, reason);
+    }
 
     public int ListenPort => _communicator?.ListenPort ?? 0;
     public ICommunicator? Communicator => _communicator;
     public ControllerUser? CurrentUser => _currentUser;
-    
+
     public void RegisterNotificationHandler(IUserNotificationHandler handler)
     {
-        if(handler != null && !_notificationHandlers.Contains(handler))
+        if (handler != null && !_notificationHandlers.Contains(handler))
         {
             _notificationHandlers.Add(handler);
         }
@@ -54,7 +60,7 @@ public sealed class ClientController : IControllerService
 
     public void UnregisterNotificationHandler(IUserNotificationHandler handler)
     {
-        if(handler != null && _notificationHandlers.Contains(handler))
+        if (handler != null && _notificationHandlers.Contains(handler))
         {
             _notificationHandlers.Remove(handler);
         }
@@ -62,15 +68,15 @@ public sealed class ClientController : IControllerService
 
     internal void NotifyHandlersUserJoined(ControllerUser user)
     {
-        foreach (var handler in _notificationHandlers)
+        foreach (IUserNotificationHandler handler in _notificationHandlers)
         {
             handler.OnUserJoined(user);
         }
     }
-    
+
     internal void NotifyHandlersUserLeft(ControllerUser user)
     {
-        foreach(var handler in _notificationHandlers)
+        foreach (IUserNotificationHandler handler in _notificationHandlers)
         {
             handler.OnUserLeft(user);
         }
@@ -88,39 +94,41 @@ public sealed class ClientController : IControllerService
     // Not applicable on the client side. Use a HostController to start/end meetings.
     public bool StartMeeting()
     {
-        Trace.TraceWarning("StartMeeting called on Client. Only the host can start meetings.");
+        Trace.TraceWarning("[Controller]: StartMeeting called on Client. Only the host can start meetings.");
         return false;
     }
 
     public bool EndMeeting()
     {
-        Trace.TraceWarning("EndMeeting called on Client. Only the host can end meetings.");
+        Trace.TraceWarning("[Controller]: EndMeeting called on Client. Only the host can end meetings.");
         return false;
     }
 
     // Sends a JOIN message to the host machine after formatting.
+    [Obsolete]
     public bool JoinMeeting(string hostIp, int hostPort, ControllerUser user)
     {
         if (!IPAddress.TryParse(hostIp, out IPAddress? ipAddress))
         {
-            Trace.TraceWarning($"JoinMeeting failed: '{hostIp}' is not a valid IP address.");
+            Trace.TraceWarning($"[Controller]: JoinMeeting failed: '{hostIp}' is not a valid IP address.");
             return false;
         }
         var serverEndPoint = new IPEndPoint(ipAddress, hostPort);
-        if(_communicator != null)
+        if (_communicator != null)
         {
             _communicator.RemoveSubscriber(Protocol.ControllerSubscriberId);
-            if(_communicator is IDisposable disposable){
+            if (_communicator is IDisposable disposable)
+            {
                 disposable.Dispose();
             }
-            _communicator = null ;
+            _communicator = null;
         }
 
-        ICommunicator? comm = CommunicatorFactory.CreateCommunicator(serverEndPoint,isServer:false,isClient:true);
-        if(comm == null || comm.ListenPort == 0)
+        ICommunicator? comm = CommunicatorFactory.CreateCommunicator(serverEndPoint, isServer: false, isClient: true);
+        if (comm == null || comm.ListenPort == 0)
         {
-            (comm as IDisposable)?.Dispose() ;
-            Trace.TraceWarning($"failed to connect to host at {hostIp}:{hostPort}");
+            (comm as IDisposable)?.Dispose();
+            Trace.TraceWarning($"[Controller]: failed to connect to host at {hostIp}:{hostPort}");
             return false;
         }
         _communicator = comm;
@@ -133,18 +141,18 @@ public sealed class ClientController : IControllerService
         user.Port = _communicator.ListenPort;
         user.JoinedAt = DateTime.UtcNow;
         lock (_knownUsers)
-        {   
+        {
             _knownUsers[user.UserKey] = user;
         }
         JoinResponseEvent.Reset();
-        IsJoined = false;
+        _isJoined = false;
         LastErrorMessage = null;
         string message = Protocol.FormatJoinRequest(user);
         SendToHost(hostIp, hostPort, message);
-        Trace.TraceInformation($"Sent JOIN for user '{user.Username}' to {hostIp}:{hostPort}.");
-        // Wait up to 1 second for host response.
-        JoinResponseEvent.Wait(TimeSpan.FromMilliseconds(1000));
-        if (!IsJoined)
+        Trace.TraceInformation($"[Controller]: Sent JOIN for user '{user.Username}' to {hostIp}:{hostPort}.");
+        // Wait up to 5 second for host response.
+        JoinResponseEvent.Wait(TimeSpan.FromMilliseconds(5000));
+        if (!_isJoined)
         {
             if (string.IsNullOrEmpty(LastErrorMessage))
             {
@@ -159,16 +167,16 @@ public sealed class ClientController : IControllerService
     {
         if (_hostIp == null)
         {
-            Trace.TraceWarning("LeaveMeeting called but no host has been joined yet.");
+            Trace.TraceWarning("[Controller]: LeaveMeeting called but no host has been joined yet.");
             return;
         }
         string userKey = _currentUser?.UserKey ?? user.UserKey;
         string message = Protocol.FormatLeaveRequest(userKey);
         SendToHost(_hostIp, _hostPort, message);
-        Trace.TraceInformation($"Sent LEAVE for user '{user.Gmail}' to {_hostIp}:{_hostPort}.");
+        Trace.TraceInformation($"[Controller]: Sent LEAVE for user '{user.Gmail}' to {_hostIp}:{_hostPort}.");
 
         // Allow background SendingQueueListenerClient thread to flush the LEAVE packet before closing socket.
-        Thread.Sleep(150);
+        Thread.Sleep(450);
 
         // Clear remembered host and local tracking.
         _hostIp = null;
@@ -194,7 +202,7 @@ public sealed class ClientController : IControllerService
     {
         if (_communicator == null)
         {
-            Trace.TraceWarning("SendToHost called but communicator is not initialized.");
+            Trace.TraceWarning("[Controller]: SendToHost called but communicator is not initialized.");
             return;
         }
 
@@ -246,42 +254,61 @@ public sealed class ClientController : IControllerService
         MeetingEnded?.Invoke(this, e);
     }
 
-    internal void RaiseUserJoined(UserJoinedEventArgs e) => UserJoined?.Invoke(this, e);
-    internal void RaiseUserLeft(UserLeftEventArgs e) => UserLeft?.Invoke(this, e);
-    internal void UpdateUserCount(int count) => _lastKnownUserCount = count;
+    internal void RaiseUserJoined(UserJoinedEventArgs e)
+    {
+        UserJoined?.Invoke(this, e);
+    }
+
+    internal void RaiseUserLeft(UserLeftEventArgs e)
+    {
+        UserLeft?.Invoke(this, e);
+    }
+
+    internal void UpdateUserCount(int count)
+    {
+        _lastKnownUserCount = count;
+    }
+
     internal void SyncUserList(IEnumerable<ControllerUser> users)
     {
         lock (_knownUsers)
         {
             _knownUsers.Clear();
-            foreach (var user in users)
+            foreach (ControllerUser user in users)
             {
-                _knownUsers[user.UserKey]=user;
+                _knownUsers[user.UserKey] = user;
             }
         }
     }
 
-    public int GetLastKnownUserCount() => _lastKnownUserCount;
-    
+    public int GetLastKnownUserCount()
+    {
+        return _lastKnownUserCount;
+    }
+
     // Cleanup 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         _disposed = true;
 
         // Auto-send LEAVE to host if still connected, so host cleans up this user.
-        if (IsJoined && _hostIp != null&& _currentUser != null)
+        if (_isJoined && _hostIp != null && _currentUser != null)
         {
             try
             {
                 string message = Protocol.FormatLeaveRequest(_currentUser.UserKey);
                 SendToHost(_hostIp, _hostPort, message);
                 Thread.Sleep(150);
-                Trace.TraceInformation($"Dispose: auto-sent LEAVE for '{_currentUser.Username}' to {_hostIp}:{_hostPort}.");
+                Trace.TraceInformation($"[Controller]: Dispose: auto-sent LEAVE for '{_currentUser.Username}' to {_hostIp}:{_hostPort}.");
             }
             catch (Exception ex)
             {
-                Trace.TraceWarning($"Dispose: failed to send LEAVE: {ex.Message}");
+                Trace.TraceWarning($"[Controller]: Dispose: failed to send LEAVE: {ex.Message}");
             }
         }
 
@@ -301,3 +328,4 @@ public sealed class ClientController : IControllerService
         }
     }
 }
+

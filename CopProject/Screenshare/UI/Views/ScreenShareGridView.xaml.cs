@@ -1,4 +1,9 @@
-﻿using Microsoft.UI.Xaml;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using ScreenShare.Interfaces;
 using ScreenShare.Models;
@@ -6,8 +11,12 @@ using ScreenShare.ViewModels;
 
 namespace ScreenShare.Views;
 
+// not covered by unit tests: a WinUI view only runs inside the app, like the other modules' views
+[ExcludeFromCodeCoverage]
 public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
 {
+    private bool _isActive;   // whether the panel holding this grid is on screen
+
     public ScreenShareViewModel? ViewModel { get; private set; }
 
     public ScreenShareGridView()
@@ -20,7 +29,10 @@ public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
     {
         ViewModel?.Dispose();
         ViewModel = new ScreenShareViewModel(feed, DispatcherQueue);
+        ViewModel.SetActive(_isActive);
+        Trace.TraceInformation("[ScreenShare] ScreenShareGridView.Initialize set flag {0} : {1}", _isActive, _isActive ? "shown" : "hidden");
         Bindings.Update();
+        Trace.TraceInformation("[Screenshare] ScreenShareGridView.Initialize: showing a new meeting's streams.");
     }
 
     /// <summary>
@@ -29,6 +41,7 @@ public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
     /// </summary>
     public void Clear()
     {
+        Trace.TraceInformation("[Screenshare] ScreenShareGridView.Clear: grid cleared.");
         ViewModel?.Dispose();
     }
 
@@ -71,4 +84,13 @@ public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
     }
 
 
+    /// <summary>
+    /// tells the grid whether its panel is on screen; streams are only asked for while it is.
+    /// remembered so a view model made later by Initialize starts in the same state.
+    /// </summary>
+    public void SetActive(bool active)
+    {
+        _isActive = active;
+        ViewModel?.SetActive(active);
+    }
 }

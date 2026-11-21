@@ -1,8 +1,11 @@
-﻿using Insights.AI;
-using Trace = System.Diagnostics.Trace;
+﻿// Author: Adwaith Nath R
+// Roll Number: 112614010
+
 using System.Text.Json.Nodes;
 using Google.GenAI;
 using Google.GenAI.Types;
+using Insights.AI;
+using Trace = System.Diagnostics.Trace;
 
 namespace Insights.LogAnalysis;
 
@@ -96,8 +99,7 @@ public sealed class GeminiLogAnalysisService : ILogAnalysisService
         string resolvedModel = ResolveModelName(modelName, fallbackModel);
 
         Func<string, string, GenerateContentConfig, Task<string?>> generator =
-            (model, prompt, config) =>
-                provider.GenerateStructuredContentAsync(model, prompt, config);
+            provider.GenerateStructuredContentAsync;
 
         GeminiLogAnalysisService service =
             new(generator, resolvedModel, forTesting: true);
@@ -147,8 +149,7 @@ public sealed class GeminiLogAnalysisService : ILogAnalysisService
             {request.LogContent}
             """;
 
-            var config = new GenerateContentConfig
-            {
+            var config = new GenerateContentConfig {
                 ResponseJsonSchema = JsonNode.Parse(ResponseSchemaJson),
                 ResponseMimeType = "application/json",
                 Temperature = 0.1
@@ -215,8 +216,7 @@ public sealed class GeminiLogAnalysisService : ILogAnalysisService
     // is covered with the injectable delegate constructor and live calls are integration tests.
     private static Func<string, string, GenerateContentConfig, Task<string?>> CreateGenerator(Client client)
     {
-        return async (model, prompt, config) =>
-        {
+        return async (model, prompt, config) => {
             GenerateContentResponse response = await client.Models.GenerateContentAsync(
                 model: model,
                 contents: prompt,

@@ -1,27 +1,33 @@
-//Author : Saideep.
+﻿//Author : Saideep.
 // Roll No : 112301018.
-using Controller;
 using Utils;
-using Xunit;
 
 namespace Controller.Test;
 
 class TestNotificationHandler : IUserNotificationHandler
 {
-    public ControllerUser? LastJoinedUser;
-    public ControllerUser? LastLeftUser;
+    public ControllerUser? LastJoinedUser { get; set; }
+    public ControllerUser? LastLeftUser { get; set; }
 
-    public void OnUserJoined(ControllerUser user) => LastJoinedUser = user;
-    public void OnUserLeft(ControllerUser user) => LastLeftUser = user;
+    public void OnUserJoined(ControllerUser user)
+    {
+        LastJoinedUser = user;
+    }
+
+    public void OnUserLeft(ControllerUser user)
+    {
+        LastLeftUser = user;
+    }
 }
 
 public class HostControllerTests
 {
     [Fact]
+    [Obsolete]
     public void StartMeeting()
     {
-        var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
-        var host = (HostController)ControllerFactory.CreateHost(Host);
+        var hostUser = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
+        var host = (HostController)ControllerFactory.CreateHost(hostUser);
         var handler = new TestNotificationHandler();
         host.RegisterNotificationHandler(handler);
         bool started = host.StartMeeting();
@@ -34,10 +40,11 @@ public class HostControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void StartAlreadyStartedMeeting()
     {
-        var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
-        var host = (HostController)ControllerFactory.CreateHost(Host);
+        var hostUser = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
+        var host = (HostController)ControllerFactory.CreateHost(hostUser);
         host.StartMeeting();
         bool secondStart = host.StartMeeting();
         Assert.False(secondStart);
@@ -45,10 +52,11 @@ public class HostControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void EndMeeting()
     {
-        var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
-        var host = (HostController)ControllerFactory.CreateHost(Host);
+        var hostUser = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
+        var host = (HostController)ControllerFactory.CreateHost(hostUser);
         host.StartMeeting();
         bool ended = host.EndMeeting();
         Assert.True(ended);
@@ -57,20 +65,22 @@ public class HostControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void EndMeetingWithoutAnActiveMeeting()
     {
-        var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
-        var host = (HostController)ControllerFactory.CreateHost(Host);
+        var hostUser = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
+        var host = (HostController)ControllerFactory.CreateHost(hostUser);
         bool ended = host.EndMeeting();
         Assert.False(ended);
         host.Dispose();
     }
 
     [Fact]
+    [Obsolete]
     public void JoinAndLeaveMeeting()
     {
-        var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
-        var host = (HostController)ControllerFactory.CreateHost(Host);
+        var hostUser = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
+        var host = (HostController)ControllerFactory.CreateHost(hostUser);
         var dummy = new ControllerUser("Dummy", "dummy@test.com", null, "10.10.10.10", 9991, isHost: false);
         Assert.False(host.JoinMeeting("10.10.10.10", 9991, dummy));
         host.LeaveMeeting(dummy);
@@ -78,10 +88,11 @@ public class HostControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void NotificationHandlers()
     {
-        var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
-        var host = (HostController)ControllerFactory.CreateHost(Host);
+        var hostUser = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
+        var host = (HostController)ControllerFactory.CreateHost(hostUser);
         var handler = new TestNotificationHandler();
         host.RegisterNotificationHandler(handler);
         host.UnregisterNotificationHandler(handler);
@@ -91,6 +102,7 @@ public class HostControllerTests
     }
 
     [Fact]
+    [Obsolete]
     public void CreateWithFactory()
     {
         var host = (HostController)ControllerFactory.CreateHost("Sai", "saideep@smail.iitpkd.ac.in");
@@ -100,10 +112,11 @@ public class HostControllerTests
         host.Dispose();
     }
     [Fact]
+    [Obsolete]
     public void ParticipantJoinedAndLeft()
     {
-        var Host = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
-        var host = (HostController)ControllerFactory.CreateHost(Host);
+        var hostUser = new ControllerUser("Host", "host@test.com", null, "10.10.10.10", 9990, isHost: true);
+        var host = (HostController)ControllerFactory.CreateHost(hostUser);
         var handler = new TestNotificationHandler();
         host.RegisterNotificationHandler(handler);
         host.StartMeeting();
@@ -119,6 +132,6 @@ public class HostControllerTests
         Assert.True(host.ListenPort > 0);
         Assert.NotNull(host.SessionManager);
         host.Dispose();
-        host.Dispose(); 
+        host.Dispose();
     }
 }

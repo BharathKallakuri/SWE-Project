@@ -39,7 +39,9 @@ public static class FileTraceListener
             FileAccess.Write,
             FileShare.ReadWrite); /* permits simulaneous reading and writing of the log file.*/
 
-        s_listener = new TextWriterTraceListener(fileStream);
+        s_listener = new TextWriterTraceListener(fileStream) {
+            TraceOutputOptions = TraceOptions.DateTime
+        };
 
         Trace.Listeners.Add(s_listener);
         Trace.AutoFlush = true;
@@ -51,7 +53,7 @@ public static class FileTraceListener
     /// <summary>
     /// Reads the most recent application log entries.
     /// </summary>
-    public static async Task<string> ReadRecentLogAsync(int lineCount = 250)
+    public static async Task<string> ReadRecentLogAsync(int lineCount = 2000)
     {
         if (s_logPath is null || s_logDirectory is null)
         {

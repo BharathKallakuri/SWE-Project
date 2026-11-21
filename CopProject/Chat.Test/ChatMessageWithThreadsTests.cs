@@ -1,7 +1,9 @@
-﻿using System;
+﻿// Author: Zeeshan
+// Roll no.: 112301040
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Chat;
 
 namespace Chat.Test;
 
@@ -30,8 +32,7 @@ public class ChatMessageWithThreadsTests
     public void AddMessageToThreadIndexesReplyByIdAndTime()
     {
         ChatMessageWithThreads message = new() { SenderName = "guest" };
-        ChatMessage reply = new()
-        {
+        ChatMessage reply = new() {
             SenderName = "host",
             Timestamp = DateTimeOffset.Parse("2026-01-01T12:00:00+00:00"),
             Content = "Reply"
@@ -51,14 +52,12 @@ public class ChatMessageWithThreadsTests
     public void ThreadMessagesAreOrderedByTimestampThenId()
     {
         ChatMessageWithThreads message = new() { SenderName = "guest" };
-        ChatMessage laterReply = new()
-        {
+        ChatMessage laterReply = new() {
             SenderName = "host",
             Timestamp = DateTimeOffset.Parse("2026-01-01T12:02:00+00:00"),
             Content = "Later"
         };
-        ChatMessage earlierReply = new()
-        {
+        ChatMessage earlierReply = new() {
             SenderName = "host",
             Timestamp = DateTimeOffset.Parse("2026-01-01T12:01:00+00:00"),
             Content = "Earlier"

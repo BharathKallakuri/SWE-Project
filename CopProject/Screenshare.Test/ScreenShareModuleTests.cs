@@ -1,6 +1,4 @@
-﻿using System;
-using Xunit;
-using ScreenShare;
+﻿using ScreenShare;
 
 namespace Screenshare.Tests;
 

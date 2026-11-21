@@ -1,3 +1,7 @@
+﻿// Authors:
+// Adwaith Nath R - Roll Number: 112614010
+// Hariram S - Roll Number: 112614008
+
 using Google.GenAI.Types;
 using Insights.AI;
 using Xunit;
@@ -16,7 +20,7 @@ public sealed class GeminiProviderTests
     [Fact]
     public void ModelName_ReturnsConfiguredModelName()
     {
-        var provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>("ok"));
+        GeminiProvider provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>("ok"));
 
         Assert.Equal("gemini-3.5-flash", provider.ModelName);
     }
@@ -53,8 +57,7 @@ public sealed class GeminiProviderTests
     {
         string? capturedModel = null;
         object? capturedContents = null;
-        var provider = CreateProvider((model, textContents, _, _) =>
-        {
+        GeminiProvider provider = CreateProvider((model, textContents, _, _) => {
             capturedModel = model;
             capturedContents = textContents;
             return Task.FromResult<string?>("Traffic analysis result");
@@ -70,7 +73,7 @@ public sealed class GeminiProviderTests
     [Fact]
     public async Task AnalyzeTrafficIncidentAsync_EmptyResponse_ReturnsEmptyString()
     {
-        var provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>(null));
+        GeminiProvider provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>(null));
 
         string result = await provider.AnalyzeTrafficIncidentAsync("Incident description");
 
@@ -80,7 +83,7 @@ public sealed class GeminiProviderTests
     [Fact]
     public async Task AnalyzeTrafficIncidentAsync_WhenGeminiFails_ReturnsErrorMessage()
     {
-        var provider = CreateProvider((_, _, _, _) =>
+        GeminiProvider provider = CreateProvider((_, _, _, _) =>
             Task.FromException<string?>(new InvalidOperationException("service unavailable")));
 
         string result = await provider.AnalyzeTrafficIncidentAsync("Incident description");
@@ -92,8 +95,7 @@ public sealed class GeminiProviderTests
     public async Task AnalyzeImageAsync_SendsImageAndPromptAndReturnsResponse()
     {
         object? capturedContents = null;
-        var provider = CreateProvider((_, _, contentItems, _) =>
-        {
+        GeminiProvider provider = CreateProvider((_, _, contentItems, _) => {
             capturedContents = contentItems;
             return Task.FromResult<string?>("Image analysis result");
         });
@@ -102,10 +104,10 @@ public sealed class GeminiProviderTests
         string result = await provider.AnalyzeImageAsync(image, "Describe this image");
 
         Assert.Equal("Image analysis result", result);
-        var contentList = Assert.IsType<List<Content>>(capturedContents);
+        List<Content> contentList = Assert.IsType<List<Content>>(capturedContents);
         Assert.Single(contentList);
 
-        var parts = contentList[0].Parts
+        List<Part> parts = contentList[0].Parts
             ?? throw new InvalidOperationException("Expected image content parts.");
 
         Assert.Equal("Describe this image", parts[0].Text);
@@ -116,7 +118,7 @@ public sealed class GeminiProviderTests
     [Fact]
     public async Task AnalyzeImageAsync_EmptyResponse_ReturnsEmptyString()
     {
-        var provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>(string.Empty));
+        GeminiProvider provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>(string.Empty));
 
         string result = await provider.AnalyzeImageAsync(new byte[] { 1 }, "Describe");
 
@@ -126,7 +128,7 @@ public sealed class GeminiProviderTests
     [Fact]
     public async Task AnalyzeImageAsync_WhenGeminiFails_ReturnsErrorMessage()
     {
-        var provider = CreateProvider((_, _, _, _) =>
+        GeminiProvider provider = CreateProvider((_, _, _, _) =>
             Task.FromException<string?>(new InvalidOperationException("image request failed")));
 
         string result = await provider.AnalyzeImageAsync(new byte[] { 1 }, "Describe");
@@ -139,8 +141,7 @@ public sealed class GeminiProviderTests
     {
         object? capturedContents = null;
         GenerateContentConfig? capturedConfig = null;
-        var provider = CreateProvider((_, textContents, _, config) =>
-        {
+        GeminiProvider provider = CreateProvider((_, textContents, _, config) => {
             capturedContents = textContents;
             capturedConfig = config;
             return Task.FromResult<string?>("Chat result");
@@ -157,8 +158,7 @@ public sealed class GeminiProviderTests
     public async Task GenerateChatResponseAsync_WithContext_IncludesContextAndQuestion()
     {
         object? capturedContents = null;
-        var provider = CreateProvider((_, textContents, _, _) =>
-        {
+        GeminiProvider provider = CreateProvider((_, textContents, _, _) => {
             capturedContents = textContents;
             return Task.FromResult<string?>("Contextual chat result");
         });
@@ -172,7 +172,7 @@ public sealed class GeminiProviderTests
     [Fact]
     public async Task GenerateChatResponseAsync_EmptyResponse_ReturnsEmptyString()
     {
-        var provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>(null));
+        GeminiProvider provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>(null));
 
         string result = await provider.GenerateChatResponseAsync("Hello");
 
@@ -182,7 +182,7 @@ public sealed class GeminiProviderTests
     [Fact]
     public async Task GenerateChatResponseAsync_WhenGeminiFails_ReturnsErrorMessage()
     {
-        var provider = CreateProvider((_, _, _, _) =>
+        GeminiProvider provider = CreateProvider((_, _, _, _) =>
             Task.FromException<string?>(new InvalidOperationException("chat request failed")));
 
         string result = await provider.GenerateChatResponseAsync("Hello");
@@ -193,7 +193,7 @@ public sealed class GeminiProviderTests
     [Fact]
     public async Task GenerateChatResponseAsync_NullUserMessage_ThrowsArgumentNullException()
     {
-        var provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>("unused"));
+        GeminiProvider provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>("unused"));
 
         await Assert.ThrowsAsync<ArgumentNullException>(
             () => provider.GenerateChatResponseAsync(null!));
@@ -202,7 +202,7 @@ public sealed class GeminiProviderTests
     [Fact]
     public async Task GenerateChatResponseAsync_EmptyOrWhitespaceUserMessage_ThrowsArgumentException()
     {
-        var provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>("unused"));
+        GeminiProvider provider = CreateProvider((_, _, _, _) => Task.FromResult<string?>("unused"));
 
         await Assert.ThrowsAsync<ArgumentException>(
             () => provider.GenerateChatResponseAsync(""));
@@ -218,14 +218,12 @@ public sealed class GeminiProviderTests
         string? capturedPrompt = null;
         GenerateContentConfig? capturedConfig = null;
 
-        var config = new GenerateContentConfig
-        {
+        var config = new GenerateContentConfig {
             ResponseMimeType = "application/json",
             Temperature = 0.1
         };
 
-        var provider = CreateProvider((model, textContents, _, receivedConfig) =>
-        {
+        GeminiProvider provider = CreateProvider((model, textContents, _, receivedConfig) => {
             capturedModel = model;
             capturedPrompt = textContents;
             capturedConfig = receivedConfig;
@@ -247,7 +245,7 @@ public sealed class GeminiProviderTests
     [Fact]
     public async Task GenerateStructuredContentAsync_EmptyModel_ThrowsArgumentException()
     {
-        var provider = CreateProvider((_, _, _, _) =>
+        GeminiProvider provider = CreateProvider((_, _, _, _) =>
             Task.FromResult<string?>("unused"));
 
         await Assert.ThrowsAsync<ArgumentException>(
@@ -260,7 +258,7 @@ public sealed class GeminiProviderTests
     [Fact]
     public async Task GenerateStructuredContentAsync_EmptyPrompt_ThrowsArgumentException()
     {
-        var provider = CreateProvider((_, _, _, _) =>
+        GeminiProvider provider = CreateProvider((_, _, _, _) =>
             Task.FromResult<string?>("unused"));
 
         await Assert.ThrowsAsync<ArgumentException>(
@@ -276,10 +274,10 @@ public sealed class GeminiProviderTests
         var expectedException =
             new InvalidOperationException("Structured request failed.");
 
-        var provider = CreateProvider((_, _, _, _) =>
+        GeminiProvider provider = CreateProvider((_, _, _, _) =>
             Task.FromException<string?>(expectedException));
 
-        var actualException = await Assert.ThrowsAsync<InvalidOperationException>(
+        InvalidOperationException actualException = await Assert.ThrowsAsync<InvalidOperationException>(
             () => provider.GenerateStructuredContentAsync(
                 "test-model",
                 "Analyse logs",

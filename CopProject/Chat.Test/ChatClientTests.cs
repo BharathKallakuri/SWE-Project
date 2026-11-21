@@ -1,16 +1,19 @@
-﻿using System;
+﻿// Author: Zeeshan
+// Roll no.: 112301040
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text.Json;
-using Chat;
 using Networking;
 
 namespace Chat.Test;
 
 public class ChatClientTests
 {
-    private static readonly IPEndPoint ServerAddress = new(IPAddress.Loopback, 12345);
+    private static readonly IPEndPoint s_serverAddress = new(IPAddress.Loopback, 12345);
+    private static IPEndPoint ServerAddress => s_serverAddress;
 
     [Fact]
     public void ConstructorRejectsInvalidUsername()
@@ -259,8 +262,7 @@ public class ChatClientTests
     [Fact]
     public void SendRequestRethrowsCommunicatorFailure()
     {
-        RecordingCommunicator communicator = new()
-        {
+        RecordingCommunicator communicator = new() {
             SendException = new InvalidOperationException("send failed")
         };
         using ChatClient client = NewClient(communicator);

@@ -1,39 +1,42 @@
-// Author = Balabadra Lepakshi Kalyan
+﻿// Author = Balabadra Lepakshi Kalyan
 // Roll Number = 112301003
-using System;
-using System.Collections.Generic;
-using System.Threading;
+using System.Diagnostics;
 
 namespace Controller.Models;
 // class for managing the current meeting state, user details, and participant information.
 public sealed class MeetingSession
 {
     // Captures the UI thread context to safely notify UI components
-    readonly SynchronizationContext? uiThread = SynchronizationContext.Current;
-    int participantCount = 1;
+    readonly SynchronizationContext? _uiThread = SynchronizationContext.Current;
+    private int _participantCount = 1;
 
     public MeetingSession() { }
 
     public string CurrentUserId { get; set; } = string.Empty;
     public string CurrentUserEmail { get; set; } = string.Empty;
     public byte[]? CurrentUserProfilePicture { get; set; }
-    
+
     // Stores meeting details and tracks the meeting's current status and duration
     public MeetingInfo? Meeting { get; private set; }
     public bool InMeeting => Meeting != null;
     public DateTime? MeetingStartTime { get; private set; }
-    public string? EndReason { get; set; }    // Returns the number of active participants, automatically updating the UI
-
+    public string? EndReason { get; set; }
 
     // Stores meeting details and tracks the meeting's current status and duration
     public int ParticipantCount
     {
-        get => participantCount;
-        set
-        {
-            participantCount = Math.Max(0, value);
-            if (uiThread != null) uiThread.Post(_ => ParticipantCountChanged?.Invoke(participantCount), null);
-            else ParticipantCountChanged?.Invoke(participantCount);
+        get => _participantCount;
+        set {
+            _participantCount = Math.Max(0, value);
+            Trace.TraceInformation($"[Controller]: ParticipantCount updated to {_participantCount}.");
+            if (_uiThread != null)
+            {
+                _uiThread.Post(_ => ParticipantCountChanged?.Invoke(_participantCount), null);
+            }
+            else
+            {
+                ParticipantCountChanged?.Invoke(_participantCount);
+            }
         }
     }
 
@@ -41,11 +44,17 @@ public sealed class MeetingSession
     public IReadOnlyList<ParticipantInfo> ActiveParticipants
     {
         get => _activeParticipants;
-        set
-        {
+        set {
             _activeParticipants = value ?? Array.Empty<ParticipantInfo>();
-            if (uiThread != null) uiThread.Post(_ => ParticipantsChanged?.Invoke(_activeParticipants), null);
-            else ParticipantsChanged?.Invoke(_activeParticipants);
+            Trace.TraceInformation($"[Controller]: ActiveParticipants updated: {_activeParticipants.Count} participant(s).");
+            if (_uiThread != null)
+            {
+                _uiThread.Post(_ => ParticipantsChanged?.Invoke(_activeParticipants), null);
+            }
+            else
+            {
+                ParticipantsChanged?.Invoke(_activeParticipants);
+            }
         }
     }
 
@@ -57,11 +66,12 @@ public sealed class MeetingSession
     public event Action<string>? SecurityAlertReceived;
     public event Action? Changed;
 
-     // Initializes a meeting, resets the participant count, and raises meeting-start notifications.
+    // Initializes a meeting, resets the participant count, and raises meeting-start notifications.
     public void StartMeeting(MeetingInfo info)
     {
+        Trace.TraceInformation($"[Controller]: Starting meeting {info.Id} on port {info.Port} (IsHost: {info.IsHost}).");
         Meeting = info;
-        participantCount = 1;
+        _participantCount = 1;
         MeetingStartTime = DateTime.Now;
         Changed?.Invoke();
         MeetingStarted?.Invoke(info);
@@ -70,7 +80,13 @@ public sealed class MeetingSession
     // Ends the meeting, clears its active state, and notifies subscribed components.
     public void EndMeeting()
     {
-        if (Meeting == null) return;
+        if (Meeting == null)
+        {
+            Trace.TraceWarning("[Controller]: EndMeeting called but no meeting is active.");
+            return;
+        }
+
+        Trace.TraceInformation($"[Controller]: Ending meeting {Meeting.Id}.");
         MeetingEnding?.Invoke();
         Meeting = null;
         MeetingStartTime = null;
@@ -82,7 +98,14 @@ public sealed class MeetingSession
 
     public void RaiseSecurityAlert(string message)
     {
-        if (uiThread != null) uiThread.Post(_ => SecurityAlertReceived?.Invoke(message), null);
-        else SecurityAlertReceived?.Invoke(message);
+        Trace.TraceWarning($"[Controller]: Security alert raised: {message}");
+        if (_uiThread != null)
+        {
+            _uiThread.Post(_ => SecurityAlertReceived?.Invoke(message), null);
+        }
+        else
+        {
+            SecurityAlertReceived?.Invoke(message);
+        }
     }
 }

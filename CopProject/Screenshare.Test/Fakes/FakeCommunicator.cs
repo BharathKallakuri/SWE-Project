@@ -1,5 +1,9 @@
-﻿using System.Net;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+using System.Net;
 using Networking;
+using Networking.Packets;
 
 namespace Screenshare.Tests.Fakes;
 
@@ -8,12 +12,23 @@ namespace Screenshare.Tests.Fakes;
 /// the real Networking module:
 /// - a client can only send to the server
 /// - only the server can send to a client, and broadcast reaches every client but not the server
+/// - lossy (UDP) messages reach only listeners added with AddLossySubscriber; the reliable
+///   listener never sees them
+/// - a lossy multicast reaches every member that joined the group, the sender included;
+///   with nobody in the group it is lost, and the sender is not told
+/// - a lossy message is one UDP datagram: once Networking wraps it (JSON, base64), anything
+///   over 65,507 bytes is lost, and the sender is not told
 /// messages are delivered straight away on the caller's thread, so tests are repeatable.
 /// </summary>
 internal sealed class FakeNetwork
 {
+    /// <summary>the largest UDP datagram Windows will send</summary>
+    public const int MaxDatagramBytes = 65507;
+
+    private readonly PacketSerializer _wire = new();
     private readonly object _lock = new();
     private readonly Dictionary<IPEndPoint, FakeCommunicator> _members = new();
+    private readonly Dictionary<int, HashSet<IPEndPoint>> _groups = new();
     private readonly List<SentMessage> _log = new();
     private readonly List<SentMessage> _dropped = new();
     private int _nextPort = 5001;
@@ -59,17 +74,18 @@ internal sealed class FakeNetwork
         to.Deliver(module, bytes);
     }
 
-    internal void Send(FakeCommunicator from, IPEndPoint to, byte[] bytes, int module, int priority)
+    internal void Send(FakeCommunicator from, IPEndPoint to, byte[] bytes, int module, int priority, bool lossy = false)
     {
         FakeCommunicator? target;
-        var sent = new SentMessage(from.Endpoint, to, module, priority, bytes);
+        var sent = new SentMessage(from.Endpoint, to, module, priority, bytes, lossy);
+        bool fits = !lossy || FitsInDatagram(bytes, to, module, priority);
 
         lock (_lock)
         {
             _members.TryGetValue(to, out target);
 
             // clients can only reach the server; the server can reach any client
-            bool allowed = target != null && target != from && (from.IsServer || target.IsServer);
+            bool allowed = fits && target != null && target != from && (from.IsServer || target.IsServer);
             if (!allowed)
             {
                 _dropped.Add(sent);
@@ -80,17 +96,17 @@ internal sealed class FakeNetwork
         }
 
         // outside the lock, since the receiver may send straight back
-        target!.Deliver(module, bytes);
+        target!.Deliver(module, bytes, lossy);
     }
 
-    internal void Broadcast(FakeCommunicator from, byte[] bytes, int module, int priority)
+    internal void Broadcast(FakeCommunicator from, byte[] bytes, int module, int priority, bool lossy = false)
     {
         if (!from.IsServer)
         {
             // ScreenShare clients never broadcast; record it so a test can catch it
             lock (_lock)
             {
-                _dropped.Add(new SentMessage(from.Endpoint, null, module, priority, bytes));
+                _dropped.Add(new SentMessage(from.Endpoint, null, module, priority, bytes, lossy));
             }
             return;
         }
@@ -103,8 +119,68 @@ internal sealed class FakeNetwork
 
         foreach (FakeCommunicator client in clients)
         {
-            Send(from, client.Endpoint, bytes, module, priority);
+            Send(from, client.Endpoint, bytes, module, priority, lossy);
         }
+    }
+
+    internal void JoinGroup(int group, IPEndPoint member)
+    {
+        lock (_lock)
+        {
+            if (!_groups.TryGetValue(group, out HashSet<IPEndPoint>? members))
+            {
+                members = new HashSet<IPEndPoint>();
+                _groups[group] = members;
+            }
+
+            members.Add(member);
+        }
+    }
+
+    internal void LeaveGroup(int group, IPEndPoint member)
+    {
+        lock (_lock)
+        {
+            if (_groups.TryGetValue(group, out HashSet<IPEndPoint>? members))
+            {
+                members.Remove(member);
+            }
+        }
+    }
+
+    internal void MulticastLossy(FakeCommunicator from, int group, byte[] bytes, int module, int priority)
+    {
+        bool fits = FitsInDatagram(bytes, from.Endpoint, module, priority);
+        List<FakeCommunicator> targets;
+        lock (_lock)
+        {
+            targets = _groups.TryGetValue(group, out HashSet<IPEndPoint>? members)
+                ? members.Where(_members.ContainsKey).Select(e => _members[e]).ToList()
+                : new List<FakeCommunicator>();
+
+            if (targets.Count == 0 || !fits)
+            {
+                // nobody joined the group, or the datagram is too big: it reaches no one
+                _dropped.Add(new SentMessage(from.Endpoint, null, module, priority, bytes, Lossy: true));
+                return;
+            }
+
+            foreach (FakeCommunicator target in targets)
+            {
+                _log.Add(new SentMessage(from.Endpoint, target.Endpoint, module, priority, bytes, Lossy: true));
+            }
+        }
+
+        foreach (FakeCommunicator target in targets)
+        {
+            target.Deliver(module, bytes, lossy: true);
+        }
+    }
+
+    // the size Networking really puts on the wire for this message
+    private bool FitsInDatagram(byte[] bytes, IPEndPoint to, int module, int priority)
+    {
+        return _wire.PacketToBytes(new Packet(bytes, to, module, priority)).Length <= MaxDatagramBytes;
     }
 
     private void Register(FakeCommunicator member)
@@ -113,8 +189,8 @@ internal sealed class FakeNetwork
     }
 }
 
-/// <summary>one message on the fake network; To is null for a rejected broadcast</summary>
-internal sealed record SentMessage(IPEndPoint From, IPEndPoint? To, int Module, int Priority, byte[] Bytes);
+/// <summary>one message on the fake network; To is null for a rejected broadcast or an empty multicast</summary>
+internal sealed record SentMessage(IPEndPoint From, IPEndPoint? To, int Module, int Priority, byte[] Bytes, bool Lossy = false);
 
 /// <summary>
 /// one member's connection to a FakeNetwork; implements the same interface ScreenShare uses
@@ -123,6 +199,7 @@ internal sealed class FakeCommunicator : ICommunicator
 {
     private readonly FakeNetwork _network;
     private readonly Dictionary<int, IMessageListener> _listeners = new();
+    private readonly Dictionary<int, IMessageListenerLossy> _lossyListeners = new();
     private readonly object _lock = new();
 
     internal FakeCommunicator(FakeNetwork network, IPEndPoint endpoint, bool isServer)
@@ -167,17 +244,17 @@ internal sealed class FakeCommunicator : ICommunicator
         _network.Broadcast(this, message, module, priority);
     }
 
-    // ScreenShare does not use multicast
     public void JoinMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
-        throw new NotSupportedException();
+        _network.JoinGroup(multicastGroup, clientIp);
     }
 
     public void LeaveMulticastGroup(int multicastGroup, IPEndPoint clientIp)
     {
-        throw new NotSupportedException();
+        _network.LeaveGroup(multicastGroup, clientIp);
     }
 
+    // ScreenShare sends nothing reliable to a multicast group
     public void MulticastMessage(int multicastGroup, byte[] message, int module, int priority)
     {
         throw new NotSupportedException();
@@ -185,37 +262,63 @@ internal sealed class FakeCommunicator : ICommunicator
 
     public void AddLossySubscriber(int module, IMessageListenerLossy subscriber)
     {
-        throw new NotSupportedException();
+        lock (_lock)
+        {
+            _lossyListeners[module] = subscriber;
+        }
     }
 
     public void RemoveLossySubscriber(int module)
     {
-        throw new NotSupportedException();
+        lock (_lock)
+        {
+            _lossyListeners.Remove(module);
+        }
     }
+
     public void SendMessageLossy(IPEndPoint iPEndPoint, byte[] message, int module, int priority)
     {
-        throw new NotSupportedException();
+        _network.Send(this, iPEndPoint, message, module, priority, lossy: true);
     }
 
     public void BroadcastMessageLossy(byte[] message, int module, int priority)
     {
-        throw new NotSupportedException();
+        _network.Broadcast(this, message, module, priority, lossy: true);
     }
 
     public void MulticastMessageLossy(int multicastGroup, byte[] message, int module, int priority)
     {
-        throw new NotSupportedException();
+        _network.MulticastLossy(this, multicastGroup, message, module, priority);
     }
 
-    internal void Deliver(int module, byte[] bytes)
+    /// <summary>true while a lossy listener is registered for the module</summary>
+    public bool HasLossyListener(int module)
     {
-        IMessageListener? listener;
         lock (_lock)
         {
-            _listeners.TryGetValue(module, out listener);
+            return _lossyListeners.ContainsKey(module);
+        }
+    }
+
+    internal void Deliver(int module, byte[] bytes, bool lossy = false)
+    {
+        IMessageListener? listener = null;
+        IMessageListenerLossy? lossyListener = null;
+        lock (_lock)
+        {
+            // like Networking, lossy messages only reach lossy listeners
+            if (lossy)
+            {
+                _lossyListeners.TryGetValue(module, out lossyListener);
+            }
+            else
+            {
+                _listeners.TryGetValue(module, out listener);
+            }
         }
 
         // a copy, like a real network, so the receiver can't change the sender's array
         listener?.OnMessageReceived(bytes.ToArray());
+        lossyListener?.OnMessageReceivedLossy(bytes.ToArray());
     }
 }

@@ -1,4 +1,7 @@
-﻿using System.Net;
+﻿// Author = Sumit
+// Roll Number = 112301032
+
+using System.Net;
 using ScreenShare;
 
 namespace Screenshare.Tests;
@@ -6,7 +9,7 @@ namespace Screenshare.Tests;
 public class HelloTests
 {
     [Fact]
-   public void Hello_StoreViewer()
+    public void Hello_StoreViewer()
     {
         Participant viewer = new("Sumit", new IPEndPoint(IPAddress.Loopback, 5000));
         Hello hello = new Hello(viewer);

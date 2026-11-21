@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿// Author: Zeeshan
+// Roll no.: 112301040
+
+using System.Diagnostics;
 
 namespace Chat;
 
@@ -42,8 +45,7 @@ public class Chatroom : IChatroom
     /// </summary>
     public IReadOnlySet<string> Participants
     {
-        get
-        {
+        get {
             lock (_syncRoot)
             {
                 return new HashSet<string>(_participants);
