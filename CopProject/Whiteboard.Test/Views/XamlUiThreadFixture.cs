@@ -76,7 +76,9 @@ public sealed class XamlUiThreadFixture : IDisposable
     public void Dispose()
     {
         WinRtActivationContext.EnsureActivated();
+#pragma warning disable IDE0200 // Lambda required to avoid cross-apartment WinRT marshaling of _controller.ShutdownQueue
         _dispatcherQueue.TryEnqueue(() => _controller.ShutdownQueue());
+#pragma warning restore IDE0200
         _uiThread.Join(TimeSpan.FromSeconds(5));
     }
 }
