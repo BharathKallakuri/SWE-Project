@@ -3,6 +3,7 @@
 /// LICENSE : MIT
 
 using Cloud.Persistence;
+using Microsoft.UI.Xaml.Controls;
 using Networking;
 using Utils;
 using Whiteboard.Interfaces;
@@ -10,6 +11,7 @@ using Whiteboard.Models;
 using Whiteboard.Services;
 using Whiteboard.Test.Mocks;
 using Whiteboard.Test.Mocks.Networking;
+using Whiteboard.Test.Views;
 using Whiteboard.ViewModels;
 using Windows.UI;
 
@@ -135,5 +137,30 @@ public class WhiteBoardViewModelInitializedTests
         public Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags) => Task.FromResult(false);
         public Task<bool> DeleteAll(string[] keys) => Task.FromResult(false);
         public Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int n) => Task.FromResult((true, new Dictionary<string, byte[]>()));
+    }
+}
+
+[Collection("XamlUi")]
+public class WhiteBoardViewModelLiveCanvasTests(XamlUiThreadFixture ui)
+{
+    private static readonly ToolbarInfo s_toolbar = new(
+        Color.FromArgb(255, 0, 0, 0),
+        2,
+        Color.FromArgb(255, 255, 255, 255));
+
+    [Fact]
+    public async Task InitializeViewModel_InitializesWithLiveCanvasAndRejectsSecondCall()
+    {
+        await ui.RunAsync(() => {
+            MockWhiteboardClient client = new();
+            Canvas canvas = new();
+            using WhiteBoardViewModel vm = new(client, "session-live");
+
+            vm.InitializeViewModel(canvas, s_toolbar);
+            Assert.Throws<InvalidOperationException>(() => vm.InitializeViewModel(canvas, s_toolbar));
+
+            vm.SelectTool(WhiteboardTool.Rectangle);
+            Assert.Equal(WhiteboardTool.Rectangle, vm.SelectedTool);
+        });
     }
 }
