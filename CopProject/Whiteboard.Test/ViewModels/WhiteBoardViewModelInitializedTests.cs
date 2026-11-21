@@ -3,6 +3,7 @@
 /// LICENSE : MIT
 
 using Cloud.Persistence;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
 using Networking;
 using Utils;
@@ -161,6 +162,28 @@ public class WhiteBoardViewModelLiveCanvasTests(XamlUiThreadFixture ui)
 
             vm.SelectTool(WhiteboardTool.Rectangle);
             Assert.Equal(WhiteboardTool.Rectangle, vm.SelectedTool);
+        });
+    }
+
+    [Fact]
+    public async Task SessionConstructor_WithDispatcherQueue_EnqueuesUserLeft()
+    {
+        WhiteboardSession? session = null;
+        WhiteBoardViewModel? vm = null;
+
+        await ui.RunAsync(() => {
+            Canvas canvas = new();
+            ICommunicator clientComm = new MockCommunicatorFactory().CreateClientCommunicator();
+            session = WhiteboardSession.StartClient("alice", clientComm, "127.0.0.1", 1234);
+            vm = new WhiteBoardViewModel(session, canvas.DispatcherQueue);
+            vm.InitializeViewModel(canvas, s_toolbar);
+            session.OnUserLeft(new ControllerUser { Username = "alice" });
+        });
+
+        // Flush enqueued OnUserLeft callback on UI thread
+        await ui.RunAsync(() => {
+            vm!.Dispose();
+            session!.Dispose();
         });
     }
 }
