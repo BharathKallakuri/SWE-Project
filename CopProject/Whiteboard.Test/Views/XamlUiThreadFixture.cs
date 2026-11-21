@@ -76,8 +76,7 @@ public sealed class XamlUiThreadFixture : IDisposable
     public void Dispose()
     {
         WinRtActivationContext.EnsureActivated();
-        DispatcherQueueHandler shutdown = _controller.ShutdownQueue;
-        _dispatcherQueue.TryEnqueue(shutdown);
+        _dispatcherQueue.TryEnqueue(() => _controller.ShutdownQueue());
         _uiThread.Join(TimeSpan.FromSeconds(5));
     }
 }
