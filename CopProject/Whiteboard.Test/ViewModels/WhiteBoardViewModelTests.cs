@@ -67,6 +67,7 @@ public class WhiteBoardViewModelTests
         Assert.Throws<InvalidOperationException>(() => vm.PointerMoved(new Point2D(0, 0)));
         Assert.Throws<InvalidOperationException>(() => vm.PointerReleased(new Point2D(0, 0)));
         Assert.Throws<InvalidOperationException>(() => _ = vm.HandlesPointerOnTextbox);
+        Assert.Throws<InvalidOperationException>(vm.ClearWhiteboard);
     }
 
     [Fact]
