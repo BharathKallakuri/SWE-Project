@@ -111,7 +111,7 @@ public class ShapeRecognitionServiceTests
     {
         FreehandItem freehand = CreateSampleFreehand();
         ShapeSuggestionResult.Polygon polygonResult = new(
-            [new(0, 0), new(50, 100), new(100, 0)],
+            ((double X, double Y)[])[new(0, 0), new(50, 100), new(100, 0)],
             0.85);
 
         IItem? item = ShapeRecognitionService.ConvertResultToItem(polygonResult, freehand);
@@ -135,7 +135,7 @@ public class ShapeRecognitionServiceTests
     public void ConvertResultToItem_PolygonWithFewerThan3Vertices_ReturnsNull()
     {
         FreehandItem freehand = CreateSampleFreehand();
-        ShapeSuggestionResult.Polygon polygonResult = new([new(0, 0), new(10, 10)], 0.9);
+        ShapeSuggestionResult.Polygon polygonResult = new(((double X, double Y)[])[new(0, 0), new(10, 10)], 0.9);
 
         IItem? item = ShapeRecognitionService.ConvertResultToItem(polygonResult, freehand);
         Assert.Null(item);

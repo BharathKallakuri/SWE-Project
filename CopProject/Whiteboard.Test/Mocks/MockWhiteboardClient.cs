@@ -41,6 +41,11 @@ public class MockWhiteboardClient : IWhiteboardClient
     /// </summary>
     public List<IItem> EditedItems { get; } = [];
 
+    /// <summary>
+    /// A history of snapshots restored through the client
+    /// </summary>
+    public List<WhiteboardDto> RestoredSnapshots { get; } = [];
+
     public void RequestSync() { }
 
     public void AddItem(IItem item)
@@ -71,5 +76,9 @@ public class MockWhiteboardClient : IWhiteboardClient
     public void Reset() { }
     public void OnMessageReceived(byte[] message) { }
 
-    public void RestoreSnapshot(WhiteboardDto whiteboard) { }
+    public void RestoreSnapshot(WhiteboardDto whiteboard)
+    {
+        ArgumentNullException.ThrowIfNull(whiteboard);
+        RestoredSnapshots.Add(whiteboard);
+    }
 }

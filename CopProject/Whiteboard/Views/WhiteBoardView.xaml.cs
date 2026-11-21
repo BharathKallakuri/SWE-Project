@@ -636,6 +636,41 @@ public sealed partial class WhiteBoardView : UserControl
         }
     }
 
+    private async void ButtonClearWhiteboard_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
+        Trace.TraceInformation("[Whiteboard][WhiteBoardView] Clear whiteboard button clicked.");
+
+        var dialog = new ContentDialog {
+            Title = "Clear whiteboard?",
+            Content = "This will permanently delete all items on the whiteboard for everyone and clear undo/redo history. This action cannot be undone.",
+            PrimaryButtonText = "Clear",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot
+        };
+
+        ContentDialogResult result = await dialog.ShowAsync();
+        if (result != ContentDialogResult.Primary)
+        {
+            return;
+        }
+
+        try
+        {
+            _viewModel.ClearWhiteboard();
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"[Whiteboard][WhiteBoardView][Error] Clear whiteboard failed: {ex.Message}");
+            await ShowMessageAsync("Clear failed", ex.Message);
+        }
+    }
+
     private async Task ShowMessageAsync(string title, string message)
     {
         var dialog = new ContentDialog {

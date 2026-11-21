@@ -382,4 +382,18 @@ public partial class WhiteBoardViewModel : IDisposable
         _whiteboardClient.RestoreSnapshot(new WhiteboardDto(snapshot.Items));
         Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Restored snapshot {snapshotId} with {snapshot.Items.Count} items.");
     }
+
+    /// <summary>
+    /// Clears all items from the whiteboard for all connected clients.
+    /// </summary>
+    public void ClearWhiteboard()
+    {
+        EnsureInitialized();
+
+        _selectState.ClearSelection();
+        _currentState.Reset();
+
+        Trace.TraceInformation($"[Whiteboard][WhiteBoardViewModel] Clearing whiteboard for Session={_sessionId}, User={_whiteboardClient.UserId}.");
+        _whiteboardClient.RestoreSnapshot(new WhiteboardDto([]));
+    }
 }

@@ -87,6 +87,19 @@ public class WhiteBoardViewModelInitializedTests
     }
 
     [Fact]
+    public void ClearWhiteboard_RestoresEmptySnapshot()
+    {
+        MockWhiteboardClient client = new();
+        using WhiteBoardViewModel vm = new(client, "session-1");
+        vm.InitializeForTesting(new MockCanvasPreview(), s_toolbar);
+
+        vm.ClearWhiteboard();
+
+        Assert.Single(client.RestoredSnapshots);
+        Assert.Empty(client.RestoredSnapshots[0].Items);
+    }
+
+    [Fact]
     public void SessionConstructor_HandlesUserLeftAndDispose()
     {
         ICommunicator clientComm = new MockCommunicatorFactory().CreateClientCommunicator();

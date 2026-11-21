@@ -179,23 +179,12 @@ LICENSE : MIT
                         </Button>
 
                         <Button
-                            x:Name="ButtonDeleteSelectedItems"
-                            ToolTipService.ToolTip="Delete selected items">
+                            x:Name="ButtonClearWhiteboard"
+                            ToolTipService.ToolTip="Clear whiteboard"
+                            Click="ButtonClearWhiteboard_Click">
                             <FontIcon Glyph="&#xE74D;"/>
                         </Button>
 
-                        <Button
-                            x:Name="ButtonDeleteAllOwnedItems"
-                            ToolTipService.ToolTip="Delete all owned items">
-                            <FontIcon Glyph="&#xED62;"/>
-                        </Button>
-
-                        <Button
-                            x:Name="ButtonUploadToCloud"
-                            ToolTipService.ToolTip="Upload to cloud">
-                            <FontIcon Glyph="&#xE898;" />
-                        </Button>
-                        
                         <Button
                             x:Name="ButtonSaveSnapshot"
                             ToolTipService.ToolTip="Save whiteboard snapshot"
