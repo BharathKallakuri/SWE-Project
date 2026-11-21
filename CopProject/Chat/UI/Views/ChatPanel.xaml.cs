@@ -8,6 +8,7 @@ using System.Text;
 using Chat;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using UI.ViewModels;
 using Windows.System;
@@ -19,9 +20,12 @@ public sealed partial class ChatPanel : UserControl
     private ChatPanelViewModel? _viewModel;
     private ScrollViewer? _mainScrollViewer, _threadScrollViewer;
     private bool _mainNearBottom = true, _threadNearBottom = true;
+    private bool _mainScrollReady, _threadScrollReady;
     private MessageViewModel? _pendingReactionMessage;
     private Button? _reactionAnchor;
     private int _emojiInputVersion;
+
+    private const double NearBottomThreshold = 90;
 
     private const uint InputKeyboard = 1;
     private new const uint KeyUp = 0x0002;
@@ -106,8 +110,12 @@ public sealed partial class ChatPanel : UserControl
                 _viewModel.Messages.CollectionChanged += OnMessagesChanged;
                 _viewModel.ThreadMessages.CollectionChanged += OnThreadMessagesChanged;
                 _viewModel.ScrollToMessageRequested += OnScrollToMessageRequested;
+                _mainNearBottom = true;
+                _threadNearBottom = true;
                 ScrollMainConversationToLatest();
             }
+
+            UpdateJumpButtons();
         }
     }
 
@@ -123,9 +131,7 @@ public sealed partial class ChatPanel : UserControl
     {
         _ = sender;
         _ = e;
-        _mainScrollViewer = FindChild<ScrollViewer>(MessagesList);
-        _mainScrollViewer?.ViewChanged += MainScrollViewer_ViewChanged;
-
+        EnsureMainScrollViewer();
         ScrollMainConversationToLatest();
     }
 
@@ -133,101 +139,238 @@ public sealed partial class ChatPanel : UserControl
     {
         _ = sender;
         _ = e;
-        _threadScrollViewer = FindChild<ScrollViewer>(ThreadMessagesList);
-        _threadScrollViewer?.ViewChanged += ThreadScrollViewer_ViewChanged;
-
+        EnsureThreadScrollViewer();
         ScrollThreadToLatest();
+    }
+
+    private void MessagesList_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        EnsureMainScrollViewer();
+        if (e.NewSize.Height > 0 && (e.PreviousSize.Height <= 0 || !_mainScrollReady))
+        {
+            _mainScrollReady = true;
+            ScrollMainConversationToLatest();
+        }
+
+        UpdateJumpButtons();
+    }
+
+    private void ThreadMessagesList_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        EnsureThreadScrollViewer();
+        if (e.NewSize.Height > 0 && (e.PreviousSize.Height <= 0 || !_threadScrollReady))
+        {
+            _threadScrollReady = true;
+            ScrollThreadToLatest();
+        }
+
+        UpdateJumpButtons();
+    }
+
+    private ScrollViewer? EnsureMainScrollViewer()
+    {
+        if (_mainScrollViewer is null)
+        {
+            _mainScrollViewer = FindChild<ScrollViewer>(MessagesList);
+            if (_mainScrollViewer is not null)
+            {
+                _mainScrollViewer.ViewChanged += MainScrollViewer_ViewChanged;
+            }
+        }
+
+        return _mainScrollViewer;
+    }
+
+    private ScrollViewer? EnsureThreadScrollViewer()
+    {
+        if (_threadScrollViewer is null)
+        {
+            _threadScrollViewer = FindChild<ScrollViewer>(ThreadMessagesList);
+            if (_threadScrollViewer is not null)
+            {
+                _threadScrollViewer.ViewChanged += ThreadScrollViewer_ViewChanged;
+            }
+        }
+
+        return _threadScrollViewer;
     }
 
     private void MainScrollViewer_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
     {
         if (_mainScrollViewer is not null)
         {
-            _mainNearBottom = _mainScrollViewer.ScrollableHeight - _mainScrollViewer.VerticalOffset < 90;
+            _mainNearBottom =
+                _mainScrollViewer.ScrollableHeight - _mainScrollViewer.VerticalOffset < NearBottomThreshold;
         }
+
+        UpdateJumpButtons();
     }
 
     private void ThreadScrollViewer_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
     {
         if (_threadScrollViewer is not null)
         {
-            _threadNearBottom = _threadScrollViewer.ScrollableHeight - _threadScrollViewer.VerticalOffset < 90;
+            _threadNearBottom =
+                _threadScrollViewer.ScrollableHeight - _threadScrollViewer.VerticalOffset < NearBottomThreshold;
         }
+
+        UpdateJumpButtons();
     }
+
+    // The wheel is not reliable on every PC, so offer an explicit way back to
+    // the newest message whenever the reader is more than a notch away from it.
+    private void UpdateJumpButtons()
+    {
+        MainJumpToLatestButton.Visibility = ShouldShowJumpButton(_mainScrollViewer, _mainNearBottom)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        ThreadJumpToLatestButton.Visibility = ShouldShowJumpButton(_threadScrollViewer, _threadNearBottom)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private static bool ShouldShowJumpButton(ScrollViewer? scroller, bool nearBottom)
+        => scroller is not null
+           && !nearBottom
+           && scroller.ScrollableHeight > NearBottomThreshold;
 
     private void OnMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (e.Action == NotifyCollectionChangedAction.Add)
+        if (e.Action != NotifyCollectionChangedAction.Add)
+        {
+            return;
+        }
+
+        // Follow the conversation when the reader is at the bottom, or when the
+        // reader's own message was just added (sending always jumps to the message).
+        bool ownMessage = e.NewItems is not null
+            && e.NewItems.OfType<MessageViewModel>().Any(message => message.IsOwnMessage);
+
+        if (ownMessage || _mainNearBottom)
         {
             ScrollMainConversationToLatest();
+        }
+        else
+        {
+            // A new message arrived while the reader was away from the bottom:
+            // keep the jump button available (and refresh it if extent changed).
+            UpdateJumpButtons();
         }
     }
 
     private void OnThreadMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (e.Action == NotifyCollectionChangedAction.Add)
+        if (e.Action != NotifyCollectionChangedAction.Add)
+        {
+            return;
+        }
+
+        bool ownMessage = e.NewItems is not null
+            && e.NewItems.OfType<MessageViewModel>().Any(message => message.IsOwnMessage);
+
+        if (ownMessage || _threadNearBottom)
         {
             ScrollThreadToLatest();
+        }
+        else
+        {
+            UpdateJumpButtons();
         }
     }
 
     private void ScrollMainConversationToLatest()
     {
-        ChatPanelViewModel? viewModel = ViewModel;
-        if (viewModel is null || viewModel.Messages.Count == 0)
-        {
-            return;
-        }
-
-        if (_mainScrollViewer is null)
-        {
-            return;
-        }
-
-        if (viewModel.Messages.LastOrDefault() is MessageViewModel latest)
-        {
-            MessagesList.ScrollIntoView(latest);
-        }
-
-        MessagesList.UpdateLayout();
-        _mainScrollViewer.ChangeView(null, _mainScrollViewer.ScrollableHeight, null);
+        _mainNearBottom = true;
+        UpdateJumpButtons();
+        ScrollToBottom(EnsureMainScrollViewer());
     }
 
     private void ScrollThreadToLatest()
     {
-        ChatPanelViewModel? viewModel = ViewModel;
-        if (viewModel is null || viewModel.ThreadMessages.Count == 0)
-        {
-            return;
-        }
-
-        if (_threadScrollViewer is null)
-        {
-            return;
-        }
-
-        if (viewModel.ThreadMessages.LastOrDefault() is MessageViewModel latest)
-        {
-            ThreadMessagesList.ScrollIntoView(latest);
-        }
-
-        ThreadMessagesList.UpdateLayout();
-        _threadScrollViewer.ChangeView(null, _threadScrollViewer.ScrollableHeight, null);
+        _threadNearBottom = true;
+        UpdateJumpButtons();
+        ScrollToBottom(EnsureThreadScrollViewer());
     }
 
-    private async void OnScrollToMessageRequested(Guid messageId)
+    private void MainJumpToLatestButton_Click(object sender, RoutedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        ScrollMainConversationToLatest();
+    }
+
+    private void ThreadJumpToLatestButton_Click(object sender, RoutedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        ScrollThreadToLatest();
+    }
+
+    private void ScrollToBottom(ScrollViewer? scroller)
+    {
+        if (scroller is null)
+        {
+            return;
+        }
+
+        EnqueueScrollToBottom(scroller, attemptsLeft: 3);
+    }
+
+    private void EnqueueScrollToBottom(ScrollViewer scroller, int attemptsLeft)
+    {
+        void Apply()
+        {
+            // Read the extents only after the new item has been laid out; reading
+            // them eagerly made ChangeView target a stale (often zero) offset.
+            double bottom = scroller.ScrollableHeight;
+            if (bottom <= 0)
+            {
+                // The list is not measured yet (first open, or a panel that was
+                // collapsed). Retry on the next idle pass instead of giving up, so
+                // the initial history still lands at the newest message.
+                if (attemptsLeft > 1)
+                {
+                    EnqueueScrollToBottom(scroller, attemptsLeft - 1);
+                }
+
+                return;
+            }
+
+            if (Math.Abs(scroller.VerticalOffset - bottom) < 0.5)
+            {
+                return;
+            }
+
+            scroller.ChangeView(null, bottom, null, true);
+        }
+
+        if (!DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, Apply))
+        {
+            Apply();
+        }
+    }
+
+    private void OnScrollToMessageRequested(Guid messageId)
     {
         if (ViewModel?.Messages.FirstOrDefault(message => message.Id == messageId) is not MessageViewModel target)
         {
             return;
         }
 
+        EnsureMainScrollViewer();
         MessagesList.ScrollIntoView(target);
+        RunJumpHighlight(target);
+    }
+
+    private async void RunJumpHighlight(MessageViewModel target)
+    {
         for (int pulse = 0; pulse < 4; pulse++)
         {
             target.SetJumpHighlighted(pulse % 2 == 0);
             await Task.Delay(240);
         }
+
         target.SetJumpHighlighted(false);
     }
 
