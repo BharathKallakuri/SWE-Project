@@ -52,11 +52,13 @@ public class ItemsAndCanvasEdgeCaseTests
     {
         Square square = new() { Center = new Point2D(50, 50), SideLegth = 20 };
         Assert.True(square.HitTest(new Point2D(50, 50)));
+        Assert.False(square.HitTest(new Point2D(50, 0)));
         Assert.False(square.HitTest(new Point2D(50, 100)));
         Assert.False(square.HitTest(new Point2D(100, 50)));
 
         Textbox textbox = new() { Center = new Point2D(50, 50), Width = 40, Height = 20 };
         Assert.True(textbox.HitTest(new Point2D(50, 50)));
+        Assert.False(textbox.HitTest(new Point2D(50, 0)));
         Assert.False(textbox.HitTest(new Point2D(50, 100)));
         Assert.False(textbox.HitTest(new Point2D(100, 50)));
     }
