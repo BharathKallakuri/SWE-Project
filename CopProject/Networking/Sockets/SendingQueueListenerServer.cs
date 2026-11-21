@@ -91,14 +91,31 @@ public class SendingQueueListenerServer : IDisposable
             destination = new IPEndPoint(destination.Address.MapToIPv4(), destination.Port);
         }
 
-        if (destination == null || !_clientToTcpListenerMap.TryGetValue(destination, out TcpClient? socket) || socket == null)
+        if (destination == null)
+        {
+            return;
+        }
+
+        // If destination socket is missing or disconnected, check if the client reconnected with a new port on the same IP
+        if (!_clientToTcpListenerMap.TryGetValue(destination, out TcpClient? socket) || socket == null || !socket.Connected)
+        {
+            IPEndPoint? activeEp = _clientToTcpListenerMap.Keys.FirstOrDefault(ep => ep.Address.Equals(destination.Address) && !ep.Equals(destination));
+            if (activeEp != null && _clientToTcpListenerMap.TryGetValue(activeEp, out TcpClient? activeSocket) && activeSocket.Connected)
+            {
+                Trace.TraceInformation($"[Networking] SendingQueueListenerServer: Migrating destination {destination} -> {activeEp} (reconnected client on same IP).");
+                destination = activeEp;
+                socket = activeSocket;
+            }
+        }
+
+        if (socket == null)
         {
             Trace.TraceWarning($"[Networking] SendingQueueListenerServer.SendDataToClient: Destination client {destination} not found in client map.");
             return;
         }
-        int maxAttempts = 7;
-        int delay = 1000;  // ms
-        int currentDelay = delay;
+
+        int maxAttempts = 3;
+        int delay = 50;  // fast retry to avoid blocking the queue for other clients
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++)
         {
@@ -112,8 +129,10 @@ public class SendingQueueListenerServer : IDisposable
             catch (Exception e)
             {
                 Trace.TraceWarning($"[Networking] SendingQueueListenerServer.SendDataToClient: Unable to send data to client {destination} (Attempt {attempt}/{maxAttempts}). Retrying in {delay}ms. Exception: {e.Message}");
-                Thread.Sleep(delay);
-                currentDelay = delay * 2;
+                if (attempt < maxAttempts)
+                {
+                    Thread.Sleep(delay);
+                }
             }
         }
         _clientToTcpListenerMap.TryRemove(destination, out _);
