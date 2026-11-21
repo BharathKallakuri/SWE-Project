@@ -2,6 +2,7 @@
 /// Roll No : 112301024
 /// LICENSE : MIT
 
+using System.Net;
 using Networking;
 using Utils;
 using Whiteboard.Services;
@@ -111,5 +112,36 @@ public class WhiteboardSessionTests
 
         Assert.NotNull(hostSession.Client);
         Assert.NotNull(hostSession.Server);
+    }
+
+    [Fact]
+    public void StartHost_UsesCommunicatorEndpointOrFallbacks()
+    {
+        EndpointCommunicator nullFallbackComm = new(null!, 0);
+        using WhiteboardSession fallbackSession = WhiteboardSession.StartHost("host-fallback", nullFallbackComm, 12345);
+        Assert.NotNull(fallbackSession.Server);
+
+        EndpointCommunicator explicitComm = new(IPAddress.Loopback, 12346);
+        using WhiteboardSession explicitSession = WhiteboardSession.StartHost("host-explicit", explicitComm, 9999);
+        Assert.NotNull(explicitSession.Server);
+    }
+
+    private sealed class EndpointCommunicator(IPAddress listenIp, int listenPort) : ICommunicator
+    {
+        public IPAddress ListenIpAddress { get; } = listenIp;
+        public int ListenPort { get; } = listenPort;
+
+        public void AddSubscriber(int moduleId, IMessageListener listener) { }
+        public void RemoveSubscriber(int moduleId) { }
+        public void AddLossySubscriber(int moduleId, IMessageListenerLossy listener) { }
+        public void RemoveLossySubscriber(int moduleId) { }
+        public void SendMessage(IPEndPoint destination, byte[] data, int moduleId, int priority = 0) { }
+        public void SendMessageLossy(IPEndPoint destination, byte[] data, int moduleId, int priority = 0) { }
+        public void BroadcastMessage(byte[] data, int moduleId, int priority = 0) { }
+        public void BroadcastMessageLossy(byte[] data, int moduleId, int priority = 0) { }
+        public void JoinMulticastGroup(int groupId, IPEndPoint endPoint) { }
+        public void LeaveMulticastGroup(int groupId, IPEndPoint endPoint) { }
+        public void MulticastMessage(int groupId, byte[] data, int moduleId, int priority = 0) { }
+        public void MulticastMessageLossy(int groupId, byte[] data, int moduleId, int priority = 0) { }
     }
 }
