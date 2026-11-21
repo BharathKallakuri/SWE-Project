@@ -281,16 +281,14 @@ public sealed partial class ChatPanel : UserControl
 
     private void ScrollMainConversationToLatest()
     {
-        _mainNearBottom = true;
-        UpdateJumpButtons();
-        ScrollToBottom(EnsureMainScrollViewer());
+        EnsureMainScrollViewer();
+        ScrollListToLatest(MessagesList, attemptsLeft: 3);
     }
 
     private void ScrollThreadToLatest()
     {
-        _threadNearBottom = true;
-        UpdateJumpButtons();
-        ScrollToBottom(EnsureThreadScrollViewer());
+        EnsureThreadScrollViewer();
+        ScrollListToLatest(ThreadMessagesList, attemptsLeft: 3);
     }
 
     private void MainJumpToLatestButton_Click(object sender, RoutedEventArgs e)
@@ -307,42 +305,33 @@ public sealed partial class ChatPanel : UserControl
         ScrollThreadToLatest();
     }
 
-    private void ScrollToBottom(ScrollViewer? scroller)
-    {
-        if (scroller is null)
-        {
-            return;
-        }
-
-        EnqueueScrollToBottom(scroller, attemptsLeft: 3);
-    }
-
-    private void EnqueueScrollToBottom(ScrollViewer scroller, int attemptsLeft)
+    private void ScrollListToLatest(ListView list, int attemptsLeft)
     {
         void Apply()
         {
-            // Read the extents only after the new item has been laid out; reading
-            // them eagerly made ChangeView target a stale (often zero) offset.
-            double bottom = scroller.ScrollableHeight;
-            if (bottom <= 0)
+            if (list.Items.Count == 0)
             {
-                // The list is not measured yet (first open, or a panel that was
-                // collapsed). Retry on the next idle pass instead of giving up, so
-                // the initial history still lands at the newest message.
+                return;
+            }
+
+            // Wait until the panel has been measured. The item-based target below
+            // does not need ScrollableHeight, which is unreliable while a
+            // virtualized ListView is still realizing containers.
+            if (list.ActualHeight <= 0)
+            {
                 if (attemptsLeft > 1)
                 {
-                    EnqueueScrollToBottom(scroller, attemptsLeft - 1);
+                    ScrollListToLatest(list, attemptsLeft - 1);
                 }
 
                 return;
             }
 
-            if (Math.Abs(scroller.VerticalOffset - bottom) < 0.5)
-            {
-                return;
-            }
-
-            scroller.ChangeView(null, bottom, null, true);
+            // Target the actual newest message instead of a stale pixel offset.
+            // Repeated calls all request the same item, so queued scrolls cannot
+            // fight each other or pull the view away while the reader is dragging.
+            object lastItem = list.Items[list.Items.Count - 1];
+            list.ScrollIntoView(lastItem);
         }
 
         if (!DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, Apply))
