@@ -179,8 +179,9 @@ LICENSE : MIT
                         </Button>
 
                         <Button
-                            x:Name="ButtonDeleteSelectedItems"
-                            ToolTipService.ToolTip="Delete selected items">
+                            x:Name="ButtonClearWhiteboard"
+                            ToolTipService.ToolTip="Clear whiteboard"
+                            Click="ButtonClearWhiteboard_Click">
                             <FontIcon Glyph="&#xE74D;"/>
                         </Button>
 
