@@ -91,7 +91,10 @@ public sealed partial class MainWindow : Window
         ControllerMeetingView.ViewModel = new MeetingViewModel(_session);
 
 
+        // SCREEN SHARE TEAM: initialize the meeting integration using controller objects and ScreenShareView
         _ = new ScreenShare.ScreenShareMeetingIntegration(_meetingService, _session, ScreenShareView);
+
+
         _session.ParticipantCountChanged += count => {
             DispatcherQueue.TryEnqueue(() => SetParticipants(count));
         };
@@ -561,6 +564,8 @@ public sealed partial class MainWindow : Window
         CloudBtn.IsChecked = which == "cloud";
         DiagnosisBtn.IsChecked = which == "diagnosis";
         LocationBtn.IsChecked = which == "location";
+
+        ScreenShareView.SetActive(which == "share");
     }
 
     private void HomeBtn_Click(object sender, RoutedEventArgs e)
