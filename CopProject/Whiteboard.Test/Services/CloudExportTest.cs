@@ -1,4 +1,4 @@
-﻿/// Author : Karthik Krishna M
+/// Author : Karthik Krishna M
 /// Roll Number : 112301014
 /// LICENSE : MIT
 
@@ -15,7 +15,7 @@ namespace Whiteboard.Test.Services;
 
 public class CloudExportIntegrationTests
 {
-    [Fact]
+    [Fact(Skip = "Integration test requiring live Cloud storage.")]
     public async Task ExportToCloudAsync_StoreExportData()
     {
         var exportData = new CanvasExportData {
