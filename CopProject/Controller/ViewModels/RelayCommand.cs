@@ -8,9 +8,9 @@ namespace Controller.ViewModels;
 // A button action: new RelayCommand(Save). Bind a Button's Command to it.
 public sealed class RelayCommand : ICommand
 {
-    readonly Action action;
+    private readonly Action _action;
 
-    public RelayCommand(Action action) { this.action = action; }
+    public RelayCommand(Action action) { _action = action; }
 
     public event EventHandler? CanExecuteChanged { add { } remove { } }
 
@@ -22,6 +22,6 @@ public sealed class RelayCommand : ICommand
     public void Execute(object? parameter)
     {
         Trace.TraceInformation("[Controller]: Executing command.");
-        action();
+        _action();
     }
 }
