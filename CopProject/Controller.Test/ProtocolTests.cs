@@ -21,8 +21,8 @@ public class ProtocolTests
         string message = Protocol.FormatLeaveRequest("bala@xyz.com#10.10.10.10#9999");
         Assert.Equal("LEAVE|bala@xyz.com#10.10.10.10#9999", message);
 
-        string LeaveMsg = Protocol.FormatNotification(Protocol.NotifySessionEnded, "HostClosed");
-        Assert.Equal("SESSION_ENDED|HostClosed", LeaveMsg);
+        string leaveMsg = Protocol.FormatNotification(Protocol.NotifySessionEnded, "HostClosed");
+        Assert.Equal("SESSION_ENDED|HostClosed", leaveMsg);
     }
 
     [Fact]
