@@ -28,6 +28,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
     private readonly HashSet<string> _onScreen = new();   // tiles currently in the viewport
     private string? _zoomedId;
     private bool _isSharingScreen;
+    private bool _isActive;   // true while the screenshare panel is the one on screen
     private bool _disposed;
 
     // latest frame per stream not yet shown; only the newest is drawn if the UI falls behind
@@ -240,7 +241,7 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        bool shown = IsZoomedMode ? id == _zoomedId : _onScreen.Contains(id);
+        bool shown = _isActive && (IsZoomedMode ? id == _zoomedId : _onScreen.Contains(id));
         if (frame != null && shown && _byId.TryGetValue(id, out ParticipantTile? tile))
         {
             tile.UpdateFrame(frame);
@@ -300,9 +301,21 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        Dictionary<string, int> wanted = IsZoomedMode && _zoomedId != null
-            ? new() { [_zoomedId] = ZoomedHeight }
-            : _onScreen.ToDictionary(id => id, _ => GridTileHeight);
+        Dictionary<string, int> wanted;
+
+        if (!_isActive)
+        {
+            wanted = new();
+        }
+        else if (IsZoomedMode && _zoomedId != null)
+        {
+            wanted = new() { [_zoomedId] = ZoomedHeight };
+        }
+        else
+        {
+            wanted = _onScreen.ToDictionary(id => id, _ => GridTileHeight);
+        }
+
         _feed.RequestFeeds(wanted);
     }
 
@@ -318,5 +331,21 @@ public sealed class ScreenShareViewModel : INotifyPropertyChanged, IDisposable
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
         }
+    }
+
+    /// <summary>
+    /// called when the screenshare panel is shown or hidden. while hidden every stream is
+    /// unsubscribed; when shown again the tiles that were visible are asked for again.
+    /// </summary>
+    public void SetActive(bool active)
+    {
+        if (_disposed || _isActive == active)
+        {
+            return;
+        }
+
+        _isActive = active;
+        Trace.TraceInformation("[Screenshare] ScreenShareViewModel.SetActive: panel is {0}.", active ? "shown" : "hidden");
+        SendFeedRequests();
     }
 }
