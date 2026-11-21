@@ -75,4 +75,98 @@ public class CloudExportIntegrationTests
             return Task.FromResult(exportData);
         }
     }
+
+    [Fact]
+    public void Constructor_ThrowsOnNullCanvasRender()
+    {
+        Assert.Throws<ArgumentNullException>(() => new CloudExport(null!));
+    }
+
+    [Fact]
+    public async Task ExportToCloudAsync_ThrowsOnNullElement()
+    {
+        var exportData = new CanvasExportData { FileName = "board.png", ContentType = "image/png", ImageData = [1, 2] };
+        var cloudExport = new CloudExport(new TempCanvasRender(exportData), new FakeStorage(true));
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => cloudExport.ExportToCloudAsync(null!, "b1", "u1"));
+    }
+
+    [Fact]
+    public async Task SaveExportDataToCloudAsync_ThrowsOnNullExportData()
+    {
+        var exportData = new CanvasExportData { FileName = "board.png", ContentType = "image/png", ImageData = [1, 2] };
+        var cloudExport = new CloudExport(new TempCanvasRender(exportData), new FakeStorage(true));
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => cloudExport.SaveExportDataToCloudAsync(null!, "b1", "u1"));
+    }
+
+    [Fact]
+    public async Task SaveExportDataToCloudAsync_ReturnsTrueAndPersistsJsonRecord()
+    {
+        var exportData = new CanvasExportData {
+            ImageData = [1, 2, 3, 4],
+            ContentType = "image/png",
+            FileName = "board.png",
+            PixelWidth = 100,
+            PixelHeight = 200,
+            ExportDateTime = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        };
+        var storage = new FakeStorage(true);
+        var cloudExport = new CloudExport(new TempCanvasRender(exportData), storage);
+
+        bool saved = await cloudExport.SaveExportDataToCloudAsync(exportData, "board-1", "user-1");
+
+        Assert.True(saved);
+        Assert.Equal("user-1:board-1:board.png", storage.LastKey);
+        Assert.NotNull(storage.LastData);
+        using JsonDocument doc = JsonDocument.Parse(storage.LastData!);
+        Assert.Equal("board-1", doc.RootElement.GetProperty("BoardId").GetString());
+        Assert.Equal("user-1", doc.RootElement.GetProperty("OwnerId").GetString());
+        Assert.Equal("100x200", doc.RootElement.GetProperty("Dimensions").GetString());
+    }
+
+    [Fact]
+    public async Task SaveExportDataToCloudAsync_ReturnsFalseWhenStorageFails()
+    {
+        var exportData = new CanvasExportData {
+            ImageData = [5, 6],
+            ContentType = "image/jpeg",
+            FileName = "board.jpg",
+            PixelWidth = 10,
+            PixelHeight = 10,
+            ExportDateTime = DateTime.UtcNow
+        };
+        var storage = new FakeStorage(false);
+        var cloudExport = new CloudExport(new TempCanvasRender(exportData), storage);
+
+        bool saved = await cloudExport.SaveExportDataToCloudAsync(exportData, "board-2", "user-2");
+
+        Assert.False(saved);
+    }
+
+    private sealed class FakeStorage(bool createResult) : IStorage
+    {
+        public string? LastKey { get; private set; }
+        public byte[]? LastData { get; private set; }
+
+        public Task<bool> Create(string key, byte[] data)
+        {
+            LastKey = key;
+            LastData = data;
+            return Task.FromResult(createResult);
+        }
+
+        public Task<(bool Success, byte[] Data)> Read(string key) => Task.FromResult((false, Array.Empty<byte>()));
+        public Task<(bool Success, string Etag)> ReadEtag(string key) => Task.FromResult((false, string.Empty));
+        public Task<bool> Update(string key, byte[] data, string etag) => Task.FromResult(false);
+        public Task<bool> Delete(string key) => Task.FromResult(false);
+        public Task<bool> CreateAll(Dictionary<string, byte[]> items) => Task.FromResult(false);
+        public Task<(bool Success, Dictionary<string, byte[]>)> ReadAll(string[] keys) => Task.FromResult((false, new Dictionary<string, byte[]>()));
+        public Task<(bool Success, List<string>)> GetAllKeys() => Task.FromResult((true, new List<string>()));
+        public Task<(bool Success, Dictionary<string, string>)> ReadAllEtags() => Task.FromResult((false, new Dictionary<string, string>()));
+        public Task<(bool Success, Dictionary<string, string> Etags)> ReadEtags(string[] keys) => Task.FromResult((false, new Dictionary<string, string>()));
+        public Task<bool> UpdateAll(Dictionary<string, byte[]> items, Dictionary<string, string> etags) => Task.FromResult(false);
+        public Task<bool> DeleteAll(string[] keys) => Task.FromResult(false);
+        public Task<(bool Success, Dictionary<string, byte[]> Items)> ReadLatest(int n) => Task.FromResult((true, new Dictionary<string, byte[]>()));
+    }
 }
