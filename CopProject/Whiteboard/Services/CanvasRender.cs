@@ -3,6 +3,7 @@
 /// LICENSE : MIT
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -14,6 +15,8 @@ using Windows.Storage.Streams;
 
 namespace Whiteboard.Services;
 
+[Obsolete("CanvasRender is unused and deprecated.")]
+[ExcludeFromCodeCoverage]
 public class CanvasRender : ICanvasRender
 {
     public async Task<byte[]> RenderToPngAsync(UIElement element)
