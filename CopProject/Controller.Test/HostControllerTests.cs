@@ -6,8 +6,8 @@ namespace Controller.Test;
 
 class TestNotificationHandler : IUserNotificationHandler
 {
-    public ControllerUser? LastJoinedUser {get ; set ;}
-    public ControllerUser? LastLeftUser {get ; set ;}
+    public ControllerUser? LastJoinedUser { get; set; }
+    public ControllerUser? LastLeftUser { get; set; }
 
     public void OnUserJoined(ControllerUser user)
     {
