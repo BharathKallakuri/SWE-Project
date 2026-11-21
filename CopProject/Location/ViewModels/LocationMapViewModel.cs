@@ -64,6 +64,26 @@ public sealed class LocationMapViewModel : LocationViewModelBase
         }
     }
 
+    private string _networkErrorMessage = string.Empty;
+
+    public string NetworkErrorMessage
+    {
+        get => _networkErrorMessage;
+        private set {
+            if (_networkErrorMessage == value) { return; }
+            _networkErrorMessage = value;
+            OnPropertyChanged(nameof(NetworkErrorMessage));
+        }
+    }
+
+    /// <summary>
+    /// Shows or clears a map tile/network error reported from the WebView.
+    /// </summary>
+    public void SetNetworkError(string message)
+    {
+        NetworkErrorMessage = message;
+    }
+
     public string TitleText
     {
         get => _titleText;

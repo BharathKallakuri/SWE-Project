@@ -71,7 +71,12 @@ Roll Number = 112301037
 
                 <TextBlock Text="{Binding ErrorMessage}"
                            Foreground="DarkRed"
-                           TextWrapping="Wrap" />
+                           TextWrapping="Wrap"
+                           MaxWidth="270" />
+                <TextBlock Text="{Binding NetworkErrorMessage}"
+                           Foreground="DarkRed"
+                           TextWrapping="Wrap"
+                           MaxWidth="270" />
             </StackPanel>
         </Border>
 

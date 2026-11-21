@@ -103,6 +103,19 @@ public sealed partial class LocationMapView : UserControl
             return;
         }
 
+        if (type.GetString() == "map-network-error")
+        {
+            _viewModel.SetNetworkError(
+                "Map tiles could not be loaded. Check your internet connection.");
+            return;
+        }
+
+        if (type.GetString() == "map-network-restored")
+        {
+            _viewModel.SetNetworkError(string.Empty);
+            return;
+        }
+
         if (type.GetString() != "incident-click" ||
             !message.RootElement.TryGetProperty("id", out JsonElement id) ||
             !Guid.TryParse(id.GetString(), out Guid incidentId))
@@ -213,9 +226,26 @@ public sealed partial class LocationMapView : UserControl
             const map = L.map('map').setView([10.79, 76.68], 12);
             const incidentMarkers = L.layerGroup().addTo(map);
             let searchMarker = null;
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            let networkErrorReported = false;
+            const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
               attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
+            tiles.on('tileerror', () => {
+              if (!networkErrorReported) {
+                networkErrorReported = true;
+                window.chrome.webview.postMessage(JSON.stringify({
+                  type: 'map-network-error'
+                }));
+              }
+            });
+            tiles.on('tileload', () => {
+              if (networkErrorReported) {
+                networkErrorReported = false;
+                window.chrome.webview.postMessage(JSON.stringify({
+                  type: 'map-network-restored'
+                }));
+              }
+            });
 
             function setIncidents(incidents) {
               incidentMarkers.clearLayers();
