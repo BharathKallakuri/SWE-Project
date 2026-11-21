@@ -28,9 +28,9 @@ public sealed class ShapeSuggestionParserTests
     [Fact]
     public void Parse_Polygon_RemovesConsecutiveAndClosingDuplicates()
     {
-        const string vertices = """[{"x":0,"y":0},{"x":0,"y":0},{"x":10,"y":0},{"x":10,"y":10},{"x":0,"y":10},{"x":0,"y":0}]""";
+        const string Vertices = """[{"x":0,"y":0},{"x":0,"y":0},{"x":10,"y":0},{"x":10,"y":10},{"x":0,"y":10},{"x":0,"y":0}]""";
         ShapeSuggestionResult.Polygon result = Assert.IsType<ShapeSuggestionResult.Polygon>(
-            ShapeSuggestionParser.Parse(CreateResponse("Polygon", vertices: vertices)));
+            ShapeSuggestionParser.Parse(CreateResponse("Polygon", vertices: Vertices)));
         Assert.Equal(new[] { (0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0) }, result.Vertices);
     }
 

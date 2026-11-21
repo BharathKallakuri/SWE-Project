@@ -13,8 +13,8 @@ public sealed class CloudCredentialServiceTests
     public async Task GetSecretAsync_WhenEnvironmentVariableExists_ReturnsValue()
     {
         string secretName = $"INSIGHTS_TEST_SECRET_{Guid.NewGuid():N}";
-        const string expectedSecret = "test-secret-value";
-        Environment.SetEnvironmentVariable(secretName, expectedSecret);
+        const string ExpectedSecret = "test-secret-value";
+        Environment.SetEnvironmentVariable(secretName, ExpectedSecret);
 
         try
         {
@@ -22,7 +22,7 @@ public sealed class CloudCredentialServiceTests
 
             string result = await service.GetSecretAsync(secretName);
 
-            Assert.Equal(expectedSecret, result);
+            Assert.Equal(ExpectedSecret, result);
         }
         finally
         {
