@@ -73,12 +73,68 @@ public class WhiteboardSnapshotStoreTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => store.ListAsync("session-1"));
     }
 
+    [Fact]
+    public async Task ListAsync_SkipsUnreadableAndInvalidSnapshots()
+    {
+        var storage = new InMemoryStorage();
+        var store = new WhiteboardSnapshotStore(storage);
+
+        await storage.Create("snapshot:session-1:null-snap", System.Text.Encoding.UTF8.GetBytes("null"));
+        await storage.Create("snapshot:session-1:wrong-session", System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new WhiteboardSnapshot {
+            SessionId = "other-session",
+            SnapshotId = "wrong-session",
+            SavedBy = "user-1"
+        }));
+        storage.FailReadKeys.Add("snapshot:session-1:unreadable");
+        await storage.Create("snapshot:session-1:unreadable", System.Text.Encoding.UTF8.GetBytes("{}"));
+
+        List<WhiteboardSnapshotSummary> list = await store.ListAsync("session-1");
+
+        Assert.Empty(list);
+    }
+
+    [Fact]
+    public async Task LoadAsync_ThrowsWhenSnapshotPayloadIsNullOrMismatched()
+    {
+        var storage = new InMemoryStorage();
+        var store = new WhiteboardSnapshotStore(storage);
+
+        await storage.Create("snapshot:session-1:null-snap", System.Text.Encoding.UTF8.GetBytes("null"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => store.LoadAsync("session-1", "null-snap"));
+
+        await storage.Create("snapshot:session-1:bad-session", System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new WhiteboardSnapshot {
+            SessionId = "other",
+            SnapshotId = "bad-session"
+        }));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => store.LoadAsync("session-1", "bad-session"));
+
+        await storage.Create("snapshot:session-1:bad-id", System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new WhiteboardSnapshot {
+            SessionId = "session-1",
+            SnapshotId = "different-id"
+        }));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => store.LoadAsync("session-1", "bad-id"));
+    }
+
+    [Fact]
+    public void WhiteboardSnapshotSummary_ToString_FormatsDateAndUser()
+    {
+        DateTimeOffset savedAt = new(2026, 5, 1, 10, 30, 0, TimeSpan.Zero);
+        var summary = new WhiteboardSnapshotSummary {
+            SnapshotId = "s1",
+            SavedBy = "alice",
+            SavedAt = savedAt
+        };
+
+        Assert.Contains("alice", summary.ToString());
+    }
+
     private sealed class InMemoryStorage : IStorage
     {
         private readonly Dictionary<string, byte[]> _items = new();
 
         public bool FailCreate { get; set; }
         public bool FailGetAllKeys { get; set; }
+        public HashSet<string> FailReadKeys { get; } = new();
 
         public Task<bool> Create(string key, byte[] data)
         {
@@ -93,6 +149,11 @@ public class WhiteboardSnapshotStoreTests
 
         public Task<(bool Success, byte[] Data)> Read(string key)
         {
+            if (FailReadKeys.Contains(key))
+            {
+                return Task.FromResult((false, Array.Empty<byte>()));
+            }
+
             return Task.FromResult(_items.TryGetValue(key, out byte[]? data)
                 ? (true, data!)
                 : (false, Array.Empty<byte>()));

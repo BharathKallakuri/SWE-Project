@@ -174,6 +174,37 @@ public partial class WhiteBoardViewModel : IDisposable
     }
 
     /// <summary>
+    /// Internal test-only initializer that injects an <see cref="ICanvasPreview"/> and optional
+    /// <see cref="WhiteboardSnapshotStore"/> so view model state transitions, pointer forwarding,
+    /// and snapshot operations can be unit-tested without a live WinUI 3 <see cref="Canvas"/>.
+    /// </summary>
+    internal void InitializeForTesting(ICanvasPreview preview, ToolbarInfo toolbarInfo, WhiteboardSnapshotStore? snapshotStore = null)
+    {
+        ArgumentNullException.ThrowIfNull(preview);
+        ArgumentNullException.ThrowIfNull(toolbarInfo);
+
+        if (_isInitialized)
+        {
+            throw new InvalidOperationException("The whiteboard view model has already been initialized.");
+        }
+
+        _snapshotStore = snapshotStore;
+        _penState = new PenState(_whiteboardClient, preview, toolbarInfo, _shapeRecognitionService);
+        _squareState = new ShapeSquareState(_whiteboardClient, preview, toolbarInfo);
+        _rectangleState = new ShapeRectangleState(_whiteboardClient, preview, toolbarInfo);
+        _circleState = new ShapeCircleState(_whiteboardClient, preview, toolbarInfo);
+        _ellipseState = new ShapeEllipseState(_whiteboardClient, preview, toolbarInfo);
+        _eraserState = new EraserState(_whiteboardClient);
+        _eqTriangleState = new ShapeEqTriangleState(_whiteboardClient, preview, toolbarInfo);
+        _textboxState = new TextboxState(_whiteboardClient, preview, toolbarInfo);
+        _lineState = new LineState(_whiteboardClient, preview, toolbarInfo);
+        _polygonState = new PolygonState(_whiteboardClient, preview, toolbarInfo);
+        _selectState = new SelectState(_whiteboardClient, preview, toolbarInfo);
+        _currentState = _penState;
+        _isInitialized = true;
+    }
+
+    /// <summary>
     /// Requests undo for the current user through the shared client.
     /// </summary>
     public void Undo()
