@@ -248,4 +248,22 @@ public class ShapeRecognitionServiceTests
         IItem? result = await service.TryRecognizeShapeAsync(CreateSampleFreehand());
         Assert.Null(result);
     }
+
+    [Fact]
+    public async Task TryRecognizeShapeAsync_WhenGeminiApiKeyEnvVarIsSet_InitializesServiceAndHandlesFailure()
+    {
+        string? previousKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
+        try
+        {
+            Environment.SetEnvironmentVariable("GEMINI_API_KEY", "test-dummy-key");
+            ShapeRecognitionService service = new() { IsEnabled = true };
+
+            IItem? result = await service.TryRecognizeShapeAsync(CreateSampleFreehand());
+            Assert.Null(result);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("GEMINI_API_KEY", previousKey);
+        }
+    }
 }
