@@ -24,10 +24,11 @@ public class CommunicatorClient : ICommunicator, IDisposable
 {
     private readonly SendingQueue _sendingQueue = new SendingQueue();
     private readonly ReceivingQueue _receivingQueue = new ReceivingQueue();
-    private readonly SocketListener? _socketListener;
+    private SocketListener? _socketListener;
     private readonly SendingQueueListenerClient? _sendingQueueListenerClient;
     private readonly ReceivingQueueListener _receivingQueueListener;
-    private readonly TcpClient _tcpClient;
+    private TcpClient _tcpClient;
+    private readonly object _connectionLock = new object();
     private readonly IPEndPoint _serverIp;
     private readonly ConcurrentDictionary<int, IMessageListener> _moduleToMessageListenerMap = new ConcurrentDictionary<int, IMessageListener>();
     private readonly Serializer<NetworkMessage> _networkMessageSerializer = new Serializer<NetworkMessage>();
@@ -64,7 +65,7 @@ public class CommunicatorClient : ICommunicator, IDisposable
             clientSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 3);
             clientSocket.NoDelay = true;
             _socketListener = new SocketListener(_receivingQueue, _tcpClient);
-            _sendingQueueListenerClient = new SendingQueueListenerClient(_sendingQueue, _tcpClient);
+            _sendingQueueListenerClient = new SendingQueueListenerClient(_sendingQueue, _tcpClient, EnsureConnected, GetStream);
 
             int localPort = ListenPort;
             Socket clientUdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
@@ -267,6 +268,63 @@ public class CommunicatorClient : ICommunicator, IDisposable
         catch (Exception e)
         {
             Trace.TraceError($"[Networking] CommunicatorClient.MulticastMessageLossy: Failed to multicast lossy message. Exception: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Ensures that the client TCP socket is connected to the server.
+    /// If disconnected, establishes a new TCP connection and restarts the socket listener.
+    /// </summary>
+    /// <returns>True if connected or successfully reconnected; otherwise, false.</returns>
+    public bool EnsureConnected()
+    {
+        lock (_connectionLock)
+        {
+            if (_tcpClient != null && _tcpClient.Connected)
+            {
+                return true;
+            }
+
+            try
+            {
+                _socketListener?.Dispose();
+                try { _tcpClient?.Close(); } catch { }
+
+                _tcpClient = new TcpClient();
+                _tcpClient.LingerState = new LingerOption(false, 0);
+                _tcpClient.Connect(_serverIp.Address, _serverIp.Port);
+
+                Socket clientSocket = _tcpClient.Client;
+                clientSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+                clientSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);
+                clientSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 10);
+                clientSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 3);
+                clientSocket.NoDelay = true;
+
+                _socketListener = new SocketListener(_receivingQueue, _tcpClient);
+                Trace.TraceInformation($"[Networking] CommunicatorClient.EnsureConnected: Successfully reconnected to server at {_serverIp}. Local port: {ListenPort}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceWarning($"[Networking] CommunicatorClient.EnsureConnected: Reconnection attempt to {_serverIp} failed: {ex.Message}");
+                return false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the current active network stream for sending, or null if disconnected.
+    /// </summary>
+    public NetworkStream? GetStream()
+    {
+        try
+        {
+            return _tcpClient?.Connected == true ? _tcpClient.GetStream() : null;
+        }
+        catch
+        {
+            return null;
         }
     }
 
