@@ -15,6 +15,8 @@ namespace ScreenShare.Views;
 [ExcludeFromCodeCoverage]
 public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
 {
+    private bool _isActive;   // whether the panel holding this grid is on screen
+
     public ScreenShareViewModel? ViewModel { get; private set; }
 
     public ScreenShareGridView()
@@ -27,6 +29,7 @@ public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
     {
         ViewModel?.Dispose();
         ViewModel = new ScreenShareViewModel(feed, DispatcherQueue);
+        ViewModel.SetActive(_isActive);
         Bindings.Update();
         Trace.TraceInformation("[Screenshare] ScreenShareGridView.Initialize: showing a new meeting's streams.");
     }
@@ -80,4 +83,13 @@ public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
     }
 
 
+    /// <summary>
+    /// tells the grid whether its panel is on screen; streams are only asked for while it is.
+    /// remembered so a view model made later by Initialize starts in the same state.
+    /// </summary>
+    public void SetActive(bool active)
+    {
+        _isActive = active;
+        ViewModel?.SetActive(active);
+    }
 }
