@@ -30,6 +30,7 @@ public sealed partial class ScreenShareGridView : UserControl, IScreenShareView
         ViewModel?.Dispose();
         ViewModel = new ScreenShareViewModel(feed, DispatcherQueue);
         ViewModel.SetActive(_isActive);
+        Trace.TraceInformation("[ScreenShare] ScreenShareGridView.Initialize set flag {0} : {1}", _isActive, _isActive ? "shown" : "hidden");
         Bindings.Update();
         Trace.TraceInformation("[Screenshare] ScreenShareGridView.Initialize: showing a new meeting's streams.");
     }

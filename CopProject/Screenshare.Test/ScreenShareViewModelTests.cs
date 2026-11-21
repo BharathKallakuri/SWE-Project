@@ -27,6 +27,10 @@ public class ScreenShareViewModelTests
             return surface;
         });
         _vm.PropertyChanged += (_, e) => _changed.Add(e.PropertyName);
+
+        // the screenshare panel is on screen; forget the empty request that showing it sent
+        _vm.SetActive(true);
+        _feed.Requests.Clear();
     }
 
     private FakeUiTimer FeedTimer => _ui.Timer(s_feedDelay);
@@ -287,6 +291,8 @@ public class ScreenShareViewModelTests
         Assert.Equal(0, FeedTimer.StartCount);
     }
 
+
+
     // frames
 
     [Fact]
@@ -519,6 +525,88 @@ public class ScreenShareViewModelTests
         _vm.BackToGrid();
 
         Assert.Equal(0, _feed.StartCalls);
+        Assert.Equal(requests, _feed.Requests.Count);
+    }
+
+    // the screenshare panel being hidden and shown
+
+    [Fact]
+    public void SetActive_False_UnsubscribesEverything()
+    {
+        Join("aryan", "sanjay");
+        Show("aryan", "sanjay");
+
+        _vm.SetActive(false);
+
+        Assert.Empty(_feed.Requests.Last());
+    }
+
+    [Fact]
+    public void SetActive_True_AsksForVisibleTilesAgain()
+    {
+        Join("aryan", "sanjay");
+        Show("aryan", "sanjay");
+        _vm.SetActive(false);
+
+        _vm.SetActive(true);
+
+        int grid = ScreenShareViewModel.GridTileHeight;
+        Assert.Equal(new Dictionary<string, int> { ["aryan"] = grid, ["sanjay"] = grid }, _feed.Requests.Last());
+    }
+
+    [Fact]
+    public void SetActive_True_WhileZoomed_AsksForZoomedTileOnly()
+    {
+        Join("aryan", "sanjay");
+        Show("aryan", "sanjay");
+        _vm.Zoom("aryan");
+        _vm.SetActive(false);
+
+        _vm.SetActive(true);
+
+        Assert.True(_vm.IsZoomedMode);
+        Assert.Equal(new Dictionary<string, int> { ["aryan"] = ScreenShareViewModel.ZoomedHeight }, _feed.Requests.Last());
+    }
+
+    [Fact]
+    public void SetActive_SameValue_DoesNothing()
+    {
+        _vm.SetActive(true);
+
+        Assert.Empty(_feed.Requests);
+    }
+
+    [Fact]
+    public void WhileInactive_TilesScrollingIn_AreNotAskedFor()
+    {
+        Join("aryan");
+        _vm.SetActive(false);
+
+        Show("aryan");
+
+        Assert.All(_feed.Requests, Assert.Empty);
+    }
+
+    [Fact]
+    public void Frame_WhileInactive_IsNotDrawn()
+    {
+        Join("aryan");
+        Show("aryan");
+        _vm.SetActive(false);
+
+        SendFrame("aryan", Frame());
+
+        Assert.Empty(_surfaces);
+    }
+
+    [Fact]
+    public void SetActive_AfterDispose_DoesNothing()
+    {
+        _vm.Dispose();
+        int requests = _feed.Requests.Count;
+
+        _vm.SetActive(false);
+
         Assert.Equal(requests, _feed.Requests.Count);
     }
 }
