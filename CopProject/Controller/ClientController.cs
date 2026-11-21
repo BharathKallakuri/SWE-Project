@@ -25,10 +25,10 @@ public sealed class ClientController : IControllerService
     private int _lastKnownUserCount;
     private readonly Dictionary<string, ControllerUser> _knownUsers = new();
     private readonly List<IUserNotificationHandler> _notificationHandlers = new();
-    internal bool InitialSync = false;
+    internal bool _initialSync = false;
     internal readonly ManualResetEventSlim JoinResponseEvent = new(false);
     public string? LastErrorMessage { get; internal set; }
-    internal bool IsJoined = false;
+    internal bool _isJoined = false;
 
     // Events
     public event EventHandler<MeetingEndedEventArgs>? MeetingEnded;
@@ -145,14 +145,14 @@ public sealed class ClientController : IControllerService
             _knownUsers[user.UserKey] = user;
         }
         JoinResponseEvent.Reset();
-        IsJoined = false;
+        _isJoined = false;
         LastErrorMessage = null;
         string message = Protocol.FormatJoinRequest(user);
         SendToHost(hostIp, hostPort, message);
         Trace.TraceInformation($"[Controller]: Sent JOIN for user '{user.Username}' to {hostIp}:{hostPort}.");
         // Wait up to 5 second for host response.
         JoinResponseEvent.Wait(TimeSpan.FromMilliseconds(5000));
-        if (!IsJoined)
+        if (!_isJoined)
         {
             if (string.IsNullOrEmpty(LastErrorMessage))
             {
@@ -297,7 +297,7 @@ public sealed class ClientController : IControllerService
         _disposed = true;
 
         // Auto-send LEAVE to host if still connected, so host cleans up this user.
-        if (IsJoined && _hostIp != null && _currentUser != null)
+        if (_isJoined && _hostIp != null && _currentUser != null)
         {
             try
             {

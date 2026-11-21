@@ -45,7 +45,7 @@ internal class ClientNotificationListener : IMessageListener
                         ControllerUser? joinedUser = JsonSerializer.Deserialize<ControllerUser>(parsed.Payload);
                         if (joinedUser != null)
                         {
-                            _client.IsJoined = true;
+                            _client._isJoined = true;
                             _client.JoinResponseEvent.Set();
                             if (parsed.Extra.Length > 0 && !string.IsNullOrWhiteSpace(parsed.Extra[0]))
                             {
@@ -57,9 +57,9 @@ internal class ClientNotificationListener : IMessageListener
                             }
                             _client.UpdateUserCount(_client.GetActiveUserCount());
                             _client.RaiseUserJoined(new UserJoinedEventArgs(joinedUser, _client.GetActiveUserCount()));
-                            if (!_client.InitialSync)
+                            if (!_client._initialSync)
                             {
-                                _client.InitialSync = true;
+                                _client._initialSync = true;
                                 //First call always notifies about the Current User.
                                 if (_client.CurrentUser != null)
                                 {
@@ -143,7 +143,7 @@ internal class ClientNotificationListener : IMessageListener
 
             case Protocol.NotifyJoinRejected:
                 {
-                    if (!_client.IsJoined)
+                    if (!_client._isJoined)
                     {
                         string reason = !string.IsNullOrWhiteSpace(parsed.Payload)
                             ? parsed.Payload

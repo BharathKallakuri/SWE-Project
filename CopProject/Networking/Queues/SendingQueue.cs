@@ -75,6 +75,26 @@ public class SendingQueue : Queue
         return Priority.Medium;
     }
 
+    private static readonly Dictionary<int, string> s_moduleIdToNameMap = new()
+    {
+        { 1, "Controller" },
+        { 5, "FileSynchroniser" },
+        { 6, "Chat" },
+        { 7, "Whiteboard" },
+        { 8, "ScreenShare" },
+        { 13, "Networking" }
+    };
+
+    private static string GetModuleName(int moduleId)
+    {
+        return s_moduleIdToNameMap.TryGetValue(moduleId, out string? name) ? $"{name} ({moduleId})" : $"Module-{moduleId}";
+    }
+
+    private string GetQueueSnapshot()
+    {
+        return $"Queues: [H:{_highQueue.Count}, M:{_mediumQueue.Count}, L:{_lowQueue.Count}, Total:{Size()}] | Metrics: [Burst:{_highBurstCount}/{_maxHighBurst}, MedServed:{_mediumServedCount}/{_mediumWeightRatio}, StarveCount:{_consecutiveHigherPriorityCount}/{_maxStarvationLimit}]";
+    }
+
     /// <summary>
     /// Enqueues a packet into the appropriate priority sub-queue.
     /// </summary>
@@ -83,7 +103,7 @@ public class SendingQueue : Queue
     {
         if (packet == null)
         {
-            Trace.TraceWarning("[Networking] SendingQueue.Enqueue: Cannot enqueue null packet.");
+            Trace.TraceWarning($"[Networking] SendingQueue.Enqueue: Cannot enqueue null packet | {GetQueueSnapshot()}");
             return;
         }
 
@@ -102,7 +122,9 @@ public class SendingQueue : Queue
                 break;
         }
 
-        Trace.TraceInformation($"[Networking] SendingQueue.Enqueue: {priority} priority packet for {packet.Destination} (Module: {packet.Module}). Queue: [H:{_highQueue.Count}, M:{_mediumQueue.Count}, L:{_lowQueue.Count}]");
+        int payloadBytes = packet.SerializedData?.Length ?? 0;
+        Trace.TraceInformation(
+            $"[Networking] SendingQueue.Enqueue: Priority: {priority} | Module: {GetModuleName(packet.Module)} | Destination: {packet.Destination} | PayloadSize: {payloadBytes}B | {GetQueueSnapshot()}");
 
         SignalItemAdded();
     }
@@ -118,47 +140,75 @@ public class SendingQueue : Queue
             if (_consecutiveHigherPriorityCount >= _maxStarvationLimit &&
                 _lowQueue.TryDequeue(out Packet? starvedPacket))
             {
+                int priorStarveCount = _consecutiveHigherPriorityCount;
                 _consecutiveHigherPriorityCount = 0;
                 _mediumServedCount = 0;
-                Trace.TraceInformation($"[Networking] SendingQueue.Dequeue: Low priority packet for {starvedPacket.Destination} (anti-starvation).");
+                int payloadBytes = starvedPacket.SerializedData?.Length ?? 0;
+                Trace.TraceInformation(
+                    $"[Networking] SendingQueue.Dequeue: Priority: Low | Reason: Anti-starvation threshold reached ({priorStarveCount} >= {_maxStarvationLimit}) | Module: {GetModuleName(starvedPacket.Module)} | Destination: {starvedPacket.Destination} | PayloadSize: {payloadBytes}B | {GetQueueSnapshot()}");
                 return starvedPacket;
             }
 
             bool allowHigh = _highBurstCount < _maxHighBurst || (_mediumQueue.IsEmpty && _lowQueue.IsEmpty);
             if (allowHigh && _highQueue.TryDequeue(out Packet? highPacket))
             {
+                string reason = _highBurstCount < _maxHighBurst
+                    ? $"High burst ({_highBurstCount + 1}/{_maxHighBurst})"
+                    : "High beyond burst limit (Medium and Low queues empty)";
+
                 _highBurstCount++;
                 if (!_lowQueue.IsEmpty)
                 {
                     _consecutiveHigherPriorityCount++;
                 }
-                Trace.TraceInformation($"[Networking] SendingQueue.Dequeue: High priority packet for {highPacket.Destination} (burst {_highBurstCount}/{_maxHighBurst}).");
+
+                int payloadBytes = highPacket.SerializedData?.Length ?? 0;
+                Trace.TraceInformation(
+                    $"[Networking] SendingQueue.Dequeue: Priority: High | Reason: {reason} | Module: {GetModuleName(highPacket.Module)} | Destination: {highPacket.Destination} | PayloadSize: {payloadBytes}B | {GetQueueSnapshot()}");
                 return highPacket;
             }
 
             bool allowMedium = _mediumServedCount < _mediumWeightRatio || _lowQueue.IsEmpty;
             if (allowMedium && _mediumQueue.TryDequeue(out Packet? mediumPacket))
             {
+                string reason = _mediumServedCount < _mediumWeightRatio
+                    ? $"Medium served ({_mediumServedCount + 1}/{_mediumWeightRatio})"
+                    : "Medium beyond ratio (Low queue empty)";
+                if (_highBurstCount >= _maxHighBurst)
+                {
+                    reason += $" (yielded after {_highBurstCount} High burst)";
+                }
+
                 _mediumServedCount++;
                 _highBurstCount = 0;
                 if (!_lowQueue.IsEmpty)
                 {
                     _consecutiveHigherPriorityCount++;
                 }
-                Trace.TraceInformation($"[Networking] SendingQueue.Dequeue: Medium priority packet for {mediumPacket.Destination} (served {_mediumServedCount}/{_mediumWeightRatio}).");
+
+                int payloadBytes = mediumPacket.SerializedData?.Length ?? 0;
+                Trace.TraceInformation(
+                    $"[Networking] SendingQueue.Dequeue: Priority: Medium | Reason: {reason} | Module: {GetModuleName(mediumPacket.Module)} | Destination: {mediumPacket.Destination} | PayloadSize: {payloadBytes}B | {GetQueueSnapshot()}");
                 return mediumPacket;
             }
 
             if (_lowQueue.TryDequeue(out Packet? lowPacket))
             {
+                string reason = (_highQueue.IsEmpty && _mediumQueue.IsEmpty)
+                    ? "Higher queues empty"
+                    : "Higher queues yielded/exhausted";
+
                 _mediumServedCount = 0;
                 _highBurstCount = 0;
                 _consecutiveHigherPriorityCount = 0;
-                Trace.TraceInformation($"[Networking] SendingQueue.Dequeue: Low priority packet for {lowPacket.Destination}.");
+
+                int payloadBytes = lowPacket.SerializedData?.Length ?? 0;
+                Trace.TraceInformation(
+                    $"[Networking] SendingQueue.Dequeue: Priority: Low | Reason: {reason} | Module: {GetModuleName(lowPacket.Module)} | Destination: {lowPacket.Destination} | PayloadSize: {payloadBytes}B | {GetQueueSnapshot()}");
                 return lowPacket;
             }
 
-            Trace.TraceWarning("[Networking] SendingQueue.Dequeue: Queue is empty.");
+            Trace.TraceWarning($"[Networking] SendingQueue.Dequeue: Queue is empty | {GetQueueSnapshot()}");
             return null;
         }
     }
@@ -174,31 +224,51 @@ public class SendingQueue : Queue
             if (_consecutiveHigherPriorityCount >= _maxStarvationLimit &&
                 _lowQueue.TryPeek(out Packet? starvedPacket))
             {
-                Trace.TraceInformation($"[Networking] SendingQueue.Peek: Low priority packet for {starvedPacket.Destination} (anti-starvation).");
+                int payloadBytes = starvedPacket.SerializedData?.Length ?? 0;
+                Trace.TraceInformation(
+                    $"[Networking] SendingQueue.Peek: Priority: Low | Reason: Anti-starvation next ({_consecutiveHigherPriorityCount} >= {_maxStarvationLimit}) | Module: {GetModuleName(starvedPacket.Module)} | Destination: {starvedPacket.Destination} | PayloadSize: {payloadBytes}B | {GetQueueSnapshot()}");
                 return starvedPacket;
             }
 
             bool allowHigh = _highBurstCount < _maxHighBurst || (_mediumQueue.IsEmpty && _lowQueue.IsEmpty);
             if (allowHigh && _highQueue.TryPeek(out Packet? highPacket))
             {
-                Trace.TraceInformation($"[Networking] SendingQueue.Peek: High priority packet for {highPacket.Destination}.");
+                string reason = _highBurstCount < _maxHighBurst
+                    ? $"High burst next ({_highBurstCount + 1}/{_maxHighBurst})"
+                    : "High beyond burst next (Medium and Low queues empty)";
+
+                int payloadBytes = highPacket.SerializedData?.Length ?? 0;
+                Trace.TraceInformation(
+                    $"[Networking] SendingQueue.Peek: Priority: High | Reason: {reason} | Module: {GetModuleName(highPacket.Module)} | Destination: {highPacket.Destination} | PayloadSize: {payloadBytes}B | {GetQueueSnapshot()}");
                 return highPacket;
             }
 
             bool allowMedium = _mediumServedCount < _mediumWeightRatio || _lowQueue.IsEmpty;
             if (allowMedium && _mediumQueue.TryPeek(out Packet? mediumPacket))
             {
-                Trace.TraceInformation($"[Networking] SendingQueue.Peek: Medium priority packet for {mediumPacket.Destination}.");
+                string reason = _mediumServedCount < _mediumWeightRatio
+                    ? $"Medium next ({_mediumServedCount + 1}/{_mediumWeightRatio})"
+                    : "Medium beyond ratio next (Low queue empty)";
+
+                int payloadBytes = mediumPacket.SerializedData?.Length ?? 0;
+                Trace.TraceInformation(
+                    $"[Networking] SendingQueue.Peek: Priority: Medium | Reason: {reason} | Module: {GetModuleName(mediumPacket.Module)} | Destination: {mediumPacket.Destination} | PayloadSize: {payloadBytes}B | {GetQueueSnapshot()}");
                 return mediumPacket;
             }
 
             if (_lowQueue.TryPeek(out Packet? lowPacket))
             {
-                Trace.TraceInformation($"[Networking] SendingQueue.Peek: Low priority packet for {lowPacket.Destination}.");
+                string reason = (_highQueue.IsEmpty && _mediumQueue.IsEmpty)
+                    ? "Higher queues empty"
+                    : "Higher queues yielded/exhausted";
+
+                int payloadBytes = lowPacket.SerializedData?.Length ?? 0;
+                Trace.TraceInformation(
+                    $"[Networking] SendingQueue.Peek: Priority: Low | Reason: {reason} | Module: {GetModuleName(lowPacket.Module)} | Destination: {lowPacket.Destination} | PayloadSize: {payloadBytes}B | {GetQueueSnapshot()}");
                 return lowPacket;
             }
 
-            Trace.TraceWarning("[Networking] SendingQueue.Peek: Queue is empty.");
+            Trace.TraceWarning($"[Networking] SendingQueue.Peek: Queue is empty | {GetQueueSnapshot()}");
             return null;
         }
     }
@@ -210,7 +280,8 @@ public class SendingQueue : Queue
     {
         lock (_dequeueLock)
         {
-            Trace.TraceInformation($"[Networking] SendingQueue.Clear: Cleared queues [H:{_highQueue.Count}, M:{_mediumQueue.Count}, L:{_lowQueue.Count}].");
+            Trace.TraceInformation(
+                $"[Networking] SendingQueue.Clear: Flushing all sub-queues | {GetQueueSnapshot()}");
             _highQueue.Clear();
             _mediumQueue.Clear();
             _lowQueue.Clear();
@@ -219,6 +290,9 @@ public class SendingQueue : Queue
             _highBurstCount = 0;
             _mediumServedCount = 0;
             ResetItemAdded();
+
+            Trace.TraceInformation(
+                $"[Networking] SendingQueue.Clear: Cleared all sub-queues and reset metrics | {GetQueueSnapshot()}");
         }
     }
 

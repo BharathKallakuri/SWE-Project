@@ -39,7 +39,9 @@ public static class FileTraceListener
             FileAccess.Write,
             FileShare.ReadWrite); /* permits simulaneous reading and writing of the log file.*/
 
-        s_listener = new TextWriterTraceListener(fileStream);
+        s_listener = new TextWriterTraceListener(fileStream) {
+            TraceOutputOptions = TraceOptions.DateTime
+        };
 
         Trace.Listeners.Add(s_listener);
         Trace.AutoFlush = true;
