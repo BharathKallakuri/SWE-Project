@@ -76,7 +76,7 @@ public sealed class NotificationServiceViewModel : ObservableObject, IAsyncDispo
     public ObservableCollection<NotificationItem> Notifications { get; } = new();
 
     /// <summary>Hardcoded servers offered in the dropdown. A custom URL can still be typed in the URL box.</summary>
-    public IReadOnlyList<ServerPreset> ServerPresets { get; } = [s_lessPowerful, s_morePowerful];
+    public IReadOnlyList<ServerPreset> ServerPresets { get; } = new List<ServerPreset> { s_lessPowerful, s_morePowerful };
 
     /// <summary>The preset chosen in the dropdown; null when the URL box holds a custom URL.</summary>
     public ServerPreset? SelectedPreset
