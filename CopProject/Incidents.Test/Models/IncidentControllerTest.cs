@@ -168,7 +168,7 @@ public sealed class IncidentControllerTest
     private void SetupMockIncidents()
     {
         _mockIncidents.AddRange(
-            [
+            new List<Incident> {
             new Incident(
             id: Guid.NewGuid(),
             title: "Test Incident 1",
@@ -218,7 +218,7 @@ public sealed class IncidentControllerTest
             changes: [],
             edges: []
          )
-        ]);
+        });
     }
 
     /// <summary>
