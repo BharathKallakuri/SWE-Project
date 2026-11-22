@@ -37,9 +37,11 @@ public class SocketListener : IDisposable
     private TcpClient _tcpClient;
 
     private const int BufferSize = 32 * 1024 * 1024;
+    private static readonly byte[] s_bytes = new byte[BufferSize];
+
     //private byte[] _buffer = new byte[_bufferSize];
-    private byte[] _receivedBuffer = new byte[BufferSize];
-    private PacketSerializer _packetSerializer = new PacketSerializer();
+    private readonly byte[] _receivedBuffer = s_bytes;
+    private readonly PacketSerializer _packetSerializer = new();
 
     /// <summary>
     /// Callback invoked when the socket stream disconnects or encounters a fatal error while running.
