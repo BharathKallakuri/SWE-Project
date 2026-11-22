@@ -284,8 +284,9 @@ public class CommunicatorClient : ICommunicator, IDisposable
                 _socketListener?.Dispose();
                 try { _tcpClient?.Close(); } catch { }
 
-                _tcpClient = new TcpClient();
-                _tcpClient.LingerState = new LingerOption(false, 0);
+                _tcpClient = new TcpClient {
+                    LingerState = new LingerOption(false, 0)
+                };
                 _tcpClient.Connect(_serverIp.Address, _serverIp.Port);
 
                 Socket clientSocket = _tcpClient.Client;
