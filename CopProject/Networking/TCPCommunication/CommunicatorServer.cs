@@ -187,11 +187,11 @@ public class CommunicatorServer : ICommunicator, IUserNotificationHandler, IDisp
             serverSocket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 3);
             serverSocket.NoDelay = true;
             _clientToTcpListenerMap[clientIp] = tcpClient;
-            SocketListener socketListener = new SocketListener(_receivingQueue, tcpClient);
-            socketListener.OnDisconnected = _ =>
-            {
-                Trace.TraceInformation($"[Networking] CommunicatorServer: Socket disconnected for client {clientIp}. Removing client.");
-                RemoveClient(clientIp);
+            SocketListener socketListener = new SocketListener(_receivingQueue, tcpClient) {
+                OnDisconnected = _ => {
+                    Trace.TraceInformation($"[Networking] CommunicatorServer: Socket disconnected for client {clientIp}. Removing client.");
+                    RemoveClient(clientIp);
+                }
             };
             _clientToSocketListenerMap[clientIp] = socketListener;
             Trace.TraceInformation($"[Networking] CommunicatorServer.AddClient: Successfully connected client {clientIp}");
