@@ -293,8 +293,7 @@ public class SocketListenerTests
         using ManualResetEventSlim signal = new(false);
 
         using SocketListener listener = new(rxQueue, serverAccepted);
-        listener.OnDisconnected = _ =>
-        {
+        listener.OnDisconnected = _ => {
             disconnectedFired = true;
             signal.Set();
         };
